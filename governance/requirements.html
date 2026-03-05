@@ -28,16 +28,16 @@
     .main > *{ justify-content:flex-start !important; align-items:stretch !important; }
 
     :root{
-      --cardBg: rgba(255,255,255,.03);
-      --cardBd: rgba(255,255,255,.12);
-      --muted: rgba(255,255,255,.72);
-      --muted2: rgba(255,255,255,.52);
-      --line: rgba(255,255,255,.14);
+      --cardBg: rgba(255,255,255,.94);
+      --cardBd: rgba(15,23,42,.12);
+      --muted: rgba(15,23,42,.68);
+      --muted2: rgba(15,23,42,.54);
+      --line: rgba(15,23,42,.10);
 
-      --ok: rgba(176,255,214,.95);
-      --partial: rgba(255,214,130,.95);
-      --gap: rgba(255,135,135,.95);
-      --accent: rgba(126,231,255,.95);
+      --ok: #16a34a;
+      --partial: #d97706;
+      --gap: #dc2626;
+      --accent: #0284c7;
     }
 
     .wrap{ max-width: 1200px; margin: 0 auto; padding: 24px 16px 60px; }
@@ -52,7 +52,7 @@
     .metaRow{ margin-top: 10px; display:flex; gap:8px; flex-wrap:wrap; color: var(--muted2); font-size: 12px; }
     .pill{
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       padding: 6px 10px;
       border-radius: 999px;
       display:inline-flex; align-items:center; gap:8px;
@@ -67,7 +67,7 @@
     .board{
       margin-top: 16px;
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 18px;
       padding: 18px;
       overflow:hidden;
@@ -85,7 +85,7 @@
 
     .kpi{
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 16px;
       padding: 12px;
     }
@@ -105,7 +105,7 @@
 
     .clausePanel{
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 18px;
       padding: 12px;
       overflow:hidden;
@@ -115,7 +115,7 @@
       display:flex; gap:8px; align-items:center;
       padding: 8px;
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 14px;
       margin-bottom: 10px;
     }
@@ -124,7 +124,7 @@
       border:0;
       outline:none;
       background: transparent;
-      color:#fff;
+      color:#0f172a;
       font-size: 13px;
     }
     .searchRow span{
@@ -143,13 +143,13 @@
     }
     .clause{
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 16px;
       padding: 10px 10px;
       cursor:pointer;
       transition: .15s ease;
     }
-    .clause:hover{ transform: translateY(-1px); background: rgba(255,255,255,.04); }
+    .clause:hover{ transform: translateY(-1px); background: rgba(255,255,255,.98); }
     .clause.active{
       border-color: rgba(126,231,255,.35);
       box-shadow: 0 0 0 1px rgba(126,231,255,.15) inset;
@@ -164,20 +164,20 @@
 
     .badge{
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 12px;
       font-weight: 900;
       white-space: nowrap;
     }
-    .badge.ok{ border-color: rgba(176,255,214,.35); color: rgba(176,255,214,.95); }
-    .badge.partial{ border-color: rgba(255,214,130,.35); color: rgba(255,214,130,.95); }
-    .badge.gap{ border-color: rgba(255,135,135,.35); color: rgba(255,135,135,.95); }
+    .badge.ok{ border-color: rgba(22,163,74,.28); color: #166534; background: rgba(22,163,74,.10); }
+    .badge.partial{ border-color: rgba(217,119,6,.28); color: #92400e; background: rgba(217,119,6,.10); }
+    .badge.gap{ border-color: rgba(220,38,38,.28); color: #991b1b; background: rgba(220,38,38,.10); }
 
     .detail{
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 18px;
       padding: 16px;
       overflow:hidden;
@@ -198,7 +198,7 @@
     .section{
       margin-top: 12px;
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.94);
       border-radius: 16px;
       padding: 12px;
     }
@@ -215,8 +215,8 @@
       gap: 8px;
     }
     .row{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.015);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.92);
       border-radius: 14px;
       padding: 10px;
       display:flex;
@@ -231,8 +231,8 @@
     .btn{
       appearance:none;
       border:1px solid var(--cardBd);
-      background: rgba(255,255,255,.03);
-      color:#fff;
+      background: rgba(255,255,255,.96);
+      color:#0f172a;
       padding: 8px 10px;
       border-radius: 12px;
       cursor:pointer;
@@ -243,22 +243,22 @@
       transition:.15s ease;
       white-space: nowrap;
     }
-    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.05); }
+    .btn:hover{ transform: translateY(-1px); background: rgba(15,23,42,.04); }
 
     .note{
       margin-top: 12px;
       padding: 12px;
-      border:1px dashed rgba(255,255,255,.14);
+      border:1px dashed rgba(15,23,42,.16);
       border-radius: 16px;
       color: var(--muted);
       font-size: 13px;
       line-height: 1.7;
-      background: rgba(255,255,255,.015);
+      background: rgba(255,255,255,.92);
     }
     .note code{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
-      color: rgba(255,255,255,.78);
+      color: rgba(15,23,42,.62);
     }
     select.btn{ padding:7px 10px; }
   </style>
@@ -567,7 +567,7 @@
       const gaps = (c.maps.gaps || []);
       const gapsHtml = gaps.length
         ? `
-          <ul style="margin:8px 0 0 18px; color: rgba(255,255,255,.68); line-height:1.7;">
+          <ul style="margin:8px 0 0 18px; color: rgba(15,23,42,.62); line-height:1.7;">
             ${gaps.map(g=>`<li>${g}</li>`).join("")}
           </ul>
         `
@@ -579,7 +579,7 @@
           <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <span class="pill" style="padding:6px 10px;">
-                <span style="color:rgba(255,255,255,.6);font-size:12px;">Owner</span>
+                <span style="color:rgba(15,23,42,.58);font-size:12px;">Owner</span>
                 <select id="capaOwner" class="btn">
                   <option value="BCMS PMO">BCMS PMO</option>
                   <option value="Risk Mgmt">Risk Mgmt</option>
@@ -591,7 +591,7 @@
               </span>
 
               <span class="pill" style="padding:6px 10px;">
-                <span style="color:rgba(255,255,255,.6);font-size:12px;">Due</span>
+                <span style="color:rgba(15,23,42,.58);font-size:12px;">Due</span>
                 <select id="capaDueDays" class="btn">
                   <option value="7">7일</option>
                   <option value="14" selected>14일</option>
@@ -605,7 +605,7 @@
             <a class="btn" href="./index.html">Governance Dashboard</a>
           </div>
 
-          <small style="display:block;margin-top:8px;color: rgba(255,255,255,.55);line-height:1.5;">
+          <small style="display:block;margin-top:8px;color: rgba(15,23,42,.54);line-height:1.5;">
             * 생성된 CAPA는 localStorage("${CAPA_KEY}")에 저장되며, Governance Dashboard의 <b>CAPA Open</b>에 즉시 반영됩니다.
           </small>
         `;
@@ -624,12 +624,12 @@
 
         <div class="section">
           <div class="sectionTitle"><b>Portal 매핑</b><small>관련 페이지 / 운영 기능</small></div>
-          <div class="rows">${portal || `<div style="color:rgba(255,255,255,.6)">매핑 없음</div>`}</div>
+          <div class="rows">${portal || `<div style="color:rgba(15,23,42,.58)">매핑 없음</div>`}</div>
         </div>
 
         <div class="section">
           <div class="sectionTitle"><b>Evidence (증적) 연결</b><small>Audit / Operation</small></div>
-          <div class="rows">${evidence || `<div style="color:rgba(255,255,255,.6)">증적 링크 없음</div>`}</div>
+          <div class="rows">${evidence || `<div style="color:rgba(15,23,42,.58)">증적 링크 없음</div>`}</div>
         </div>
 
         <div class="section">
@@ -674,7 +674,7 @@
       renderList(filtered);
       if(filtered.length) selectClause(filtered[0].id);
       else{
-        elDetail.innerHTML = `<div style="color: rgba(255,255,255,.7); line-height:1.7;">검색 결과가 없습니다.</div>`;
+        elDetail.innerHTML = `<div style="color: rgba(15,23,42,.62); line-height:1.7;">검색 결과가 없습니다.</div>`;
       }
     }
 
