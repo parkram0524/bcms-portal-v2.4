@@ -10,6 +10,7 @@
   const KEY_THEME = 'bcms_theme';
   const KEY_DEMO_MODE = 'bcms_demo_mode';
   const KEY_RTO_THRESHOLD = 'bcms_rto_threshold_minutes';
+  const KEY_ORG_REGISTRY = 'bcms_org_registry_v1';
 
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
@@ -62,6 +63,7 @@
     KEY_THEME,
     KEY_DEMO_MODE,
     KEY_RTO_THRESHOLD,
+    KEY_ORG_REGISTRY,
     get,
     set,
     update,
