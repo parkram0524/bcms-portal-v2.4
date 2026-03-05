@@ -41,12 +41,37 @@
     .statusBadge.recovering{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.10); }
     .statusBadge.recovering .dot{ background:#d97706; }
 
+
+    .quickActions{
+      display:grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .quickCard{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border:1px solid rgba(15,23,42,.12);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.96);
+      text-decoration:none;
+      color:#0f172a;
+      font-weight:900;
+      font-size:14px;
+    }
+    .quickCard:hover{ background:rgba(15,23,42,.04); }
+    @media (max-width: 900px){ .quickActions{ grid-template-columns:1fr; } }
+
     .grid{ display:grid; grid-template-columns: repeat(12,minmax(0,1fr)); gap:14px; }
     .card{ border-radius:16px; }
 
     .incidentCard{ grid-column: span 6; }
     .countdownCard{ grid-column: span 3; text-align:center; }
     .drCard{ grid-column: span 3; }
+    .scenarioCard{ grid-column: span 12; }
     .logCard{ grid-column: span 12; }
 
     @media (max-width: 1180px){
@@ -57,42 +82,30 @@
       .countdownCard, .drCard{ grid-column: span 12; }
     }
 
-    .metaGrid{
-      margin-top:8px;
-      display:grid;
-      grid-template-columns: repeat(2,minmax(0,1fr));
-      gap:10px;
-    }
-    .metaItem{
-      border:1px solid rgba(15,23,42,.10);
-      border-radius:12px;
-      padding:10px;
-      background:rgba(255,255,255,.96);
-    }
+    .metaGrid{ margin-top:8px; display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px; }
+    .metaItem{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:10px; background:rgba(255,255,255,.96); }
     .metaItem .k{ font-size:12px; font-weight:800; color:rgba(15,23,42,.58); }
     .metaItem .v{ margin-top:4px; font-size:15px; font-weight:900; color:#0f172a; }
 
-    .rto{
-      font-size:40px;
-      font-weight:950;
-      letter-spacing:.04em;
-      line-height:1.1;
-      margin-top:10px;
-    }
+    .rto{ font-size:40px; font-weight:950; letter-spacing:.04em; line-height:1.1; margin-top:10px; }
     .rtoHint{ margin-top:6px; color:rgba(15,23,42,.58); font-size:13px; }
 
     .toggleRow{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
-    .toggleBtn{
-      border:1px solid rgba(15,23,42,.14);
-      background:#fff;
-      color:#0f172a;
-      border-radius:999px;
-      padding:7px 10px;
-      font-size:12px;
-      font-weight:900;
-      cursor:pointer;
-    }
+    .toggleBtn{ border:1px solid rgba(15,23,42,.14); background:#fff; color:#0f172a; border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; cursor:pointer; }
     .toggleBtn.active{ border-color:rgba(37,99,235,.35); box-shadow:0 0 0 2px rgba(37,99,235,.12) inset; }
+
+    .scenarioGrid{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:12px; margin-top:10px; }
+    @media (max-width: 980px){ .scenarioGrid{ grid-template-columns:1fr; } }
+
+    .scenarioBox{ border:1px solid rgba(15,23,42,.10); border-radius:14px; padding:12px; background:rgba(255,255,255,.96); }
+    .scenarioBox h4{ margin:0 0 8px; font-size:15px; }
+    .scenarioBox .row{ margin-top:8px; }
+    .scenarioBox label{ display:block; font-size:12px; font-weight:800; color:rgba(15,23,42,.62); margin-bottom:4px; }
+
+    .checkGroup{ display:flex; gap:8px; flex-wrap:wrap; }
+    .checkPill{ display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(15,23,42,.12); border-radius:999px; padding:6px 10px; font-size:12px; }
+
+    .actionBtn{ width:100%; margin-top:10px; }
 
     .tableWrap{ overflow:auto; }
     table{ width:100%; min-width:900px; }
@@ -112,42 +125,33 @@
         </div>
         <div class="heroRight">
           <div id="globalStatusBadge" class="statusBadge normal"><span class="dot"></span>정상 (Normal)</div>
-          <button class="btn" id="resetDemoBtn" type="button">Reset demo data</button>
+          <button class="btn" id="resetDemoBtn" type="button">데모 데이터 리셋</button>
         </div>
       </div>
 
+      <section class="quickActions">
+        <a class="quickCard" href="../library/eop.html">🚨 EOP 실행</a>
+        <a class="quickCard" href="../library/drp.html">🛠️ DR 계획 확인</a>
+        <a class="quickCard" href="../library/sop.html">📘 SOP 절차 확인</a>
+      </section>
+
       <section class="grid">
-        <!-- A. Incident Status Card -->
         <article class="card incidentCard">
           <h3>현재 사고 현황 (Incident Snapshot)</h3>
           <div class="metaGrid">
-            <div class="metaItem">
-              <div class="k">현재 사고 상태</div>
-              <div class="v" id="incidentStatusText">모니터링 (Monitoring)</div>
-            </div>
-            <div class="metaItem">
-              <div class="k">심각도 등급 (Severity)</div>
-              <div class="v" id="severityText">SEV2</div>
-            </div>
-            <div class="metaItem">
-              <div class="k">영향 서비스</div>
-              <div class="v" id="impactedText">Auth API, Payment Gateway</div>
-            </div>
-            <div class="metaItem">
-              <div class="k">사고 시작 시각</div>
-              <div class="v" id="startTimeText">-</div>
-            </div>
+            <div class="metaItem"><div class="k">현재 Incident 상태</div><div class="v" id="incidentStatusText">안정화 모니터링</div></div>
+            <div class="metaItem"><div class="k">심각도</div><div class="v" id="severityText">보통</div></div>
+            <div class="metaItem"><div class="k">영향 서비스</div><div class="v" id="impactedText">-</div></div>
+            <div class="metaItem"><div class="k">사고 시작 시각</div><div class="v" id="startTimeText">-</div></div>
           </div>
         </article>
 
-        <!-- B. RTO 카운트다운 -->
         <article class="card countdownCard">
           <h3>RTO 카운트다운</h3>
           <div class="rto" id="rtoTimer">01:35:22</div>
           <div class="rtoHint">목표 복구시간(RTO) 남은 시간</div>
         </article>
 
-        <!-- C. DR 전환 상태 (DR Activation) -->
         <article class="card drCard">
           <h3>DR 전환 상태 (DR Activation)</h3>
           <div id="drBadge" class="statusBadge normal" style="margin-top:10px;"><span class="dot"></span>정상 (Normal)</div>
@@ -158,19 +162,61 @@
           </div>
         </article>
 
-        <!-- D. 사고 로그 (Incident Log) Table -->
+        <!-- 운영 시나리오 버튼/입력 -->
+        <article class="card scenarioCard">
+          <h3>운영 시나리오</h3>
+          <div class="scenarioGrid">
+            <section class="scenarioBox">
+              <h4>Incident 시작</h4>
+              <div class="row">
+                <label for="severitySelect">Severity 선택 (경미 / 보통 / 심각 / 치명)</label>
+                <select id="severitySelect">
+                  <option>경미</option><option selected>보통</option><option>심각</option><option>치명</option>
+                </select>
+              </div>
+              <div class="row">
+                <label>영향 서비스 체크</label>
+                <div class="checkGroup" id="impactChecks">
+                  <label class="checkPill"><input type="checkbox" value="Auth API" checked/> Auth API</label>
+                  <label class="checkPill"><input type="checkbox" value="Payment Gateway" checked/> Payment Gateway</label>
+                  <label class="checkPill"><input type="checkbox" value="Web Portal"/> Web Portal</label>
+                  <label class="checkPill"><input type="checkbox" value="CRM"/> CRM</label>
+                </div>
+              </div>
+              <button class="btn actionBtn" id="btnStartIncident" type="button">Incident 시작</button>
+            </section>
+
+            <section class="scenarioBox">
+              <h4>상태 업데이트</h4>
+              <div class="row">
+                <label for="statusSelect">새 상태</label>
+                <select id="statusSelect">
+                  <option>원인 조사</option>
+                  <option>영향 완화</option>
+                  <option selected>안정화 모니터링</option>
+                  <option>복구 완료</option>
+                </select>
+              </div>
+              <button class="btn actionBtn" id="btnChangeStatus" type="button">상태 업데이트</button>
+            </section>
+
+            <section class="scenarioBox">
+              <h4>Incident 종료</h4>
+              <div class="row">
+                <label for="finalSummary">최종 요약 (1줄)</label>
+                <input id="finalSummary" type="text" placeholder="예: 핵심 서비스 정상화, 후속 점검 진행"/>
+              </div>
+              <button class="btn actionBtn" id="btnEndIncident" type="button">Incident 종료</button>
+            </section>
+          </div>
+        </article>
+
         <article class="card logCard">
           <h3>사고 로그 (Incident Log)</h3>
           <div class="tableWrap">
             <table>
               <thead>
-                <tr>
-                  <th>시간 (Time)</th>
-                  <th>시스템 (System)</th>
-                  <th>이벤트 (Event)</th>
-                  <th>조치 내용 (Action Taken)</th>
-                  <th>담당자 (Operator)</th>
-                </tr>
+                <tr><th>시간</th><th>시스템</th><th>이벤트</th><th>조치 내용</th><th>담당자</th></tr>
               </thead>
               <tbody id="incidentLogBody"></tbody>
             </table>
@@ -183,19 +229,8 @@
   <script src="../assets/sidebar.js"></script>
   <script>
     (() => {
-      // ===== LocalStorage key =====
       const STORAGE_KEY = 'bcms_incidents_v1';
 
-      // ===== Demo templates =====
-      const updateTemplates = [
-        { status: '모니터링 (Monitoring)', severity: 'SEV2', impacted: 'Auth API, Payment Gateway', action: '초기 장애 감지 및 상황 브리핑', system: 'API Gateway', operator: 'NOC-1' },
-        { status: '원인 분석 중 (Investigating)', severity: 'SEV2', impacted: 'Auth API, Payment Gateway, Web Portal', action: '원인 분석 및 트래픽 우회 적용', system: 'Traffic Controller', operator: 'Ops-Lee' },
-        { status: '완화 조치 중 (Mitigating)', severity: 'SEV1', impacted: 'Auth API, Payment Gateway, Web Portal, CRM', action: 'DR 대상 우선순위 반영 및 복구 절차 실행', system: 'DR Orchestrator', operator: 'DR-Kim' },
-        { status: '복구 중 (Recovering)', severity: 'SEV2', impacted: 'Web Portal, CRM', action: '핵심 서비스 정상화 확인, 잔여 서비스 복구 중', system: 'Portal Cluster', operator: 'Ops-Park' },
-        { status: '안정화 (Stabilized)', severity: 'SEV3', impacted: 'CRM', action: '후속 검증 및 사후 점검 계획 등록', system: 'Service Desk', operator: 'QA-Han' },
-      ];
-
-      // ===== DOM refs =====
       const logBody = document.getElementById('incidentLogBody');
       const incidentStatusText = document.getElementById('incidentStatusText');
       const severityText = document.getElementById('severityText');
@@ -205,8 +240,10 @@
       const drBadge = document.getElementById('drBadge');
       const rtoTimer = document.getElementById('rtoTimer');
       const resetDemoBtn = document.getElementById('resetDemoBtn');
+      const severitySelect = document.getElementById('severitySelect');
+      const statusSelect = document.getElementById('statusSelect');
+      const finalSummary = document.getElementById('finalSummary');
 
-      // ===== DR labels =====
       const drStateMap = {
         normal: { label: '정상 (Normal)', cls: 'normal' },
         dr: { label: 'DR 가동 (DR Activated)', cls: 'dr' },
@@ -215,35 +252,31 @@
 
       const nowText = () => new Date().toLocaleString('ko-KR', { hour12: false });
       const nowTime = () => new Date().toLocaleTimeString('ko-KR', { hour12: false });
+      const getCheckedServices = () => [...document.querySelectorAll('#impactChecks input:checked')].map((el) => el.value);
 
-      const createDefaultState = () => {
-        const base = updateTemplates[0];
-        return {
-          currentIncident: {
-            status: base.status,
-            severity: base.severity,
-            impacted: base.impacted,
-            startTime: nowText(),
-          },
-          drState: 'normal',
-          logs: [
-            { time: nowTime(), system: base.system, event: `${base.status} / ${base.severity}`, action: base.action, operator: base.operator },
-          ],
-        };
-      };
+      const createDefaultState = () => ({
+        currentIncident: {
+          status: '안정화 모니터링',
+          severity: '보통',
+          impacted: 'Auth API, Payment Gateway',
+          startTime: '-',
+          endTime: '-',
+          finalSummary: '',
+        },
+        drState: 'normal',
+        logs: [
+          { time: nowTime(), system: '운영 관제', event: '대시보드 초기화', action: '샘플 데이터 로드', operator: '시스템' },
+        ],
+      });
 
-      const saveState = (state) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      };
-
+      const saveState = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       const loadState = () => {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) return createDefaultState();
           const parsed = JSON.parse(raw);
-          if (!parsed || typeof parsed !== 'object') return createDefaultState();
           return {
-            currentIncident: parsed.currentIncident || createDefaultState().currentIncident,
+            currentIncident: { ...createDefaultState().currentIncident, ...(parsed.currentIncident || {}) },
             drState: parsed.drState || 'normal',
             logs: Array.isArray(parsed.logs) ? parsed.logs : createDefaultState().logs,
           };
@@ -252,27 +285,23 @@
         }
       };
 
-      let state = loadState();
-      saveState(state);
+      const addLog = ({ system, event, action, operator = '운영자' }) => {
+        state.logs.unshift({ time: nowTime(), system, event, action, operator });
+        if (state.logs.length > 20) state.logs = state.logs.slice(0, 20);
+      };
 
       const renderIncident = () => {
         incidentStatusText.textContent = state.currentIncident.status;
         severityText.textContent = state.currentIncident.severity;
-        impactedText.textContent = state.currentIncident.impacted;
-        startTimeText.textContent = state.currentIncident.startTime;
+        impactedText.textContent = state.currentIncident.impacted || '-';
+        startTimeText.textContent = state.currentIncident.startTime || '-';
       };
 
       const renderLogs = () => {
         logBody.innerHTML = '';
         state.logs.forEach((row) => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${row.time}</td>
-            <td>${row.system}</td>
-            <td class="evt">${row.event}</td>
-            <td>${row.action}</td>
-            <td>${row.operator}</td>
-          `;
+          tr.innerHTML = `<td>${row.time}</td><td>${row.system}</td><td class="evt">${row.event}</td><td>${row.action}</td><td>${row.operator}</td>`;
           logBody.appendChild(tr);
         });
       };
@@ -283,9 +312,7 @@
         drBadge.innerHTML = `<span class="dot"></span>${info.label}`;
         globalStatusBadge.className = `statusBadge ${info.cls}`;
         globalStatusBadge.innerHTML = `<span class="dot"></span>${info.label}`;
-        document.querySelectorAll('#drStatusToggles .toggleBtn').forEach((btn) => {
-          btn.classList.toggle('active', btn.dataset.state === state.drState);
-        });
+        document.querySelectorAll('#drStatusToggles .toggleBtn').forEach((btn) => btn.classList.toggle('active', btn.dataset.state === state.drState));
       };
 
       const renderAll = () => {
@@ -294,52 +321,80 @@
         renderDrState();
       };
 
-      const applyIncidentUpdate = (u) => {
-        state.currentIncident = {
-          ...state.currentIncident,
-          status: u.status,
-          severity: u.severity,
-          impacted: u.impacted,
-        };
+      let state = loadState();
 
-        state.logs.unshift({
-          time: nowTime(),
-          system: u.system,
-          event: `${u.status} / ${u.severity}`,
-          action: u.action,
-          operator: u.operator,
-        });
-
-        if (state.logs.length > 12) state.logs = state.logs.slice(0, 12);
-        saveState(state);
-        renderAll();
-      };
-
-      // ===== DR toggle events =====
+      // DR status toggle persist
       document.getElementById('drStatusToggles').addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-state]');
         if (!btn) return;
         state.drState = btn.dataset.state;
-        saveState(state);
-        renderDrState();
-      });
-
-      // ===== Reset demo data =====
-      resetDemoBtn.addEventListener('click', () => {
-        state = createDefaultState();
-        saveState(state);
+        addLog({ system: 'DR 제어기', event: `DR 상태 변경: ${btn.textContent}`, action: '운영센터 수동 전환', operator: 'DR 담당' });
+        saveState();
         renderAll();
       });
 
-      // ===== periodic incident update simulation =====
-      let updateIndex = 0;
-      setInterval(() => {
-        updateIndex = (updateIndex + 1) % updateTemplates.length;
-        applyIncidentUpdate(updateTemplates[updateIndex]);
-      }, 7000);
+      // Incident 시작
+      document.getElementById('btnStartIncident').addEventListener('click', () => {
+        const services = getCheckedServices();
+        const impacted = services.length ? services.join(', ') : '영향 서비스 미선택';
+        state.currentIncident = {
+          ...state.currentIncident,
+          status: '원인 조사',
+          severity: severitySelect.value,
+          impacted,
+          startTime: nowText(),
+          endTime: '-',
+          finalSummary: '',
+        };
+        addLog({
+          system: '사고 대응 콘솔',
+          event: `Incident 시작 / ${state.currentIncident.severity}`,
+          action: `시작 시각 기록, 영향 서비스: ${impacted}`,
+          operator: '사고 관리자',
+        });
+        saveState();
+        renderAll();
+      });
 
-      // ===== RTO countdown timer =====
-      let remaining = (1 * 60 * 60) + (35 * 60) + 22; // 01:35:22
+      // 상태 변경
+      document.getElementById('btnChangeStatus').addEventListener('click', () => {
+        const nextStatus = statusSelect.value;
+        state.currentIncident.status = nextStatus;
+        addLog({
+          system: '사고 대응 콘솔',
+          event: `상태 업데이트: ${nextStatus}`,
+          action: '운영 시나리오 상태 전이 반영',
+          operator: '당직 담당자',
+        });
+        saveState();
+        renderAll();
+      });
+
+      // Incident 종료
+      document.getElementById('btnEndIncident').addEventListener('click', () => {
+        const summary = (finalSummary.value || '').trim() || '최종 요약 미입력';
+        state.currentIncident.status = '복구 완료';
+        state.currentIncident.endTime = nowText();
+        state.currentIncident.finalSummary = summary;
+        addLog({
+          system: '사고 대응 콘솔',
+          event: 'Incident 종료 (복구 완료)',
+          action: `종료 시각 기록 / 요약: ${summary}`,
+          operator: '사고 관리자',
+        });
+        saveState();
+        renderAll();
+      });
+
+      // Reset demo
+      resetDemoBtn.addEventListener('click', () => {
+        state = createDefaultState();
+        saveState();
+        renderAll();
+      });
+
+      // RTO countdown visual timer (session only)
+      let remaining = (1 * 60 * 60) + (35 * 60) + 22;
       const pad = (n) => String(n).padStart(2, '0');
       const renderTimer = () => {
         const h = Math.floor(remaining / 3600);
@@ -353,6 +408,7 @@
         renderTimer();
       }, 1000);
 
+      saveState();
       renderAll();
     })();
   </script>
