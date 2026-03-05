@@ -20,6 +20,10 @@
     .hero p{ margin:8px 0 0; color:rgba(15,23,42,.62); }
     .heroRight{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 
+    .demoToggle{ display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:6px 10px; background:#fff; }
+    .demoToggle label{ font-size:12px; font-weight:900; color:#0f172a; margin:0; }
+    .demoToggle input{ width:18px; height:18px; accent-color:#2563eb; }
+
     .statusBadge{
       display:inline-flex;
       align-items:center;
@@ -125,6 +129,10 @@
         </div>
         <div class="heroRight">
           <div id="globalStatusBadge" class="statusBadge normal"><span class="dot"></span>정상 (Normal)</div>
+          <div class="demoToggle">
+            <label for="demoModeToggle">데모 모드</label>
+            <input id="demoModeToggle" type="checkbox"/>
+          </div>
           <button class="btn" id="resetDemoBtn" type="button">데모 데이터 리셋</button>
         </div>
       </div>
@@ -230,6 +238,7 @@
   <script>
     (() => {
       const STORAGE_KEY = 'bcms_incidents_v1';
+      const DEMO_MODE_KEY = 'bcms_demo_mode';
 
       const logBody = document.getElementById('incidentLogBody');
       const incidentStatusText = document.getElementById('incidentStatusText');
@@ -243,6 +252,7 @@
       const severitySelect = document.getElementById('severitySelect');
       const statusSelect = document.getElementById('statusSelect');
       const finalSummary = document.getElementById('finalSummary');
+      const demoModeToggle = document.getElementById('demoModeToggle');
 
       const drStateMap = {
         normal: { label: '정상 (Normal)', cls: 'normal' },
@@ -289,6 +299,13 @@
         state.logs.unshift({ time: nowTime(), system, event, action, operator });
         if (state.logs.length > 20) state.logs = state.logs.slice(0, 20);
       };
+
+      const loadDemoMode = () => {
+        const raw = localStorage.getItem(DEMO_MODE_KEY);
+        if (raw === null) return true;
+        return raw === 'true';
+      };
+      const saveDemoMode = (flag) => localStorage.setItem(DEMO_MODE_KEY, String(flag));
 
       const renderIncident = () => {
         incidentStatusText.textContent = state.currentIncident.status;
@@ -386,6 +403,42 @@
         renderAll();
       });
 
+      // 데모 모드 자동 시뮬레이션
+      const demoStatusSequence = ['원인 조사', '영향 완화', '안정화 모니터링', '복구 완료'];
+      let demoTimer = null;
+      let demoIdx = 0;
+
+      const runDemoTick = () => {
+        const next = demoStatusSequence[demoIdx % demoStatusSequence.length];
+        demoIdx += 1;
+        state.currentIncident.status = next;
+        addLog({
+          system: '데모 엔진',
+          event: `자동 상태 전환: ${next}`,
+          action: '데모 모드 자동 시뮬레이션',
+          operator: 'SYSTEM',
+        });
+        saveState();
+        renderAll();
+      };
+
+      const startDemoMode = () => {
+        if (demoTimer) return;
+        demoTimer = setInterval(runDemoTick, 15000);
+      };
+      const stopDemoMode = () => {
+        if (!demoTimer) return;
+        clearInterval(demoTimer);
+        demoTimer = null;
+      };
+
+      demoModeToggle.addEventListener('change', () => {
+        const on = demoModeToggle.checked;
+        saveDemoMode(on);
+        if (on) startDemoMode();
+        else stopDemoMode();
+      });
+
       // Reset demo
       resetDemoBtn.addEventListener('click', () => {
         state = createDefaultState();
@@ -407,6 +460,10 @@
         if (remaining > 0) remaining -= 1;
         renderTimer();
       }, 1000);
+
+      const demoOn = loadDemoMode();
+      demoModeToggle.checked = demoOn;
+      if (demoOn) startDemoMode();
 
       saveState();
       renderAll();
