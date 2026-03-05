@@ -6,17 +6,35 @@
   font-family:"Pretendard","Segoe UI",sans-serif;
 }
 
-/* ===== BASE ===== */
+/* ===== BASE TOKENS ===== */
 :root{
-  /* ✅ 여기만 바꾸면 전 페이지 사이드바 폭 통일 */
   --sidebarW: 400px;
 
-  --sbBg: #0b1220;
-  --sbBd: rgba(255,255,255,0.06);
-  --sbHover: #1e293b;
-  --sbTxt: #e2e8f0;
-  --sbSub: #94a3b8;
-  --sbBrand: #60a5fa;
+  --pageBg: #f4f6fb;
+  --panel: #ffffff;
+  --ink: #0f172a;
+  --muted: rgba(15,23,42,.64);
+  --mutedStrong: rgba(15,23,42,.78);
+  --line: rgba(15,23,42,.10);
+  --lineStrong: rgba(15,23,42,.16);
+
+  --radiusLg: 18px;
+  --radiusMd: 14px;
+  --radiusSm: 10px;
+
+  --shadowSm: 0 4px 12px rgba(15,23,42,.06);
+  --shadowMd: 0 10px 26px rgba(15,23,42,.08);
+
+  /* Sidebar */
+  --sbBg: #ffffff;
+  --sbBd: rgba(15,23,42,.10);
+  --sbHover: rgba(15,23,42,.04);
+  --sbActive: rgba(37,99,235,.10);
+  --sbActiveBd: rgba(37,99,235,.18);
+  --sbTxt: rgba(15,23,42,.88);
+  --sbSub: rgba(15,23,42,.62);
+  --sbBrand: #0f172a;
+  --sbShadow: 8px 0 24px rgba(15,23,42,.04);
 }
 
 html, body{
@@ -25,32 +43,10 @@ html, body{
 }
 
 body{
-  background:#0f172a;
-  color:#e2e8f0;
+  background: var(--pageBg);
+  color: var(--ink);
   display:flex;
   min-height: 100vh;
-}
-
-/* =========================================================
-   ✅ SIDEBAR (GLOBAL) — WHITE THEME (org.html style)
-   - 기존 구조/클래스명 유지
-   - hover 펼침 / active 펼침 / 줄바꿈 유지
-   ========================================================= */
-
-:root{
-  /* ✅ 여기만 바꾸면 전 페이지 사이드바 폭 통일 */
-  --sidebarW: 400px;
-
-  /* ✅ White sidebar tokens */
-  --sbBg: #ffffff;
-  --sbBd: rgba(15,23,42,.10);
-  --sbHover: rgba(15,23,42,.04);
-  --sbActive: rgba(37,99,235,.10);       /* active 배경 */
-  --sbActiveBd: rgba(37,99,235,.18);     /* active 테두리 */
-  --sbTxt: rgba(15,23,42,.88);
-  --sbSub: rgba(15,23,42,.62);
-  --sbBrand: #0f172a;                    /* 상단 타이틀 색 */
-  --sbShadow: 8px 0 24px rgba(15,23,42,.04);
 }
 
 /* ===== SIDEBAR (GLOBAL) ===== */
@@ -58,18 +54,14 @@ body{
   width: var(--sidebarW);
   min-width: var(--sidebarW);
   max-width: var(--sidebarW);
-
   background: var(--sbBg);
   min-height: 100vh;
   padding: 26px 18px;
-
   border-right: 1px solid var(--sbBd);
   box-shadow: var(--sbShadow);
-
   overflow-y: auto;
 }
 
-/* 상단 타이틀 */
 .sidebar h1{
   font-size: 20px;
   font-weight: 900;
@@ -78,50 +70,33 @@ body{
   letter-spacing: 0.2px;
 }
 
-/* 상위 카테고리 */
-.sidebar-section{
-  margin-bottom: 10px;
-}
+.sidebar-section{ margin-bottom: 10px; }
 
-/* 상위 카테고리 링크 */
 .sidebar-section-title{
   display:flex;
   align-items:center;
-  gap: 10px;
-
+  gap:10px;
   font-size: 16px;
   font-weight: 800;
-
   color: var(--sbTxt);
-
   padding: 10px 12px;
   border-radius: 12px;
-
   cursor: pointer;
-  transition: 0.18s;
-
+  transition: .18s;
   line-height: 1.35;
   word-break: keep-all;
-  white-space: normal; /* ✅ 줄바꿈 허용 */
+  white-space: normal;
   text-decoration: none !important;
-
-  border: 1px solid transparent; /* hover/active에서 깔끔 */
+  border: 1px solid transparent;
 }
+.sidebar-section-title:hover{ background: var(--sbHover); }
 
-/* hover */
-.sidebar-section-title:hover{
-  background: var(--sbHover);
-  text-decoration: none !important;
-}
-
-/* 현재 페이지 강조 */
 .sidebar-section.active > .sidebar-section-title{
   background: var(--sbActive);
   border-color: var(--sbActiveBd);
   color: rgba(15,23,42,.95);
 }
 
-/* 하위 메뉴 */
 .sub-menu{
   display:none;
   margin-left: 8px;
@@ -132,125 +107,121 @@ body{
 .sub-menu a{
   display:block;
   text-decoration:none;
-
   padding: 9px 12px;
   border-radius: 10px;
-
   font-size: 15px;
   font-weight: 600;
-
   color: var(--sbSub);
   margin-bottom: 6px;
-
-  transition: 0.18s;
-
+  transition: .18s;
   line-height: 1.45;
   word-break: keep-all;
-  white-space: normal; /* ✅ 줄바꿈 허용 */
-
+  white-space: normal;
   border: 1px solid transparent;
 }
-
-/* 하위 hover */
-.sub-menu a:hover{
-  background: var(--sbHover);
-  color: rgba(15,23,42,.95);
-}
-
-/* 마우스 올리면 펼침 */
-.sidebar-section:hover .sub-menu{
-  display:block;
-}
-
-/* 현재 페이지는 항상 펼침 */
-.sidebar-section.active .sub-menu{
-  display:block;
-}
-
-/* ===== RESPONSIVE: 1024px 이하에서는 상단바처럼 ===== */
-@media (max-width: 1024px){
-  body{ flex-direction: column; }
-
-  .sidebar{
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    min-height: auto;
-    height: auto;
-
-    border-right: none;
-    border-bottom: 1px solid var(--sbBd);
-
-    box-shadow: none;
-  }
-}
+.sub-menu a:hover{ background: var(--sbHover); color: rgba(15,23,42,.95); }
+.sidebar-section:hover .sub-menu,
+.sidebar-section.active .sub-menu{ display:block; }
 
 /* ===== MAIN (GLOBAL) ===== */
 .main{
   flex: 1;
-  min-width: 0;        /* ✅ 테이블/카드가 옆으로 밀리는 현상 방지 */
-  padding: 38px 36px;  /* ✅ 400px 사이드바 기준 밸런스 */
-  font-size: 16px;     /* ✅ 본문 기본 크기 */
+  min-width: 0;
+  padding: 34px 34px 44px;
+  font-size: 16px;
+  background: var(--pageBg);
 }
 
-/* 페이지 타이틀 (통일) */
+.main .wrap{
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
 .page-title{
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 20px;
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 18px;
+  letter-spacing: -.01em;
+  color: var(--ink);
 }
 
-/* 카드 UI */
-.card{
-  background:#1e293b;
-  padding:26px;
-  border-radius:14px;
-  margin-bottom:22px;
-  border:1px solid rgba(255,255,255,0.05);
+/* ===== SURFACE SYSTEM ===== */
+.card, .panel, .box, .tile, .kpi, .rowItem, .item, .tableWrap, table, .section{
+  background: var(--panel) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radiusMd);
+  box-shadow: var(--shadowSm);
 }
 
-.card h3{
-  font-size:20px;
-  font-weight:800;
-  margin-bottom:12px;
+.card, .panel, .box, .tile, .kpi{ padding: 20px; }
+
+.card h3, .panel h3, .box h3, .tile h3, .kpi h3,
+h1, h2, h3, h4{ color: var(--ink); }
+
+.card p,
+p, small, .muted, .sub, .hint, .meta, .desc, .rowSub, .tileMeta, .panelHint,
+label, .mini, .kpiCaption, .gaugeSub, .sectionHint, .mono{
+  color: var(--muted) !important;
 }
 
-.card p{
-  font-size:16px;
-  line-height:1.7;
-  color:#cbd5e1;
+/* ===== BUTTON / CHIP ===== */
+button, .btn, .chipBtn, .chip, .linkBtn{
+  font-size: 15px;
+  background: rgba(255,255,255,.95) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--lineStrong) !important;
+  border-radius: 12px;
+  transition: transform .08s ease, background .12s ease, border-color .12s ease;
+}
+button:hover, .btn:hover, .chipBtn:hover, .chip:hover, .linkBtn:hover{
+  background: rgba(15,23,42,.04) !important;
 }
 
-/* 공통 보조 텍스트 */
-.mini{ font-size: 14px; line-height: 1.6; }
-.hint{ font-size: 15px; line-height: 1.6; }
-
-/* ===== GLOBAL: Select dropdown option visibility (Dark UI fix) ===== */
-select{
-  color: #e9eefc;
-  background: rgba(0,0,0,.18);
-}
-select option{
-  color: #0b1220;
-  background: #ffffff;
-}
-select option:checked{
-  background: #e9eefc;
-  color: #0b1220;
-}
-select option:disabled{
-  color: #6b7280;
-}
-
-/* 입력/버튼 기본 크기 통일 */
+/* ===== FORM ===== */
 input, select, textarea{
-  font-size: 16px;
+  font-size: 15px;
+  background: #ffffff !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid var(--lineStrong) !important;
+  border-radius: 11px;
 }
-button, .btn, .chipBtn{
-  font-size: 16px;
+input:focus, select:focus, textarea:focus{
+  outline: none;
+  border-color: rgba(59,130,246,.45) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.12);
 }
 
-/* ===== RESPONSIVE: 1024px 이하에서는 상단바처럼 ===== */
+select option{ color:#0b1220; background:#fff; }
+select option:checked{ background:#e9eefc; color:#0b1220; }
+select option:disabled{ color:#6b7280; }
+
+/* ===== TABLE ===== */
+table{
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+th{
+  color: var(--mutedStrong) !important;
+  background: rgba(15,23,42,.02);
+  font-weight: 800;
+  border-bottom: 1px solid var(--line);
+}
+td{
+  color: rgba(15,23,42,.88) !important;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+tr:hover td{ background: rgba(15,23,42,.02); }
+
+/* ===== SPECIAL LIGHT FIX ===== */
+.toast{
+  background: rgba(255,255,255,.98) !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid var(--lineStrong) !important;
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 1024px){
   body{ flex-direction: column; }
 
@@ -262,9 +233,8 @@ button, .btn, .chipBtn{
     height: auto;
     border-right: none;
     border-bottom: 1px solid var(--sbBd);
+    box-shadow: none;
   }
 
-  .main{
-    padding: 18px; /* ✅ !important 제거 */
-  }
+  .main{ padding: 18px; }
 }
