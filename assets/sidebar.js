@@ -110,14 +110,27 @@
     { key: "admin", match: "/admin/" },
   ];
 
+  const currentPath = path.replace(BASE, "");
+
   const activeKey = (() => {
-    const p = path.replace(BASE, "");
-    const hit = sections.find(s => p.includes(s.match));
+    const hit = sections.find(s => currentPath.includes(s.match));
     return hit ? hit.key : "home";
   })();
 
   document.querySelectorAll(".sidebar-section").forEach(section => {
     const key = section.getAttribute("data-section");
     if (key === activeKey) section.classList.add("active");
+  });
+
+  // ✅ 현재 페이지와 일치하는 링크 하이라이트 + 접근성 속성 지정
+  document.querySelectorAll(".sidebar a[href]").forEach(link => {
+    const href = link.getAttribute("href");
+    if (!href) return;
+
+    const normalizedHref = href.replace(BASE, "");
+    if (normalizedHref === currentPath) {
+      link.classList.add("active-link");
+      link.setAttribute("aria-current", "page");
+    }
   });
 })();

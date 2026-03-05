@@ -120,6 +120,11 @@ body{
   border: 1px solid transparent;
 }
 .sub-menu a:hover{ background: var(--sbHover); color: rgba(15,23,42,.95); }
+.sub-menu a.active-link{
+  background: var(--sbActive);
+  border-color: var(--sbActiveBd);
+  color: rgba(15,23,42,.95);
+}
 .sidebar-section:hover .sub-menu,
 .sidebar-section.active .sub-menu{ display:block; }
 
