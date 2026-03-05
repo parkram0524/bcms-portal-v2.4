@@ -235,10 +235,11 @@
   </main>
 
   <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
   <script>
     (() => {
-      const STORAGE_KEY = 'bcms_incidents_v1';
-      const DEMO_MODE_KEY = 'bcms_demo_mode';
+      const STORAGE_KEY = DataStore.KEY_INCIDENTS;
+      const DEMO_MODE_KEY = DataStore.KEY_DEMO_MODE;
 
       const logBody = document.getElementById('incidentLogBody');
       const incidentStatusText = document.getElementById('incidentStatusText');
@@ -279,20 +280,15 @@
         ],
       });
 
-      const saveState = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const saveState = () => DataStore.update(STORAGE_KEY, () => state);
       const loadState = () => {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return createDefaultState();
-          const parsed = JSON.parse(raw);
-          return {
-            currentIncident: { ...createDefaultState().currentIncident, ...(parsed.currentIncident || {}) },
-            drState: parsed.drState || 'normal',
-            logs: Array.isArray(parsed.logs) ? parsed.logs : createDefaultState().logs,
-          };
-        } catch {
-          return createDefaultState();
-        }
+        const parsed = DataStore.get(STORAGE_KEY, null);
+        if (!parsed || typeof parsed !== 'object') return createDefaultState();
+        return {
+          currentIncident: { ...createDefaultState().currentIncident, ...(parsed.currentIncident || {}) },
+          drState: parsed.drState || 'normal',
+          logs: Array.isArray(parsed.logs) ? parsed.logs : createDefaultState().logs,
+        };
       };
 
       const addLog = ({ system, event, action, operator = '운영자' }) => {
@@ -300,12 +296,8 @@
         if (state.logs.length > 20) state.logs = state.logs.slice(0, 20);
       };
 
-      const loadDemoMode = () => {
-        const raw = localStorage.getItem(DEMO_MODE_KEY);
-        if (raw === null) return true;
-        return raw === 'true';
-      };
-      const saveDemoMode = (flag) => localStorage.setItem(DEMO_MODE_KEY, String(flag));
+      const loadDemoMode = () => DataStore.get(DEMO_MODE_KEY, true);
+      const saveDemoMode = (flag) => DataStore.set(DEMO_MODE_KEY, Boolean(flag));
 
       const renderIncident = () => {
         incidentStatusText.textContent = state.currentIncident.status;
