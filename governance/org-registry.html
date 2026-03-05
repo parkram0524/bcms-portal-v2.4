@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>조직 관리 | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; }
+    .card12{ grid-column:span 12; }
+    .formRow{ display:grid; grid-template-columns:2fr 1fr auto; gap:8px; }
+    .tableWrap{ overflow:auto; }
+    table{ width:100%; min-width:980px; }
+    th,td{ padding:10px 12px; font-size:14px; text-align:left; }
+    .actions{ display:flex; gap:6px; flex-wrap:wrap; }
+    .sub{ font-size:12px; color:var(--muted); }
+    @media(max-width:900px){ .formRow{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+  <main class="main"><div class="wrap">
+    <h1 class="page-title">🏢 조직 관리 (Organization Registry)</h1>
+
+    <section class="grid">
+      <article class="card card12">
+        <h3>본부 관리</h3>
+        <div class="formRow">
+          <input id="divisionName" placeholder="본부명 입력"/>
+          <input id="divisionId" placeholder="본부 ID (예: risk)"/>
+          <button class="btn" id="addDivisionBtn" type="button">본부 추가</button>
+        </div>
+        <p class="sub">본부명, ID를 입력한 뒤 추가하세요. 수정/삭제는 아래 표에서 수행합니다.</p>
+      </article>
+
+      <article class="card card12">
+        <h3>팀 관리</h3>
+        <div class="formRow">
+          <select id="teamDivisionSelect"></select>
+          <input id="teamName" placeholder="팀명 입력"/>
+          <button class="btn" id="addTeamBtn" type="button">팀 추가</button>
+        </div>
+        <div class="formRow" style="margin-top:8px;">
+          <input id="teamId" placeholder="팀 ID (예: bcm)"/>
+          <input id="teamSearch" placeholder="팀명 검색"/>
+          <button class="btn" id="resetTemplateBtn" type="button">기본 조직 템플릿 초기화</button>
+        </div>
+      </article>
+
+      <article class="card card12">
+        <h3>조직 레지스트리 목록</h3>
+        <div class="tableWrap">
+          <table>
+            <thead><tr><th>본부 ID</th><th>본부명</th><th>팀 목록</th><th>작업</th></tr></thead>
+            <tbody id="orgBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </div></main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
+  <script>
+    (() => {
+      const KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
+        get:(k,f)=>{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} },
+        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v))
+      };
+      const uid = (p='id') => (window.DataStore && DataStore.uid) ? DataStore.uid(p).toLowerCase() : `${p}-${Date.now()}`;
+
+      const template = () => ({
+        companyName: 'Apex Digital',
+        divisions: [
+          { id:'risk', name:'리스크·컴플라이언스본부', teams:[{id:'bcm',name:'재난안전(BCM)팀'},{id:'security',name:'정보보호팀'},{id:'audit',name:'감사·컴플라이언스팀'}]},
+          { id:'it', name:'IT서비스운영본부', teams:[{id:'sre',name:'SRE/플랫폼운영팀'},{id:'app',name:'애플리케이션운영팀'},{id:'db',name:'데이터/DB운영팀'},{id:'network',name:'네트워크운영팀'}]},
+          { id:'dc', name:'IDC운영본부', teams:[{id:'power',name:'전기팀'},{id:'hvac',name:'기계(냉각)팀'},{id:'fire',name:'방재·소방팀'},{id:'noc',name:'DC운영(NOC/관제)팀'}]},
+          { id:'customer', name:'고객서비스본부', teams:[{id:'cs',name:'고객지원팀'},{id:'quality',name:'서비스품질팀'}]},
+          { id:'management', name:'경영지원본부', teams:[{id:'hr',name:'인사총무팀'},{id:'finance',name:'재무회계팀'},{id:'procurement',name:'구매·자산관리팀'}]},
+        ]
+      });
+
+      let data = store.get(KEY, null);
+      if (!data || !Array.isArray(data.divisions)) { data = template(); store.set(KEY, data); }
+
+      const orgBody=document.getElementById('orgBody');
+      const teamDivisionSelect=document.getElementById('teamDivisionSelect');
+      const teamSearch=document.getElementById('teamSearch');
+
+      const save = ()=>store.set(KEY, data);
+
+      const renderDivisionSelect = () => {
+        teamDivisionSelect.innerHTML = '';
+        data.divisions.forEach((d)=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.name; teamDivisionSelect.appendChild(o); });
+      };
+
+      const render = () => {
+        const q=(teamSearch.value||'').trim().toLowerCase();
+        orgBody.innerHTML='';
+        data.divisions.forEach((d)=>{
+          const teams = (d.teams||[]).filter((t)=>!q || t.name.toLowerCase().includes(q));
+          const tr=document.createElement('tr');
+          tr.innerHTML=`<td>${d.id}</td><td>${d.name}</td><td>${teams.map((t)=>`<span class='chip'>${t.name} <button type='button' data-team-del='${d.id}::${t.id}'>×</button></span>`).join(' ') || '-'}</td><td class='actions'><button class='btn' data-div-edit='${d.id}' type='button'>본부수정</button><button class='btn' data-div-del='${d.id}' type='button'>본부삭제</button><button class='btn' data-team-edit='${d.id}' type='button'>팀수정</button></td>`;
+          orgBody.appendChild(tr);
+        });
+      };
+
+      document.getElementById('addDivisionBtn').addEventListener('click',()=>{
+        const name=document.getElementById('divisionName').value.trim();
+        const id=(document.getElementById('divisionId').value.trim() || uid('div')).toLowerCase();
+        if(!name) return;
+        const exists=data.divisions.some((d)=>d.id===id);
+        if(exists) return alert('이미 존재하는 본부 ID입니다.');
+        data.divisions.push({id,name,teams:[]}); save(); renderDivisionSelect(); render();
+        document.getElementById('divisionName').value=''; document.getElementById('divisionId').value='';
+      });
+
+      document.getElementById('addTeamBtn').addEventListener('click',()=>{
+        const divId=teamDivisionSelect.value;
+        const name=document.getElementById('teamName').value.trim();
+        const id=(document.getElementById('teamId').value.trim() || uid('team')).toLowerCase();
+        if(!divId || !name) return;
+        const div=data.divisions.find((d)=>d.id===divId); if(!div) return;
+        if((div.teams||[]).some((t)=>t.id===id)) return alert('이미 존재하는 팀 ID입니다.');
+        div.teams = div.teams || []; div.teams.push({id,name}); save(); render();
+        document.getElementById('teamName').value=''; document.getElementById('teamId').value='';
+      });
+
+      orgBody.addEventListener('click',(e)=>{
+        const divEdit=e.target.getAttribute('data-div-edit');
+        const divDel=e.target.getAttribute('data-div-del');
+        const teamEdit=e.target.getAttribute('data-team-edit');
+        const teamDel=e.target.getAttribute('data-team-del');
+
+        if(divEdit){
+          const d=data.divisions.find((x)=>x.id===divEdit); if(!d) return;
+          const next=prompt('본부명 수정', d.name); if(!next) return;
+          d.name=next.trim(); save(); renderDivisionSelect(); render(); return;
+        }
+        if(divDel){
+          data.divisions=data.divisions.filter((d)=>d.id!==divDel); save(); renderDivisionSelect(); render(); return;
+        }
+        if(teamEdit){
+          const d=data.divisions.find((x)=>x.id===teamEdit); if(!d) return;
+          const old=prompt('수정할 팀 ID 입력', d.teams?.[0]?.id || ''); if(!old) return;
+          const t=d.teams.find((x)=>x.id===old); if(!t) return alert('팀 ID를 찾을 수 없습니다.');
+          const nn=prompt('팀명 수정', t.name); if(!nn) return;
+          t.name=nn.trim(); save(); render(); return;
+        }
+        if(teamDel){
+          const [did,tid]=teamDel.split('::');
+          const d=data.divisions.find((x)=>x.id===did); if(!d) return;
+          d.teams=(d.teams||[]).filter((t)=>t.id!==tid); save(); render();
+        }
+      });
+
+      teamSearch.addEventListener('input', render);
+      document.getElementById('resetTemplateBtn').addEventListener('click',()=>{ data=template(); save(); renderDivisionSelect(); render(); });
+
+      renderDivisionSelect();
+      render();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>비상대응 조직도 | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .roleGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .roleCard{ border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--panel); }
+    .roleCard h4{ margin:0 0 8px; }
+    .teamList{ margin:0; padding-left:18px; color:var(--mutedStrong); }
+    @media(max-width:980px){ .roleGrid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+  <main class="main"><div class="wrap">
+    <h1 class="page-title">🚨 비상대응 조직도</h1>
+
+    <article class="card">
+      <h3>사고 대응 역할별 조직 매핑</h3>
+      <p class="hint">조직 레지스트리의 팀명과 자동 매칭됩니다. 매칭되지 않으면 "미매핑"으로 표시됩니다.</p>
+      <div id="roleGrid" class="roleGrid"></div>
+    </article>
+  </div></main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
+  <script>
+    (() => {
+      const KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const store = (window.DataStore && DataStore.get) ? DataStore : {
+        get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } }
+      };
+
+      const mapping = [
+        { role:'사고지휘 (Incident Commander)', teams:['재난안전(BCM)팀'] },
+        { role:'상황관리', teams:['DC운영(NOC/관제)팀'] },
+        { role:'기술복구', teams:['SRE/플랫폼운영팀','애플리케이션운영팀','데이터/DB운영팀'] },
+        { role:'시설지원', teams:['전기팀','기계(냉각)팀','방재·소방팀'] },
+        { role:'보안대응', teams:['정보보호팀'] },
+        { role:'대외커뮤니케이션', teams:['고객지원팀'] },
+        { role:'기록·증적', teams:['감사·컴플라이언스팀'] },
+      ];
+
+      const roleGrid = document.getElementById('roleGrid');
+
+      const render = () => {
+        const data = store.get(KEY, { divisions: [] });
+        const allTeams = (data.divisions || []).flatMap((d) => d.teams || []).map((t) => t.name);
+
+        roleGrid.innerHTML = mapping.map((m) => {
+          const matched = m.teams.filter((name) => allTeams.includes(name));
+          const rows = matched.length ? matched.map((x) => `<li>${x}</li>`).join('') : '<li>미매핑</li>';
+          return `<section class="roleCard"><h4>${m.role}</h4><ul class="teamList">${rows}</ul></section>`;
+        }).join('');
+      };
+
+      window.addEventListener('storage', (e) => { if (e.key === KEY) render(); });
+      setInterval(render, 3000);
+      render();
+    })();
+  </script>
+</body>
+</html>
