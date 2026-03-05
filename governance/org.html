@@ -6,7 +6,7 @@
   <title>평상시 조직도 | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    body{ display:block; }
+    body{ display:flex; }
     .main{ padding:20px; }
     .wrap{ max-width:100%; }
     .topBar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
@@ -32,6 +32,7 @@
   </style>
 </head>
 <body>
+  <aside id="sidebarMount"></aside>
   <main class="main"><div class="wrap">
     <h1 class="page-title">🏛️ 평상시 조직도</h1>
     <div class="topBar">
@@ -47,6 +48,7 @@
     </article>
   </div></main>
 
+  <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
   <script>
     (() => {
