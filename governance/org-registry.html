@@ -14,7 +14,12 @@
     th,td{ padding:10px 12px; font-size:14px; text-align:left; }
     .actions{ display:flex; gap:6px; flex-wrap:wrap; }
     .sub{ font-size:12px; color:var(--muted); }
-    @media(max-width:900px){ .formRow{ grid-template-columns:1fr; } }
+    .mappingGrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .roleBox{ border:1px solid var(--line); border-radius:12px; padding:10px; background:#fff; }
+    .roleBox h4{ margin:0 0 8px; font-size:14px; }
+    .checks{ display:flex; flex-wrap:wrap; gap:8px; }
+    .checks label{ display:flex; gap:6px; align-items:center; font-size:12px; border:1px solid var(--lineStrong); border-radius:999px; padding:4px 8px; }
+    @media(max-width:900px){ .formRow{ grid-template-columns:1fr; } .mappingGrid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -30,7 +35,7 @@
           <input id="divisionId" placeholder="본부 ID (예: risk)"/>
           <button class="btn" id="addDivisionBtn" type="button">본부 추가</button>
         </div>
-        <p class="sub">본부명, ID를 입력한 뒤 추가하세요. 수정/삭제는 아래 표에서 수행합니다.</p>
+        <p class="sub">본부명, ID를 입력한 뒤 추가하세요.</p>
       </article>
 
       <article class="card card12">
@@ -56,6 +61,16 @@
           </table>
         </div>
       </article>
+
+      <article class="card card12">
+        <h3>비상대응 역할 매핑</h3>
+        <p class="sub">각 역할에 연결할 팀을 선택하세요. 저장 키: <b>bcms_eop_role_mapping_v1</b></p>
+        <div id="mappingGrid" class="mappingGrid"></div>
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn" id="saveMappingBtn" type="button">매핑 저장</button>
+          <button class="btn" id="resetMappingBtn" type="button">기본 매핑 복원</button>
+        </div>
+      </article>
     </section>
   </div></main>
 
@@ -64,6 +79,7 @@
   <script>
     (() => {
       const KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const MAP_KEY = (window.DataStore && DataStore.KEY_EOP_ROLE_MAPPING) || 'bcms_eop_role_mapping_v1';
       const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
         get:(k,f)=>{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} },
         set:(k,v)=>localStorage.setItem(k, JSON.stringify(v))
@@ -81,18 +97,60 @@
         ]
       });
 
+      const roleDefs = [
+        { key:'incidentCommander', label:'본부장' },
+        { key:'situation', label:'상황관리' },
+        { key:'techRecovery', label:'기술복구' },
+        { key:'facility', label:'시설지원(IDC)' },
+        { key:'security', label:'보안대응' },
+        { key:'communication', label:'대외커뮤니케이션' },
+        { key:'record', label:'기록·증적' },
+        { key:'bcpWorkEnv', label:'BCP 업무환경팀' },
+        { key:'bcpPeople', label:'BCP 인력지원팀' },
+        { key:'bcpSupply', label:'BCP 물자·구매지원팀' },
+        { key:'bcpAdmin', label:'BCP 총무지원팀' },
+      ];
+
+      const defaultMapping = () => ({
+        incidentCommander: ['재난안전(BCM)팀'],
+        situation: ['DC운영(NOC/관제)팀'],
+        techRecovery: ['SRE/플랫폼운영팀','애플리케이션운영팀','데이터/DB운영팀','네트워크운영팀'],
+        facility: ['전기팀','기계(냉각)팀','방재·소방팀'],
+        security: ['정보보호팀'],
+        communication: ['고객지원팀','서비스품질팀'],
+        record: ['감사·컴플라이언스팀','재난안전(BCM)팀'],
+        bcpWorkEnv: ['인사총무팀','SRE/플랫폼운영팀'],
+        bcpPeople: ['인사총무팀'],
+        bcpSupply: ['구매·자산관리팀'],
+        bcpAdmin: ['인사총무팀'],
+      });
+
       let data = store.get(KEY, null);
       if (!data || !Array.isArray(data.divisions)) { data = template(); store.set(KEY, data); }
+      let roleMapping = store.get(MAP_KEY, null) || defaultMapping();
 
       const orgBody=document.getElementById('orgBody');
       const teamDivisionSelect=document.getElementById('teamDivisionSelect');
       const teamSearch=document.getElementById('teamSearch');
+      const mappingGrid=document.getElementById('mappingGrid');
 
+      const getAllTeamNames = () => data.divisions.flatMap((d) => d.teams || []).map((t) => t.name);
       const save = ()=>store.set(KEY, data);
 
       const renderDivisionSelect = () => {
         teamDivisionSelect.innerHTML = '';
         data.divisions.forEach((d)=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.name; teamDivisionSelect.appendChild(o); });
+      };
+
+      const renderMapping = () => {
+        const teams = getAllTeamNames();
+        mappingGrid.innerHTML = roleDefs.map((role) => {
+          const checks = teams.map((name) => {
+            const checked = (roleMapping[role.key] || []).includes(name) ? 'checked' : '';
+            return `<label><input type="checkbox" data-role="${role.key}" value="${name}" ${checked}/> ${name}</label>`;
+          }).join('');
+          return `<section class="roleBox"><h4>${role.label}</h4><div class="checks">${checks || '<span class="sub">팀 없음</span>'}</div></section>`;
+        }).join('');
       };
 
       const render = () => {
@@ -110,9 +168,8 @@
         const name=document.getElementById('divisionName').value.trim();
         const id=(document.getElementById('divisionId').value.trim() || uid('div')).toLowerCase();
         if(!name) return;
-        const exists=data.divisions.some((d)=>d.id===id);
-        if(exists) return alert('이미 존재하는 본부 ID입니다.');
-        data.divisions.push({id,name,teams:[]}); save(); renderDivisionSelect(); render();
+        if(data.divisions.some((d)=>d.id===id)) return alert('이미 존재하는 본부 ID입니다.');
+        data.divisions.push({id,name,teams:[]}); save(); renderDivisionSelect(); render(); renderMapping();
         document.getElementById('divisionName').value=''; document.getElementById('divisionId').value='';
       });
 
@@ -123,7 +180,7 @@
         if(!divId || !name) return;
         const div=data.divisions.find((d)=>d.id===divId); if(!div) return;
         if((div.teams||[]).some((t)=>t.id===id)) return alert('이미 존재하는 팀 ID입니다.');
-        div.teams = div.teams || []; div.teams.push({id,name}); save(); render();
+        div.teams = div.teams || []; div.teams.push({id,name}); save(); render(); renderMapping();
         document.getElementById('teamName').value=''; document.getElementById('teamId').value='';
       });
 
@@ -139,27 +196,46 @@
           d.name=next.trim(); save(); renderDivisionSelect(); render(); return;
         }
         if(divDel){
-          data.divisions=data.divisions.filter((d)=>d.id!==divDel); save(); renderDivisionSelect(); render(); return;
+          data.divisions=data.divisions.filter((d)=>d.id!==divDel); save(); renderDivisionSelect(); render(); renderMapping(); return;
         }
         if(teamEdit){
           const d=data.divisions.find((x)=>x.id===teamEdit); if(!d) return;
           const old=prompt('수정할 팀 ID 입력', d.teams?.[0]?.id || ''); if(!old) return;
           const t=d.teams.find((x)=>x.id===old); if(!t) return alert('팀 ID를 찾을 수 없습니다.');
           const nn=prompt('팀명 수정', t.name); if(!nn) return;
-          t.name=nn.trim(); save(); render(); return;
+          t.name=nn.trim(); save(); render(); renderMapping(); return;
         }
         if(teamDel){
           const [did,tid]=teamDel.split('::');
           const d=data.divisions.find((x)=>x.id===did); if(!d) return;
-          d.teams=(d.teams||[]).filter((t)=>t.id!==tid); save(); render();
+          d.teams=(d.teams||[]).filter((t)=>t.id!==tid); save(); render(); renderMapping();
         }
       });
 
       teamSearch.addEventListener('input', render);
-      document.getElementById('resetTemplateBtn').addEventListener('click',()=>{ data=template(); save(); renderDivisionSelect(); render(); });
+      document.getElementById('resetTemplateBtn').addEventListener('click',()=>{ data=template(); save(); roleMapping = defaultMapping(); store.set(MAP_KEY, roleMapping); renderDivisionSelect(); render(); renderMapping(); });
+
+      mappingGrid.addEventListener('change', (e) => {
+        if (!e.target.matches('input[type="checkbox"][data-role]')) return;
+        const role = e.target.getAttribute('data-role');
+        const selected = [...mappingGrid.querySelectorAll(`input[data-role="${role}"]:checked`)].map((el) => el.value);
+        roleMapping[role] = selected;
+      });
+
+      document.getElementById('saveMappingBtn').addEventListener('click', () => {
+        store.set(MAP_KEY, roleMapping);
+        alert('역할 매핑이 저장되었습니다.');
+      });
+
+      document.getElementById('resetMappingBtn').addEventListener('click', () => {
+        roleMapping = defaultMapping();
+        store.set(MAP_KEY, roleMapping);
+        renderMapping();
+      });
 
       renderDivisionSelect();
       render();
+      renderMapping();
     })();
   </script>
 </body>

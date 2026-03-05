@@ -11,6 +11,8 @@
   const KEY_DEMO_MODE = 'bcms_demo_mode';
   const KEY_RTO_THRESHOLD = 'bcms_rto_threshold_minutes';
   const KEY_ORG_REGISTRY = 'bcms_org_registry_v1';
+  const KEY_EOP_ROLE_MAPPING = 'bcms_eop_role_mapping_v1';
+  const KEY_BCP_MODE = 'bcms_bcp_mode';
 
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
@@ -64,6 +66,8 @@
     KEY_DEMO_MODE,
     KEY_RTO_THRESHOLD,
     KEY_ORG_REGISTRY,
+    KEY_EOP_ROLE_MAPPING,
+    KEY_BCP_MODE,
     get,
     set,
     update,
