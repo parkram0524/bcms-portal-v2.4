@@ -124,7 +124,7 @@
       border:0;
       outline:none;
       background: transparent;
-      color:#fff;
+      color:#0f172a;
       font-size: 13px;
     }
     .searchRow span{
@@ -232,7 +232,7 @@
       appearance:none;
       border:1px solid var(--cardBd);
       background: rgba(255,255,255,.96);
-      color:#fff;
+      color:#0f172a;
       padding: 8px 10px;
       border-radius: 12px;
       cursor:pointer;
@@ -258,7 +258,7 @@
     .note code{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
-      color: rgba(255,255,255,.78);
+      color: rgba(15,23,42,.62);
     }
     select.btn{ padding:7px 10px; }
   </style>
@@ -567,7 +567,7 @@
       const gaps = (c.maps.gaps || []);
       const gapsHtml = gaps.length
         ? `
-          <ul style="margin:8px 0 0 18px; color: rgba(255,255,255,.68); line-height:1.7;">
+          <ul style="margin:8px 0 0 18px; color: rgba(15,23,42,.62); line-height:1.7;">
             ${gaps.map(g=>`<li>${g}</li>`).join("")}
           </ul>
         `
@@ -579,7 +579,7 @@
           <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <span class="pill" style="padding:6px 10px;">
-                <span style="color:rgba(255,255,255,.6);font-size:12px;">Owner</span>
+                <span style="color:rgba(15,23,42,.58);font-size:12px;">Owner</span>
                 <select id="capaOwner" class="btn">
                   <option value="BCMS PMO">BCMS PMO</option>
                   <option value="Risk Mgmt">Risk Mgmt</option>
@@ -591,7 +591,7 @@
               </span>
 
               <span class="pill" style="padding:6px 10px;">
-                <span style="color:rgba(255,255,255,.6);font-size:12px;">Due</span>
+                <span style="color:rgba(15,23,42,.58);font-size:12px;">Due</span>
                 <select id="capaDueDays" class="btn">
                   <option value="7">7일</option>
                   <option value="14" selected>14일</option>
@@ -605,7 +605,7 @@
             <a class="btn" href="./index.html">Governance Dashboard</a>
           </div>
 
-          <small style="display:block;margin-top:8px;color: rgba(255,255,255,.55);line-height:1.5;">
+          <small style="display:block;margin-top:8px;color: rgba(15,23,42,.54);line-height:1.5;">
             * 생성된 CAPA는 localStorage("${CAPA_KEY}")에 저장되며, Governance Dashboard의 <b>CAPA Open</b>에 즉시 반영됩니다.
           </small>
         `;
@@ -624,12 +624,12 @@
 
         <div class="section">
           <div class="sectionTitle"><b>Portal 매핑</b><small>관련 페이지 / 운영 기능</small></div>
-          <div class="rows">${portal || `<div style="color:rgba(255,255,255,.6)">매핑 없음</div>`}</div>
+          <div class="rows">${portal || `<div style="color:rgba(15,23,42,.58)">매핑 없음</div>`}</div>
         </div>
 
         <div class="section">
           <div class="sectionTitle"><b>Evidence (증적) 연결</b><small>Audit / Operation</small></div>
-          <div class="rows">${evidence || `<div style="color:rgba(255,255,255,.6)">증적 링크 없음</div>`}</div>
+          <div class="rows">${evidence || `<div style="color:rgba(15,23,42,.58)">증적 링크 없음</div>`}</div>
         </div>
 
         <div class="section">
@@ -674,7 +674,7 @@
       renderList(filtered);
       if(filtered.length) selectClause(filtered[0].id);
       else{
-        elDetail.innerHTML = `<div style="color: rgba(255,255,255,.7); line-height:1.7;">검색 결과가 없습니다.</div>`;
+        elDetail.innerHTML = `<div style="color: rgba(15,23,42,.62); line-height:1.7;">검색 결과가 없습니다.</div>`;
       }
     }
 
