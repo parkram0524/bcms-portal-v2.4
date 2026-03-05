@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>Procedure Library (절차·문서) | BCMS Portal v2</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:16px;
+  }
+  @media (max-width: 1000px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+  .cardLink{
+    display:block;
+    text-decoration:none;
+    color:inherit;
+  }
+  .box{
+    background:#1e293b;
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;
+    padding:18px;
+    transition:.15s;
+    min-height:150px;
+  }
+  .box:hover{ filter:brightness(1.06); transform: translateY(-1px); }
+  .titleRow{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .emoji{ font-size:22px; }
+  .title{
+    font-size:20px;
+    font-weight:800;
+  }
+  .desc{
+    font-size:16px;
+    line-height:1.7;
+    color:#cbd5e1;
+  }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .chip{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    font-size:13px;
+    color:#cbd5e1;
+  }
+  .hint{
+    font-size:14px;
+    opacity:.8;
+    margin-top:10px;
+    line-height:1.6;
+  }
+</style>
+</head>
+
+<body>
+
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">📚 Procedure Library (절차·문서 라이브러리)</div>
+
+  <div class="card">
+    <h3>라이브러리 구성</h3>
+    <div class="desc" style="margin-top:10px;">
+      SOP/EOP/BCP/DRP 문서를 표준 구조로 관리하고, Risk & BIA 결과(핵심업무·RTO)를 기반으로
+      계획서(BCP/DRP) 작성과 실행(EOP/Runbook)까지 연결합니다.
+    </div>
+    <div class="hint">
+      💡 현재 데모는 <b>BCP</b>부터 BIA 연계가 적용되어 있습니다.
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <a class="cardLink" href="/library/sop.html">
+      <div class="box">
+        <div class="titleRow">
+          <div class="emoji">🧾</div>
+          <div class="title">SOP (평시 운영)</div>
+        </div>
+        <div class="desc">
+          부서별/업무별/시스템 운영 표준 절차와 체크리스트를 관리합니다.
+        </div>
+        <div class="chips">
+          <span class="chip">부서별</span>
+          <span class="chip">업무별</span>
+          <span class="chip">체크리스트</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="cardLink" href="/library/eop.html">
+      <div class="box">
+        <div class="titleRow">
+          <div class="emoji">🚨</div>
+          <div class="title">EOP (비상 대응)</div>
+        </div>
+        <div class="desc">
+          유형별(화재/정전/감염병/사이버) 초기대응 Action Card와 보고체계를 관리합니다.
+        </div>
+        <div class="chips">
+          <span class="chip">유형별</span>
+          <span class="chip">보고체계</span>
+          <span class="chip">Action Card</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="cardLink" href="/library/bcp.html">
+      <div class="box">
+        <div class="titleRow">
+          <div class="emoji">📄</div>
+          <div class="title">BCP (업무 연속)</div>
+        </div>
+        <div class="desc">
+          부서별 핵심업무·RTO를 기반으로 대체 인력/장소/수동절차를 정의합니다.
+          (BIA에서 자동 연계)
+        </div>
+        <div class="chips">
+          <span class="chip">부서별</span>
+          <span class="chip">핵심업무·RTO</span>
+          <span class="chip">대체자원</span>
+          <span class="chip">수동절차</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="cardLink" href="/library/drp.html">
+      <div class="box">
+        <div class="titleRow">
+          <div class="emoji">🛠️</div>
+          <div class="title">DRP (IT 복구)</div>
+        </div>
+        <div class="desc">
+          시스템 목록, RTO·RPO, 복구 절차, 백업 및 테스트 이력을 관리합니다.
+        </div>
+        <div class="chips">
+          <span class="chip">시스템 목록</span>
+          <span class="chip">RTO·RPO</span>
+          <span class="chip">Runbook</span>
+          <span class="chip">테스트 이력</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+</body>
+</html>

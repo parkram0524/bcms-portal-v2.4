@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BCMS Map | Governance</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+
+  <style>
+    .wrap{ max-width:1600px; margin:0 auto; }
+    .topRow{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .titleBox h1{ margin:0; font-size:26px; letter-spacing:.2px; }
+    .titleBox p{ margin:8px 0 0; color:#a8b3d4; font-size:15px; line-height:1.7; }
+    .topActions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+    .chipBtn{
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color:#e2e8f0;
+      font-weight:900;
+      font-size:15px;
+      cursor:pointer;
+      white-space:nowrap;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .chipBtn:hover{ filter:brightness(1.08); }
+    .chipBtn.primary{
+      background:#60a5fa;
+      color:#0b1220;
+      border-color: rgba(96,165,250,.6);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      font-size:13px;
+      color:#cbd5e1;
+      white-space:nowrap;
+      cursor:pointer;
+      user-select:none;
+    }
+    .pill:hover{ filter:brightness(1.08); }
+    .pill.warn{ border-color: rgba(234,179,8,.35); background: rgba(234,179,8,.10); color:#fde68a; }
+    .pill.good{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color:#bbf7d0; }
+    .pill.info{ border-color: rgba(59,130,246,.35); background: rgba(59,130,246,.10); color:#bfdbfe; }
+
+    .section{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .sectionHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .sectionHead h2{ margin:0; font-size:19px; }
+    .sectionHead .hint{ color:#a8b3d4; font-size:13px; }
+
+    .mapWrap{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+      border-radius: 16px;
+      padding: 12px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mapLegend{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .mapCanvas{
+      min-width: 1200px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    /* ===== BCMS Master bar ===== */
+    .masterBar{
+      border:1px solid rgba(96,165,250,.35);
+      background: rgba(96,165,250,.08);
+      border-radius: 16px;
+      padding: 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .masterBar .t{
+      font-weight:900;
+      font-size:16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .masterBar .d{
+      color:#a8b3d4;
+      font-size:14px;
+      line-height:1.6;
+      margin-top:6px;
+    }
+
+    /* ===== Nodes ===== */
+    .node{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      padding: 14px;
+      transition: transform .15s ease, filter .15s ease, box-shadow .15s ease, border-color .15s ease;
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-height:104px;
+      position:relative;
+      overflow:hidden;
+    }
+    .node:hover{
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+      box-shadow: 0 10px 26px rgba(0,0,0,.30);
+      border-color: rgba(96,165,250,.45);
+    }
+    .node .t{ font-weight:900; font-size:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .node .d{ color:#a8b3d4; font-size:14px; line-height:1.6; opacity:.95; }
+    .node .meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; }
+
+    .c-gov{ border-color: rgba(96,165,250,.25); }
+    .c-risk{ border-color: rgba(234,179,8,.25); }
+    .c-plan{ border-color: rgba(99,102,241,.25); }
+    .c-op{ border-color: rgba(249,115,22,.25); }
+    .c-proc{ border-color: rgba(34,197,94,.22); }
+    .c-tr{ border-color: rgba(14,165,233,.22); }
+    .c-audit{ border-color: rgba(148,163,184,.22); }
+    .c-admin{ border-color: rgba(226,232,240,.18); }
+
+    /* ===== ✅ Structure row with arrows ===== */
+    .row6Arrows{
+      display:grid;
+      grid-template-columns:
+        minmax(0,1fr) 34px
+        minmax(0,1fr) 34px
+        minmax(0,1fr) 34px
+        minmax(0,1fr) 34px
+        minmax(0,1fr) 34px
+        minmax(0,1fr);
+      gap:10px;
+      align-items:stretch;
+    }
+
+    .flowArrow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      opacity:.9;
+      position:relative;
+      user-select:none;
+    }
+    /* 감각적인 화살표: 그라데이션 라인 + 이동하는 하이라이트 */
+    .flowArrow::before{
+      content:"";
+      position:absolute;
+      left:2px; right:2px;
+      height:2px;
+      background: linear-gradient(90deg,
+        rgba(96,165,250,.0),
+        rgba(96,165,250,.55),
+        rgba(34,197,94,.45),
+        rgba(96,165,250,.0)
+      );
+      border-radius:999px;
+      top:50%;
+      transform: translateY(-50%);
+    }
+    .flowArrow::after{
+      content:"➜";
+      font-weight:900;
+      color:#a8b3d4;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      padding:6px 8px;
+      border-radius:999px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+      transform: translateY(-1px);
+    }
+    .flowArrow .glow{
+      position:absolute;
+      left:0;
+      width:28px;
+      height:2px;
+      border-radius:999px;
+      top:50%;
+      transform: translateY(-50%);
+      background: rgba(96,165,250,.55);
+      filter: blur(0.2px);
+      animation: sweep 2.2s linear infinite;
+      opacity:.7;
+    }
+    @keyframes sweep{
+      0%{ left:2px; opacity:.0; }
+      15%{ opacity:.75; }
+      50%{ opacity:.6; }
+      85%{ opacity:.75; }
+      100%{ left: calc(100% - 30px); opacity:0; }
+    }
+
+    /* ===== Flow (세로 순서) ===== */
+    .flowStack{ display:flex; flex-direction:column; gap:10px; }
+    .stepCard{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .stepTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .stepTop .left{ display:flex; flex-direction:column; gap:6px; min-width: 260px; }
+    .stepNum{ font-weight:900; font-size:15px; }
+    .stepDesc{ color:#a8b3d4; font-size:14px; line-height:1.6; }
+    .stepRight{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .stepTools{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    /* ===== Decision Gate ===== */
+    .gate{
+      border:1px solid rgba(234,179,8,.30);
+      background: rgba(234,179,8,.08);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .gateTitle{
+      font-weight:900;
+      font-size:16px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .gateDesc{ margin-top:6px; color:#a8b3d4; font-size:14px; line-height:1.6; }
+
+    /* ===== ✅ YES/NO 대비 강화 ===== */
+    .branchWrap{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    /* YES: 따뜻한(Amber) 톤 */
+    .branch.yes{
+      border:1px solid rgba(234,179,8,.30);
+      background: radial-gradient(1200px 500px at 20% 0%,
+        rgba(234,179,8,.10),
+        rgba(0,0,0,.12)
+      );
+      border-radius: 16px;
+      padding: 12px;
+    }
+    /* NO: 차가운(Blue) 톤 */
+    .branch.no{
+      border:1px solid rgba(96,165,250,.28);
+      background: radial-gradient(1200px 500px at 20% 0%,
+        rgba(96,165,250,.10),
+        rgba(0,0,0,.12)
+      );
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .branchHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .branchHead .q{ font-weight:900; font-size:15px; }
+
+    .branchGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+
+    .miniTip{ color:#a8b3d4; font-size:13px; line-height:1.6; margin-top:8px; }
+
+    @media (max-width: 1100px){
+      .row6Arrows{
+        grid-template-columns: 1fr;
+      }
+      .flowArrow{ display:none; }
+      .branchWrap{ grid-template-columns: 1fr; }
+      .branchGrid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="wrap">
+
+    <div class="topRow">
+      <div class="titleBox">
+        <h1>🗺 BCMS 체계 맵 (Structure & Flow) — v2</h1>
+        <p>
+          <b>BCMS가 재난/중단 대응을 어떻게 포괄하는지</b>를 한눈에 보여줍니다. <br/>
+          상단 Structure는 “좌→우 흐름(화살표)”으로 연결되며, 하단 Flow는 “재난 발생 시 문서/절차 적용”을 보여줍니다.
+        </p>
+      </div>
+      <div class="topActions">
+        <a class="chipBtn" href="./index.html">← Governance Dashboard</a>
+        <a class="chipBtn primary" href="../library/index.html">📚 Procedure Library</a>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="sectionHead">
+        <h2>Interactive Map</h2>
+        <div class="hint">상단: BCMS 포괄 구조 / 하단: 재난 발생 시 운영 흐름</div>
+      </div>
+
+      <div class="mapWrap">
+        <div class="mapLegend">
+          <span class="pill info" onclick="go('../governance/index.html')">클릭 이동</span>
+          <span class="pill">Structure</span>
+          <span class="pill">Flow</span>
+          <span class="pill warn">YES/NO 분기</span>
+          <span class="pill good">Evidence(증적)</span>
+        </div>
+
+        <div class="mapCanvas">
+
+          <div class="masterBar">
+            <div>
+              <div class="t">🧠 BCMS — “정책 + 기준 + 실행 + 증적” 통합 체계</div>
+              <div class="d">
+                Governance에서 기준을 정의하고(R&R/SEV/Scope), Risk & BIA로 목표(RTO/RPO)를 만든 뒤,
+                사건 발생 시 SOP/EOP/DRP/BCP를 실행하고, Training/Audit/Evidence로 개선(CAPA)까지 연결합니다.
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <span class="pill info" onclick="go('./policy.html')">Policy</span>
+              <span class="pill info" onclick="go('../risk-bia/bia.html')">BIA (RTO/RPO)</span>
+              <span class="pill info" onclick="go('../library/index.html')">Procedures</span>
+              <span class="pill good" onclick="go('../audit/index.html?days=90')">Evidence</span>
+            </div>
+          </div>
+
+          <!-- ✅ Structure: arrows between boxes -->
+          <div class="row6Arrows">
+            <div class="node c-gov" onclick="go('../governance/index.html')">
+              <div class="t">🧭 Governance</div>
+              <div class="d">정책/범위/조직(R&R)/SEV 기준</div>
+              <div class="meta">
+                <span class="pill info" onclick="event.stopPropagation(); go('./policy.html')">Policy</span>
+                <span class="pill info" onclick="event.stopPropagation(); go('./org.html')">R&R</span>
+              </div>
+            </div>
+
+            <div class="flowArrow"><span class="glow"></span></div>
+
+            <div class="node c-risk" onclick="go('../risk-bia/index.html')">
+              <div class="t">🧩 Risk & BIA</div>
+              <div class="d">RTO/RPO/중요도/우선순위</div>
+              <div class="meta">
+                <span class="pill info" onclick="event.stopPropagation(); go('../risk-bia/bia.html')">BIA</span>
+              </div>
+            </div>
+
+            <div class="flowArrow"><span class="glow"></span></div>
+
+            <div class="node c-plan" onclick="go('../strategy-plans/index.html')">
+              <div class="t">🧱 Strategy & Plans</div>
+              <div class="d">BCP 전략/전환 기준/계획</div>
+              <div class="meta">
+                <span class="pill" onclick="event.stopPropagation(); go('../library/bcp.html')">BCP</span>
+              </div>
+            </div>
+
+            <div class="flowArrow"><span class="glow"></span></div>
+
+            <div class="node c-op" onclick="go('../op-center/index.html')">
+              <div class="t">🚨 Operation Center</div>
+              <div class="d">DR/EOP 실행 로그·통계·Export</div>
+              <div class="meta">
+                <span class="pill good" onclick="event.stopPropagation(); go('../op-center/index.html')">Logs</span>
+              </div>
+            </div>
+
+            <div class="flowArrow"><span class="glow"></span></div>
+
+            <div class="node c-proc" onclick="go('../library/index.html')">
+              <div class="t">📚 Procedure Library</div>
+              <div class="d">SOP / EOP / DRP / BCP 실행</div>
+              <div class="meta">
+                <span class="pill" onclick="event.stopPropagation(); go('../library/sop.html')">SOP</span>
+                <span class="pill" onclick="event.stopPropagation(); go('../library/eop.html')">EOP</span>
+                <span class="pill" onclick="event.stopPropagation(); go('../library/drp.html')">DRP</span>
+              </div>
+            </div>
+
+            <div class="flowArrow"><span class="glow"></span></div>
+
+            <div class="node c-tr" onclick="go('../training/index.html')">
+              <div class="t">🎯 Training & Audit Loop</div>
+              <div class="d">훈련(Attach) → CAPA → Audit(Evidence)</div>
+              <div class="meta">
+                <span class="pill good" onclick="event.stopPropagation(); go('../training/index.html')">CAPA</span>
+                <span class="pill good" onclick="event.stopPropagation(); go('../audit/index.html?days=90')">Evidence</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flow -->
+          <div class="flowStack">
+
+            <div class="stepCard">
+              <div class="stepTop">
+                <div class="left">
+                  <div class="stepNum">1) 준비/기준 확립 (Governance)</div>
+                  <div class="stepDesc">정책/범위/조직(R&R)/승인·보고/SEV 기준을 정의합니다.</div>
+                </div>
+                <div class="stepRight">
+                  <span class="pill info" onclick="go('./policy.html')">Policy & Scope</span>
+                  <span class="pill info" onclick="go('./org.html')">Organization & R&R</span>
+                  <span class="pill info" onclick="go('./docs.html')">Document Framework</span>
+                </div>
+              </div>
+              <div class="stepTools">
+                <span class="pill" onclick="go('./requirements.html')">Requirements Mapping</span>
+                <span class="pill" onclick="go('./system-registry.html')">System Registry(표준명)</span>
+              </div>
+            </div>
+
+            <div class="stepCard">
+              <div class="stepTop">
+                <div class="left">
+                  <div class="stepNum">2) 목표 설정 (Risk & BIA)</div>
+                  <div class="stepDesc">업무/시스템별 RTO/RPO와 우선순위를 정의해 “의사결정 기준”을 만듭니다.</div>
+                </div>
+                <div class="stepRight">
+                  <span class="pill info" onclick="go('../risk-bia/bia.html')">BIA</span>
+                  <span class="pill" onclick="go('../risk-bia/priority.html')">Priority</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stepCard">
+              <div class="stepTop">
+                <div class="left">
+                  <div class="stepNum">3) 사건 발생 (Incident/장애/재난)</div>
+                  <div class="stepDesc">감지/보고/상황정리 후 SEV를 확정하고, 목표(RTO) 초과 위험 여부를 판단합니다.</div>
+                </div>
+                <div class="stepRight">
+                  <span class="pill warn" onclick="go('../op-center/index.html')">SEV</span>
+                  <span class="pill good" onclick="go('../op-center/index.html')">Log 기록</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="gate">
+              <div class="gateTitle">4) 의사결정 게이트: <span class="pill warn" style="cursor:default;">RTO 초과 위험 / 서비스 영향?</span></div>
+              <div class="gateDesc">
+                YES면 복구/연속성(DRP/BCP/EOP)을 실행하고, NO면 SOP로 수습합니다.
+                모든 실행은 로그로 남고(운영센터), 훈련/감사에서 증적(Evidence)로 활용됩니다.
+              </div>
+
+              <div class="branchWrap">
+
+                <!-- ✅ YES -->
+                <div class="branch yes">
+                  <div class="branchHead">
+                    <div class="q">YES → 복구/연속성 실행</div>
+                    <span class="pill warn" style="cursor:default;">Escalate</span>
+                  </div>
+                  <div class="branchGrid">
+                    <div class="node c-proc" onclick="go('../library/drp.html')">
+                      <div class="t">🛠 DRP</div>
+                      <div class="d">IT 복구 Runbook 실행</div>
+                      <div class="meta"><span class="pill good" onclick="event.stopPropagation(); go('../op-center/index.html')">Log</span></div>
+                    </div>
+                    <div class="node c-proc" onclick="go('../library/bcp.html')">
+                      <div class="t">🧱 BCP</div>
+                      <div class="d">업무 연속/대체 운영</div>
+                      <div class="meta"><span class="pill" style="cursor:default;">Continuity</span></div>
+                    </div>
+                    <div class="node c-proc" onclick="go('../library/eop.html')">
+                      <div class="t">🚨 EOP</div>
+                      <div class="d">전력/설비 초기대응 (Registry 기반)</div>
+                      <div class="meta"><span class="pill good" onclick="event.stopPropagation(); go('../op-center/index.html')">Log</span></div>
+                    </div>
+                    <div class="node c-op" onclick="go('../op-center/index.html')">
+                      <div class="t">📊 운영센터</div>
+                      <div class="d">로그/통계/Export</div>
+                      <div class="meta"><span class="pill good" style="cursor:default;">Evidence</span></div>
+                    </div>
+                  </div>
+                  <div class="miniTip">* v2 핵심: DR/EOP 실행 로그가 Evidence Layer로 자동 연결됩니다.</div>
+                </div>
+
+                <!-- ✅ NO -->
+                <div class="branch no">
+                  <div class="branchHead">
+                    <div class="q">NO → SOP로 수습</div>
+                    <span class="pill info" style="cursor:default;">Operate</span>
+                  </div>
+                  <div class="branchGrid">
+                    <div class="node c-proc" onclick="go('../library/sop.html')">
+                      <div class="t">📘 SOP</div>
+                      <div class="d">표준 운영/점검/조치</div>
+                      <div class="meta"><span class="pill good" onclick="event.stopPropagation(); go('../op-center/index.html')">Record</span></div>
+                    </div>
+                    <div class="node c-op" onclick="go('../op-center/index.html')">
+                      <div class="t">📈 기록</div>
+                      <div class="d">상태 기록/모니터링</div>
+                      <div class="meta"><span class="pill good" style="cursor:default;">Evidence</span></div>
+                    </div>
+                    <div class="node c-plan" onclick="go('../strategy-plans/index.html')">
+                      <div class="t">🧱 계획 보정</div>
+                      <div class="d">전략/절차 업데이트</div>
+                      <div class="meta"><span class="pill" style="cursor:default;">Update</span></div>
+                    </div>
+                    <div class="node c-tr" onclick="go('../training/index.html')">
+                      <div class="t">🎯 훈련 반영</div>
+                      <div class="d">재현/검증 + CAPA</div>
+                      <div class="meta"><span class="pill good" style="cursor:default;">Attach</span></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="stepCard">
+              <div class="stepTop">
+                <div class="left">
+                  <div class="stepNum">5) 훈련/감사/개선 루프 (Improvement)</div>
+                  <div class="stepDesc">훈련에서 실행 이력을 Attach하고, CAPA를 등록/추적한 뒤 Audit에서 증적화합니다.</div>
+                </div>
+                <div class="stepRight">
+                  <span class="pill good" onclick="go('../training/index.html')">Training (Attach)</span>
+                  <span class="pill good" onclick="go('../audit/index.html?days=90')">Audit (Evidence)</span>
+                  <span class="pill" onclick="go('./docs.html')">문서 개정</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="miniTip">
+            ✅ 상단 Structure는 “흐름 화살표”로 하나의 체계처럼 보이게 했고,<br/>
+            ✅ Decision Gate 아래 YES/NO는 서로 다른 톤(Amber vs Blue)로 대비를 줬습니다.
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+<script>
+  function go(href){ if(!href) return; location.href = href; }
+</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>정책·목표·범위 | 거버넌스</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+<style>
+.main{ padding:28px; }
+.wrap{ max-width:1200px; margin:0 auto; }
+
+/* ===== 제목 ===== */
+.header{
+  margin-bottom:24px;
+}
+.header h1{
+  margin:0;
+  font-size:30px;
+  font-weight:900;
+}
+.header p{
+  margin:8px 0 0;
+  color:#94a3b8;
+}
+
+/* ===== 공통 섹션 ===== */
+.section{
+  border-radius:18px;
+  padding:24px;
+  margin-bottom:22px;
+}
+
+/* 섹션별 배경톤 다르게 */
+.s1{ background:rgba(59,130,246,.08); }
+.s2{ background:rgba(34,197,94,.08); }
+.s3{ background:rgba(234,179,8,.08); }
+.s4{ background:rgba(236,72,153,.08); }
+
+.section h2{
+  margin:0 0 16px;
+  font-size:20px;
+  font-weight:900;
+}
+
+/* ===== 선언 카드 ===== */
+.cardGrid{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:16px;
+}
+@media(max-width:1000px){
+  .cardGrid{ grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:600px){
+  .cardGrid{ grid-template-columns:1fr; }
+}
+
+.card{
+  background:#0f172a;
+  border-radius:16px;
+  padding:18px;
+  min-height:120px;
+}
+
+.card h3{
+  margin:0 0 8px;
+  font-size:16px;
+  font-weight:900;
+}
+
+.card p{
+  margin:0;
+  color:#94a3b8;
+  font-size:14px;
+  line-height:1.6;
+}
+
+/* ===== 흐름 다이어그램 ===== */
+.flow{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+}
+
+.node{
+  background:#0f172a;
+  padding:16px 20px;
+  border-radius:14px;
+  font-weight:900;
+  font-size:14px;
+  min-width:140px;
+  text-align:center;
+}
+
+.arrow{
+  font-size:20px;
+  font-weight:900;
+  color:#64748b;
+}
+
+/* ===== KPI ===== */
+.kpiGrid{
+  display:grid;
+  grid-template-columns: repeat(3,1fr);
+  gap:16px;
+}
+@media(max-width:900px){
+  .kpiGrid{ grid-template-columns:1fr; }
+}
+
+.kpi{
+  background:#0f172a;
+  padding:22px;
+  border-radius:18px;
+  text-align:center;
+}
+.kpi h3{
+  margin:0 0 10px;
+  font-size:16px;
+}
+.kpi .big{
+  font-size:34px;
+  font-weight:900;
+}
+.kpi p{
+  color:#94a3b8;
+  margin-top:8px;
+  font-size:14px;
+}
+
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+<div class="wrap">
+
+<div class="header">
+<h1>📘 정책·목표·범위</h1>
+<p>BIA → Risk 평가 순서를 기준으로 설계된 BCMS 구조</p>
+</div>
+
+<!-- 1 경영진 선언 -->
+<section class="section s1">
+<h2>1) 경영진 선언</h2>
+
+<div class="cardGrid">
+  <div class="card">
+    <h3>🎯 복구 목표</h3>
+    <p>RTO/RPO 내 복구 + 투명 커뮤니케이션</p>
+  </div>
+  <div class="card">
+    <h3>🧩 표준 실행</h3>
+    <p>BCP·DRP·EOP·SOP 기반 일관 대응</p>
+  </div>
+  <div class="card">
+    <h3>🧾 증적 기반</h3>
+    <p>Execution Logs + Audit Evidence 자동화</p>
+  </div>
+  <div class="card">
+    <h3>🔁 지속 개선</h3>
+    <p>훈련 → 검증 → CAPA → 개정</p>
+  </div>
+</div>
+</section>
+
+<!-- 2 흐름 -->
+<section class="section s2">
+<h2>2) “살아있는 BCMS” 흐름</h2>
+
+<div class="flow">
+  <div class="node">BIA<br><span style="color:#94a3b8;font-weight:400;">핵심업무·RTO 확정</span></div>
+  <div class="arrow">→</div>
+  <div class="node">Risk 평가<br><span style="color:#94a3b8;font-weight:400;">위험·완화 산정</span></div>
+  <div class="arrow">→</div>
+  <div class="node">우선순위</div>
+  <div class="arrow">→</div>
+  <div class="node">전략·계획</div>
+  <div class="arrow">→</div>
+  <div class="node">훈련·점검</div>
+  <div class="arrow">→</div>
+  <div class="node">감사·평가</div>
+</div>
+
+</section>
+
+<!-- 3 범위 -->
+<section class="section s3">
+<h2>3) 적용 범위</h2>
+
+<div class="cardGrid">
+  <div class="card">
+    <h3>✅ 포함</h3>
+    <p>IT 서비스 · IDC · 전력/설비 · DR/BCP/SOP</p>
+  </div>
+  <div class="card">
+    <h3>⛔ 제외</h3>
+    <p>비핵심 도구 · PoC · 개인 환경</p>
+  </div>
+  <div class="card">
+    <h3>🚨 이벤트 유형</h3>
+    <p>서비스 중단 · 데이터 손실 · 설비 · 보안 사고</p>
+  </div>
+</div>
+</section>
+
+<!-- 4 KPI -->
+<section class="section s4">
+<h2>4) KPI</h2>
+
+<div class="kpiGrid">
+  <div class="kpi">
+    <h3>RTO 준수율</h3>
+    <div class="big">90%</div>
+    <p>목표 예시</p>
+  </div>
+  <div class="kpi">
+    <h3>증적 완결성</h3>
+    <div class="big">80%</div>
+    <p>로그 누락 0 목표</p>
+  </div>
+  <div class="kpi">
+    <h3>CAPA 리드타임</h3>
+    <div class="big">30일</div>
+    <p>Open → Close 평균</p>
+  </div>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Risk & BIA Dashboard | BCMS</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+<style>
+  .main { font-size: 17px; }
+  .card { font-size: 17px; }
+  .page-title { font-size: 26px; font-weight: 800; }
+  .card h3 { font-size: 20px; font-weight: 700; }
+  .muted { color:#a8b3d4; font-size:16px; line-height:1.7; margin:6px 0 0 0; }
+
+  .dashGrid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:10px; }
+  @media (max-width: 1100px){ .dashGrid{ grid-template-columns: repeat(2, 1fr);} }
+  @media (max-width: 640px){ .dashGrid{ grid-template-columns: 1fr;} }
+
+  .kpiBox{ border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.02); border-radius: 12px; padding: 12px; }
+  .kpiLabel{ font-size: 16px; color:#a8b3d4; margin:0 0 6px 0; }
+  .kpiValue{ font-size: 40px; font-weight: 900; margin:0; color:#e8eeff; }
+  .kpiHint{ font-size: 16px; color:#a8b3d4; margin:6px 0 0 0; line-height:1.7; }
+
+  .rowControls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .rowControls select, .rowControls input{
+    height:40px; padding:0 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; outline:none;
+    min-width: 220px; font-size:16px;
+  }
+  .rowControls input{ min-width: 280px; }
+
+  .pillRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    font-size:14px; color:#a8b3d4;
+  }
+  .pill b{ color:#e8eeff; }
+
+  .grid2{ display:grid; grid-template-columns: 1.2fr .8fr; gap:12px; margin-top:12px; }
+  @media (max-width: 1100px){ .grid2{ grid-template-columns: 1fr; } }
+
+  table.mini{ width:100%; border-collapse: collapse; font-size:16px; overflow:hidden; border-radius:12px; }
+  table.mini th, table.mini td{ padding:10px; border-bottom:1px solid rgba(255,255,255,.10); vertical-align: top; }
+  table.mini th{ text-align:left; font-size:16px; color:#a8b3d4; font-weight:800; }
+  table.mini tr:hover td{ background: rgba(255,255,255,.02); }
+
+  .barWrap{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+  .barRow{ display:grid; grid-template-columns: 140px 1fr 70px; gap:10px; align-items:center; }
+  .barLabel{ font-size:16px; color:#a8b3d4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar{ height:12px; border-radius:999px; border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03); overflow:hidden; }
+  .bar > i{ display:block; height:100%; width:0%; background: rgba(120,180,255,.65); }
+  .barVal{ text-align:right; font-size:16px; color:#e8eeff; }
+
+  .linkRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .linkBtn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#60a5fa; text-decoration:none;
+    font-size:16px;
+  }
+  .linkBtn:hover{ background: rgba(255,255,255,.05); }
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">📊 Risk & BIA Dashboard (요약 KPI)</div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">핵심 KPI</h3>
+    <p class="muted">
+      데이터는 1) <b>sessionStorage.bcp_core_processes</b> 우선, 없으면 2) <b>risk-bia-data.js</b>의 BIA 데이터(세션)를 읽습니다.
+      (Tier III 단일사고 MBCO: <b>1.6h (96분)</b>)
+    </p>
+
+    <div class="rowControls">
+      <select id="deptFilter"><option value="">전체 부서</option></select>
+      <input id="searchInput" type="text" placeholder="업무/부서 검색 (예: 결제, 정보보안, IDC)"/>
+    </div>
+
+    <div class="pillRow" id="badgeRow"></div>
+
+    <div class="dashGrid">
+      <div class="kpiBox">
+        <p class="kpiLabel">CoreFinal</p>
+        <p class="kpiValue" id="kpiCoreFinal">0</p>
+        <p class="kpiHint">최종 Core (CoreAuto + CoreManual)</p>
+      </div>
+      <div class="kpiBox">
+        <p class="kpiLabel">CoreAuto</p>
+        <p class="kpiValue" id="kpiCoreAuto">0</p>
+        <p class="kpiHint">Impact ≥ 60 &amp; MTPD ≤ 96분(=1.6h)</p>
+      </div>
+      <div class="kpiBox">
+        <p class="kpiLabel">분석 완료</p>
+        <p class="kpiValue" id="kpiDone">0</p>
+        <p class="kpiHint">MTPD 자동도출 + RTO 확정</p>
+      </div>
+      <div class="kpiBox">
+        <p class="kpiLabel">MTPD ≤ 96분</p>
+        <p class="kpiValue" id="kpiMtpd96">0</p>
+        <p class="kpiHint">단일사고 허용한계: 1.6h (96분) 이내</p>
+      </div>
+    </div>
+
+    <div class="linkRow">
+      <a class="linkBtn" href="./bia.html">→ BIA 수행/수정</a>
+      <a class="linkBtn" href="./dependency.html">→ 자원/의존성(Dependency)</a>
+      <a class="linkBtn" href="./priority.html">→ 중요도/우선순위</a>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0;">🔥 Impact 상위 업무 Top 10</h3>
+      <p class="muted">필터/검색 조건이 적용된 데이터 기준으로 Impact 내림차순 정렬합니다.</p>
+      <div style="overflow:auto; margin-top:10px;">
+        <table class="mini">
+          <thead>
+            <tr>
+              <th style="width:44px;">#</th>
+              <th>부서</th>
+              <th>업무</th>
+              <th style="width:90px;">Impact</th>
+              <th style="width:100px;">MTPD</th>
+              <th style="width:100px;">RTO</th>
+              <th style="width:90px;">Core</th>
+            </tr>
+          </thead>
+          <tbody id="topImpactBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">⏱ MTPD 분포(분)</h3>
+      <p class="muted">96분(=1.6h) 이내 구간을 중심으로 분포를 보여줍니다.</p>
+      <div class="barWrap" id="mtpdBars"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">🏢 부서별 CoreFinal 현황</h3>
+    <p class="muted">필터/검색 조건이 적용된 데이터 기준으로 CoreFinal 수를 집계합니다.</p>
+    <div class="barWrap" id="deptCoreBars"></div>
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+<script src="./risk-bia-data.js"></script>
+
+<script>
+  const MBCO_MIN = 96;
+  const MBCO_HOURS = 1.6;
+  const TOP_N = 10;
+
+  const $ = (s)=>document.querySelector(s);
+  const esc = (s)=>String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+  const toNum = (v)=>{ if(v===null||v===undefined||v==="") return null; const x=Number(v); return Number.isFinite(x)?x:null; };
+  function minText(min){ const m=toNum(min); if(m===null) return "-"; if(m===0) return "즉시"; return `${m}분`; }
+  function loadJSON(key, fallback){ try{ const raw=sessionStorage.getItem(key); if(!raw) return fallback; return JSON.parse(raw);}catch(e){return fallback;} }
+  function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+  function normalizeItem(x){
+    const dept = x.dept || x.department || x.org || "";
+    const work = x.work || x.process || x.processName || x.name || "";
+    const impact = toNum(x.impact ?? x.impactScore ?? x.impact_score);
+    const mtpd = toNum(x.mtpd ?? x.mtpdMin ?? x.mtpd_minutes);
+    const rto  = toNum(x.rto  ?? x.rtoMin  ?? x.rto_minutes);
+    const mtpdText = x.mtpdText || minText(mtpd);
+    const rtoText  = x.rtoText  || minText(rto);
+    const coreAuto   = !!(x.coreAuto ?? x.core_auto);
+    const coreManual = !!(x.coreManual ?? x.core_manual);
+    const coreFinal  = !!(x.coreFinal ?? x.core_final ?? (coreAuto || coreManual));
+    const resources = x.resources ?? x.resourceSummary ?? x.resource_summary ?? "";
+    const done = (mtpd !== null) && (rto !== null);
+    return { dept, work, impact, mtpd, rto, mtpdText, rtoText, coreAuto, coreManual, coreFinal, resources, done };
+  }
+
+  function getAllItems(){
+    const bcp = loadJSON("bcp_core_processes", null);
+    if (Array.isArray(bcp) && bcp.length) return bcp.map(normalizeItem);
+
+    if (window.RiskBiaData){
+      try{
+        if (typeof window.RiskBiaData.getAll === "function"){
+          const arr = window.RiskBiaData.getAll();
+          if (Array.isArray(arr)) return arr.map(normalizeItem);
+        }
+      }catch(e){}
+    }
+    const guessKeys = ["bia_processes","risk_bia_processes","riskBiaProcesses","biaRecords"];
+    for (const k of guessKeys){
+      const v = loadJSON(k, null);
+      if (Array.isArray(v) && v.length) return v.map(normalizeItem);
+    }
+    return [];
+  }
+
+  const KEY_DEPT = "riskBiaDash_dept";
+  const KEY_Q = "riskBiaDash_q";
+
+  function persist(){
+    sessionStorage.setItem(KEY_DEPT, $("#deptFilter").value || "");
+    sessionStorage.setItem(KEY_Q, $("#searchInput").value || "");
+  }
+  function restore(){ $("#searchInput").value = sessionStorage.getItem(KEY_Q) || ""; }
+
+  function buildDeptFilter(all){
+    const sel = $("#deptFilter");
+    const prev = sessionStorage.getItem(KEY_DEPT) || "";
+    const depts = uniq(all.map(x=>x.dept)).sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = `<option value="">전체 부서</option>` + depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+    sel.value = depts.includes(prev) ? prev : "";
+  }
+
+  function applyFilters(items){
+    const dept = $("#deptFilter").value;
+    const q = $("#searchInput").value.trim().toLowerCase();
+    return items.filter(x=>{
+      if (dept && x.dept !== dept) return false;
+      if (q){
+        const hay = `${x.dept} ${x.work}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderBadges(scoped, all){
+    const total = scoped.length;
+    const coreFinal = scoped.filter(x=>x.coreFinal).length;
+    const coreAuto = scoped.filter(x=>x.coreAuto).length;
+    const done = scoped.filter(x=>x.done).length;
+    const allTotal = all.length;
+    const allCoreFinal = all.filter(x=>x.coreFinal).length;
+
+    $("#badgeRow").innerHTML = `
+      <span class="pill">필터 결과 <b>${coreFinal}</b> / <b>${total}</b> CoreFinal/Total</span>
+      <span class="pill">CoreAuto <b>${coreAuto}</b></span>
+      <span class="pill">분석 완료 <b>${done}</b></span>
+      <span class="pill">전체 <b>${allCoreFinal}</b> / <b>${allTotal}</b></span>
+      <span class="pill">MBCO <b>${MBCO_HOURS}h (${MBCO_MIN}분)</b></span>
+    `;
+  }
+
+  function renderKPIs(items){
+    $("#kpiCoreFinal").textContent = items.filter(x=>x.coreFinal).length;
+    $("#kpiCoreAuto").textContent  = items.filter(x=>x.coreAuto).length;
+    $("#kpiDone").textContent      = items.filter(x=>x.done).length;
+    $("#kpiMtpd96").textContent    = items.filter(x=>x.mtpd!==null && x.mtpd<=MBCO_MIN).length;
+  }
+
+  function renderTopImpact(items){
+    const top = items.slice().sort((a,b)=> (toNum(b.impact) ?? -Infinity) - (toNum(a.impact) ?? -Infinity)).slice(0, TOP_N);
+    const body = $("#topImpactBody");
+
+    if (!top.length){
+      body.innerHTML = `<tr><td colspan="7" class="muted">표시할 데이터가 없습니다. (BIA 수행 후 확인)</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = top.map((x,i)=>{
+      const coreTxt = x.coreFinal ? "Core" : (x.coreAuto ? "Auto" : (x.coreManual ? "Manual" : "-"));
+      return `
+        <tr>
+          <td>${i+1}</td>
+          <td>${esc(x.dept||"-")}</td>
+          <td>${esc(x.work||"-")}</td>
+          <td><b>${x.impact ?? "-"}</b></td>
+          <td>${esc(x.mtpdText)}</td>
+          <td>${esc(x.rtoText)}</td>
+          <td>${esc(coreTxt)}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function renderMtpdDistribution(items){
+    const buckets = [
+      { label:"≤ 30",  test:(m)=> m!==null && m<=30 },
+      { label:"31–60", test:(m)=> m!==null && m>=31 && m<=60 },
+      { label:"61–96", test:(m)=> m!==null && m>=61 && m<=96 },
+      { label:"97–240",test:(m)=> m!==null && m>=97 && m<=240 },
+      { label:"> 240", test:(m)=> m!==null && m>240 },
+      { label:"미정",  test:(m)=> m===null },
+    ];
+    const counts = buckets.map(b=> items.filter(x=>b.test(x.mtpd)).length);
+    const max = Math.max(1, ...counts);
+
+    $("#mtpdBars").innerHTML = buckets.map((b,idx)=>{
+      const c = counts[idx];
+      const w = clamp01(c/max)*100;
+      return `
+        <div class="barRow">
+          <div class="barLabel">${esc(b.label)} 분</div>
+          <div class="bar"><i style="width:${w.toFixed(1)}%"></i></div>
+          <div class="barVal">${c}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderDeptCore(items){
+    const map = new Map();
+    for (const x of items){
+      const k = x.dept || "미분류";
+      if (!map.has(k)) map.set(k, { dept:k, total:0, core:0 });
+      const o = map.get(k);
+      o.total += 1;
+      if (x.coreFinal) o.core += 1;
+    }
+    const rows = Array.from(map.values()).sort((a,b)=> b.core - a.core || b.total - a.total || a.dept.localeCompare(b.dept));
+    const max = Math.max(1, ...rows.map(r=>r.core));
+
+    $("#deptCoreBars").innerHTML = rows.length ? rows.map(r=>{
+      const w = clamp01(r.core/max)*100;
+      return `
+        <div class="barRow">
+          <div class="barLabel">${esc(r.dept)}</div>
+          <div class="bar"><i style="width:${w.toFixed(1)}%"></i></div>
+          <div class="barVal">${r.core}/${r.total}</div>
+        </div>
+      `;
+    }).join("") : `<div class="muted">표시할 데이터가 없습니다.</div>`;
+  }
+
+  function renderAll(){
+    const all = getAllItems();
+    buildDeptFilter(all);
+    restore();
+    const scoped = applyFilters(all);
+    renderBadges(scoped, all);
+    renderKPIs(scoped);
+    renderTopImpact(scoped);
+    renderMtpdDistribution(scoped);
+    renderDeptCore(scoped);
+  }
+
+  $("#deptFilter").addEventListener("change", ()=>{ persist(); renderAll(); });
+  $("#searchInput").addEventListener("input", ()=>{ persist(); renderAll(); });
+
+  renderAll();
+</script>
+</body>
+</html>

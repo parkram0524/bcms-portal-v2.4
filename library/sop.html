@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>SOP (평시 운영) | Procedure Library</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width: 1000px){ .grid{ grid-template-columns:1fr; } }
+
+.pill{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.03);
+  font-size:13px;
+  color:#cbd5e1;
+  margin-right:8px;
+  margin-bottom:8px;
+}
+
+.mini{ opacity:.8; font-size:14px; line-height:1.6; }
+
+.ctx{
+  display:none;
+  margin-top:12px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.02);
+}
+
+.docCard{
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.02);
+  border-radius:14px;
+  padding:14px;
+  margin-top:12px;
+}
+.docTitle{
+  font-weight:900;
+  font-size:15px;
+}
+.docMeta{
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">🧾 SOP (평시 운영)</div>
+
+  <!-- BCP 연계 컨텍스트 -->
+  <div class="card ctx" id="ctxBox">
+    <div><b>🔗 BCP 연계 컨텍스트로 진입했습니다</b></div>
+    <div class="mini" style="margin-top:6px;">
+      해당 부서/핵심업무 기준으로 SOP 문서를 자동 필터링합니다.
+    </div>
+    <div id="ctxBadges" style="margin-top:8px;"></div>
+  </div>
+
+  <!-- SOP 문서 목록 -->
+  <div class="card">
+    <h3>SOP 문서 목록</h3>
+    <div id="docList"></div>
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+
+<script>
+/* ===============================
+   📚 더미 SOP 데이터 모델
+=================================*/
+const SOP_DATA = [
+  {
+    id:"SOP-001",
+    title:"IDC 일일 운영 점검 체크리스트",
+    dept:"IT 인프라팀",
+    process:"IDC 운영",
+    level:"Critical",
+    type:"일일점검",
+    version:"v1.0"
+  },
+  {
+    id:"SOP-002",
+    title:"IDC 백업 점검 절차",
+    dept:"IT 인프라팀",
+    process:"IDC 운영",
+    level:"Critical",
+    type:"백업관리",
+    version:"v1.1"
+  },
+  {
+    id:"SOP-003",
+    title:"침해사고 로그 분석 절차",
+    dept:"정보보안팀",
+    process:"침해사고 대응",
+    level:"Critical",
+    type:"보안운영",
+    version:"v2.0"
+  },
+  {
+    id:"SOP-004",
+    title:"고객 공지 작성 가이드",
+    dept:"고객지원팀",
+    process:"고객 공지/상담 운영",
+    level:"High",
+    type:"고객응대",
+    version:"v1.0"
+  },
+  {
+    id:"SOP-005",
+    title:"시설 정기 점검 체크리스트",
+    dept:"시설/안전팀",
+    process:"시설 점검/복구 지원",
+    level:"Medium",
+    type:"시설관리",
+    version:"v1.3"
+  }
+];
+
+/* ===============================
+   🔍 쿼리 읽기
+=================================*/
+const qs = new URLSearchParams(location.search);
+const dept = qs.get("dept");
+const process = qs.get("process");
+const level = qs.get("level");
+
+/* ===============================
+   🔗 컨텍스트 표시
+=================================*/
+function renderContext(){
+  if(!(dept || process || level)) return;
+
+  document.getElementById("ctxBox").style.display="block";
+  const badges = document.getElementById("ctxBadges");
+
+  if(dept) badges.innerHTML += `<span class="pill">부서: ${dept}</span>`;
+  if(process) badges.innerHTML += `<span class="pill">핵심업무: ${process}</span>`;
+  if(level) badges.innerHTML += `<span class="pill">중요도: ${level}</span>`;
+}
+
+/* ===============================
+   📄 문서 목록 렌더
+=================================*/
+function renderDocs(){
+  let filtered = SOP_DATA;
+
+  if(dept){
+    filtered = filtered.filter(d => d.dept === dept);
+  }
+  if(process){
+    filtered = filtered.filter(d => d.process === process);
+  }
+
+  const container = document.getElementById("docList");
+  container.innerHTML="";
+
+  if(filtered.length === 0){
+    container.innerHTML = `<div class="mini">조건에 맞는 SOP 문서가 없습니다.</div>`;
+    return;
+  }
+
+  filtered.forEach(doc=>{
+    const div = document.createElement("div");
+    div.className="docCard";
+    div.innerHTML = `
+      <div class="docTitle">${doc.title}</div>
+      <div class="docMeta">
+        <span class="pill">${doc.id}</span>
+        <span class="pill">${doc.dept}</span>
+        <span class="pill">${doc.type}</span>
+        <span class="pill">${doc.version}</span>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+renderContext();
+renderDocs();
+</script>
+
+</body>
+</html>

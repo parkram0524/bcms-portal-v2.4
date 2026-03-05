@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>요구사항 매핑 (ISO 22301) | BCMS</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+
+  <style>
+    html, body{ height:auto !important; min-height:100% !important; }
+    .layout{
+      display:flex !important;
+      align-items:stretch !important;
+      justify-content:flex-start !important;
+      min-height:100vh !important;
+      height:auto !important;
+    }
+    .main{
+      display:block !important;
+      flex:1 1 auto !important;
+      min-height:100vh !important;
+      height:auto !important;
+      justify-content:flex-start !important;
+      align-items:stretch !important;
+      padding-top: 0 !important;
+      margin-top: 0 !important;
+    }
+    .main > *{ justify-content:flex-start !important; align-items:stretch !important; }
+
+    :root{
+      --cardBg: rgba(255,255,255,.03);
+      --cardBd: rgba(255,255,255,.12);
+      --muted: rgba(255,255,255,.72);
+      --muted2: rgba(255,255,255,.52);
+      --line: rgba(255,255,255,.14);
+
+      --ok: rgba(176,255,214,.95);
+      --partial: rgba(255,214,130,.95);
+      --gap: rgba(255,135,135,.95);
+      --accent: rgba(126,231,255,.95);
+    }
+
+    .wrap{ max-width: 1200px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    .pageTitle{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap: 14px; margin: 4px 0 14px;
+    }
+    .pageTitle h1{ margin:0; font-size: 26px; letter-spacing:-.02em; }
+    .pageTitle p{ margin:8px 0 0; color: var(--muted); line-height:1.6; max-width: 920px; }
+
+    .metaRow{ margin-top: 10px; display:flex; gap:8px; flex-wrap:wrap; color: var(--muted2); font-size: 12px; }
+    .pill{
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display:inline-flex; align-items:center; gap:8px;
+      white-space: nowrap;
+    }
+    .dot{ width:8px; height:8px; border-radius:999px; display:inline-block; }
+    .dot.ok{ background: var(--ok); }
+    .dot.partial{ background: var(--partial); }
+    .dot.gap{ background: var(--gap); }
+    .dot.acc{ background: var(--accent); }
+
+    .board{
+      margin-top: 16px;
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 18px;
+      padding: 18px;
+      overflow:hidden;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 980px){
+      .kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .kpi{
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .kpi b{ font-size: 13px; letter-spacing:-.01em; }
+    .kpi .v{ margin-top: 8px; font-size: 22px; font-weight: 900; }
+    .kpi small{ display:block; margin-top: 6px; color: var(--muted2); line-height:1.45; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 1020px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .clausePanel{
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 18px;
+      padding: 12px;
+      overflow:hidden;
+    }
+
+    .searchRow{
+      display:flex; gap:8px; align-items:center;
+      padding: 8px;
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 14px;
+      margin-bottom: 10px;
+    }
+    .searchRow input{
+      width:100%;
+      border:0;
+      outline:none;
+      background: transparent;
+      color:#fff;
+      font-size: 13px;
+    }
+    .searchRow span{
+      color: var(--muted2);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .clauseList{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      max-height: 640px;
+      overflow:auto;
+      padding-right: 4px;
+    }
+    .clause{
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 16px;
+      padding: 10px 10px;
+      cursor:pointer;
+      transition: .15s ease;
+    }
+    .clause:hover{ transform: translateY(-1px); background: rgba(255,255,255,.04); }
+    .clause.active{
+      border-color: rgba(126,231,255,.35);
+      box-shadow: 0 0 0 1px rgba(126,231,255,.15) inset;
+      background: rgba(126,231,255,.04);
+    }
+
+    .cTop{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+    }
+    .cTop b{ font-size: 13px; letter-spacing:-.01em; }
+    .cTop small{ color: var(--muted2); font-size: 12px; line-height:1.35; margin-top: 4px; display:block; }
+
+    .badge{
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .badge.ok{ border-color: rgba(176,255,214,.35); color: rgba(176,255,214,.95); }
+    .badge.partial{ border-color: rgba(255,214,130,.35); color: rgba(255,214,130,.95); }
+    .badge.gap{ border-color: rgba(255,135,135,.35); color: rgba(255,135,135,.95); }
+
+    .detail{
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 18px;
+      padding: 16px;
+      overflow:hidden;
+      min-height: 520px;
+    }
+
+    .dHead{
+      display:flex; align-items:flex-start; justify-content:space-between; gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 12px;
+    }
+    .dHead h2{ margin:0; font-size: 16px; letter-spacing:-.02em; }
+    .dHead p{ margin:8px 0 0; color: var(--muted); line-height:1.6; font-size: 13px; max-width: 860px; }
+
+    .dBadges{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    .section{
+      margin-top: 12px;
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.02);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .sectionTitle{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 8px;
+    }
+    .sectionTitle b{ font-size: 13px; letter-spacing:-.01em; }
+    .sectionTitle small{ color: var(--muted2); font-size: 12px; }
+
+    .rows{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+    .row{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.015);
+      border-radius: 14px;
+      padding: 10px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .row b{ font-size: 13px; }
+    .row small{ display:block; margin-top: 6px; color: var(--muted2); line-height:1.5; }
+
+    .links{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
+    .btn{
+      appearance:none;
+      border:1px solid var(--cardBd);
+      background: rgba(255,255,255,.03);
+      color:#fff;
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing:-.01em;
+      text-decoration:none;
+      transition:.15s ease;
+      white-space: nowrap;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.05); }
+
+    .note{
+      margin-top: 12px;
+      padding: 12px;
+      border:1px dashed rgba(255,255,255,.14);
+      border-radius: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      background: rgba(255,255,255,.015);
+    }
+    .note code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+    }
+    select.btn{ padding:7px 10px; }
+  </style>
+</head>
+
+<body>
+  <div class="layout">
+    <aside id="sidebarMount"></aside>
+
+    <main class="main">
+      <div class="wrap">
+        <div class="pageTitle">
+          <div>
+            <h1>요구사항 매핑 (ISO 22301)</h1>
+            <p>
+              ISO 22301 요구사항(4~10)을 BCMS Portal v2 구조에 매핑합니다.
+              v2의 핵심은 <b>“Records = Logs/Evidence(자동)”</b>이며,
+              Decision/Execution이 로그로 환류되어 Audit과 CAPA로 이어집니다.
+            </p>
+            <div class="metaRow">
+              <span class="pill"><span class="dot acc"></span>Portal Map 기반 증적 연결</span>
+              <span class="pill"><span class="dot ok"></span>충족</span>
+              <span class="pill"><span class="dot partial"></span>부분</span>
+              <span class="pill"><span class="dot gap"></span>갭</span>
+            </div>
+          </div>
+        </div>
+
+        <section class="board">
+          <div class="kpis" id="kpiArea"></div>
+
+          <div class="grid">
+            <aside class="clausePanel">
+              <div class="searchRow">
+                <input id="q" placeholder="조항 검색 (예: 8.4, audit, competence, exercise)"/>
+                <span id="cnt">0</span>
+              </div>
+              <div class="clauseList" id="clauseList"></div>
+            </aside>
+
+            <section class="detail" id="detail"></section>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/sidebar.js"></script>
+
+  <script>
+    const CAPA_KEY = "bcms_capa_v1";
+    const ISO_SYNC_KEY = "bcms_iso_requirements_v1";
+
+    const clauses = [
+      {
+        id: "4",
+        title: "4. Context of the organization (조직의 상황)",
+        status: "partial",
+        intent: "조직/이해관계자/적용범위 정의 및 BCMS 범위·목표의 정합성을 유지",
+        maps: {
+          portal: [
+            { name: "Governance / Policy (정책·목표·범위)", desc: "BCMS 목적/범위/목표, 적용범위/경계, 승인 구조", href: "./policy.html" },
+            { name: "System Registry (업무 시스템 목록)", desc: "중요 서비스/시스템 목록화(범위/의존성 기반)", href: "./system-registry.html" },
+            { name: "BCMS Map (Structure & Flow)", desc: "운영 흐름/Decision Gate/증적 레이어 구조", href: "./bcms-map.html" }
+          ],
+          evidence: [
+            { name: "Evidence (임시)", desc: "증적은 운영/감사 모듈로 연결", href: "../op-center/index.html" }
+          ],
+          gaps: [
+            "이해관계자 요구사항(예: SLA/규제/고객 기대) 정형 템플릿 추가 권장",
+            "조직의 이슈/외부·내부 이슈 레지스터(연 1회 리뷰) 추가 권장"
+          ]
+        }
+      },
+      {
+        id: "5",
+        title: "5. Leadership (리더십)",
+        status: "ok",
+        intent: "최고경영진의 의지/책임/역할/커뮤니케이션이 BCMS 운영에 내재화",
+        maps: {
+          portal: [
+            { name: "Governance / Policy", desc: "최고경영진 승인/책임, 정책 배포", href: "./policy.html" },
+            { name: "Org / R&R", desc: "평상시 조직 + EOC 지휘체계, 역할/책임", href: "./org.html" }
+          ],
+          evidence: [
+            { name: "Audit", desc: "리더십/거버넌스 준수 점검", href: "../audit/index.html" }
+          ],
+          gaps: []
+        }
+      },
+      {
+        id: "6",
+        title: "6. Planning (계획)",
+        status: "partial",
+        intent: "리스크/기회 기반 계획 수립, 목표 설정, 변경관리",
+        maps: {
+          portal: [
+            { name: "Risk & BIA", desc: "위험평가/업무영향분석 기반 우선순위, RTO/RPO", href: "../risk-bia/index.html" },
+            { name: "Strategy & Plans", desc: "DR/BCP 전략·계획, 테스트/훈련 계획", href: "../strategy-plans/index.html" }
+          ],
+          evidence: [
+            { name: "Plans Review (임시)", desc: "계획 개정/승인 기록(운영센터로 임시 연결)", href: "../op-center/index.html" }
+          ],
+          gaps: [
+            "BCMS 목표(KPI) 정의(예: 훈련 이행률, RTO 달성률) 및 대시보드 연결 권장"
+          ]
+        }
+      },
+      {
+        id: "7",
+        title: "7. Support (지원)",
+        status: "partial",
+        intent: "자원/역량/인식/커뮤니케이션/문서화 정보 관리",
+        maps: {
+          portal: [
+            { name: "Training & Exercise", desc: "교육/훈련 계획 및 이행 관리", href: "../training/index.html" },
+            { name: "Document Framework (문서체계)", desc: "문서/절차/증적 구조 정의", href: "./docs.html" }
+          ],
+          evidence: [
+            { name: "Training (Records)", desc: "교육/훈련 결과 기록", href: "../training/index.html" }
+          ],
+          gaps: [
+            "역량(competence) 매트릭스/역할별 교육 요구사항 표준화 권장",
+            "대내외 커뮤니케이션 템플릿(미디어/고객/규제기관) 표준화 권장"
+          ]
+        }
+      },
+      {
+        id: "8",
+        title: "8. Operation (운영)",
+        status: "ok",
+        intent: "운영 통제, Decision Gate, DRP/EOP/BCP 실행 및 증적화",
+        maps: {
+          portal: [
+            { name: "Operation Center", desc: "상황관리/실행 로그/운영 증적 레이어", href: "../op-center/index.html" },
+            { name: "Procedure Library", desc: "YES: DRP/EOP/BCP · NO: SOP", href: "../library/index.html" }
+          ],
+          evidence: [
+            { name: "Audit Evidence", desc: "사건 단위 증적 패키징(감사센터)", href: "../audit/index.html" }
+          ],
+          gaps: []
+        }
+      },
+      {
+        id: "9",
+        title: "9. Performance evaluation (성과 평가)",
+        status: "partial",
+        intent: "모니터링/측정/분석/평가, 내부감사, 경영검토",
+        maps: {
+          portal: [
+            { name: "Audit", desc: "내부감사 계획/결과/증적", href: "../audit/index.html" }
+          ],
+          evidence: [
+            { name: "Audit Records", desc: "감사 체크리스트/결과", href: "../audit/index.html" }
+          ],
+          gaps: [
+            "경영검토(Management Review) 템플릿/회의록 섹션 추가 권장",
+            "성과지표(KPI) 대시보드 카드(Trend) 연결 권장"
+          ]
+        }
+      },
+      {
+        id: "10",
+        title: "10. Improvement (개선)",
+        status: "ok",
+        intent: "부적합/시정조치/지속적 개선이 Governance로 환류",
+        maps: {
+          portal: [
+            { name: "Admin (CAPA 관리: 임시)", desc: "개선 항목 등록/조치/검증(향후 Improvement 확장)", href: "../admin/index.html" },
+            { name: "Governance Update", desc: "정책/절차/훈련/감사 결과를 반영해 업데이트", href: "./index.html" }
+          ],
+          evidence: [
+            { name: "Corrective Action (임시)", desc: "시정조치 증적(감사/운영으로 연결)", href: "../audit/index.html" }
+          ],
+          gaps: []
+        }
+      }
+    ];
+
+    const elList = document.getElementById("clauseList");
+    const elDetail = document.getElementById("detail");
+    const elQ = document.getElementById("q");
+    const elCnt = document.getElementById("cnt");
+    const elKpi = document.getElementById("kpiArea");
+
+    function badge(status){
+      if(status === "ok") return `<span class="badge ok">충족</span>`;
+      if(status === "partial") return `<span class="badge partial">부분</span>`;
+      return `<span class="badge gap">갭</span>`;
+    }
+    function toKR(status){
+      if(status === "ok") return "충족";
+      if(status === "partial") return "부분";
+      return "갭";
+    }
+    function syncISO(){
+      const payload = clauses.map(c => ({ clause:String(c.id), status: toKR(c.status) }));
+      localStorage.setItem(ISO_SYNC_KEY, JSON.stringify(payload));
+    }
+
+    function buildKPIs(items){
+      const ok = items.filter(x=>x.status==="ok").length;
+      const partial = items.filter(x=>x.status==="partial").length;
+      const gap = items.filter(x=>x.status==="gap").length;
+      const total = items.length;
+
+      elKpi.innerHTML = `
+        <div class="kpi"><b>총 조항 (4~10)</b><div class="v">${total}</div><small>ISO 22301 핵심 조항 수</small></div>
+        <div class="kpi"><b>충족</b><div class="v" style="color:rgba(176,255,214,.95)">${ok}</div><small>Portal 구조로 커버 가능</small></div>
+        <div class="kpi"><b>부분</b><div class="v" style="color:rgba(255,214,130,.95)">${partial}</div><small>템플릿/지표/레지스터 보완 권장</small></div>
+        <div class="kpi"><b>갭</b><div class="v" style="color:rgba(255,135,135,.95)">${gap}</div><small>추가 설계 필요</small></div>
+      `;
+    }
+
+    function renderList(items){
+      elList.innerHTML = items.map((c) => `
+        <div class="clause" data-id="${c.id}">
+          <div class="cTop">
+            <div>
+              <b>${c.title}</b>
+              <small>${c.intent}</small>
+            </div>
+            ${badge(c.status)}
+          </div>
+        </div>
+      `).join("");
+
+      elCnt.textContent = items.length;
+
+      [...elList.querySelectorAll(".clause")].forEach(node=>{
+        node.addEventListener("click", ()=>selectClause(node.dataset.id));
+      });
+    }
+
+    // ===== CAPA =====
+    function getCapaList(){
+      try{ return JSON.parse(localStorage.getItem(CAPA_KEY) || "[]"); } catch(e){ return []; }
+    }
+    function setCapaList(list){ localStorage.setItem(CAPA_KEY, JSON.stringify(list)); }
+    function generateCapaId(list){
+      const max = list.reduce((m,x)=>{
+        const n = parseInt((x.id||"").replace("CAPA-",""), 10) || 0;
+        return Math.max(m,n);
+      },0);
+      return "CAPA-" + String(max+1).padStart(3,"0");
+    }
+    function formatDateKR(iso){
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
+    }
+    function hasOpenCapaForClause(list, clause){
+      return list.some(x =>
+        String(x.clause) === String(clause) &&
+        (x.status === "OPEN" || x.status === "IN_PROGRESS")
+      );
+    }
+    function createCapaFromClause(clause, status, owner="BCMS PMO", dueDays=14){
+      const list = getCapaList();
+      if (hasOpenCapaForClause(list, clause)){
+        alert(`이미 Clause ${clause}에 대한 열린 CAPA가 있습니다.\n(CAPA Open/진행중을 먼저 처리하세요)`);
+        return;
+      }
+
+      const due = new Date(Date.now() + dueDays*24*60*60*1000).toISOString();
+      const item = {
+        id: generateCapaId(list),
+        title: `ISO ${clause}조 요구사항 ${status === "gap" ? "갭" : "보완"} 개선`,
+        status: "OPEN",
+        source: status === "gap" ? "GAP" : "PARTIAL",
+        clause: String(clause),
+        owner,
+        created: new Date().toISOString(),
+        due
+      };
+
+      list.push(item);
+      setCapaList(list);
+
+      alert(`CAPA 생성 완료: ${item.id}\nOwner: ${owner}\nDue: ${formatDateKR(item.due)}`);
+    }
+
+    function renderDetail(c){
+      const portal = (c.maps.portal || []).map(x => `
+        <div class="row">
+          <div>
+            <b>${x.name}</b>
+            <small>${x.desc}</small>
+          </div>
+          <div class="links"><a class="btn" href="${x.href}">열기</a></div>
+        </div>
+      `).join("");
+
+      const evidence = (c.maps.evidence || []).map(x => `
+        <div class="row">
+          <div>
+            <b>${x.name}</b>
+            <small>${x.desc}</small>
+          </div>
+          <div class="links"><a class="btn" href="${x.href}">증적</a></div>
+        </div>
+      `).join("");
+
+      const gaps = (c.maps.gaps || []);
+      const gapsHtml = gaps.length
+        ? `
+          <ul style="margin:8px 0 0 18px; color: rgba(255,255,255,.68); line-height:1.7;">
+            ${gaps.map(g=>`<li>${g}</li>`).join("")}
+          </ul>
+        `
+        : `<div style="color: rgba(176,255,214,.85); font-weight:900; margin-top:6px;">추가 갭 없음 (현재 구조로 커버 가능)</div>`;
+
+      const capaAction = (c.status === "ok")
+        ? ``
+        : `
+          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <span class="pill" style="padding:6px 10px;">
+                <span style="color:rgba(255,255,255,.6);font-size:12px;">Owner</span>
+                <select id="capaOwner" class="btn">
+                  <option value="BCMS PMO">BCMS PMO</option>
+                  <option value="Risk Mgmt">Risk Mgmt</option>
+                  <option value="Ops">Ops</option>
+                  <option value="Infra">Infra</option>
+                  <option value="DX">DX</option>
+                  <option value="Security">Security</option>
+                </select>
+              </span>
+
+              <span class="pill" style="padding:6px 10px;">
+                <span style="color:rgba(255,255,255,.6);font-size:12px;">Due</span>
+                <select id="capaDueDays" class="btn">
+                  <option value="7">7일</option>
+                  <option value="14" selected>14일</option>
+                  <option value="30">30일</option>
+                  <option value="60">60일</option>
+                </select>
+              </span>
+            </div>
+
+            <button class="btn" id="btnCapaCreate">CAPA 생성 (Clause ${c.id})</button>
+            <a class="btn" href="./index.html">Governance Dashboard</a>
+          </div>
+
+          <small style="display:block;margin-top:8px;color: rgba(255,255,255,.55);line-height:1.5;">
+            * 생성된 CAPA는 localStorage("${CAPA_KEY}")에 저장되며, Governance Dashboard의 <b>CAPA Open</b>에 즉시 반영됩니다.
+          </small>
+        `;
+
+      elDetail.innerHTML = `
+        <div class="dHead">
+          <div>
+            <h2>${c.title}</h2>
+            <p>${c.intent}</p>
+          </div>
+          <div class="dBadges">
+            ${badge(c.status)}
+            <span class="pill"><span class="dot acc"></span>Records=Logs 기반</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sectionTitle"><b>Portal 매핑</b><small>관련 페이지 / 운영 기능</small></div>
+          <div class="rows">${portal || `<div style="color:rgba(255,255,255,.6)">매핑 없음</div>`}</div>
+        </div>
+
+        <div class="section">
+          <div class="sectionTitle"><b>Evidence (증적) 연결</b><small>Audit / Operation</small></div>
+          <div class="rows">${evidence || `<div style="color:rgba(255,255,255,.6)">증적 링크 없음</div>`}</div>
+        </div>
+
+        <div class="section">
+          <div class="sectionTitle"><b>갭 &amp; 개선 권장사항</b><small>심사 대응 보완 포인트</small></div>
+          ${gapsHtml}
+          ${capaAction}
+        </div>
+
+        <div class="note">
+          <b>v2 운영 해석</b><br/>
+          <code>Decision Gate → 실행(DRP/EOP/BCP/SOP) → Evidence → Audit → CAPA → Governance 업데이트</code>
+        </div>
+      `;
+
+      const btn = document.getElementById("btnCapaCreate");
+      if (btn){
+        btn.addEventListener("click", () => {
+          const owner = (document.getElementById("capaOwner")?.value) || "BCMS PMO";
+          const dueDays = Number(document.getElementById("capaDueDays")?.value || 14);
+          createCapaFromClause(c.id, c.status, owner, dueDays);
+        });
+      }
+    }
+
+    function selectClause(id){
+      const c = clauses.find(x=>x.id===id) || clauses[0];
+      [...elList.querySelectorAll(".clause")].forEach(n=>n.classList.toggle("active", n.dataset.id===id));
+      renderDetail(c);
+    }
+
+    function applyFilter(){
+      const q = (elQ.value || "").trim().toLowerCase();
+      if(!q){
+        renderList(clauses);
+        selectClause(clauses[0].id);
+        return;
+      }
+      const filtered = clauses.filter(c => {
+        const t = (c.title + " " + c.intent).toLowerCase();
+        return t.includes(q) || c.id.includes(q);
+      });
+      renderList(filtered);
+      if(filtered.length) selectClause(filtered[0].id);
+      else{
+        elDetail.innerHTML = `<div style="color: rgba(255,255,255,.7); line-height:1.7;">검색 결과가 없습니다.</div>`;
+      }
+    }
+
+    buildKPIs(clauses);
+    renderList(clauses);
+    selectClause(clauses[0].id);
+    syncISO();
+
+    elQ.addEventListener("input", () => {
+      clearTimeout(window.__rqT);
+      window.__rqT = setTimeout(applyFilter, 120);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Risk Assessment | Risk & BIA</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+<style>
+  .main { font-size:17px; }
+  .page-title { font-size:26px; font-weight:800; }
+  .card { font-size:17px; }
+  .card h3 { font-size:20px; font-weight:700; margin:0; }
+  .muted{ color:#a8b3d4; font-size:16px; line-height:1.7; margin:6px 0 0 0; }
+
+  .controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .controls select, .controls input{
+    height:40px; padding:0 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; outline:none;
+    font-size:16px; min-width:220px;
+  }
+  .controls input{ min-width:320px; flex: 1 1 320px; }
+
+  .btn{
+    height:40px; padding:0 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; cursor:pointer; font-size:16px;
+  }
+  .btn:hover{ background: rgba(255,255,255,.05); }
+  .btnPrimary{ background: rgba(96,165,250,.18); border-color: rgba(96,165,250,.35); }
+  .btnDanger{ background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.35); }
+
+  .pillRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    font-size:14px; color:#a8b3d4;
+  }
+  .pill b{ color:#e8eeff; }
+
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
+  @media (max-width: 1100px){ .grid2{ grid-template-columns: 1fr; } }
+
+  .field{
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    border-radius:14px;
+    padding:12px;
+  }
+  .field label{ display:block; font-size:14px; color:#a8b3d4; margin-bottom:8px; }
+  .field input, .field select{
+    width:100%;
+    height:40px;
+    padding:0 10px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff;
+    outline:none;
+    font-size:16px;
+  }
+
+  .list{
+    margin-top:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .listHead{
+    padding:12px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .listBody{ max-height: 760px; overflow:auto; }
+  .rowItem{
+    padding:12px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .rowItem:hover{ background: rgba(255,255,255,.03); }
+  .left{ min-width:0; }
+  .title{ margin:0; font-weight:900; font-size:16px; color:#e8eeff; }
+  .sub{ margin:4px 0 0 0; font-size:14px; color:#a8b3d4; line-height:1.5; }
+
+  .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .score{
+    font-size:26px; font-weight:900; color:#e8eeff;
+    min-width: 72px; text-align:right;
+  }
+  .miniTag{
+    display:inline-flex; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    color:#a8b3d4; font-size:13px; white-space:nowrap;
+  }
+
+  .linkRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .linkBtn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#60a5fa; text-decoration:none;
+    font-size:16px;
+  }
+  .linkBtn:hover{ background: rgba(255,255,255,.05); }
+
+  .empty{
+    padding:16px; margin:12px;
+    border:1px dashed rgba(255,255,255,.18);
+    border-radius:14px;
+    color:#a8b3d4;
+    background: rgba(255,255,255,.02);
+    line-height:1.7;
+    font-size:16px;
+  }
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">⚠️ Risk Assessment (리스크 평가)</div>
+
+  <div class="card">
+    <h3>심플 리스크 등록</h3>
+    <p class="muted">
+      위협(Threat) + 취약성(Vulnerability) 기반으로 리스크를 등록하고,
+      <b>영향(Impact)</b>과 <b>발생가능성(Likelihood)</b>으로 점수를 산출합니다.
+      (점수 = Impact × Likelihood, 1~25)
+    </p>
+
+    <div class="controls">
+      <select id="deptFilter"><option value="">전체 부서</option></select>
+      <input id="searchInput" placeholder="리스크/위협/취약성 검색 (예: 정전, 침해, 화재)"/>
+      <button class="btn" id="btnRefresh">새로고침</button>
+      <button class="btn btnDanger" id="btnReset">리스크 전체 리셋</button>
+    </div>
+
+    <div class="pillRow" id="badgeRow"></div>
+
+    <div class="linkRow">
+      <a class="linkBtn" href="./index.html">→ 대시보드</a>
+      <a class="linkBtn" href="./bia.html">→ BIA</a>
+      <a class="linkBtn" href="./priority.html">→ Priority</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>리스크 등록</h3>
+    <div class="grid2">
+      <div class="field">
+        <label>부서</label>
+        <select id="inDept"></select>
+      </div>
+      <div class="field">
+        <label>리스크명</label>
+        <input id="inRiskName" placeholder="예: UPS 장애로 인한 전원 중단"/>
+      </div>
+      <div class="field">
+        <label>위협(Threat)</label>
+        <input id="inThreat" placeholder="예: 정전, 침수, 화재, 침해사고"/>
+      </div>
+      <div class="field">
+        <label>취약성(Vulnerability)</label>
+        <input id="inVuln" placeholder="예: 이중화 미구성, 점검 미흡, 단일 회선"/>
+      </div>
+      <div class="field">
+        <label>영향(Impact) 1~5</label>
+        <select id="inImpact">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>발생가능성(Likelihood) 1~5</label>
+        <select id="inLike">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="controls" style="margin-top:12px;">
+      <button class="btn btnPrimary" id="btnAdd">리스크 추가</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="list">
+      <div class="listHead">
+        <div class="pillRow" style="margin:0;">
+          <span class="pill">전체 <b id="cntTotal">0</b></span>
+          <span class="pill">High(≥16) <b id="cntHigh">0</b></span>
+          <span class="pill">Med(8~15) <b id="cntMed">0</b></span>
+          <span class="pill">Low(≤7) <b id="cntLow">0</b></span>
+        </div>
+        <div class="pill">정렬: 점수 높은 순</div>
+      </div>
+      <div class="listBody" id="listBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+
+<script>
+  const KEY_RISKS = "risks";
+
+  const $ = (s)=>document.querySelector(s);
+  const esc = (s)=>String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+  const toNum = (v)=>{ if(v===null||v===undefined||v==="") return null; const x=Number(v); return Number.isFinite(x)?x:null; };
+  const uniq = (arr)=>[...new Set(arr.filter(Boolean))];
+
+  function loadJSON(key, fallback){
+    try{ const raw=sessionStorage.getItem(key); if(!raw) return fallback; return JSON.parse(raw); }
+    catch(e){ return fallback; }
+  }
+  function saveJSON(key, v){
+    try{ sessionStorage.setItem(key, JSON.stringify(v)); }catch(e){}
+  }
+
+  function getDepts(){
+    const depts = loadJSON("departments", []);
+    return Array.isArray(depts) ? depts : [];
+  }
+
+  function riskScore(r){ return (toNum(r.impact)||1) * (toNum(r.like)||1); }
+  function riskBand(s){
+    if (s >= 16) return "High";
+    if (s >= 8) return "Med";
+    return "Low";
+  }
+
+  function getRisks(){
+    const arr = loadJSON(KEY_RISKS, []);
+    return Array.isArray(arr) ? arr : [];
+  }
+  function setRisks(arr){ saveJSON(KEY_RISKS, arr); }
+
+  function uid(){ return "risk-" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
+
+  /* ✅ Seed risks: 비어있을 때만 자동 주입 */
+  function ensureRiskSeed(){
+    const cur = getRisks();
+    if (cur.length) return;
+
+    const depts = getDepts();
+    const d1 = depts[0] || "IT 인프라팀";
+    const d2 = depts[1] || "정보보안팀";
+    const d3 = depts[2] || "고객지원팀";
+    const d4 = depts[3] || "시설/안전팀";
+
+    const seed = [
+      { id: uid(), dept:d1, name:"UPS/발전기 전환 실패로 인한 전원 중단", threat:"정전", vuln:"정기 점검 미흡/절체 시나리오 미검증", impact:5, like:3 },
+      { id: uid(), dept:d1, name:"네트워크 단일회선 장애로 서비스 단절", threat:"통신장애", vuln:"단일 회선/라우팅 이중화 미흡", impact:4, like:3 },
+      { id: uid(), dept:d2, name:"EDR/SIEM 장애로 침해 탐지 지연", threat:"침해사고", vuln:"보안관제 시스템 단일 장애점", impact:4, like:4 },
+      { id: uid(), dept:d2, name:"권한관리 미흡으로 내부자 오남용", threat:"내부 위협", vuln:"권한검토/분리 미흡", impact:5, like:3 },
+      { id: uid(), dept:d3, name:"대규모 장애 시 공지/CS 폭주로 고객 신뢰 하락", threat:"대규모 장애", vuln:"CS 증원 플랜/공지 채널 준비 부족", impact:4, like:4 },
+      { id: uid(), dept:d4, name:"침수로 전기실 설비 손상 및 운영 중단", threat:"침수", vuln:"차수/배수 설비 취약", impact:5, like:2 },
+    ];
+
+    setRisks(seed);
+  }
+
+  function buildDeptOptions(){
+    const depts = getDepts();
+    const deptFilter = $("#deptFilter");
+    const inDept = $("#inDept");
+
+    const prev = sessionStorage.getItem("risk_deptFilter") || "";
+    deptFilter.innerHTML = `<option value="">전체 부서</option>` + depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+    deptFilter.value = depts.includes(prev) ? prev : "";
+
+    inDept.innerHTML = depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+    if (depts.length && !inDept.value) inDept.value = depts[0];
+  }
+
+  function persist(){
+    sessionStorage.setItem("risk_deptFilter", $("#deptFilter").value || "");
+    sessionStorage.setItem("risk_q", $("#searchInput").value || "");
+  }
+  function restore(){
+    $("#searchInput").value = sessionStorage.getItem("risk_q") || "";
+  }
+
+  function applyFilters(items){
+    const dept = $("#deptFilter").value;
+    const q = $("#searchInput").value.trim().toLowerCase();
+    return items.filter(r=>{
+      if (dept && r.dept !== dept) return false;
+      if (q){
+        const hay = `${r.name} ${r.threat} ${r.vuln} ${r.dept}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderBadges(scoped, all){
+    const total = scoped.length;
+    const allTotal = all.length;
+    const high = scoped.filter(r=>riskScore(r) >= 16).length;
+
+    $("#badgeRow").innerHTML = `
+      <span class="pill">필터 결과 <b>${total}</b></span>
+      <span class="pill">High(≥16) <b>${high}</b></span>
+      <span class="pill">전체 <b>${allTotal}</b></span>
+    `;
+  }
+
+  function renderCounts(items){
+    const scores = items.map(r=>riskScore(r));
+    $("#cntTotal").textContent = items.length;
+    $("#cntHigh").textContent = scores.filter(s=>s>=16).length;
+    $("#cntMed").textContent  = scores.filter(s=>s>=8 && s<=15).length;
+    $("#cntLow").textContent  = scores.filter(s=>s<=7).length;
+  }
+
+  function renderList(items){
+    const mount = $("#listBody");
+    if (!items.length){
+      mount.innerHTML = `<div class="empty">표시할 리스크가 없습니다. 위에서 리스크를 추가해보세요.</div>`;
+      return;
+    }
+
+    const sorted = items.slice().sort((a,b)=>riskScore(b)-riskScore(a));
+
+    mount.innerHTML = sorted.map(r=>{
+      const s = riskScore(r);
+      const band = riskBand(s);
+      const tags = `
+        <span class="miniTag">Impact ${r.impact}</span>
+        <span class="miniTag">Like ${r.like}</span>
+        <span class="miniTag">${band} ${s}</span>
+      `;
+
+      return `
+        <div class="rowItem">
+          <div class="left">
+            <p class="title">${esc(r.name)}</p>
+            <p class="sub">${esc(r.dept)} · Threat: ${esc(r.threat)} · Vulnerability: ${esc(r.vuln)}</p>
+            <div class="pillRow" style="margin-top:8px;">${tags}</div>
+          </div>
+          <div class="right">
+            <div class="score">${s}</div>
+            <button class="btn btnDanger" data-del="${esc(r.id)}">삭제</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderAll(){
+    ensureRiskSeed();
+    buildDeptOptions();
+    restore();
+
+    const all = getRisks();
+    const scoped = applyFilters(all);
+
+    renderBadges(scoped, all);
+    renderCounts(scoped);
+    renderList(scoped);
+  }
+
+  $("#deptFilter").addEventListener("change", ()=>{ persist(); renderAll(); });
+  $("#searchInput").addEventListener("input", ()=>{ persist(); renderAll(); });
+  $("#btnRefresh").addEventListener("click", ()=>{ renderAll(); });
+
+  $("#btnReset").addEventListener("click", ()=>{
+    if (!confirm("리스크 데이터를 전체 리셋할까요?")) return;
+    setRisks([]);
+    renderAll();
+  });
+
+  $("#btnAdd").addEventListener("click", ()=>{
+    const dept = $("#inDept").value || "";
+    const name = ($("#inRiskName").value || "").trim();
+    const threat = ($("#inThreat").value || "").trim();
+    const vuln = ($("#inVuln").value || "").trim();
+    const impact = toNum($("#inImpact").value) || 1;
+    const like = toNum($("#inLike").value) || 1;
+
+    if (!dept){ alert("부서를 선택하세요."); return; }
+    if (!name){ alert("리스크명을 입력하세요."); return; }
+
+    const arr = getRisks();
+    arr.push({ id: uid(), dept, name, threat, vuln, impact, like });
+    setRisks(arr);
+
+    $("#inRiskName").value = "";
+    $("#inThreat").value = "";
+    $("#inVuln").value = "";
+
+    renderAll();
+  });
+
+  document.addEventListener("click", (e)=>{
+    const del = e.target.closest("[data-del]");
+    if (!del) return;
+    const id = del.dataset.del;
+    const arr = getRisks().filter(r=>r.id!==id);
+    setRisks(arr);
+    renderAll();
+  });
+
+  renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>BCP (업무 연속) | Procedure Library</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+  .btn{
+    padding:10px 14px; border-radius:10px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.10);
+    background:#60a5fa; color:#0b1220; font-weight:800; font-size:15px;
+  }
+  .btn2{
+    padding:10px 14px; border-radius:10px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.10);
+    background:#1e293b; color:#e2e8f0; font-weight:700; font-size:15px;
+  }
+  .mini{ opacity:.8; font-size:14px; line-height:1.6; }
+  .tag{
+    display:inline-block; padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    font-size:13px; color:#cbd5e1;
+  }
+
+  .deptBlock{ margin-top:16px; }
+  .deptHead{
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    align-items:center; margin-bottom:10px;
+  }
+  .deptTitle{ font-size:18px; font-weight:800; }
+
+  .tableWrap{ overflow-x:auto; }
+  table.bcpTable{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    overflow:hidden;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.02);
+    table-layout:fixed;
+    min-width: 1320px;
+  }
+  table.bcpTable col.c1{ width:260px; }
+  table.bcpTable col.c2{ width:90px; }
+  table.bcpTable col.c3{ width:90px; }
+  table.bcpTable col.c4{ width:120px; }
+  table.bcpTable col.c5{ width:260px; }
+  table.bcpTable col.c6{ width:260px; }
+  table.bcpTable col.c7{ width:330px; }
+  table.bcpTable col.c8{ width:190px; }
+
+  table.bcpTable th, table.bcpTable td{
+    padding:12px 12px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    vertical-align:middle;
+    font-size:14px;
+    line-height:1.35;
+  }
+  table.bcpTable th{
+    background: rgba(255,255,255,.03);
+    font-weight:800;
+    color:#e2e8f0;
+    white-space:nowrap;
+  }
+  table.bcpTable tr:last-child td{ border-bottom:none; }
+
+  .cellLeft{ text-align:left; }
+  .cellCenter{ text-align:center; }
+
+  .procName{
+    font-weight:800;
+    font-size:15px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  input, textarea{
+    width:100%;
+    padding:10px 10px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.10);
+    background:#0b1220;
+    color:#e2e8f0;
+    outline:none;
+    font-size:14px;
+    line-height:1.35;
+  }
+  textarea{ min-height:46px; resize:vertical; }
+
+  .lvl{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:12px;
+    border:1px solid rgba(255,255,255,.12);
+    white-space:nowrap;
+  }
+  .lvl.Critical{ color:#fecaca; border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.12); }
+  .lvl.High{ color:#fed7aa; border-color: rgba(249,115,22,.5); background: rgba(249,115,22,.12); }
+  .lvl.Medium{ color:#fde68a; border-color: rgba(234,179,8,.5); background: rgba(234,179,8,.12); }
+  .lvl.Low{ color:#bbf7d0; border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.12); }
+
+  .linkRow{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .chip{
+    display:inline-block;
+    padding:7px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#cbd5e1;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:800;
+  }
+  .chip:hover{ filter:brightness(1.08); }
+
+  .debugBox{
+    margin-top:12px;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.02);
+    color:#cbd5e1;
+    font-size:13px;
+    line-height:1.55;
+    display:none;
+    max-height:220px;
+    overflow:auto;
+  }
+  .debugBox pre{
+    margin:8px 0 0;
+    padding:10px;
+    border-radius:10px;
+    background: rgba(0,0,0,.25);
+    border:1px solid rgba(255,255,255,.06);
+    overflow:auto;
+    max-height:120px;
+  }
+
+  /* ===== 카드형 보기 ===== */
+  .viewToggle{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .pillBtn{
+    padding:10px 14px; border-radius:999px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.03);
+    color:#e2e8f0; font-weight:900; font-size:14px;
+  }
+  .pillBtn.active{
+    background:#60a5fa; color:#0b1220;
+    border-color: rgba(96,165,250,.6);
+  }
+
+  .cardGrid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap:12px;
+    margin-top:12px;
+  }
+  @media (max-width: 1100px){
+    .cardGrid{ grid-template-columns: 1fr; }
+  }
+
+  .procCard{
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.02);
+    border-radius:14px;
+    padding:14px;
+  }
+  .procTop{
+    display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+  }
+  .procMeta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; opacity:.9; font-size:13px; }
+  .kv{
+    display:inline-flex; gap:6px; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.03);
+  }
+  .warn{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(239,68,68,.35);
+    background: rgba(239,68,68,.10);
+    color:#fecaca;
+    font-weight:800;
+    font-size:13px;
+  }
+  .fieldGrid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+  @media (max-width: 900px){
+    .fieldGrid{ grid-template-columns: 1fr; }
+  }
+  .field label{
+    display:block; margin:0 0 6px; font-size:12px; opacity:.8; font-weight:800;
+  }
+  .cardLinks{ margin-top:12px; display:flex; justify-content:flex-end; }
+</style>
+</head>
+
+<body>
+
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">📄 BCP (업무 연속)</div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div>
+        <h3 style="margin:0;">부서별 BCP 핵심업무 시트</h3>
+        <div class="mini" style="margin-top:8px;">
+          • 데이터 원천: BIA에서 저장한 <b>bcp_core_processes</b> (sessionStorage 우선)<br/>
+          • 이 페이지에서 입력한 대체자원/수동절차는 <b>bcp_plans</b>에 저장됩니다.
+        </div>
+      </div>
+
+      <div class="linkRow" style="gap:10px;">
+        <div class="viewToggle">
+          <button class="pillBtn" id="btnSheet" onclick="setView('sheet')">부서별 시트</button>
+          <button class="pillBtn" id="btnCard" onclick="setView('card')">프로세스 카드</button>
+        </div>
+
+        <button class="btn2" onclick="toggleDebug()">데이터 확인</button>
+        <button class="btn2" onclick="reloadFromBIA()">BIA 다시 불러오기</button>
+        <button class="btn" onclick="savePlans(true)">저장</button>
+      </div>
+    </div>
+
+    <div class="debugBox" id="debugBox">
+      <div><b>저장소 상태</b> (sessionStorage → localStorage 순으로 확인)</div>
+      <div id="debugText" style="margin-top:6px;"></div>
+      <pre id="debugJson"></pre>
+    </div>
+  </div>
+
+  <div class="card" id="emptyBox" style="display:none;">
+    <h3>데이터가 없습니다</h3>
+    <div class="mini" style="margin-top:10px;">
+      BIA에서 부서/업무를 등록한 뒤 다시 와주세요.<br/>
+      (BIA 저장 키: <b>bcp_core_processes</b>)
+    </div>
+    <div style="margin-top:12px;">
+      <a class="chip" href="../risk-bia/bia.html">→ BIA로 이동</a>
+    </div>
+  </div>
+
+  <div id="bcpArea"></div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+
+<script>
+  const KEY_CORE = "bcp_core_processes";
+  const KEY_PLAN = "bcp_plans";
+
+  let currentView = sessionStorage.getItem("bcp_view") || "sheet";
+
+  function setView(v){
+    currentView = v;
+    sessionStorage.setItem("bcp_view", v);
+    const bs = document.getElementById("btnSheet");
+    const bc = document.getElementById("btnCard");
+    if(bs) bs.classList.toggle("active", v==="sheet");
+    if(bc) bc.classList.toggle("active", v==="card");
+    render();
+  }
+
+  /* ✅ SOP/EOP/DRP 링크에 BCP 컨텍스트 붙이기 */
+  function buildProcLink(type, dept, processName, level){
+    const params = new URLSearchParams();
+    if(dept) params.set("dept", dept);
+    if(processName) params.set("process", processName);
+    if(level) params.set("level", level);
+    params.set("from", "bcp");
+    return `./${type}.html?` + params.toString();
+  }
+
+  // ✅ 어떤 형태로 오든 표준 필드로 맞춘다
+  function normalizeItem(raw){
+    const department = raw.department ?? raw.dept ?? raw.team ?? "미분류";
+    const processName = raw.processName ?? raw.process ?? raw.name ?? raw.coreProcess ?? "";
+    const mtpd = raw.mtpd ?? raw.MTPD ?? raw.maxTolerablePeriod ?? raw.maxTolerable ?? "";
+    const rto = raw.rto ?? raw.RTO ?? raw.recoveryTimeObjective ?? "";
+    const level = raw.level ?? raw.criticality ?? raw.critical ?? raw.priority ?? "Medium";
+
+    const lv = (""+level).toLowerCase();
+    let fixed = "Medium";
+    if(lv.includes("critical") || lv.includes("치명")) fixed = "Critical";
+    else if(lv.includes("high") || lv.includes("높")) fixed = "High";
+    else if(lv.includes("low") || lv.includes("낮")) fixed = "Low";
+    else if(lv.includes("medium") || lv.includes("중")) fixed = "Medium";
+
+    return { department, processName, mtpd, rto, level: fixed };
+  }
+
+  function safeJsonParse(v, fallback){
+    try{ return JSON.parse(v); }catch(e){ return fallback; }
+  }
+
+  function loadCoreRaw(){
+    const s = sessionStorage.getItem(KEY_CORE);
+    if(s) return { source:"sessionStorage", value: safeJsonParse(s, []) };
+
+    const l = localStorage.getItem(KEY_CORE);
+    if(l) return { source:"localStorage", value: safeJsonParse(l, []) };
+
+    const legacyKeys = ["bcp_core_process", "bcp_core", "core_processes"];
+    for(const k of legacyKeys){
+      const sv = sessionStorage.getItem(k);
+      if(sv) return { source:`sessionStorage(${k})`, value: safeJsonParse(sv, []) };
+      const lv = localStorage.getItem(k);
+      if(lv) return { source:`localStorage(${k})`, value: safeJsonParse(lv, []) };
+    }
+    return { source:"none", value: [] };
+  }
+
+  function loadCore(){
+    const raw = loadCoreRaw();
+    const arr = Array.isArray(raw.value) ? raw.value : [];
+    const normalized = arr.map(normalizeItem).filter(x=>x.processName);
+    return { source: raw.source, data: normalized, raw: arr };
+  }
+
+  function loadPlans(){
+    return safeJsonParse(sessionStorage.getItem(KEY_PLAN) || "{}", {});
+  }
+
+  function savePlans(showAlert){
+    const plans = loadPlans();
+    document.querySelectorAll("[data-plankey]").forEach(el=>{
+      const key = el.getAttribute("data-plankey");
+      if(!plans[key]) plans[key] = {};
+      plans[key][el.name] = el.value;
+    });
+    sessionStorage.setItem(KEY_PLAN, JSON.stringify(plans));
+    if(showAlert) alert("BCP 입력값을 저장했습니다. (sessionStorage: bcp_plans)");
+  }
+
+  function reloadFromBIA(){ render(); }
+
+  function groupByDept(core){
+    const map = {};
+    core.forEach(item=>{
+      const dept = item.department || "미분류";
+      if(!map[dept]) map[dept] = [];
+      map[dept].push(item);
+    });
+    return map;
+  }
+
+  function planKey(dept, processName){
+    return (dept + "||" + processName).replace(/\s+/g," ").trim();
+  }
+
+  // ✅ 디버그 UI
+  function toggleDebug(){
+    const box = document.getElementById("debugBox");
+    box.style.display = (box.style.display === "none" || !box.style.display) ? "block" : "none";
+    if(box.style.display === "block") refreshDebug();
+  }
+
+  function refreshDebug(){
+    const { source, data, raw } = loadCore();
+    const keysS = Object.keys(sessionStorage).filter(k=>k.includes("bcp") || k.includes("core")).sort();
+    const keysL = Object.keys(localStorage).filter(k=>k.includes("bcp") || k.includes("core")).sort();
+
+    document.getElementById("debugText").innerHTML =
+      `• Core source: <b>${source}</b><br/>` +
+      `• core rows(normalized): <b>${data.length}</b><br/>` +
+      `• sessionStorage keys: ${keysS.length ? keysS.join(", ") : "(없음)"}<br/>` +
+      `• localStorage keys: ${keysL.length ? keysL.join(", ") : "(없음)"}`;
+
+    const sample = raw && raw.length ? raw.slice(0,3) : [];
+    document.getElementById("debugJson").textContent =
+      JSON.stringify({sample_raw: sample, sample_normalized: data.slice(0,3)}, null, 2);
+  }
+
+  function renderCardView(core, plans, area){
+    const grid = document.createElement("div");
+    grid.className = "cardGrid";
+
+    core.forEach(item=>{
+      const dept = item.department || "미분류";
+      const pName = item.processName || "";
+      const k = planKey(dept, pName);
+      const saved = plans[k] || {};
+      const lvl = item.level || "Medium";
+
+      const warn = (Number(item.rto) > Number(item.mtpd)) ? `
+        <div class="warn">⚠ RTO가 MTPD를 초과합니다 (RTO ${item.rto}h / MTPD ${item.mtpd}h)</div>
+      ` : "";
+
+      const card = document.createElement("div");
+      card.className = "procCard";
+      card.innerHTML = `
+        <div class="procTop">
+          <div>
+            <div style="font-weight:900; font-size:16px;">${pName}</div>
+            <div class="procMeta">
+              <span class="kv">🏷 <b>${dept}</b></span>
+              <span class="kv">MTPD <b>${item.mtpd}h</b></span>
+              <span class="kv">RTO <b>${item.rto}h</b></span>
+            </div>
+          </div>
+          <div><span class="lvl ${lvl}">${lvl}</span></div>
+        </div>
+        ${warn}
+
+        <div class="fieldGrid">
+          <div class="field">
+            <label>대체 인력</label>
+            <input data-plankey="${k}" name="altPeople"
+              placeholder="예: 당직조/백업 담당자"
+              value="${String(saved.altPeople||"").replace(/"/g,"&quot;")}"
+            />
+          </div>
+
+          <div class="field">
+            <label>대체 장소</label>
+            <input data-plankey="${k}" name="altSite"
+              placeholder="예: DR센터/재택/대체 사무실"
+              value="${String(saved.altSite||"").replace(/"/g,"&quot;")}"
+            />
+          </div>
+
+          <div class="field" style="grid-column:1 / -1;">
+            <label>수동 절차</label>
+            <textarea data-plankey="${k}" name="manualProcedure"
+              placeholder="예: 수동 처리 절차 요약(핵심 단계/체크리스트)">${String(saved.manualProcedure||"")}</textarea>
+          </div>
+        </div>
+
+        <div class="cardLinks">
+          <div class="linkRow">
+            <a class="chip" href="${buildProcLink('sop', dept, pName, lvl)}">SOP</a>
+            <a class="chip" href="${buildProcLink('eop', dept, pName, lvl)}">EOP</a>
+            <a class="chip" href="${buildProcLink('drp', dept, pName, lvl)}">DRP</a>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    area.appendChild(grid);
+  }
+
+  function render(){
+    const corePack = loadCore();
+    const core = corePack.data;
+    const plans = loadPlans();
+
+    const emptyBox = document.getElementById("emptyBox");
+    const area = document.getElementById("bcpArea");
+    area.innerHTML = "";
+
+    const bs = document.getElementById("btnSheet");
+    const bc = document.getElementById("btnCard");
+    if(bs) bs.classList.toggle("active", currentView==="sheet");
+    if(bc) bc.classList.toggle("active", currentView==="card");
+
+    if(!core || core.length === 0){
+      emptyBox.style.display = "block";
+      refreshDebug();
+      return;
+    }
+    emptyBox.style.display = "none";
+
+    if(currentView === "card"){
+      renderCardView(core, plans, area);
+      refreshDebug();
+      return;
+    }
+
+    const byDept = groupByDept(core);
+
+    Object.keys(byDept).forEach(dept=>{
+      const rows = byDept[dept];
+
+      const block = document.createElement("div");
+      block.className = "deptBlock";
+
+      const head = document.createElement("div");
+      head.className = "deptHead";
+      head.innerHTML = `
+        <div class="deptTitle">🏷 ${dept}</div>
+        <div class="mini">총 ${rows.length}건 · <span class="tag">BIA→BCP 연계</span></div>
+      `;
+      block.appendChild(head);
+
+      const wrap = document.createElement("div");
+      wrap.className = "tableWrap";
+
+      const table = document.createElement("table");
+      table.className = "bcpTable";
+      table.innerHTML = `
+        <colgroup>
+          <col class="c1"/><col class="c2"/><col class="c3"/><col class="c4"/>
+          <col class="c5"/><col class="c6"/><col class="c7"/><col class="c8"/>
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="cellLeft">핵심업무</th>
+            <th class="cellCenter">MTPD</th>
+            <th class="cellCenter">RTO</th>
+            <th class="cellCenter">중요도</th>
+            <th class="cellLeft">대체 인력</th>
+            <th class="cellLeft">대체 장소</th>
+            <th class="cellLeft">수동 절차</th>
+            <th class="cellCenter">관련 문서</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+
+      const tbody = table.querySelector("tbody");
+
+      rows.forEach(item=>{
+        const pName = item.processName || "";
+        const k = planKey(dept, pName);
+        const saved = plans[k] || {};
+        const lvl = item.level || "Medium";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="cellLeft"><div class="procName" title="${String(pName).replace(/"/g,"&quot;")}">${pName}</div></td>
+          <td class="cellCenter">${item.mtpd !== "" ? item.mtpd : ""}h</td>
+          <td class="cellCenter">${item.rto !== "" ? item.rto : ""}h</td>
+          <td class="cellCenter"><span class="lvl ${lvl}">${lvl}</span></td>
+
+          <td class="cellLeft">
+            <input
+              data-plankey="${k}"
+              name="altPeople"
+              placeholder="예: 당직조/백업 담당자"
+              value="${String(saved.altPeople||"").replace(/"/g,"&quot;")}"
+            />
+          </td>
+
+          <td class="cellLeft">
+            <input
+              data-plankey="${k}"
+              name="altSite"
+              placeholder="예: DR센터/재택/대체 사무실"
+              value="${String(saved.altSite||"").replace(/"/g,"&quot;")}"
+            />
+          </td>
+
+          <td class="cellLeft">
+            <textarea
+              data-plankey="${k}"
+              name="manualProcedure"
+              placeholder="예: 수동 처리 절차 요약(핵심 단계/체크리스트)"
+            >${String(saved.manualProcedure||"")}</textarea>
+          </td>
+
+          <td class="cellCenter">
+            <div class="linkRow">
+              <a class="chip" href="${buildProcLink('sop', dept, pName, lvl)}">SOP</a>
+              <a class="chip" href="${buildProcLink('eop', dept, pName, lvl)}">EOP</a>
+              <a class="chip" href="${buildProcLink('drp', dept, pName, lvl)}">DRP</a>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      wrap.appendChild(table);
+      block.appendChild(wrap);
+      area.appendChild(block);
+    });
+
+    refreshDebug();
+  }
+
+  // 최초 로드: 저장된 뷰로 시작
+  setView(currentView);
+
+  // 자동 저장(알림 없음)
+  window.addEventListener("beforeunload", ()=>{
+    try{ savePlans(false); }catch(e){}
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>System Registry (업무 시스템 목록) | Governance</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  .mini{ opacity:.85; font-size:14px; line-height:1.6; }
+  .hint{ opacity:.85; font-size:15px; line-height:1.6; }
+  .page-title{ font-size:24px; }
+
+  .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .row > *{ flex: 1 1 220px; }
+
+  input, select, textarea{
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.10);
+    background:#0b1220;
+    color:#e2e8f0;
+    outline:none;
+    font-size:16px;
+  }
+  textarea{ min-height:90px; resize:vertical; }
+
+  label{ font-size:14px; font-weight:900; opacity:.9; display:block; margin-bottom:6px; }
+
+  .btn{
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.18);
+    color:#e9eefc;
+    padding: 10px 14px;
+    border-radius: 12px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn.primary{ background:#60a5fa; color:#0b1220; border-color: rgba(96,165,250,.6); }
+  .btn.danger{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); color:#fecaca; }
+  .btn.ghost{ background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.12); color:#e2e8f0; }
+
+  .pill{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    font-size:13px;
+    color:#cbd5e1;
+    margin-right:8px;
+    margin-bottom:8px;
+    white-space:nowrap;
+  }
+
+  .grid2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+  @media (max-width: 1100px){
+    .grid2{ grid-template-columns: 1fr; }
+  }
+
+  table{
+    width:100%;
+    border-collapse: collapse;
+    overflow:hidden;
+    border-radius: 14px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.12);
+    table-layout: fixed;
+    font-size:15px;
+  }
+  th, td{
+    padding:10px 10px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    vertical-align: top;
+    line-height:1.5;
+  }
+  th{ text-align:left; color:#a8b3d4; font-weight:900; font-size:14px; }
+  tr:last-child td{ border-bottom:none; }
+
+  table thead th:nth-child(1), table tbody td:nth-child(1){ width: 16%; }
+  table thead th:nth-child(2), table tbody td:nth-child(2){ width: 18%; }
+  table thead th:nth-child(3), table tbody td:nth-child(3){ width: 24%; }
+  table thead th:nth-child(4), table tbody td:nth-child(4){ width: 18%; }
+  table thead th:nth-child(5), table tbody td:nth-child(5){ width: 10%; }
+  table thead th:nth-child(6), table tbody td:nth-child(6){ width: 14%; }
+
+  td:nth-child(2), td:nth-child(5){ white-space:nowrap; }
+  td:nth-child(3){ word-break: break-word; }
+  td:nth-child(6){ white-space:nowrap; }
+
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+  .tag{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border:1px solid rgba(255,255,255,.14);
+    color:#e9eefc;
+    background: rgba(255,255,255,.03);
+    white-space:nowrap;
+  }
+  .critical { border-color: rgba(255,80,80,.55); background: rgba(255,80,80,.10); color:#fecaca; }
+  .high { border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
+  .medium { border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
+  .low { border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color:#bbf7d0; }
+
+  .toast{
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    max-width: 420px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(10,12,20,.92);
+    color:#e9eefc;
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: 0 10px 26px rgba(0,0,0,.35);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events:none;
+    transition: .2s ease;
+    z-index: 9999;
+    font-size: 13px;
+  }
+  .toast.on{ opacity:1; transform: translateY(0); }
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">📘 System Registry (업무 시스템 목록)</div>
+
+  <div class="card">
+    <div class="hint">
+      목적: DRP/EOP/Training/Audit에서 동일한 시스템/설비 명칭을 쓰도록 “표준 목록 + 용어 정의”를 관리합니다.<br/>
+      저장 키: <b>localStorage["bcms_system_registry_v1"]</b>
+    </div>
+
+    <div style="margin-top:12px;">
+      <span class="pill">표준 시스템명</span>
+      <span class="pill">설비/장비</span>
+      <span class="pill">소유부서</span>
+      <span class="pill">중요도</span>
+      <span class="pill">용어정의</span>
+      <span class="pill">유형/위치(설비형 EOP 연동)</span>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin:0;">등록/수정</h3>
+      <div class="mini" style="margin-top:8px;">
+        • 표시명: 화면에 보여줄 이름 (예: UPS (무정전전원장치))<br/>
+        • 시스템ID: 내부 식별자 (예: UPS-ROOM-01)<br/>
+        • 유형/위치: EOP(설비형) 매칭 정확도 향상용(없어도 동작은 함)
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div>
+          <label>카테고리 (Category)</label>
+          <select id="f_category">
+            <option value="IT Service (IT 서비스)">IT Service (IT 서비스)</option>
+            <option value="Security (보안)">Security (보안)</option>
+            <option value="Power (전력)">Power (전력)</option>
+            <option value="Cooling (냉각)">Cooling (냉각)</option>
+            <option value="Network (네트워크)">Network (네트워크)</option>
+            <option value="Facility (시설)">Facility (시설)</option>
+          </select>
+        </div>
+        <div>
+          <label>시스템ID (System ID)</label>
+          <input id="f_systemId" placeholder="예: UPS-ROOM-01" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div>
+          <label>표시명 (Display Name)</label>
+          <input id="f_displayName" placeholder="예: UPS (무정전전원장치)" />
+        </div>
+        <div>
+          <label>소유부서 (Owner Dept)</label>
+          <input id="f_ownerDept" placeholder="예: IT인프라팀 / 시설팀" />
+        </div>
+      </div>
+
+      <!-- ✅ 신규: 유형/위치 -->
+      <div class="row" style="margin-top:12px;">
+        <div>
+          <label>유형 (Type, 선택)</label>
+          <select id="f_type">
+            <option value="">(미지정)</option>
+            <option value="UPS">UPS</option>
+            <option value="Generator">Generator</option>
+            <option value="Utility">Utility</option>
+            <option value="Switchgear/Breaker">Switchgear/Breaker</option>
+            <option value="Transfer">Transfer</option>
+            <option value="Cooling/CRAC">Cooling/CRAC</option>
+            <option value="Chiller">Chiller</option>
+            <option value="Network/Core">Network/Core</option>
+            <option value="Security/System">Security/System</option>
+          </select>
+        </div>
+        <div>
+          <label>위치 (Location, 선택)</label>
+          <input id="f_location" placeholder="예: UPS Room / Electrical Room / IDC 3F" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div>
+          <label>중요도 (Criticality)</label>
+          <select id="f_criticality">
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div>
+          <label>태그 (Tags)</label>
+          <input id="f_tags" placeholder="예: UPS, Power, Battery, EPMS (콤마)" />
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label>용어 정의/설명 (Definition)</label>
+        <textarea id="f_definition" placeholder="예: 상용전원 장애 시 부하에 안정적 전원을 공급"></textarea>
+      </div>
+
+      <div class="actions" style="margin-top:12px;">
+        <button class="btn ghost" onclick="resetForm()">입력 초기화</button>
+        <button class="btn primary" id="btnSave" onclick="saveItem()">저장</button>
+        <button class="btn danger" onclick="seedDemo()">데모 시드</button>
+        <button class="btn" onclick="exportRegistry()">Export</button>
+      </div>
+
+      <div class="mini" style="margin-top:10px; opacity:.8;">
+        Tip: Power/Facility 설비 항목(UPS/발전기/수전/배전/절체)을 등록하면 EOP에서 드롭다운 연동이 바로 됩니다.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="toolbarRow" style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;">
+        <h3 style="margin:0;">목록</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+          <input id="q" placeholder="검색: 이름/ID/태그/설명/유형/위치" style="max-width:320px;" />
+          <button class="btn" onclick="renderTable()">검색</button>
+          <button class="btn danger" onclick="resetAll()">전체 삭제</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>카테고리</th>
+              <th>시스템ID</th>
+              <th>표시명</th>
+              <th>소유부서</th>
+              <th>중요도</th>
+              <th style="text-align:right;">액션</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="mini" style="margin-top:10px; opacity:.8;">
+        • “수정” 클릭 시 왼쪽 폼에 로드됩니다.<br/>
+        • 유형/위치는 표에서 생략했지만 Export 및 EOP 연동에서 사용됩니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../assets/sidebar.js"></script>
+<script>
+  const KEY = "bcms_system_registry_v1";
+  let editingId = null;
+
+  const $ = (sel)=>document.querySelector(sel);
+
+  function toast(msg){
+    const t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("on");
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(()=>t.classList.remove("on"), 1600);
+  }
+
+  function safeParse(v, fallback){
+    try{ return JSON.parse(v); }catch(e){ return fallback; }
+  }
+
+  function loadAll(){
+    const arr = safeParse(localStorage.getItem(KEY) || "[]", []);
+    return Array.isArray(arr) ? arr : [];
+  }
+
+  function saveAll(arr){
+    localStorage.setItem(KEY, JSON.stringify(arr));
+  }
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
+  }
+
+  function tagClass(level){
+    const v = String(level||"").toLowerCase();
+    if(v==="critical") return "critical";
+    if(v==="high") return "high";
+    if(v==="medium") return "medium";
+    if(v==="low") return "low";
+    return "";
+  }
+
+  function resetForm(){
+    editingId = null;
+    $("#f_category").value = "IT Service (IT 서비스)";
+    $("#f_systemId").value = "";
+    $("#f_displayName").value = "";
+    $("#f_ownerDept").value = "";
+    $("#f_type").value = "";
+    $("#f_location").value = "";
+    $("#f_criticality").value = "Critical";
+    $("#f_tags").value = "";
+    $("#f_definition").value = "";
+    $("#btnSave").textContent = "저장";
+  }
+
+  function saveItem(){
+    const category = $("#f_category").value;
+    const systemId = ($("#f_systemId").value || "").trim();
+    const displayName = ($("#f_displayName").value || "").trim();
+    const ownerDept = ($("#f_ownerDept").value || "").trim();
+    const type = ($("#f_type").value || "").trim();
+    const location = ($("#f_location").value || "").trim();
+    const criticality = $("#f_criticality").value;
+    const tags = ($("#f_tags").value || "").split(",").map(x=>x.trim()).filter(Boolean);
+    const definition = ($("#f_definition").value || "").trim();
+
+    if(!systemId || !displayName){
+      alert("시스템ID와 표시명은 필수입니다.");
+      return;
+    }
+
+    const all = loadAll();
+
+    const dup = all.find(x => x.systemId === systemId && x.id !== editingId);
+    if(dup){
+      alert("같은 시스템ID가 이미 존재합니다. 다른 ID를 입력하세요.");
+      return;
+    }
+
+    if(editingId){
+      const idx = all.findIndex(x=>x.id === editingId);
+      if(idx >= 0){
+        all[idx] = {
+          ...all[idx],
+          category, systemId, displayName, ownerDept, type, location, criticality, tags, definition,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    }else{
+      all.unshift({
+        id: "SYSREG-" + Date.now(),
+        category, systemId, displayName, ownerDept, type, location, criticality, tags, definition,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    saveAll(all);
+    toast("저장 완료");
+    resetForm();
+    renderTable();
+  }
+
+  function editItem(id){
+    const all = loadAll();
+    const item = all.find(x=>x.id===id);
+    if(!item) return;
+
+    editingId = id;
+    $("#f_category").value = item.category || "IT Service (IT 서비스)";
+    $("#f_systemId").value = item.systemId || "";
+    $("#f_displayName").value = item.displayName || "";
+    $("#f_ownerDept").value = item.ownerDept || "";
+    $("#f_type").value = item.type || "";
+    $("#f_location").value = item.location || "";
+    $("#f_criticality").value = item.criticality || "Critical";
+    $("#f_tags").value = (item.tags || []).join(", ");
+    $("#f_definition").value = item.definition || "";
+    $("#btnSave").textContent = "수정 저장";
+    toast("수정 모드");
+  }
+
+  function deleteItem(id){
+    if(!confirm("이 항목을 삭제할까요?")) return;
+    const all = loadAll().filter(x=>x.id!==id);
+    saveAll(all);
+    toast("삭제 완료");
+    renderTable();
+  }
+
+  function exportRegistry(){
+    const all = loadAll();
+    const blob = new Blob([JSON.stringify(all, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "bcms_system_registry_v1.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function resetAll(){
+    if(!confirm("업무 시스템 목록을 모두 삭제할까요?")) return;
+    localStorage.removeItem(KEY);
+    resetForm();
+    renderTable();
+    toast("전체 삭제 완료");
+  }
+
+  function seedDemo(){
+    const all = loadAll();
+    const demo = [
+      {
+        id:"SYSREG-DEMO-1",
+        category:"Security (보안)",
+        systemId:"IAM-SSO-01",
+        displayName:"IAM / SSO (인증/접근관리)",
+        ownerDept:"정보보안팀",
+        type:"Security/System",
+        location:"HQ / Auth Zone",
+        criticality:"High",
+        tags:["IAM","SSO","Login","Access"],
+        definition:"사용자 인증(로그인) 및 권한(접근제어)을 담당하는 핵심 시스템.",
+        createdAt:new Date().toISOString(),
+        updatedAt:new Date().toISOString()
+      },
+      {
+        id:"SYSREG-DEMO-2",
+        category:"IT Service (IT 서비스)",
+        systemId:"DB-PRIMARY-01",
+        displayName:"Primary DB (주 데이터베이스)",
+        ownerDept:"IT인프라팀",
+        type:"IT Service",
+        location:"IDC / Core DB",
+        criticality:"Critical",
+        tags:["DB","Storage","Core"],
+        definition:"핵심 트랜잭션 데이터가 저장되는 주 데이터베이스.",
+        createdAt:new Date().toISOString(),
+        updatedAt:new Date().toISOString()
+      },
+      {
+        id:"SYSREG-DEMO-3",
+        category:"Power (전력)",
+        systemId:"UPS-ROOM-01",
+        displayName:"UPS (무정전전원장치)",
+        ownerDept:"IT인프라팀",
+        type:"UPS",
+        location:"UPS Room",
+        criticality:"Critical",
+        tags:["UPS","Power","Battery","EPMS"],
+        definition:"상용전원 장애 시 부하에 안정적인 전원을 공급하는 무정전전원장치.",
+        createdAt:new Date().toISOString(),
+        updatedAt:new Date().toISOString()
+      },
+      {
+        id:"SYSREG-DEMO-4",
+        category:"Power (전력)",
+        systemId:"GEN-A-01",
+        displayName:"Generator A (비상발전기 A)",
+        ownerDept:"시설팀",
+        type:"Generator",
+        location:"Generator Room",
+        criticality:"Critical",
+        tags:["Generator","Fuel","ATS"],
+        definition:"정전 시 비상 전력을 공급하는 발전기(주요 라인).",
+        createdAt:new Date().toISOString(),
+        updatedAt:new Date().toISOString()
+      }
+    ];
+
+    const merged = [...demo.filter(d => !all.some(x=>x.id===d.id)), ...all];
+    saveAll(merged);
+    toast("데모 시드 생성");
+    renderTable();
+  }
+
+  function renderTable(){
+    const all = loadAll();
+    const q = ($("#q").value || "").trim().toLowerCase();
+
+    const filtered = !q ? all : all.filter(x => {
+      const hay = [
+        x.category, x.systemId, x.displayName, x.ownerDept, x.type, x.location, x.criticality,
+        (x.tags||[]).join(" "),
+        x.definition
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+
+    const tbody = $("#tbody");
+    tbody.innerHTML = "";
+
+    if(!filtered.length){
+      tbody.innerHTML = `<tr><td colspan="6" style="opacity:.8;">등록된 항목이 없습니다. 왼쪽에서 추가하거나 “데모 시드”를 눌러보세요.</td></tr>`;
+      return;
+    }
+
+    filtered.forEach(x=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${esc(x.category || "-")}</td>
+        <td class="mono">${esc(x.systemId || "-")}</td>
+        <td>${esc(x.displayName || "-")}</td>
+        <td>${esc(x.ownerDept || "-")}</td>
+        <td><span class="tag ${tagClass(x.criticality)}">${esc(x.criticality || "-")}</span></td>
+        <td style="text-align:right;">
+          <button class="btn ghost" onclick="editItem('${esc(x.id)}')">수정</button>
+          <button class="btn danger" onclick="deleteItem('${esc(x.id)}')">삭제</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  $("#q").addEventListener("input", ()=>{ clearTimeout(window.__t); window.__t=setTimeout(renderTable, 120); });
+  renderTable();
+</script>
+</body>
+</html>

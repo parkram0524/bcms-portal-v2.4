@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dependency & Resource Mapping | Risk & BIA</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+<style>
+  /* ===== Large mode (확정 크기) ===== */
+  .main { font-size: 17px; }
+  .card { font-size: 17px; }
+  .page-title { font-size: 26px; font-weight: 800; }
+  .card h3 { font-size: 20px; font-weight: 700; }
+  .muted{ color:#a8b3d4; font-size:16px; line-height:1.7; margin:6px 0 0 0; }
+
+  /* Layout */
+  .grid{ display:grid; grid-template-columns: 380px 1fr; gap:12px; }
+  @media (max-width: 1100px){ .grid{ grid-template-columns: 1fr; } }
+
+  .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .controls select, .controls input{
+    height:40px; padding:0 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; outline:none;
+    font-size:16px; min-width: 220px;
+  }
+  .controls input{ min-width: 260px; }
+  .chk{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 10px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    color:#e8eeff; font-size:15px;
+  }
+  .btn{
+    height:40px; padding:0 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; cursor:pointer;
+    font-size:16px;
+  }
+  .btn:hover{ background: rgba(255,255,255,.05); }
+
+  /* list */
+  .list{
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:14px;
+    overflow:hidden;
+    background: rgba(255,255,255,.02);
+  }
+  .listHead{
+    padding:12px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    color:#a8b3d4; font-size:14px;
+  }
+  .badge b{ color:#e8eeff; }
+
+  .listBody{ max-height: 640px; overflow:auto; }
+  .item{ padding:12px; border-bottom:1px solid rgba(255,255,255,.08); cursor:pointer; }
+  .item:hover{ background: rgba(255,255,255,.03); }
+  .item.active{ outline:2px solid rgba(120,180,255,.55); outline-offset:-2px; background: rgba(120,180,255,.08); }
+  .itemTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .itemTitle{ margin:0; font-weight:800; font-size:16px; color:#e8eeff; }
+  .itemSub{ margin:4px 0 0 0; font-size:14px; color:#a8b3d4; line-height:1.5; }
+  .tagCore{
+    display:inline-flex; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);
+    background: rgba(255,90,90,.10);
+    color:#ffb4b4; font-size:13px; white-space:nowrap;
+  }
+  .tagNon{
+    display:inline-flex; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.02);
+    color:#a8b3d4; font-size:13px; white-space:nowrap;
+  }
+
+  /* editor */
+  .formHead{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:10px; flex-wrap:wrap; margin-bottom:10px;
+  }
+  .title2{ margin:0; font-size:20px; font-weight:900; }
+  .metaRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    color:#a8b3d4; font-size:14px;
+  }
+  .pill b{ color:#e8eeff; }
+
+  .section{ margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.10); }
+  .secTitle{ margin:0; font-size:18px; font-weight:900; display:flex; align-items:center; gap:10px; }
+  .secHint{ margin:6px 0 0 0; color:#a8b3d4; font-size:15px; line-height:1.6; }
+
+  .tagInputRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .tagInputRow input, .tagInputRow select{
+    height:40px; padding:0 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; outline:none;
+    font-size:16px; min-width: 280px;
+    flex: 1 1 280px;
+  }
+  .chipRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; font-size:15px;
+  }
+  .chip button{
+    width:26px; height:26px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; cursor:pointer; line-height:1;
+  }
+  .chip button:hover{ background: rgba(255,255,255,.06); }
+
+  .linkRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .linkBtn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#60a5fa; text-decoration:none;
+    font-size:16px;
+  }
+  .linkBtn:hover{ background: rgba(255,255,255,.05); }
+
+  .empty{
+    padding:16px;
+    border:1px dashed rgba(255,255,255,.18);
+    border-radius:14px;
+    color:#a8b3d4;
+    background: rgba(255,255,255,.02);
+    line-height:1.7;
+    font-size:16px;
+  }
+
+  /* Reverse index chips clickable */
+  .chipLink{ cursor:pointer; }
+  .chipLink:hover{ background: rgba(120,180,255,.10); border-color: rgba(120,180,255,.28); }
+  .miniCore{ font-size:12px; color:#ffb4b4; margin-left:6px; }
+
+  /* Simple warning */
+  .warn{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,150,80,.22);
+    background: rgba(255,150,80,.08);
+    color:#ffd2b0;
+    font-size:15px;
+    line-height:1.6;
+    display:none;
+  }
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+
+  <div class="page-title">🔗 Dependency & Resource Mapping (ISO 22301)</div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">목표</h3>
+    <p class="muted">
+      ISO 22301 흐름에 맞춰 업무별 <b>필수 자원</b>을 구조화합니다.
+      <b>CoreFinal</b> 업무를 우선으로 보되, 전체 업무도 함께 관리합니다.
+    </p>
+
+    <div class="controls">
+      <select id="deptFilter">
+        <option value="">전체 부서</option>
+      </select>
+      <input id="searchInput" type="text" placeholder="업무/부서 검색 (예: 결제, 관제, EDR)"/>
+      <label class="chk"><input id="coreOnly" type="checkbox"/> CoreFinal만 보기</label>
+      <button class="btn" id="btnRefresh">새로고침</button>
+    </div>
+
+    <div class="linkRow">
+      <a class="linkBtn" href="./index.html">→ 대시보드</a>
+      <a class="linkBtn" href="./bia.html">→ BIA</a>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="card">
+      <div class="list">
+        <div class="listHead">
+          <div class="badge">업무 <b id="countTotal">0</b>개</div>
+          <div class="badge">CoreFinal <b id="countCore">0</b>개</div>
+        </div>
+        <div class="listBody" id="processList"></div>
+      </div>
+      <p class="muted" style="margin-top:10px;">
+        리스트는 <b>sessionStorage.bcp_core_processes</b>를 우선 사용합니다.
+      </p>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card" id="editorCard">
+      <div id="emptyEditor" class="empty">
+        왼쪽에서 업무를 선택하면 ISO 22301 기준 자원을 태그로 정리할 수 있습니다.
+      </div>
+
+      <div id="editor" style="display:none;">
+        <div class="formHead">
+          <div>
+            <div class="title2" id="selTitle">-</div>
+            <div class="metaRow" id="selMeta"></div>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" id="btnSave">저장</button>
+            <button class="btn" id="btnReset">이 업무만 초기화</button>
+          </div>
+        </div>
+
+        <!-- 6 Categories -->
+        <div class="section">
+          <div class="secTitle">👥 인력 (People)</div>
+          <div class="secHint">핵심 역할/직무, 최소 인원, 대체 가능 여부</div>
+          <div class="tagInputRow">
+            <input id="in_people" placeholder="예: 관제 2명, 교대조장, DB 엔지니어"/>
+            <button class="btn" data-add="people">추가</button>
+          </div>
+          <div class="chipRow" id="chips_people"></div>
+        </div>
+
+        <div class="section">
+          <div class="secTitle">💾 정보 (Information / Data)</div>
+          <div class="secHint">핵심 데이터/문서/기록/지식</div>
+          <div class="tagInputRow">
+            <input id="in_info" placeholder="예: 고객 DB, SIEM 로그, 운영 SOP, 계약서"/>
+            <button class="btn" data-add="info">추가</button>
+          </div>
+          <div class="chipRow" id="chips_info"></div>
+        </div>
+
+        <div class="section">
+          <div class="secTitle">🖥 시스템·ICT (Technology / ICT)</div>
+          <div class="secHint">애플리케이션/서버/네트워크/보안장비/클라우드</div>
+          <div class="tagInputRow">
+            <input id="in_ict" placeholder="예: SIEM, EDR, FW, VPN, AD"/>
+            <button class="btn" data-add="ict">추가</button>
+          </div>
+          <div class="chipRow" id="chips_ict"></div>
+        </div>
+
+        <div class="section">
+          <div class="secTitle">🏢 시설 (Facilities)</div>
+          <div class="secHint">IDC/사무실/특정 구역/대체 사업장</div>
+          <div class="tagInputRow">
+            <input id="in_facilities" placeholder="예: 안양 IDC, 관제실, 방재실, 대체근무지"/>
+            <button class="btn" data-add="facilities">추가</button>
+          </div>
+          <div class="chipRow" id="chips_facilities"></div>
+        </div>
+
+        <div class="section">
+          <div class="secTitle">🤝 외부기관·공급자 (Suppliers)</div>
+          <div class="secHint">외주/벤더/통신사/규제기관/협력사</div>
+          <div class="tagInputRow">
+            <input id="in_suppliers" placeholder="예: 보안관제 외주사, 통신사, MSP, KISA"/>
+            <button class="btn" data-add="suppliers">추가</button>
+          </div>
+          <div class="chipRow" id="chips_suppliers"></div>
+        </div>
+
+        <div class="section">
+          <div class="secTitle">🛠 장비·물자 (Equipment)</div>
+          <div class="secHint">특수 장비/설비/재고/물자</div>
+          <div class="tagInputRow">
+            <input id="in_equipment" placeholder="예: 예비 스위치, 보안키, 콘솔 노트북"/>
+            <button class="btn" data-add="equipment">추가</button>
+          </div>
+          <div class="chipRow" id="chips_equipment"></div>
+        </div>
+
+        <div class="section">
+          <div class="secTitle">🧾 메모</div>
+          <div class="secHint">추가 설명(선택)</div>
+          <div class="tagInputRow">
+            <input id="in_notes" placeholder="예: 야간 교대 시 승인 프로세스 필요"/>
+          </div>
+        </div>
+
+        <!-- Reverse Index Simple -->
+        <div class="section">
+          <div class="secTitle">🔎 시스템 역색인 (심플)</div>
+          <div class="secHint">시스템(ICT) 태그 선택 → 해당 시스템에 의존하는 업무 목록</div>
+          <div class="tagInputRow">
+            <select id="revIctSelect">
+              <option value="">시스템 선택 (예: SIEM)</option>
+            </select>
+          </div>
+
+          <!-- ✅ 심플 경고 1줄 -->
+          <div id="revWarn" class="warn"></div>
+
+          <div class="chipRow" id="revIctList"></div>
+        </div>
+
+        <p class="muted" style="margin-top:12px;">저장: <b>sessionStorage.risk_bia_dependency_map_v1</b></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+<script src="./risk-bia-data.js"></script>
+
+<script>
+  const KEY_DEP = "risk_bia_dependency_map_v1";
+  const KEY_DEPT = "riskBiaDep_dept";
+  const KEY_Q = "riskBiaDep_q";
+  const KEY_CORE = "riskBiaDep_coreOnly";
+  const MBCO_MIN = 96;
+
+  const $ = (s)=>document.querySelector(s);
+  const esc = (s)=>String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+  const toNum = (v)=>{
+    if (v===null||v===undefined||v==="") return null;
+    const x = Number(v);
+    return Number.isFinite(x) ? x : null;
+  };
+  function minutesText(min){
+    const m = toNum(min);
+    if (m===null) return "-";
+    if (m < 60) return `${m}m`;
+    if (m % 60 === 0) return `${m/60}h`;
+    return `${Math.floor(m/60)}h ${m%60}m`;
+  }
+  function loadJSON(key, fallback){
+    try{ const raw = sessionStorage.getItem(key); if(!raw) return fallback; return JSON.parse(raw); }
+    catch(e){ return fallback; }
+  }
+  function saveJSON(key, value){ try{ sessionStorage.setItem(key, JSON.stringify(value)); }catch(e){} }
+  function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
+
+  function normalizeItem(x){
+    const dept = x.dept || x.department || x.org || "";
+    const work = x.work || x.process || x.processName || x.name || "";
+    const impact = toNum(x.impact ?? x.impactScore ?? x.impact_score);
+    const mtpd = toNum(x.mtpd ?? x.mtpdMin ?? x.mtpd_minutes);
+    const rto  = toNum(x.rto  ?? x.rtoMin  ?? x.rto_minutes);
+    const coreAuto   = !!(x.coreAuto ?? x.core_auto);
+    const coreManual = !!(x.coreManual ?? x.core_manual);
+    const coreFinal  = !!(x.coreFinal ?? x.core_final ?? (coreAuto || coreManual));
+    const resourcesText = (x.resources ?? x.resourceSummary ?? x.resource_summary ?? "");
+    return { dept, work, impact, mtpd, rto, coreFinal, resourcesText };
+  }
+  function getAllProcesses(){
+    const bcp = loadJSON("bcp_core_processes", null);
+    if (Array.isArray(bcp) && bcp.length) return bcp.map(normalizeItem);
+    if (window.RiskBiaData){
+      try{
+        if (typeof window.RiskBiaData.getAll === "function"){
+          const arr = window.RiskBiaData.getAll();
+          if (Array.isArray(arr) && arr.length) return arr.map(normalizeItem);
+        }
+      }catch(e){}
+    }
+    return [];
+  }
+
+  function getDepMap(){
+    const m = loadJSON(KEY_DEP, []);
+    return Array.isArray(m) ? m : [];
+  }
+  function setDepMap(m){ saveJSON(KEY_DEP, m); }
+
+  function procKey(p){ return `${p.dept}|||${p.work}`; }
+
+  function ensureEntry(p){
+    const map = getDepMap();
+    const key = procKey(p);
+    let entry = map.find(x=>x.key===key);
+
+    if (!entry){
+      entry = {
+        key,
+        dept: p.dept,
+        work: p.work,
+        coreFinal: !!p.coreFinal,
+        meta: { impact: p.impact, mtpd: p.mtpd, rto: p.rto },
+        resources: { people:[], info:[], ict:[], facilities:[], suppliers:[], equipment:[] },
+        notes: p.resourcesText ? String(p.resourcesText).slice(0, 300) : ""
+      };
+      map.push(entry);
+      setDepMap(map);
+    }else{
+      entry.dept = p.dept;
+      entry.work = p.work;
+      entry.coreFinal = !!p.coreFinal;
+      entry.meta = { impact: p.impact, mtpd: p.mtpd, rto: p.rto };
+      if (!entry.resources){
+        entry.resources = { people:[], info:[], ict:[], facilities:[], suppliers:[], equipment:[] };
+      }
+      setDepMap(map);
+    }
+    return entry;
+  }
+
+  function updateEntry(entry){
+    const map = getDepMap();
+    const idx = map.findIndex(x=>x.key===entry.key);
+    if (idx >= 0) map[idx] = entry;
+    else map.push(entry);
+    setDepMap(map);
+  }
+
+  function resetEntry(key){
+    const map = getDepMap();
+    const idx = map.findIndex(x=>x.key===key);
+    if (idx >= 0){ map.splice(idx,1); setDepMap(map); }
+  }
+
+  let ALL = [];
+  let ACTIVE_KEY = null;
+
+  function persistFilters(){
+    sessionStorage.setItem(KEY_DEPT, $("#deptFilter").value || "");
+    sessionStorage.setItem(KEY_Q, $("#searchInput").value || "");
+    sessionStorage.setItem(KEY_CORE, $("#coreOnly").checked ? "1" : "0");
+  }
+  function restoreFilters(){
+    $("#searchInput").value = sessionStorage.getItem(KEY_Q) || "";
+    $("#coreOnly").checked = (sessionStorage.getItem(KEY_CORE) === "1");
+  }
+  function buildDeptOptions(){
+    const sel = $("#deptFilter");
+    const prev = sessionStorage.getItem(KEY_DEPT) || "";
+    const depts = uniq(ALL.map(x=>x.dept)).sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = `<option value="">전체 부서</option>` + depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+    sel.value = depts.includes(prev) ? prev : "";
+  }
+  function applyFilters(list){
+    const dept = $("#deptFilter").value;
+    const q = $("#searchInput").value.trim().toLowerCase();
+    const coreOnly = $("#coreOnly").checked;
+
+    return list.filter(p=>{
+      if (dept && p.dept !== dept) return false;
+      if (coreOnly && !p.coreFinal) return false;
+      if (q){
+        const hay = `${p.dept} ${p.work}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderList(){
+    const filtered = applyFilters(ALL);
+    $("#countTotal").textContent = filtered.length;
+    $("#countCore").textContent = filtered.filter(x=>x.coreFinal).length;
+
+    const mount = $("#processList");
+    if (!filtered.length){
+      mount.innerHTML = `<div class="empty" style="margin:12px;">표시할 업무가 없습니다.</div>`;
+      return;
+    }
+
+    filtered.sort((a,b)=>{
+      if ((b.coreFinal?1:0)!==(a.coreFinal?1:0)) return (b.coreFinal?1:0)-(a.coreFinal?1:0);
+      const bi=(b.impact??-Infinity), ai=(a.impact??-Infinity);
+      if (bi!==ai) return bi-ai;
+      const am=(a.mtpd??Infinity), bm=(b.mtpd??Infinity);
+      return am-bm;
+    });
+
+    mount.innerHTML = filtered.map(p=>{
+      const key = procKey(p);
+      const active = (key===ACTIVE_KEY);
+      const tag = p.coreFinal ? `<span class="tagCore">CoreFinal</span>` : `<span class="tagNon">Non-core</span>`;
+      return `
+        <div class="item ${active?"active":""}" data-key="${esc(key)}">
+          <div class="itemTop">
+            <div style="min-width:0;">
+              <p class="itemTitle">${esc(p.work||"-")}</p>
+              <p class="itemSub">${esc(p.dept||"-")} · Impact ${p.impact ?? "-"} · MTPD ${minutesText(p.mtpd)} · RTO ${minutesText(p.rto)}</p>
+            </div>
+            ${tag}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderChips(entry){
+    const R = entry.resources;
+    const render = (key)=>{
+      const mount = document.getElementById(`chips_${key}`);
+      const arr = Array.isArray(R[key]) ? R[key] : [];
+      mount.innerHTML = arr.map((t, idx)=>`
+        <span class="chip">
+          ${esc(t)}
+          <button title="삭제" data-del="${key}:${idx}">×</button>
+        </span>
+      `).join("") || `<span class="muted">아직 없음</span>`;
+    };
+    render("people"); render("info"); render("ict"); render("facilities"); render("suppliers"); render("equipment");
+    $("#in_notes").value = entry.notes || "";
+  }
+
+  function addTag(entry, key, text){
+    const t = String(text||"").trim();
+    if (!t) return;
+    if (!entry.resources[key]) entry.resources[key] = [];
+    if (!entry.resources[key].includes(t)) entry.resources[key].push(t);
+  }
+  function deleteTag(entry, key, idx){
+    const arr = entry.resources[key];
+    if (!Array.isArray(arr)) return;
+    if (idx < 0 || idx >= arr.length) return;
+    arr.splice(idx, 1);
+  }
+
+  /* ✅ Reverse index (심플, ICT만) + 1줄 경고 */
+  function renderReverseIndexSimple(){
+    const dep = getDepMap();
+    const select = document.getElementById("revIctSelect");
+    const list = document.getElementById("revIctList");
+    const warn = document.getElementById("revWarn");
+    if (!select || !list || !warn) return;
+
+    const tags = [];
+    for (const e of dep){
+      const arr = (e.resources && Array.isArray(e.resources.ict)) ? e.resources.ict : [];
+      for (const t of arr){
+        const tt = String(t||"").trim();
+        if (tt) tags.push(tt);
+      }
+    }
+    const uniqTags = [...new Set(tags)].sort((a,b)=>a.localeCompare(b));
+
+    const current = select.value || "";
+    select.innerHTML = `<option value="">시스템 선택 (예: SIEM)</option>` +
+      uniqTags.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("");
+    select.value = uniqTags.includes(current) ? current : "";
+
+    if (!select.value && uniqTags.length){
+      select.value = uniqTags[0];
+    }
+
+    const picked = select.value;
+
+    // reset warn
+    warn.style.display = "none";
+    warn.textContent = "";
+
+    if (!picked){
+      list.innerHTML = `<span class="muted">시스템을 선택하면 업무 목록이 표시됩니다.</span>`;
+      return;
+    }
+
+    const rows = dep
+      .filter(e => (e.resources?.ict || []).includes(picked))
+      .map(e => ({ key: e.key, dept: e.dept, work: e.work, coreFinal: !!e.coreFinal }))
+      .sort((a,b)=> (b.coreFinal?1:0)-(a.coreFinal?1:0) || (a.dept||"").localeCompare(b.dept||"") || (a.work||"").localeCompare(b.work||""));
+
+    // ✅ simple warning: CoreFinal 3개 이상이면 1줄
+    const coreCount = rows.filter(r=>r.coreFinal).length;
+    if (coreCount >= 3){
+      warn.style.display = "block";
+      warn.textContent = `⚠ 공통 의존성(주의): CoreFinal ${coreCount}개 업무가 “${picked}” 시스템에 의존합니다.`;
+    }
+
+    list.innerHTML = rows.length
+      ? rows.map(r=>`
+          <span class="chip chipLink" data-jump="${esc(r.key)}" title="클릭하면 업무로 이동">
+            ${esc(r.dept)} / ${esc(r.work)}
+            ${r.coreFinal ? `<span class="miniCore">Core</span>` : ``}
+          </span>
+        `).join("")
+      : `<span class="muted">연결된 업무가 없습니다.</span>`;
+  }
+
+  function scrollListToKey(key){
+    const safeKey = (window.CSS && CSS.escape) ? CSS.escape(key) : key.replace(/"/g,'\\"');
+    const el = document.querySelector(`.item[data-key="${safeKey}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  function openEditorByKey(key){
+    const p = ALL.find(x=>procKey(x)===key);
+    if (!p) return;
+
+    ACTIVE_KEY = key;
+    renderList();
+    setTimeout(()=>scrollListToKey(key), 0);
+
+    const entry = ensureEntry(p);
+
+    $("#emptyEditor").style.display = "none";
+    $("#editor").style.display = "block";
+
+    $("#selTitle").textContent = `${p.work || "-"}`;
+    $("#selMeta").innerHTML = `
+      <span class="pill">부서 <b>${esc(p.dept || "-")}</b></span>
+      <span class="pill">CoreFinal <b>${p.coreFinal ? "YES" : "NO"}</b></span>
+      <span class="pill">Impact <b>${p.impact ?? "-"}</b></span>
+      <span class="pill">MTPD <b>${minutesText(p.mtpd)}</b></span>
+      <span class="pill">RTO <b>${minutesText(p.rto)}</b></span>
+      <span class="pill">MBCO <b>${MBCO_MIN}분</b></span>
+    `;
+
+    renderChips(entry);
+    renderReverseIndexSimple();
+
+    $("#btnSave").dataset.key = entry.key;
+    $("#btnReset").dataset.key = entry.key;
+    window.__ACTIVE_ENTRY__ = entry;
+  }
+
+  function saveActive(){
+    const entry = window.__ACTIVE_ENTRY__;
+    if (!entry) return;
+    entry.notes = ($("#in_notes").value || "").trim();
+    updateEntry(entry);
+    renderReverseIndexSimple();
+  }
+
+  document.addEventListener("click", (e)=>{
+    const item = e.target.closest(".item");
+    if (item && item.dataset.key){ openEditorByKey(item.dataset.key); return; }
+
+    const jump = e.target.closest("[data-jump]");
+    if (jump && jump.dataset.jump){ openEditorByKey(jump.dataset.jump); return; }
+
+    const addBtn = e.target.closest("button[data-add]");
+    if (addBtn){
+      const key = addBtn.dataset.add;
+      const entry = window.__ACTIVE_ENTRY__;
+      if (!entry) return;
+
+      const inputId = {
+        people: "in_people", info: "in_info", ict: "in_ict",
+        facilities: "in_facilities", suppliers: "in_suppliers", equipment: "in_equipment"
+      }[key];
+
+      const inp = document.getElementById(inputId);
+      addTag(entry, key, inp.value);
+      inp.value = "";
+      renderChips(entry);
+      saveActive();
+      return;
+    }
+
+    const delBtn = e.target.closest("button[data-del]");
+    if (delBtn){
+      const entry = window.__ACTIVE_ENTRY__;
+      if (!entry) return;
+      const [key, idxStr] = delBtn.dataset.del.split(":");
+      deleteTag(entry, key, Number(idxStr));
+      renderChips(entry);
+      saveActive();
+      return;
+    }
+
+    if (e.target.id === "btnSave"){ saveActive(); alert("저장 완료"); return; }
+
+    if (e.target.id === "btnReset"){
+      const key = e.target.dataset.key;
+      if (!key) return;
+      if (confirm("이 업무의 Dependency 데이터를 초기화할까요?")){
+        resetEntry(key);
+        openEditorByKey(key);
+        alert("초기화 완료");
+      }
+      return;
+    }
+
+    if (e.target.id === "btnRefresh"){ loadAndRender(); return; }
+  });
+
+  ["in_people","in_info","in_ict","in_facilities","in_suppliers","in_equipment"].forEach(id=>{
+    document.addEventListener("keydown", (e)=>{
+      if (e.target && e.target.id === id && e.key === "Enter"){
+        e.preventDefault();
+        const map = {
+          in_people:"people", in_info:"info", in_ict:"ict",
+          in_facilities:"facilities", in_suppliers:"suppliers", in_equipment:"equipment"
+        };
+        const key = map[id];
+        const entry = window.__ACTIVE_ENTRY__;
+        if (!entry) return;
+        addTag(entry, key, e.target.value);
+        e.target.value = "";
+        renderChips(entry);
+        saveActive();
+      }
+    }, true);
+  });
+
+  $("#in_notes").addEventListener("input", ()=>{ saveActive(); });
+
+  $("#deptFilter").addEventListener("change", ()=>{ persistFilters(); renderList(); });
+  $("#searchInput").addEventListener("input", ()=>{ persistFilters(); renderList(); });
+  $("#coreOnly").addEventListener("change", ()=>{ persistFilters(); renderList(); });
+  document.getElementById("revIctSelect").addEventListener("change", ()=>{ renderReverseIndexSimple(); });
+
+  function loadAndRender(){
+    ALL = getAllProcesses();
+    buildDeptOptions();
+    restoreFilters();
+    renderList();
+    renderReverseIndexSimple();
+
+    const filtered = applyFilters(ALL);
+    if (filtered[0]){
+      openEditorByKey(procKey(filtered[0]));
+    }else{
+      ACTIVE_KEY = null;
+      $("#emptyEditor").style.display = "block";
+      $("#editor").style.display = "none";
+    }
+  }
+
+  loadAndRender();
+</script>
+
+</body>
+</html>

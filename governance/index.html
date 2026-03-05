@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>거버넌스 대시보드 | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <style>
+    /* ===== Governance Dashboard: clean + readable ===== */
+    :root{
+      --gBase: 18px;
+      --bd: rgba(255,255,255,.10);
+      --bg: rgba(255,255,255,.025);
+      --radius: 20px;
+    }
+
+    .main{ padding: 26px 26px; }
+    .wrap{ max-width: 1400px; margin:0 auto; font-size: var(--gBase); }
+
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom: 16px;
+    }
+    .titleWrap h1{
+      margin:0;
+      font-size: 26px;
+      font-weight: 950;
+      letter-spacing: .2px;
+      line-height: 1.15;
+    }
+    .titleWrap p{
+      margin:8px 0 0;
+      color: rgba(226,232,240,.78);
+      line-height: 1.55;
+      font-size: 14.5px;
+      max-width: 980px;
+    }
+
+    .topActions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .chipBtn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:11px 14px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.035);
+      color:#e9eefc; text-decoration:none;
+      font-size:14px; font-weight:800; white-space:nowrap;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease;
+    }
+    .chipBtn:hover{ background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.22); transform: translateY(-1px); }
+    .chipBtn.primary{ border-color: rgba(92,168,255,.55); background: rgba(92,168,255,.18); }
+    .chipBtn.primary:hover{ border-color: rgba(92,168,255,.72); background: rgba(92,168,255,.26); }
+
+    /* KPI row */
+    .kpiRow{ display:grid; grid-template-columns: repeat(12, 1fr); gap:16px; margin-top: 6px; }
+    @media (max-width: 1100px){ .kpiRow{ grid-template-columns: repeat(6, 1fr); } }
+    @media (max-width: 680px){ .kpiRow{ grid-template-columns: repeat(2, 1fr); } }
+
+    .card{
+      border:1px solid var(--bd);
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 12px 26px rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .kpi{ grid-column: span 3; }
+    @media (max-width: 1100px){ .kpi{ grid-column: span 3; } }
+    @media (max-width: 680px){ .kpi{ grid-column: span 2; } }
+
+    .kpiHead{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .kpiTitle{ margin:0; font-size:15px; font-weight:900; color:#e9eefc; letter-spacing:.2px; }
+    .kpiCaption{ margin:8px 0 0; color: rgba(226,232,240,.70); font-size: 13.5px; line-height:1.4; }
+    .kpiNum{ margin:12px 0 8px; font-size: 40px; font-weight:950; color:#e9eefc; letter-spacing:-.6px; line-height:1; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.035);
+      color: rgba(226,232,240,.88);
+      font-size: 12.5px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .pill.ok{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
+    .pill.warn{ border-color: rgba(245,158,11,.42); background: rgba(245,158,11,.12); }
+
+    .kpiActions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+
+    /* ISO gauge */
+    .gaugeWrap{ display:flex; align-items:center; gap:12px; margin-top: 6px; }
+    .gauge{ width:96px; height:96px; flex:0 0 auto; }
+    .gaugePct{ margin:0; font-size: 26px; font-weight:950; color:#e9eefc; letter-spacing:-.4px; line-height:1; }
+    .gaugeSub{ margin:8px 0 0; color: rgba(226,232,240,.70); font-size: 13.5px; line-height:1.45; }
+
+    /* Quick links */
+    .sectionTitleRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top: 20px; }
+    .sectionTitle{ margin:0; font-size: 18px; font-weight:950; color:#e9eefc; letter-spacing:.2px; }
+    .sectionHint{ margin:0; color: rgba(226,232,240,.62); font-size: 13px; white-space:nowrap; }
+
+    .quickLinks{ margin-top: 12px; display:grid; grid-template-columns: repeat(12, 1fr); gap:16px; }
+    .ql{ grid-column: span 4; }
+    @media (max-width: 1100px){ .ql{ grid-column: span 6; } }
+    @media (max-width: 680px){ .ql{ grid-column: span 12; } }
+
+    .ql a{ display:block; text-decoration:none; color:#e9eefc; }
+    .qlTitle{ display:flex; align-items:center; gap:10px; margin:0; font-size:16px; font-weight:950; }
+    .qlDesc{ margin:8px 0 0; color: rgba(226,232,240,.70); font-size: 13.5px; line-height:1.55; }
+    .mono{ margin-top:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: rgba(226,232,240,.55); font-size: 12px; }
+
+    /* Bottom tools */
+    .tools{ margin-top: 16px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.035);
+      color:#e9eefc;
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .btn:hover{ background: rgba(255,255,255,.07); }
+
+    @media (max-width: 900px){
+      .main{ padding: 22px 18px; }
+      .topbar{ flex-direction:column; }
+      .sectionHint{ white-space: normal; }
+    }
+  </style>
+</head>
+
+<body>
+  <aside id="sidebarMount"></aside>
+
+  <main class="main">
+    <div class="wrap">
+
+      <div class="topbar">
+        <div class="titleWrap">
+          <h1>🧭 거버넌스 대시보드</h1>
+          <p>정책·조직·요구사항·증적 관리 현황을 한눈에 요약합니다.</p>
+        </div>
+
+        <div class="topActions">
+          <a class="chipBtn" href="../audit/index.html">🧾 평가·감사</a>
+          <a class="chipBtn" href="../op-center/index.html">🚨 운영센터</a>
+          <a class="chipBtn primary" href="./bcms-map.html">🗺️ BCMS 체계 맵</a>
+        </div>
+      </div>
+
+      <section class="kpiRow">
+        <!-- Audit -->
+        <section class="card kpi" id="kpiAudit">
+          <div class="kpiHead">
+            <div>
+              <p class="kpiTitle">최근 감사</p>
+              <p class="kpiCaption">최근 3건 기준 요약</p>
+            </div>
+            <span class="pill" id="auditPill">로딩…</span>
+          </div>
+          <div class="kpiNum" id="auditScore">0</div>
+          <p class="kpiCaption" id="auditSub">-</p>
+          <div class="kpiActions">
+            <a class="chipBtn" href="../audit/index.html" style="padding:9px 12px; font-size:13px;">자세히 보기</a>
+          </div>
+        </section>
+
+        <!-- CAPA -->
+        <section class="card kpi" id="kpiCapa">
+          <div class="kpiHead">
+            <div>
+              <p class="kpiTitle">개선항목(CAPA)</p>
+              <p class="kpiCaption">열림(Open) 기준</p>
+            </div>
+            <span class="pill" id="capaPill">로딩…</span>
+          </div>
+          <div class="kpiNum" id="capaOpen">0</div>
+          <p class="kpiCaption" id="capaSub">-</p>
+          <p class="kpiCaption" id="capaOverdue">-</p>
+          <div class="kpiActions">
+            <a class="chipBtn" href="../admin/capa.html" style="padding:9px 12px; font-size:13px;">CAPA 관리</a>
+            <a class="chipBtn" href="./requirements.html" style="padding:9px 12px; font-size:13px;">요구사항</a>
+          </div>
+        </section>
+
+        <!-- Training -->
+        <section class="card kpi" id="kpiTraining">
+          <div class="kpiHead">
+            <div>
+              <p class="kpiTitle">훈련·점검</p>
+              <p class="kpiCaption">모듈 연계 예정</p>
+            </div>
+            <span class="pill warn">미구현</span>
+          </div>
+          <div class="kpiNum">—</div>
+          <p class="kpiCaption">훈련 모듈에서 기록을 관리합니다.</p>
+          <div class="kpiActions">
+            <a class="chipBtn" href="../training/index.html" style="padding:9px 12px; font-size:13px;">훈련으로 이동</a>
+          </div>
+        </section>
+
+        <!-- ISO -->
+        <section class="card kpi" id="kpiISO">
+          <div class="kpiHead">
+            <div>
+              <p class="kpiTitle">ISO 22301 충족률</p>
+              <p class="kpiCaption">조항 4~10 기준</p>
+            </div>
+            <span class="pill" id="isoPill">Clause 4~10</span>
+          </div>
+
+          <div class="gaugeWrap">
+            <svg class="gauge" viewBox="0 0 120 120" aria-label="ISO 22301 충족률 게이지">
+              <circle cx="60" cy="60" r="44" stroke="rgba(255,255,255,.10)" stroke-width="12" fill="none"></circle>
+              <circle id="isoArc" cx="60" cy="60" r="44"
+                stroke="rgba(233,238,252,.85)" stroke-width="12" fill="none"
+                stroke-linecap="round"
+                transform="rotate(-90 60 60)"
+                stroke-dasharray="0 999"></circle>
+            </svg>
+            <div>
+              <p class="gaugePct" id="isoPct">0%</p>
+              <p class="gaugeSub" id="isoSub">-</p>
+            </div>
+          </div>
+
+          <div class="kpiActions">
+            <a class="chipBtn" href="./requirements.html" style="padding:9px 12px; font-size:13px;">요구사항 보기</a>
+          </div>
+        </section>
+      </section>
+
+      <div class="sectionTitleRow">
+        <h2 class="sectionTitle">빠른 이동</h2>
+        <p class="sectionHint">요약은 대시보드, 상세는 하위 페이지</p>
+      </div>
+
+      <section class="quickLinks">
+        <article class="card ql">
+          <a href="./policy.html">
+            <p class="qlTitle">🟦 정책·범위</p>
+            <p class="qlDesc">정책·목표·범위·원칙</p>
+          </a>
+        </article>
+
+        <article class="card ql">
+          <a href="./org.html">
+            <p class="qlTitle">👥 조직·역할</p>
+            <p class="qlDesc">평상시 조직 + EOC 지휘체계</p>
+          </a>
+        </article>
+
+        <article class="card ql">
+          <a href="./docs.html">
+            <p class="qlTitle">📁 문서 체계</p>
+            <p class="qlDesc">Policy → Framework → Plan → Procedure → Record</p>
+          </a>
+        </article>
+
+        <article class="card ql">
+          <a href="./requirements.html">
+            <p class="qlTitle">📄 요구사항</p>
+            <p class="qlDesc">ISO 22301 매핑 + 증적 연결</p>
+          </a>
+        </article>
+
+        <article class="card ql">
+          <a href="./bcms-map.html">
+            <p class="qlTitle">🗺️ 체계 맵</p>
+            <p class="qlDesc">Structure & Flow (클릭 이동)</p>
+          </a>
+        </article>
+
+        <article class="card ql">
+          <a href="./system-registry.html">
+            <p class="qlTitle">🧩 시스템 목록</p>
+            <p class="qlDesc">시스템/설비 표준 자산 관리</p>
+            <div class="mono">localStorage: "bcms_system_registry_v1"</div>
+          </a>
+        </article>
+      </section>
+
+      <div class="tools">
+        <button type="button" class="btn" id="btnSeed">데모 데이터</button>
+        <button type="button" class="btn" id="btnClear">초기화</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script>
+    const LS = {
+      audits: "bcms_audits_v1",
+      capa: "bcms_capa_v1",
+      iso: "bcms_iso_requirements_v1",
+    };
+    const $ = (s) => document.querySelector(s);
+    const safeParse = (v, fb) => { try{ return JSON.parse(v); } catch(e){ return fb; } };
+
+    function setGaugePct(pct){
+      const r = 44;
+      const c = 2 * Math.PI * r;
+      const filled = (pct/100) * c;
+      $("#isoArc").setAttribute("stroke-dasharray", `${filled} ${c - filled}`);
+    }
+    function isoScore(list){
+      const clauses = ["4","5","6","7","8","9","10"];
+      const weights = { "충족":1, "부분":0.5, "갭":0 };
+      const map = new Map((list||[]).map(x => [String(x.clause), String(x.status||"").trim()]));
+      let score=0, ok=0, partial=0, gap=0;
+      clauses.forEach(c => {
+        const st = map.get(c) || "갭";
+        if (st === "충족") ok++;
+        else if (st === "부분") partial++;
+        else gap++;
+        score += (weights[st] ?? 0);
+      });
+      const pct = Math.round((score / clauses.length) * 100);
+      return { pct, ok, partial, gap };
+    }
+
+    function render(){
+      const audits = safeParse(localStorage.getItem(LS.audits), []);
+      const capa = safeParse(localStorage.getItem(LS.capa), []);
+      const iso = safeParse(localStorage.getItem(LS.iso), []);
+
+      // Audit
+      const recent = [...audits].sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0,3);
+      const ok = recent.filter(x=>x.result==="OK").length;
+      const partial = recent.filter(x=>x.result==="PARTIAL").length;
+      const gap = recent.filter(x=>x.result==="GAP").length;
+
+      $("#auditPill").className = "pill " + (recent.length ? "ok" : "warn");
+      $("#auditPill").textContent = `OK ${ok} · Partial ${partial} · Gap ${gap}`;
+      $("#auditScore").textContent = String(recent.length);
+      $("#auditSub").textContent = `OK ${ok} / Partial ${partial} / Gap ${gap}`;
+
+      // CAPA
+      const open = capa.filter(x=>x.status==="OPEN").length;
+      const inprog = capa.filter(x=>x.status==="IN_PROGRESS").length;
+      const done = capa.filter(x=>x.status==="DONE").length;
+
+      $("#capaPill").className = "pill " + ((open+inprog+done) ? "ok" : "warn");
+      $("#capaPill").textContent = `OPEN ${open} · 진행 ${inprog} · 완료 ${done}`;
+      $("#capaOpen").textContent = String(open);
+      $("#capaSub").textContent = `진행 ${inprog} · 완료 ${done}`;
+
+      const now = new Date();
+      const overdue = capa.filter(x =>
+        (x.status === "OPEN" || x.status === "IN_PROGRESS") &&
+        x.due && new Date(x.due) < now
+      ).length;
+      $("#capaOverdue").textContent = `기한 경과 ${overdue}`;
+
+      // ISO
+      const agg = isoScore(iso);
+      $("#isoPct").textContent = `${agg.pct}%`;
+      $("#isoSub").textContent = `충족 ${agg.ok} · 부분 ${agg.partial} · 갭 ${agg.gap}`;
+      setGaugePct(agg.pct);
+    }
+
+    function seedDemo(){
+      const now = new Date();
+      const d = (daysAgo) => new Date(now.getTime() - daysAgo*86400000).toISOString();
+
+      const demoAudits = [
+        { id:"AUD-030", title:"BCMS Internal Audit (Q1)", result:"PARTIAL", clause:"9", date:d(6) },
+        { id:"AUD-029", title:"DR Exercise Evidence Review", result:"OK", clause:"8", date:d(22) },
+        { id:"AUD-028", title:"ISO 22301 Gap Check", result:"GAP", clause:"6", date:d(40) },
+      ];
+
+      const demoCapa = [
+        { id:"CAPA-012", title:"ISO 6조 요구사항 갭 개선", status:"OPEN", source:"GAP", clause:"6", owner:"Risk Mgmt", created:d(2), due:new Date(now.getTime()+7*86400000).toISOString() },
+        { id:"CAPA-011", title:"ISO 9조 보완 개선", status:"IN_PROGRESS", source:"PARTIAL", clause:"9", owner:"BCMS PMO", created:d(10), due:new Date(now.getTime()-2*86400000).toISOString() },
+        { id:"CAPA-010", title:"DR 템플릿 표준화", status:"DONE", source:"AUDIT", clause:"8", owner:"Infra", created:d(30), due:d(10) },
+      ];
+
+      const demoISO = [
+        { clause:"4", status:"부분" },
+        { clause:"5", status:"충족" },
+        { clause:"6", status:"부분" },
+        { clause:"7", status:"부분" },
+        { clause:"8", status:"충족" },
+        { clause:"9", status:"부분" },
+        { clause:"10", status:"충족" },
+      ];
+
+      localStorage.setItem(LS.audits, JSON.stringify(demoAudits));
+      localStorage.setItem(LS.capa, JSON.stringify(demoCapa));
+      localStorage.setItem(LS.iso, JSON.stringify(demoISO));
+    }
+
+    function clearData(){
+      localStorage.removeItem(LS.audits);
+      localStorage.removeItem(LS.capa);
+      localStorage.removeItem(LS.iso);
+    }
+
+    function ensureSeedIfEmpty(){
+      const has = localStorage.getItem(LS.audits) || localStorage.getItem(LS.capa) || localStorage.getItem(LS.iso);
+      if(!has) seedDemo();
+    }
+
+    ensureSeedIfEmpty();
+    document.getElementById("btnSeed").addEventListener("click", () => { seedDemo(); render(); });
+    document.getElementById("btnClear").addEventListener("click", () => { clearData(); render(); });
+    render();
+  </script>
+</body>
+</html>

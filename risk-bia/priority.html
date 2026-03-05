@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Priority & Criticality | Risk & BIA</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+<style>
+  .main { font-size: 17px; }
+  .card { font-size: 17px; }
+  .page-title { font-size: 26px; font-weight: 800; }
+  .card h3 { font-size: 20px; font-weight: 700; }
+  .muted{ color:#a8b3d4; font-size:16px; line-height:1.7; margin:6px 0 0 0; }
+
+  .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .controls select, .controls input{
+    height:40px; padding:0 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; outline:none;
+    font-size:16px; min-width: 220px;
+  }
+  .controls input{ min-width: 280px; }
+  .btn{
+    height:40px; padding:0 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e8eeff; cursor:pointer;
+    font-size:16px;
+  }
+  .btn:hover{ background: rgba(255,255,255,.05); }
+
+  .pillRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    color:#a8b3d4; font-size:14px;
+  }
+  .pill b{ color:#e8eeff; }
+
+  .linkRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .linkBtn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#60a5fa; text-decoration:none;
+    font-size:16px;
+  }
+  .linkBtn:hover{ background: rgba(255,255,255,.05); }
+
+  .list{
+    margin-top:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .listHead{
+    padding:12px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .listBody{ max-height: 760px; overflow:auto; }
+
+  .rowItem{
+    padding:12px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+    cursor:pointer;
+  }
+  .rowItem:hover{ background: rgba(255,255,255,.03); }
+
+  .left{ min-width:0; }
+  .title{ margin:0; font-weight:900; font-size:16px; color:#e8eeff; }
+  .sub{ margin:4px 0 0 0; font-size:14px; color:#a8b3d4; line-height:1.5; }
+
+  .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .score{
+    font-size:26px;
+    font-weight:900;
+    color:#e8eeff;
+    min-width: 72px;
+    text-align:right;
+  }
+
+  .tagCore{
+    display:inline-flex; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);
+    background: rgba(255,90,90,.10);
+    color:#ffb4b4; font-size:13px;
+    white-space:nowrap;
+  }
+  .tagNon{
+    display:inline-flex; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.02);
+    color:#a8b3d4; font-size:13px;
+    white-space:nowrap;
+  }
+
+  .miniTag{
+    display:inline-flex; align-items:center;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.02);
+    color:#a8b3d4; font-size:13px;
+    white-space:nowrap;
+  }
+  .riskBonusTag{
+    border-color: rgba(239,68,68,.35) !important;
+    background: rgba(239,68,68,.10) !important;
+    color:#fecaca !important;
+  }
+
+  .empty{
+    padding:16px;
+    border:1px dashed rgba(255,255,255,.18);
+    border-radius:14px;
+    color:#a8b3d4;
+    background: rgba(255,255,255,.02);
+    line-height:1.7;
+    font-size:16px;
+    margin:12px;
+  }
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">🎯 중요도 / 우선순위 (Priority)</div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">통합 우선순위(심플)</h3>
+    <p class="muted">
+      전 업무를 대상으로 우선순위를 산출하고 <b>CoreFinal</b>을 강조합니다. (MTPD/RTO는 분 기준)<br/>
+      <b>Risk 보정(부서 기준):</b> RiskBonus = min(10, High×2 + Med×1) → 최종점수에 + 적용
+    </p>
+
+    <div class="controls">
+      <select id="deptFilter"><option value="">전체 부서</option></select>
+      <select id="sortMode">
+        <option value="score_desc">우선순위 점수 ↓</option>
+        <option value="mtpd_asc">MTPD ↑(짧은 순)</option>
+        <option value="rto_asc">RTO ↑(짧은 순)</option>
+        <option value="core_first">CoreFinal 먼저</option>
+      </select>
+      <input id="searchInput" placeholder="업무/부서 검색 (예: IDC, 관제, 침해)"/>
+      <button class="btn" id="btnRefresh">새로고침</button>
+    </div>
+
+    <div class="pillRow" id="badgeRow"></div>
+
+    <div class="linkRow">
+      <a class="linkBtn" href="./index.html">→ 대시보드</a>
+      <a class="linkBtn" href="./risk.html">→ Risk</a>
+      <a class="linkBtn" href="./bia.html">→ BIA</a>
+      <a class="linkBtn" href="./dependency.html">→ Dependency</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="list">
+      <div class="listHead">
+        <div class="pillRow" style="margin:0;">
+          <span class="pill">전체 <b id="cntTotal">0</b></span>
+          <span class="pill">CoreFinal <b id="cntCore">0</b></span>
+          <span class="pill">RTO 미입력 <b id="cntNoRto">0</b></span>
+          <span class="pill">High Risk(≥16) <b id="cntHighRisk">0</b></span>
+        </div>
+        <div class="pill">점수 = (MTPD+RTO 가중 + Core 보정) + RiskBonus</div>
+      </div>
+      <div class="listBody" id="listBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+
+<script>
+  const $ = (s)=>document.querySelector(s);
+  const esc = (s)=>String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+  const toNum = (v)=>{ if(v===null||v===undefined||v==="") return null; const x=Number(v); return Number.isFinite(x)?x:null; };
+  const loadJSON = (k, fb)=>{ try{ const raw=sessionStorage.getItem(k); if(!raw) return fb; return JSON.parse(raw);}catch(e){ return fb; } };
+  const uniq = (arr)=>[...new Set(arr.filter(Boolean))];
+
+  function minText(min){
+    const m = toNum(min);
+    if (m === null) return "-";
+    if (m === 0) return "즉시";
+    return `${m}분`;
+  }
+
+  /* ===== Risk map ===== */
+  function getRisks(){
+    const arr = loadJSON("risks", []);
+    return Array.isArray(arr) ? arr : [];
+  }
+  function riskScore(r){
+    return (toNum(r.impact)||1) * (toNum(r.like)||1);
+  }
+  function buildDeptRiskMap(risks){
+    const map = new Map();
+    const add = (dept, band)=>{
+      if(!map.has(dept)) map.set(dept, { high:0, med:0, low:0, total:0 });
+      const o = map.get(dept);
+      o.total += 1;
+      if (band==="high") o.high += 1;
+      else if (band==="med") o.med += 1;
+      else o.low += 1;
+    };
+    for (const r of risks){
+      const dept = r.dept || r.department || "";
+      const s = riskScore(r);
+      const band = (s>=16) ? "high" : (s>=8 ? "med" : "low");
+      add(dept, band);
+    }
+    return map;
+  }
+  function riskBonusForDept(rm){
+    if (!rm) return 0;
+    return Math.min(10, rm.high*2 + rm.med*1);
+  }
+
+  /* ===== Data normalize ===== */
+  function normalizeItem(x){
+    const dept = x.dept || x.department || x.org || "";
+    const work = x.work || x.process || x.processName || x.name || "";
+
+    const mtpd = toNum(x.mtpd ?? x.mtpdMin ?? x.mtpd_minutes);
+    const rto  = toNum(x.rto  ?? x.rtoMin  ?? x.rto_minutes);
+
+    const mtpdText = x.mtpdText || minText(mtpd);
+    const rtoText  = x.rtoText  || minText(rto);
+
+    const coreAuto   = !!(x.coreAuto ?? x.core_auto);
+    const coreManual = !!(x.coreManual ?? x.core_manual);
+    const coreFinal  = !!(x.coreFinal ?? x.core_final ?? (coreAuto || coreManual));
+
+    return { dept, work, mtpd, rto, mtpdText, rtoText, coreAuto, coreManual, coreFinal };
+  }
+
+  function getAll(){
+    const bcp = loadJSON("bcp_core_processes", null);
+    if (Array.isArray(bcp) && bcp.length) return bcp.map(normalizeItem);
+
+    const procs = loadJSON("processes", []);
+    if (Array.isArray(procs) && procs.length){
+      return procs.map(p=>{
+        const dept = p.department || "";
+        const work = p.name || "";
+        const mtpd = toNum(p.mtpdMinutes);
+        const rto  = toNum(p.rtoMinutes);
+        const coreAuto = !!p.coreAuto;
+        const coreManual = !!p.coreManual;
+        const coreFinal = !!(coreAuto || coreManual);
+        return { dept, work, mtpd, rto, mtpdText:minText(mtpd), rtoText:minText(rto), coreAuto, coreManual, coreFinal };
+      });
+    }
+    return [];
+  }
+
+  /* ===== Base scoring ===== */
+  function mtpdWeight(m){
+    const x = toNum(m);
+    if (x === null) return 0;
+    if (x === 0) return 30;
+    if (x <= 10) return 28;
+    if (x <= 30) return 24;
+    if (x <= 60) return 18;
+    if (x <= 96) return 14;
+    if (x <= 240) return 8;
+    return 2;
+  }
+  function rtoWeight(m){
+    const x = toNum(m);
+    if (x === null) return 0;
+    if (x === 0) return 20;
+    if (x <= 10) return 18;
+    if (x <= 30) return 14;
+    if (x <= 60) return 10;
+    if (x <= 96) return 8;
+    if (x <= 240) return 4;
+    return 1;
+  }
+  function basePriorityScore(p){
+    const base = mtpdWeight(p.mtpd) + rtoWeight(p.rto);
+    const coreBonus = p.coreFinal ? 10 : 0;
+    return Math.round(base + coreBonus);
+  }
+
+  /* ===== Filters (persist) ===== */
+  const KEY_DEPT = "riskBiaPriority_dept";
+  const KEY_SORT = "riskBiaPriority_sort";
+  const KEY_Q    = "riskBiaPriority_q";
+
+  function persist(){
+    sessionStorage.setItem(KEY_DEPT, $("#deptFilter").value || "");
+    sessionStorage.setItem(KEY_SORT, $("#sortMode").value || "score_desc");
+    sessionStorage.setItem(KEY_Q, $("#searchInput").value || "");
+  }
+  function restore(){
+    $("#searchInput").value = sessionStorage.getItem(KEY_Q) || "";
+    $("#sortMode").value = sessionStorage.getItem(KEY_SORT) || "score_desc";
+  }
+
+  function buildDeptOptions(all){
+    const sel = $("#deptFilter");
+    const prev = sessionStorage.getItem(KEY_DEPT) || "";
+    const depts = uniq(all.map(x=>x.dept)).sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = `<option value="">전체 부서</option>` + depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+    sel.value = depts.includes(prev) ? prev : "";
+  }
+
+  function applyFilters(items){
+    const dept = $("#deptFilter").value;
+    const q = $("#searchInput").value.trim().toLowerCase();
+    return items.filter(x=>{
+      if (dept && x.dept !== dept) return false;
+      if (q){
+        const hay = `${x.dept} ${x.work}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function applySort(items){
+    const mode = $("#sortMode").value;
+    const arr = items.slice();
+
+    if (mode === "mtpd_asc") return arr.sort((a,b)=> (toNum(a.mtpd) ?? Infinity) - (toNum(b.mtpd) ?? Infinity));
+    if (mode === "rto_asc")  return arr.sort((a,b)=> (toNum(a.rto) ?? Infinity) - (toNum(b.rto) ?? Infinity));
+    if (mode === "core_first") return arr.sort((a,b)=> (b.coreFinal?1:0)-(a.coreFinal?1:0) || b._score-a._score);
+    return arr.sort((a,b)=> b._score - a._score);
+  }
+
+  /* ===== Render ===== */
+  function renderBadges(scoped, all, riskMap){
+    const total = scoped.length;
+    const core  = scoped.filter(x=>x.coreFinal).length;
+    const noRto = scoped.filter(x=>x.rto === null).length;
+
+    const allTotal = all.length;
+    const allCore = all.filter(x=>x.coreFinal).length;
+
+    let high=0, med=0, low=0;
+    for (const x of scoped){
+      const o = riskMap.get(x.dept);
+      if (!o) continue;
+      high += o.high; med += o.med; low += o.low;
+    }
+
+    $("#badgeRow").innerHTML = `
+      <span class="pill">필터 결과 <b>${total}</b></span>
+      <span class="pill">CoreFinal <b>${core}</b></span>
+      <span class="pill">RTO 미입력 <b>${noRto}</b></span>
+      <span class="pill">부서 High <b>${high}</b></span>
+      <span class="pill">부서 Med <b>${med}</b></span>
+      <span class="pill">부서 Low <b>${low}</b></span>
+      <span class="pill">전체 CoreFinal <b>${allCore}</b> / <b>${allTotal}</b></span>
+    `;
+  }
+
+  function renderCounts(scoped, riskMap){
+    $("#cntTotal").textContent = scoped.length;
+    $("#cntCore").textContent  = scoped.filter(x=>x.coreFinal).length;
+    $("#cntNoRto").textContent = scoped.filter(x=>x.rto === null).length;
+
+    let high=0;
+    for (const x of scoped){
+      const o = riskMap.get(x.dept);
+      if (o) high += o.high;
+    }
+    $("#cntHighRisk").textContent = high;
+  }
+
+  function renderList(items, riskMap){
+    const mount = $("#listBody");
+    if (!items.length){
+      mount.innerHTML = `<div class="empty">표시할 데이터가 없습니다. (BIA 수행 후 확인)</div>`;
+      return;
+    }
+
+    mount.innerHTML = items.map(p=>{
+      const coreTag = p.coreFinal ? `<span class="tagCore">CoreFinal</span>` : `<span class="tagNon">Non-core</span>`;
+      const meta1 = `<span class="miniTag">MTPD ${esc(p.mtpdText)}</span>`;
+      const meta2 = `<span class="miniTag">RTO ${esc(p.rtoText)}</span>`;
+      const meta3 = p.coreManual ? `<span class="miniTag">Manual</span>` : (p.coreAuto ? `<span class="miniTag">Auto</span>` : ``);
+
+      const rm = riskMap.get(p.dept);
+      const bonus = riskBonusForDept(rm);
+      const riskTag = bonus > 0
+        ? `<span class="miniTag riskBonusTag">Risk +${bonus} (H${rm.high}/M${rm.med})</span>`
+        : `<span class="miniTag">Risk +0</span>`;
+
+      return `
+        <div class="rowItem" data-open="bia">
+          <div class="left">
+            <p class="title">${esc(p.work || "-")}</p>
+            <p class="sub">${esc(p.dept || "-")}</p>
+            <div class="pillRow" style="margin-top:8px;">${meta1}${meta2}${riskTag}${meta3}${coreTag}</div>
+          </div>
+          <div class="right">
+            <div class="score" title="Priority Score">${p._score}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  /* ===== Main ===== */
+  let ALL = [];
+
+  function renderAll(){
+    const risks = getRisks();
+    const riskMap = buildDeptRiskMap(risks);
+
+    ALL = getAll().map(x=>{
+      const base = basePriorityScore(x);
+      const bonus = riskBonusForDept(riskMap.get(x.dept));
+      x._base = base;
+      x._riskBonus = bonus;
+      x._score = base + bonus; // ✅ 통합 점수
+      return x;
+    });
+
+    buildDeptOptions(ALL);
+    restore();
+
+    const scoped = applyFilters(ALL);
+    const sorted = applySort(scoped);
+
+    renderBadges(scoped, ALL, riskMap);
+    renderCounts(scoped, riskMap);
+    renderList(sorted, riskMap);
+  }
+
+  $("#deptFilter").addEventListener("change", ()=>{ persist(); renderAll(); });
+  $("#sortMode").addEventListener("change", ()=>{ persist(); renderAll(); });
+  $("#searchInput").addEventListener("input", ()=>{ persist(); renderAll(); });
+  $("#btnRefresh").addEventListener("click", ()=>{ renderAll(); });
+
+  document.addEventListener("click", (e)=>{
+    const row = e.target.closest(".rowItem[data-open='bia']");
+    if (row) location.href = "./bia.html";
+  });
+
+  renderAll();
+</script>
+</body>
+</html>

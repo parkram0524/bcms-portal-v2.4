@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Operation Center | BCMS Portal v2</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  .mini{ opacity:.85; font-size:14px; line-height:1.6; }
+  .kpiGrid{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap:12px;
+    margin-top:12px;
+  }
+  @media (max-width: 1100px){
+    .kpiGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 700px){
+    .kpiGrid{ grid-template-columns: 1fr; }
+  }
+
+  .kpi{
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.02);
+    border-radius:14px;
+    padding:14px;
+  }
+  .kpiLabel{ font-weight:900; font-size:13px; opacity:.85; }
+  .kpiValue{ font-weight:900; font-size:22px; margin-top:6px; }
+  .kpiHint{ margin-top:6px; opacity:.75; font-size:12px; line-height:1.45; }
+
+  .grid2{
+    display:grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap:12px;
+    margin-top:12px;
+  }
+  @media (max-width: 1100px){
+    .grid2{ grid-template-columns: 1fr; }
+  }
+
+  .pill{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    font-size:13px;
+    color:#cbd5e1;
+    margin-right:8px;
+    margin-bottom:8px;
+    white-space:nowrap;
+  }
+
+  .btnRow{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .chipBtn{
+    display:inline-block;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e2e8f0;
+    text-decoration:none;
+    font-weight:900;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chipBtn:hover{ filter:brightness(1.08); }
+  .chipBtn.primary{ border-color: rgba(77,163,255,.35); background: rgba(77,163,255,.08); }
+  .chipBtn.danger{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+
+  .logList{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+  .logItem{
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(0,0,0,.18);
+    border-radius:14px;
+    padding:12px;
+  }
+  .logTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
+  .logTitle{ font-weight:900; }
+  .logMeta{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+
+  .logActions{
+    margin-top:10px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .logSteps{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,.08);
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:8px;
+  }
+  @media (max-width: 900px){
+    .logSteps{ grid-template-columns: 1fr; }
+  }
+  .step{
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.02);
+    border-radius:12px;
+    padding:10px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+  }
+  .stepTxt{ font-weight:800; font-size:13px; opacity:.95; line-height:1.4; }
+  .stepTime{ font-size:12px; opacity:.75; white-space:nowrap; }
+
+  /* completion tags */
+  .tagGood{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color:#bbf7d0; }
+  .tagWarn{ border-color: rgba(234,179,8,.35); background: rgba(234,179,8,.10); color:#fde68a; }
+  .tagBad{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); color:#fecaca; }
+
+  /* severity tags */
+  .sev1{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); color:#fecaca; }
+  .sev2{ border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
+  .sev3{ border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
+  .sev4{ border-color: rgba(59,130,246,.40); background: rgba(59,130,246,.10); color:#bfdbfe; }
+  .sev5{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#e2e8f0; }
+
+  .empty{
+    margin-top:12px;
+    border:1px dashed rgba(255,255,255,.18);
+    border-radius:14px;
+    padding:14px;
+    opacity:.85;
+    line-height:1.7;
+  }
+
+  code.k{ opacity:.85; }
+
+  /* Severity 기준표 */
+  details.sevBox{
+    margin-top:12px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.02);
+    border-radius:14px;
+    padding:12px;
+  }
+  details.sevBox summary{
+    cursor:pointer;
+    list-style:none;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    font-weight:900;
+  }
+  details.sevBox summary::-webkit-details-marker{ display:none; }
+  table.sevTable{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:12px;
+    overflow:hidden;
+    background: rgba(0,0,0,.14);
+    font-size:14px;
+  }
+  table.sevTable th, table.sevTable td{
+    padding:10px 10px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    vertical-align:top;
+    line-height:1.5;
+  }
+  table.sevTable th{ color:#a8b3d4; text-align:left; }
+  table.sevTable tr:last-child td{ border-bottom:none; }
+
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">🛰️ Operation Center (운영센터)</div>
+
+  <!-- ✅ Severity 기준표 -->
+  <details class="sevBox" open>
+    <summary>
+      <span>📌 Severity Level (상황등급) 기준표</span>
+      <span class="mini" style="margin:0;">(클릭하면 접기/펼치기)</span>
+    </summary>
+
+    <div class="mini" style="margin-top:10px;">
+      • SEV1이 가장 심각(전사 위기), SEV5는 정보성/관찰 수준입니다.<br/>
+      • DRP/EOP 실행 로그에 SEV가 저장되며, Audit에서 증적/필터로 활용됩니다.
+    </div>
+
+    <table class="sevTable">
+      <thead>
+        <tr>
+          <th style="width:120px;">등급</th>
+          <th>정의(요약)</th>
+          <th>예시</th>
+          <th style="width:190px;">권장 대응</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="pill sev1">SEV1 (최고)</span></td>
+          <td>전사/대규모 서비스 중단, 핵심 시스템 장시간 불가, 대외 리스크 가능</td>
+          <td>UPS/발전/수전 이상으로 서비스 전반 중단 위험</td>
+          <td>비상대응 체계 가동, War-room, 24/7 복구</td>
+        </tr>
+        <tr>
+          <td><span class="pill sev2">SEV2 (높음)</span></td>
+          <td>핵심 기능 영향/부분 중단, 다수 사용자 영향</td>
+          <td>인증/전력 계통 일부 이상으로 핵심 존 영향</td>
+          <td>즉시 조치, 1~2시간 단위 보고</td>
+        </tr>
+        <tr>
+          <td><span class="pill sev3">SEV3 (중간)</span></td>
+          <td>일부 기능 영향, 우회 가능, 제한된 사용자 영향</td>
+          <td>설비 경고/부분 성능저하</td>
+          <td>업무시간 내 복구, 재발방지 등록</td>
+        </tr>
+        <tr>
+          <td><span class="pill sev4">SEV4 (낮음)</span></td>
+          <td>경미한 결함/지연, 영향 제한</td>
+          <td>비핵심 기능 오류/경고</td>
+          <td>계획 수리, 정기 배포로 수정</td>
+        </tr>
+        <tr>
+          <td><span class="pill sev5">SEV5 (정보)</span></td>
+          <td>관찰/점검/정보성 이벤트</td>
+          <td>테스트 로그</td>
+          <td>기록 유지</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start;">
+      <div>
+        <h3 style="margin:0;">운영 지표 요약</h3>
+        <div class="mini" style="margin-top:8px;">
+          • DRP 실행 로그: <code class="k">localStorage: bcms_drp_exec_logs</code><br/>
+          • EOP 실행 로그: <code class="k">localStorage: bcms_eop_exec_logs</code><br/>
+          • BCP 계획 입력: <code class="k">sessionStorage: bcp_plans</code>
+        </div>
+      </div>
+      <div class="btnRow">
+        <a class="chipBtn primary" href="../audit/index.html?days=30">Audit Center (평가/감사)</a>
+        <button class="chipBtn" onclick="exportDRLogs()">DR 로그 Export</button>
+        <button class="chipBtn" onclick="exportEOPLogs()">EOP 로그 Export</button>
+        <button class="chipBtn danger" onclick="clearAllLogs()">로그 전체 삭제</button>
+      </div>
+    </div>
+
+    <div class="kpiGrid">
+      <div class="kpi">
+        <div class="kpiLabel">최근 DR 실행(총)</div>
+        <div class="kpiValue" id="kpiDrTotal">-</div>
+        <div class="kpiHint">DR Runbook 실행 로그 누적 건수</div>
+      </div>
+      <div class="kpi">
+        <div class="kpiLabel">최근 EOP 실행(총)</div>
+        <div class="kpiValue" id="kpiEopTotal">-</div>
+        <div class="kpiHint">설비/장비 기반 EOP 실행 로그 누적 건수</div>
+      </div>
+      <div class="kpi">
+        <div class="kpiLabel">최근 24h 실행</div>
+        <div class="kpiValue" id="kpiExec24h">-</div>
+        <div class="kpiHint">DR+EOP 합산(24시간)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpiLabel">현재 최고 등급</div>
+        <div class="kpiValue" id="kpiSevMax">-</div>
+        <div class="kpiHint">최근 로그 기준 최고 Severity</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <!-- 좌: 최근 실행 로그 -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;">
+        <h3 style="margin:0;">최근 실행 이력 (DR 5건 + EOP 5건)</h3>
+        <div class="btnRow">
+          <a class="chipBtn" href="../library/drp.html">DRP (재해복구계획)</a>
+          <a class="chipBtn" href="../library/eop.html">EOP (비상대응)</a>
+        </div>
+      </div>
+
+      <div class="mini" style="margin-top:10px;">
+        • 클릭 시 Audit로 이동하여 증적을 바로 확인할 수 있습니다.
+      </div>
+
+      <div class="logList" id="drLogList"></div>
+      <div class="logList" id="eopLogList"></div>
+    </div>
+
+    <!-- 우: 통계 -->
+    <div class="card">
+      <h3 style="margin:0;">실행 통계</h3>
+      <div class="mini" style="margin-top:10px;">
+        • 완료율 = 체크 완료 단계 / 전체 단계 평균 (DR/EOP 동일)<br/>
+        • EOP는 장비/설비 이벤트 기반 “초기대응(Action Card) 실행” 로그입니다.
+      </div>
+
+      <div style="margin-top:12px;">
+        <div class="pill" id="statCompletion">평균 완료율: -</div>
+        <div class="pill" id="statTopDept">최다 실행 부서: -</div>
+        <div class="pill" id="statTopAsset">최다 실행 대상(시스템/설비): -</div>
+      </div>
+
+      <div class="empty" style="margin-top:12px;">
+        다음 단계 추천<br/>
+        1) Audit에 EOP Evidence 섹션 추가(증적 조회)<br/>
+        2) EOP 실행 로그를 Training에 Attach(훈련 증적화)<br/>
+        3) 상황등급(SEV) 기반 자동 보고서/PDF Export
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+<script>
+  const DR_LOG_KEY = "bcms_drp_exec_logs";
+  const EOP_LOG_KEY = "bcms_eop_exec_logs";
+  const BCP_PLAN_KEY = "bcp_plans";
+
+  function safeParse(v, fallback){
+    try{ return JSON.parse(v); }catch(e){ return fallback; }
+  }
+
+  function toTs(str){
+    if(!str || str === "-") return null;
+    const s = String(str).trim();
+    const iso = s.includes("T") ? s : s.replace(" ", "T");
+    const d = new Date(iso);
+    if(String(d) === "Invalid Date") return null;
+    return d.getTime();
+  }
+
+  function fmt(s){ return (s && s !== "null" && s !== "undefined") ? String(s) : "-"; }
+
+  function computeCompletion(steps){
+    const arr = Array.isArray(steps) ? steps : [];
+    if(!arr.length) return {done:0,total:0,pct:0};
+    const done = arr.filter(x=>x && x.checked).length;
+    const total = arr.length;
+    return {done,total,pct: Math.round((done/total)*100)};
+  }
+
+  function stepTagClass(pct){
+    if(pct >= 80) return "tagGood";
+    if(pct >= 40) return "tagWarn";
+    return "tagBad";
+  }
+
+  function sevClass(sev){
+    if(sev===1) return "sev1";
+    if(sev===2) return "sev2";
+    if(sev===3) return "sev3";
+    if(sev===4) return "sev4";
+    return "sev5";
+  }
+  function sevLabel(sev){
+    if(sev===1) return "SEV1";
+    if(sev===2) return "SEV2";
+    if(sev===3) return "SEV3";
+    if(sev===4) return "SEV4";
+    return "SEV5";
+  }
+
+  function inferSeverityFromLevel(level){
+    const v = String(level||"").toLowerCase();
+    if(v === "critical") return 1;
+    if(v === "high") return 2;
+    if(v === "medium") return 3;
+    if(v === "low") return 4;
+    return 5;
+  }
+
+  function getSeverityFromDr(log){
+    const s = Number(log?.severity);
+    if([1,2,3,4,5].includes(s)) return s;
+    return inferSeverityFromLevel(log?.level);
+  }
+
+  function getSeverityFromEop(log){
+    const s = Number(log?.severity);
+    if([1,2,3,4,5].includes(s)) return s;
+    return 3;
+  }
+
+  function loadDRLogs(){
+    const logs = safeParse(localStorage.getItem(DR_LOG_KEY) || "[]", []);
+    const arr = Array.isArray(logs) ? logs : [];
+    arr.sort((a,b)=>{
+      const ta = toTs(a.savedAt) || toTs(a.finishedAt) || toTs(a.startedAt) || 0;
+      const tb = toTs(b.savedAt) || toTs(b.finishedAt) || toTs(b.startedAt) || 0;
+      return tb - ta;
+    });
+    return arr;
+  }
+
+  function loadEOPLogs(){
+    const logs = safeParse(localStorage.getItem(EOP_LOG_KEY) || "[]", []);
+    const arr = Array.isArray(logs) ? logs : [];
+    arr.sort((a,b)=>{
+      const ta = toTs(a.savedAt) || toTs(a.finishedAt) || toTs(a.startedAt) || 0;
+      const tb = toTs(b.savedAt) || toTs(b.finishedAt) || toTs(b.startedAt) || 0;
+      return tb - ta;
+    });
+    return arr;
+  }
+
+  function loadBCPPlansCount(){
+    const plans = safeParse(sessionStorage.getItem(BCP_PLAN_KEY) || "{}", {});
+    return Object.keys(plans).length;
+  }
+
+  function downloadJson(filename, data){
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportDRLogs(){
+    downloadJson("bcms_drp_exec_logs.json", loadDRLogs());
+  }
+  function exportEOPLogs(){
+    downloadJson("bcms_eop_exec_logs.json", loadEOPLogs());
+  }
+
+  function clearAllLogs(){
+    if(!confirm("DR 로그 + EOP 로그를 모두 삭제할까요?")) return;
+    localStorage.removeItem(DR_LOG_KEY);
+    localStorage.removeItem(EOP_LOG_KEY);
+    refresh();
+    alert("삭제되었습니다.");
+  }
+
+  function pickMaxSev(drLogs, eopLogs){
+    let best = 5;
+    drLogs.forEach(l=>{ best = Math.min(best, getSeverityFromDr(l)); });
+    eopLogs.forEach(l=>{ best = Math.min(best, getSeverityFromEop(l)); });
+    return (drLogs.length || eopLogs.length) ? best : null;
+  }
+
+  function renderKPIs(drLogs, eopLogs){
+    document.getElementById("kpiDrTotal").textContent = drLogs.length;
+    document.getElementById("kpiEopTotal").textContent = eopLogs.length;
+
+    const now = Date.now();
+    const dayAgo = now - 24*60*60*1000;
+    const in24h =
+      drLogs.filter(l=>{
+        const t = toTs(l.savedAt) || toTs(l.finishedAt) || toTs(l.startedAt);
+        return t && t >= dayAgo;
+      }).length
+      +
+      eopLogs.filter(l=>{
+        const t = toTs(l.savedAt) || toTs(l.finishedAt) || toTs(l.startedAt);
+        return t && t >= dayAgo;
+      }).length;
+
+    document.getElementById("kpiExec24h").textContent = in24h;
+
+    const maxSev = pickMaxSev(drLogs, eopLogs);
+    document.getElementById("kpiSevMax").textContent = maxSev ? sevLabel(maxSev) : "-";
+  }
+
+  function renderStats(drLogs, eopLogs){
+    const logsAll = [...drLogs, ...eopLogs];
+    if(!logsAll.length){
+      document.getElementById("statCompletion").textContent = "평균 완료율: -";
+      document.getElementById("statTopDept").textContent = "최다 실행 부서: -";
+      document.getElementById("statTopAsset").textContent = "최다 실행 대상(시스템/설비): -";
+      return;
+    }
+
+    let sumPct = 0;
+    let cnt = 0;
+    const deptCount = {};
+    const assetCount = {};
+
+    // DR
+    drLogs.forEach(l=>{
+      const comp = computeCompletion(l.steps);
+      sumPct += comp.pct; cnt++;
+      const dept = l.dept || "미분류";
+      const asset = l.system || l.systemId || "Unknown";
+      deptCount[dept] = (deptCount[dept]||0) + 1;
+      assetCount[asset] = (assetCount[asset]||0) + 1;
+    });
+
+    // EOP
+    eopLogs.forEach(l=>{
+      const comp = computeCompletion(l.steps);
+      sumPct += comp.pct; cnt++;
+      const dept = l.dept || "미분류";
+      const asset = l.equipment || l.eopTitle || l.eopId || "EOP";
+      deptCount[dept] = (deptCount[dept]||0) + 1;
+      assetCount[asset] = (assetCount[asset]||0) + 1;
+    });
+
+    const avg = cnt ? Math.round(sumPct / cnt) : 0;
+    document.getElementById("statCompletion").textContent = `평균 완료율: ${avg}%`;
+
+    const topDept = Object.entries(deptCount).sort((a,b)=>b[1]-a[1])[0];
+    const topAsset = Object.entries(assetCount).sort((a,b)=>b[1]-a[1])[0];
+
+    document.getElementById("statTopDept").textContent = `최다 실행 부서: ${topDept ? topDept[0] : "-"}`;
+    document.getElementById("statTopAsset").textContent = `최다 실행 대상(시스템/설비): ${topAsset ? topAsset[0] : "-"}`;
+  }
+
+  function goAudit(params){
+    const qs = new URLSearchParams(params);
+    location.href = `../audit/index.html?${qs.toString()}`;
+  }
+
+  function renderDrList(drLogs){
+    const root = document.getElementById("drLogList");
+    root.innerHTML = "";
+
+    const list = drLogs.slice(0,5);
+    if(!list.length){
+      root.innerHTML = `
+        <div class="empty">
+          아직 DR 실행 로그가 없습니다.<br/>
+          DRP 페이지에서 실행 모드를 수행하고 “실행 완료”를 누르면 기록됩니다.
+        </div>
+      `;
+      return;
+    }
+
+    list.forEach((l, idx)=>{
+      const comp = computeCompletion(l.steps);
+      const sev = getSeverityFromDr(l);
+
+      const item = document.createElement("div");
+      item.className = "logItem";
+      item.innerHTML = `
+        <div class="logTop">
+          <div class="logTitle">DR ${idx+1}. ${fmt(l.system)}</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <span class="pill ${sevClass(sev)}">${sevLabel(sev)} (SEV)</span>
+            <span class="pill ${stepTagClass(comp.pct)}">완료율 ${comp.pct}%</span>
+          </div>
+        </div>
+
+        <div class="logMeta">
+          <span class="pill">${fmt(l.systemId)}</span>
+          <span class="pill">${fmt(l.dept)}</span>
+          <span class="pill">${fmt(l.process)}</span>
+          <span class="pill">${fmt(l.level)}</span>
+          <span class="pill">시작 ${fmt(l.startedAt)}</span>
+          <span class="pill">완료 ${fmt(l.finishedAt)}</span>
+        </div>
+
+        <div class="logActions">
+          <button class="chipBtn primary" onclick="goAudit({days:30, sev:${sev}, dept:'${encodeURIComponent(l.dept||"")}', level:'${encodeURIComponent(l.level||"")}', q:'${encodeURIComponent(l.process||l.system||"")}'})">Audit 증적 보기</button>
+          <a class="chipBtn" href="../library/drp.html">DRP 이동</a>
+        </div>
+      `;
+      root.appendChild(item);
+    });
+  }
+
+  function renderEopList(eopLogs){
+    const root = document.getElementById("eopLogList");
+    root.innerHTML = "";
+
+    const list = eopLogs.slice(0,5);
+    if(!list.length){
+      root.innerHTML = `
+        <div class="empty">
+          아직 EOP 실행 로그가 없습니다.<br/>
+          EOP 페이지에서 설비/이벤트를 선택하고 “실행 완료”를 누르면 기록됩니다.
+        </div>
+      `;
+      return;
+    }
+
+    list.forEach((l, idx)=>{
+      const comp = computeCompletion(l.steps);
+      const sev = getSeverityFromEop(l);
+
+      const title = l.event || l.eopTitle || l.eopId || "EOP";
+      const asset = l.equipment || "-";
+      const loc = l.location || "-";
+
+      const item = document.createElement("div");
+      item.className = "logItem";
+      item.innerHTML = `
+        <div class="logTop">
+          <div class="logTitle">EOP ${idx+1}. ${fmt(title)}</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <span class="pill ${sevClass(sev)}">${sevLabel(sev)} (SEV)</span>
+            <span class="pill ${stepTagClass(comp.pct)}">완료율 ${comp.pct}%</span>
+          </div>
+        </div>
+
+        <div class="logMeta">
+          <span class="pill">${fmt(asset)}</span>
+          <span class="pill">${fmt(loc)}</span>
+          <span class="pill">${fmt(l.category || "-")}</span>
+          <span class="pill">${fmt(l.dept || "-")}</span>
+          <span class="pill">시작 ${fmt(l.startedAt)}</span>
+          <span class="pill">완료 ${fmt(l.finishedAt)}</span>
+        </div>
+
+        ${l.memo ? `<div class="mini" style="margin-top:8px;">📝 메모: ${fmt(l.memo)}</div>` : ""}
+
+        <div class="logActions">
+          <button class="chipBtn primary" onclick="goAudit({days:30, sev:${sev}, dept:'${encodeURIComponent(l.dept||"")}', q:'${encodeURIComponent((l.event||l.eopTitle||l.eopId||""))}'})">Audit 증적 보기</button>
+          <a class="chipBtn" href="../library/eop.html">EOP 이동</a>
+        </div>
+      `;
+      root.appendChild(item);
+    });
+  }
+
+  function refresh(){
+    const drLogs = loadDRLogs();
+    const eopLogs = loadEOPLogs();
+    renderKPIs(drLogs, eopLogs);
+    renderStats(drLogs, eopLogs);
+    renderDrList(drLogs);
+    renderEopList(eopLogs);
+  }
+
+  refresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,1587 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audit Center | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <style>
+    .layout { display:flex; min-height: 100vh; }
+    #sidebarMount { flex: 0 0 auto; }
+    main { flex:1; padding: 18px 18px 28px; max-width: 1180px; margin: 0 auto; width: 100%; }
+
+    /* Portfolio typography */
+    main { font-size: 16px; line-height: 1.65; }
+    .pageHead { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin: 10px 0 14px; }
+    .titleWrap h1 { margin:0; font-size: 24px; letter-spacing: .2px; }
+    .titleWrap p { margin: 6px 0 0; color: #a8b3d4; line-height: 1.6; font-size: 14px; }
+    .rightTools { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+    .btn {
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color:#e9eefc;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      user-select:none;
+    }
+    .btn:hover { background: rgba(255,255,255,.05); }
+    .btn.danger { border-color: rgba(255,120,120,.35); }
+    .btn.ghost { background: transparent; }
+
+    /* Severity 기준표 */
+    details.sevBox{
+      margin: 8px 0 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      border-radius:14px;
+      padding:12px;
+    }
+    details.sevBox summary{
+      cursor:pointer;
+      list-style:none;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      font-weight:900;
+    }
+    details.sevBox summary::-webkit-details-marker{ display:none; }
+    table.sevTable{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      overflow:hidden;
+      background: rgba(0,0,0,.14);
+      font-size:14px;
+    }
+    table.sevTable th, table.sevTable td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      vertical-align:top;
+      line-height:1.5;
+    }
+    table.sevTable th{ color:#a8b3d4; text-align:left; }
+    table.sevTable tr:last-child td{ border-bottom:none; }
+
+    /* KPI */
+    .kpiGrid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px; margin: 12px 0 14px; }
+    @media (max-width: 980px){ .kpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px){ .kpiGrid { grid-template-columns: 1fr; } }
+
+    .kpi{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      padding: 12px 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .kpi:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      background: rgba(255,255,255,.04);
+    }
+    .kpi .label { color:#a8b3d4; font-size: 13px; }
+    .kpi .value {
+      font-size: 26px;
+      margin-top: 6px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #4da3ff, #7cc8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .kpi .sub { margin-top: 4px; color:#a8b3d4; font-size: 12px; }
+
+    /* Filters */
+    .filters {
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      border-radius: 14px;
+      padding: 10px;
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-bottom: 14px;
+    }
+    .filters .pill {
+      display:flex; align-items:center; gap:8px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      padding: 8px 10px;
+      border-radius: 999px;
+    }
+    .filters label { color:#a8b3d4; font-size: 12px; }
+    .filters select, .filters input {
+      background: transparent;
+      border: none;
+      color: #e9eefc;
+      outline: none;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    .filters input { min-width: 220px; }
+    .filters .btnRow { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* Sections */
+    .section {
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      border-radius: 16px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .sectionHead { display:flex; justify-content:space-between; align-items:flex-end; gap:10px; margin-bottom: 10px; }
+    .sectionHead h2 { margin:0; font-size: 19px; }
+    .sectionHead .hint { color:#a8b3d4; font-size: 12px; }
+
+    /* Evidence cards */
+    .eList { display:flex; flex-direction:column; gap:10px; }
+    details.eCard {
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      overflow:hidden;
+    }
+    details.eCard summary {
+      cursor:pointer;
+      list-style: none;
+      padding: 12px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    details.eCard summary::-webkit-details-marker { display:none; }
+    .eMain { display:flex; flex-direction:column; gap:8px; min-width: 0; }
+    .eTopLine { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .eMeta { color:#a8b3d4; font-size:14px; }
+    .eSubLine { display:flex; gap:10px; flex-wrap:wrap; color:#a8b3d4; font-size:14px; }
+    .eActions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+    /* Badges */
+    .badge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      color:#e9eefc;
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+    .badge.critical { border-color: rgba(255,80,80,.55); background: rgba(255,80,80,.10); }
+    .badge.high { border-color: rgba(255,170,60,.55); background: rgba(255,170,60,.10); }
+    .badge.medium { border-color: rgba(120,200,255,.45); background: rgba(120,200,255,.10); }
+    .badge.low { border-color: rgba(170,255,170,.35); background: rgba(170,255,170,.08); }
+    .badge.state { border-color: rgba(255,255,255,.14); background: rgba(0,0,0,.18); color:#a8b3d4; }
+
+    .badge.sev1{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); color:#fecaca; }
+    .badge.sev2{ border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
+    .badge.sev3{ border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
+    .badge.sev4{ border-color: rgba(59,130,246,.40); background: rgba(59,130,246,.10); color:#bfdbfe; }
+    .badge.sev5{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#e2e8f0; }
+
+    /* Details body */
+    .eBody { padding: 0 12px 12px; border-top:1px solid rgba(255,255,255,.08); }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 10px; }
+    @media (max-width: 860px){ .grid2 { grid-template-columns: 1fr; } }
+
+    .box {
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .box h3 { margin:0 0 8px; font-size: 13px; color:#e9eefc; }
+    .kv { display:grid; grid-template-columns: 130px 1fr; gap:8px 10px; }
+    .kv div { font-size: 12px; }
+    .kv .k { color:#a8b3d4; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .steps { display:flex; flex-direction:column; gap:8px; }
+    .step {
+      display:flex; justify-content:space-between; gap:10px;
+      padding: 8px 10px; border-radius: 12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+    }
+    .step .left { display:flex; gap:8px; align-items:flex-start; min-width:0; }
+    .dot {
+      width: 10px; height: 10px; border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      margin-top: 3px;
+    }
+    .dot.on { border-color: rgba(170,255,170,.6); background: rgba(170,255,170,.18); }
+    .step .txt { font-size: 14px; color:#e9eefc; }
+    .step .time { font-size: 12px; color:#a8b3d4; white-space:nowrap; }
+
+    .empty {
+      color:#a8b3d4;
+      font-size: 13px;
+      padding: 14px;
+      border-radius: 14px;
+      border:1px dashed rgba(255,255,255,.16);
+      background: rgba(0,0,0,.10);
+    }
+
+    .toast {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      max-width: 420px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,20,.92);
+      color:#e9eefc;
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events:none;
+      transition: .2s ease;
+      z-index:9999;
+    }
+    .toast.on { opacity:1; transform: translateY(0); }
+  </style>
+</head>
+
+<body>
+  <div class="layout">
+    <aside id="sidebarMount"></aside>
+
+    <main>
+      <div class="pageHead">
+        <div class="titleWrap">
+          <h1>Audit Center (평가/감사)</h1>
+          <p>DR/EOP 실행 로그 및 Training 기록을 기반으로 증적(Evidence)을 조회·필터·내보내기 할 수 있습니다. (Check / Evidence Layer)</p>
+        </div>
+        <div class="rightTools">
+          <button class="btn" id="btnSeedDemo">🧪 Demo Seed</button>
+          <button class="btn" id="btnExportSnapshot">📤 Audit Snapshot</button>
+          <button class="btn danger" id="btnClearFiltered">🧹 필터 결과 삭제</button>
+        </div>
+      </div>
+
+      <!-- ✅ Severity 기준표 -->
+      <details class="sevBox" open>
+        <summary>
+          <span>📌 Severity Level (상황등급) 기준표</span>
+          <span class="mini" style="margin:0; color:#a8b3d4; font-weight:800;">(클릭하면 접기/펼치기)</span>
+        </summary>
+
+        <table class="sevTable">
+          <thead>
+            <tr>
+              <th style="width:120px;">등급</th>
+              <th>정의(요약)</th>
+              <th>예시</th>
+              <th style="width:190px;">권장 대응</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge sev1">SEV1 (최고)</span></td>
+              <td>전사/대규모 중단 또는 DC 전력/냉각 핵심 상실, 대외 리스크 가능</td>
+              <td>UPS/발전/수전 이상으로 서비스 전반 중단 위험</td>
+              <td>비상대응 가동, War-room, 24/7 복구</td>
+            </tr>
+            <tr>
+              <td><span class="badge sev2">SEV2 (높음)</span></td>
+              <td>핵심 기능 영향/부분 중단, 다수 사용자 영향</td>
+              <td>인증/전력 계통 일부 이상으로 핵심 존 영향</td>
+              <td>즉시 조치, 1~2시간 단위 보고</td>
+            </tr>
+            <tr>
+              <td><span class="badge sev3">SEV3 (중간)</span></td>
+              <td>일부 기능 영향, 우회 가능, 제한된 사용자 영향</td>
+              <td>설비 경고/부분 성능저하</td>
+              <td>업무시간 내 복구, 재발방지 등록</td>
+            </tr>
+            <tr>
+              <td><span class="badge sev4">SEV4 (낮음)</span></td>
+              <td>경미한 결함/지연, 영향 제한</td>
+              <td>비핵심 기능 오류/경고</td>
+              <td>계획 수리, 정기 배포/점검</td>
+            </tr>
+            <tr>
+              <td><span class="badge sev5">SEV5 (정보)</span></td>
+              <td>관찰/점검/정보성 이벤트</td>
+              <td>테스트 로그</td>
+              <td>기록 유지</td>
+            </tr>
+          </tbody>
+        </table>
+      </details>
+
+      <!-- KPI -->
+      <section class="kpiGrid" aria-label="KPI">
+        <div class="kpi">
+          <div class="label">DR 실행 건수</div>
+          <div class="value" id="kpiDrCount">-</div>
+          <div class="sub" id="kpiDrCountSub">-</div>
+        </div>
+        <div class="kpi">
+          <div class="label">평균 완료율</div>
+          <div class="value" id="kpiAvgCompletion">-</div>
+          <div class="sub" id="kpiAvgCompletionSub">-</div>
+        </div>
+        <div class="kpi">
+          <div class="label">평균 소요시간</div>
+          <div class="value" id="kpiAvgDuration">-</div>
+          <div class="sub" id="kpiAvgDurationSub">-</div>
+        </div>
+        <div class="kpi">
+          <div class="label">미완료 실행</div>
+          <div class="value" id="kpiOpenCount">-</div>
+          <div class="sub" id="kpiOpenCountSub">-</div>
+        </div>
+      </section>
+
+      <!-- Filters -->
+      <section class="filters" aria-label="Filters">
+        <div class="pill">
+          <label for="fDept">부서</label>
+          <select id="fDept"></select>
+        </div>
+
+        <div class="pill">
+          <label for="fSev">상황등급</label>
+          <select id="fSev">
+            <option value="__ALL__">전체</option>
+            <option value="1">SEV1</option>
+            <option value="2">SEV2</option>
+            <option value="3">SEV3</option>
+            <option value="4">SEV4</option>
+            <option value="5">SEV5</option>
+          </select>
+        </div>
+
+        <div class="pill">
+          <label for="fLevel">중요도</label>
+          <select id="fLevel">
+            <option value="__ALL__">전체</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+
+        <div class="pill">
+          <label for="fStatus">상태</label>
+          <select id="fStatus">
+            <option value="__ALL__">전체</option>
+            <option value="Completed">Completed</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Planned">Planned</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </div>
+
+        <div class="pill">
+          <label for="fDays">기간</label>
+          <select id="fDays">
+            <option value="__ALL__">전체</option>
+            <option value="7">최근 7일</option>
+            <option value="30">최근 30일</option>
+            <option value="90">최근 90일</option>
+          </select>
+        </div>
+
+        <div class="pill">
+          <label for="fQ">검색</label>
+          <input id="fQ" placeholder="시스템/설비/이벤트/Registry/메모 키워드" />
+        </div>
+
+        <div class="btnRow">
+          <button class="btn" id="btnResetFilters">🔄 필터 초기화</button>
+          <button class="btn" id="btnExportDrAll">📤 DR 전체 Export</button>
+          <button class="btn" id="btnExportEopAll">📤 EOP 전체 Export</button>
+          <button class="btn" id="btnExportTrAll">📤 Training 전체 Export</button>
+        </div>
+      </section>
+
+      <!-- DR Evidence -->
+      <section class="section">
+        <div class="sectionHead">
+          <h2>1) DR Execution Evidence</h2>
+          <div class="hint">읽는 키: <span class="mono">localStorage["bcms_drp_exec_logs"]</span></div>
+        </div>
+        <div class="eList" id="drList"></div>
+      </section>
+
+      <!-- EOP Evidence -->
+      <section class="section">
+        <div class="sectionHead">
+          <h2>2) EOP Execution Evidence</h2>
+          <div class="hint">
+            읽는 키: <span class="mono">localStorage["bcms_eop_exec_logs"]</span> /
+            Registry 키: <span class="mono">localStorage["bcms_system_registry_v1"]</span>
+          </div>
+        </div>
+        <div class="eList" id="eopList"></div>
+      </section>
+
+      <!-- Training Evidence -->
+      <section class="section">
+        <div class="sectionHead">
+          <h2>3) Training Evidence</h2>
+          <div class="hint">읽는 키: <span class="mono">localStorage["bcms_training_records_v2"]</span></div>
+        </div>
+        <div class="eList" id="trList"></div>
+      </section>
+
+      <!-- Export Tools -->
+      <section class="section">
+        <div class="sectionHead">
+          <h2>4) Export & Tools</h2>
+          <div class="hint">Audit 대응용 JSON 스냅샷 다운로드 / 필터 기반 삭제</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn" id="btnExportFiltered">📤 필터 결과 Export</button>
+          <button class="btn danger" id="btnClearAll">🧨 전체 데이터 초기화(감사)</button>
+        </div>
+        <p style="margin:10px 0 0; color:#a8b3d4; font-size:12px; line-height:1.6;">
+          ※ <b>전체 데이터 초기화</b>는 Demo 환경에서만 사용하세요. 실 운영이라면 Admin 권한 영역으로 분리하는 것이 적절합니다.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const KEY_DRP = "bcms_drp_exec_logs";
+    const KEY_EOP = "bcms_eop_exec_logs";
+    const KEY_TRN = "bcms_training_records_v2";
+    const KEY_SYS = "bcms_system_registry_v1"; // ✅ Registry
+
+    const $ = (sel) => document.querySelector(sel);
+
+    function toast(msg){
+      const t = $("#toast");
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add("on");
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(() => t.classList.remove("on"), 1800);
+    }
+
+    function safeJsonParse(raw, fallback){
+      try { return JSON.parse(raw); } catch { return fallback; }
+    }
+
+    function loadArray(key){
+      const raw = localStorage.getItem(key);
+      const arr = safeJsonParse(raw, []);
+      return Array.isArray(arr) ? arr : [];
+    }
+
+    function saveArray(key, arr){
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+
+    // ============================
+    // ✅ Registry Loader + Maps
+    // (너 system-registry.html 스키마 기준)
+    // ============================
+    function loadRegistry(){
+      const raw = localStorage.getItem(KEY_SYS);
+      const arr = safeJsonParse(raw, []);
+      if (!Array.isArray(arr)) return [];
+      return arr.map(x => ({
+        regId: x?.id || "",
+        category: x?.category || "",
+        systemCode: x?.systemId || "",     // 예: UPS-ROOM-01
+        name: x?.displayName || "",        // 예: UPS (무정전전원장치)
+        owner: x?.ownerDept || "",
+        criticality: x?.criticality || "",
+        tags: Array.isArray(x?.tags) ? x.tags : [],
+        definition: x?.definition || "",
+        type: x?.type || "",
+        location: x?.location || ""
+      })).filter(x => x.regId && x.name);
+    }
+
+    function normCatLabel(cat){
+      const s = String(cat || "").toLowerCase();
+      if (s.includes("power") || s.includes("전력")) return "Power (전력)";
+      if (s.includes("facility") || s.includes("시설") || s.includes("설비")) return "Facility (시설)";
+      return cat || "";
+    }
+
+    function buildRegistryMaps(reg){
+      const byRegId = new Map();
+      const bySystemCode = new Map();
+      reg.forEach(r => {
+        if (r.regId) byRegId.set(r.regId, r);
+        if (r.systemCode) bySystemCode.set(r.systemCode, r);
+      });
+      return { byRegId, bySystemCode };
+    }
+
+    // 느슨한 텍스트 매칭(구버전 로그 대응)
+    function inferTypeFromText(text){
+      const t = String(text || "").toLowerCase();
+      if (t.includes("ups")) return "ups";
+      if (t.includes("generator") || t.includes("발전")) return "generator";
+      if (t.includes("utility") || t.includes("수전")) return "utility";
+      if (t.includes("switchgear") || t.includes("breaker") || t.includes("배전") || t.includes("차단") || t.includes("tob")) return "switchgear";
+      if (t.includes("transfer") || t.includes("절체")) return "transfer";
+      return "";
+    }
+
+    function findRegistryForEopLog(log, maps, regList){
+      // 1) 신버전: systemId = Registry record id
+      if (log?.systemId && maps.byRegId.has(log.systemId)) return maps.byRegId.get(log.systemId);
+
+      // 2) 신버전: systemCode = Registry systemId
+      if (log?.systemCode && maps.bySystemCode.has(log.systemCode)) return maps.bySystemCode.get(log.systemCode);
+
+      // 3) 구버전/혼합: systemName이 있으면 name으로 매칭 시도
+      const sName = String(log?.systemName || "").trim();
+      if (sName) {
+        const hit = regList.find(r => r.name === sName);
+        if (hit) return hit;
+      }
+
+      // 4) 최후: equipment/event/location 기반 느슨한 매칭
+      const text = [log?.equipment, log?.event, log?.eopTitle, log?.location, log?.category].join(" ");
+      const inferred = inferTypeFromText(text);
+      if (!inferred) return null;
+
+      // 카테고리 힌트도 반영(있으면)
+      const catHint = normCatLabel(log?.category || "");
+
+      const candidates = regList.filter(r => {
+        const rText = `${r.name} ${r.systemCode} ${r.category} ${(r.tags||[]).join(" ")}`.toLowerCase();
+        const rInfer = (r.type || "").toLowerCase() || inferTypeFromText(rText);
+        const catOk = !catHint || !r.category ? true : (normCatLabel(r.category) === catHint);
+        return catOk && rInfer === inferred;
+      });
+
+      return candidates[0] || null;
+    }
+
+    // DR에서도(가능하면) Registry 표시명 매칭
+    function findRegistryForDrLog(log, maps, regList){
+      // DR 로그는 스키마가 다양해서: systemId(업무용) 또는 system 텍스트로 매칭
+      const sysId = String(log?.systemId || "").trim();
+      if (sysId && maps.bySystemCode.has(sysId)) return maps.bySystemCode.get(sysId);
+
+      const sysName = String(log?.system || "").trim();
+      if (sysName) {
+        const hit = regList.find(r => r.name === sysName);
+        if (hit) return hit;
+      }
+      return null;
+    }
+
+    function toDate(ts){
+      if (!ts) return null;
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function fmtDateTime(ts){
+      const d = toDate(ts);
+      if (!d) return "-";
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mi = String(d.getMinutes()).padStart(2,"0");
+      return `${yy}-${mm}-${dd} ${hh}:${mi}`;
+    }
+
+    function fmtDateOnly(ts){
+      const d = toDate(ts);
+      if (!d) return "-";
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yy}-${mm}-${dd}`;
+    }
+
+    function minutesBetween(aTs, bTs){
+      const a = toDate(aTs), b = toDate(bTs);
+      if (!a || !b) return null;
+      const ms = b.getTime() - a.getTime();
+      if (!isFinite(ms) || ms < 0) return null;
+      return Math.round(ms / 60000);
+    }
+
+    function computeCompletion(steps){
+      if (!Array.isArray(steps) || steps.length === 0) return 0;
+      const done = steps.filter(s => !!s && s.checked === true).length;
+      return Math.round((done / steps.length) * 100);
+    }
+
+    function levelClass(level){
+      const v = String(level || "").toLowerCase();
+      if (v === "critical") return "critical";
+      if (v === "high") return "high";
+      if (v === "medium") return "medium";
+      if (v === "low") return "low";
+      return "";
+    }
+
+    /* Severity */
+    function inferSeverityFromLevel(level){
+      const v = String(level||"").toLowerCase();
+      if(v === "critical") return 1;
+      if(v === "high") return 2;
+      if(v === "medium") return 3;
+      if(v === "low") return 4;
+      return 5;
+    }
+    function getSeverityFromDr(log){
+      const s = Number(log?.severity);
+      if([1,2,3,4,5].includes(s)) return s;
+      return inferSeverityFromLevel(log?.level);
+    }
+    function getSeverityFromEop(log){
+      const s = Number(log?.severity);
+      if([1,2,3,4,5].includes(s)) return s;
+      return 3;
+    }
+    function sevBadgeClass(sev){
+      if(sev===1) return "sev1";
+      if(sev===2) return "sev2";
+      if(sev===3) return "sev3";
+      if(sev===4) return "sev4";
+      return "sev5";
+    }
+    function sevLabel(sev){
+      if(sev===1) return "SEV1";
+      if(sev===2) return "SEV2";
+      if(sev===3) return "SEV3";
+      if(sev===4) return "SEV4";
+      return "SEV5";
+    }
+
+    function downloadJson(filename, data){
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function normalizeText(v){
+      return String(v ?? "").toLowerCase();
+    }
+
+    function pickDeptList(drLogs, eopLogs, trRecs){
+      const set = new Set();
+      drLogs.forEach(x => x?.dept && set.add(x.dept));
+      eopLogs.forEach(x => x?.dept && set.add(x.dept));
+      trRecs.forEach(x => x?.dept && set.add(x.dept));
+      trRecs.forEach(x => {
+        (x?.attachedDrLogs || x?.attached || []).forEach(l => l?.dept && set.add(l.dept));
+      });
+      const list = Array.from(set).sort((a,b)=> String(a).localeCompare(String(b)));
+      return ["__ALL__", ...list];
+    }
+
+    function nowMinusDays(days){
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      return d.getTime();
+    }
+
+    // ============================
+    // ✅ Registry state
+    // ============================
+    let _regAll = [];
+    let _regMaps = { byRegId: new Map(), bySystemCode: new Map() };
+
+    function applyFilters(drLogs, eopLogs, trRecs){
+      const dept = $("#fDept").value;
+      const sev = $("#fSev").value;
+      const level = $("#fLevel").value;
+      const status = $("#fStatus").value;
+      const days = $("#fDays").value;
+      const q = normalizeText($("#fQ").value.trim());
+
+      const minTs = (days !== "__ALL__") ? nowMinusDays(Number(days)) : null;
+
+      const matchCommon = (objText, objTs) => {
+        if (q) {
+          const hay = normalizeText(objText);
+          if (!hay.includes(q)) return false;
+        }
+        if (minTs != null) {
+          const ts = toDate(objTs)?.getTime();
+          if (!ts || ts < minTs) return false;
+        }
+        return true;
+      };
+
+      const drFiltered = drLogs.filter(l => {
+        const lDept = l?.dept || "";
+        const lLevel = l?.level || "";
+        const lStatus = l?.finishedAt ? "Completed" : "In Progress";
+        const baseTs = l?.savedAt || l?.startedAt || l?.finishedAt;
+
+        if (dept !== "__ALL__" && lDept !== dept) return false;
+
+        if (sev !== "__ALL__") {
+          const s = getSeverityFromDr(l);
+          if (String(s) !== String(sev)) return false;
+        }
+
+        if (level !== "__ALL__" && lLevel !== level) return false;
+
+        if (status !== "__ALL__") {
+          if (status === "Completed" && lStatus !== "Completed") return false;
+          if (status === "In Progress" && lStatus !== "In Progress") return false;
+          if (["Planned","Closed"].includes(status)) return false;
+        }
+
+        const r = findRegistryForDrLog(l, _regMaps, _regAll);
+        const regText = r ? `${r.name} ${r.systemCode} ${r.owner} ${r.criticality} ${r.category} ${(r.tags||[]).join(" ")} ${r.definition}` : "";
+
+        const text = [l?.system, l?.systemId, l?.process, l?.processName, l?.memo, l?.dept, l?.level, regText].join(" ");
+        return matchCommon(text, baseTs);
+      });
+
+      const eopFiltered = eopLogs.filter(l => {
+        const lDept = l?.dept || "";
+        const baseTs = l?.savedAt || l?.startedAt || l?.finishedAt;
+        const lStatus = l?.finishedAt ? "Completed" : "In Progress";
+
+        if (dept !== "__ALL__" && lDept !== dept) return false;
+
+        if (sev !== "__ALL__") {
+          const s = getSeverityFromEop(l);
+          if (String(s) !== String(sev)) return false;
+        }
+
+        if (level !== "__ALL__") {
+          const lv = String(l?.level || "");
+          if (lv && lv !== level) return false;
+        }
+
+        if (status !== "__ALL__") {
+          if (status === "Completed" && lStatus !== "Completed") return false;
+          if (status === "In Progress" && lStatus !== "In Progress") return false;
+          if (["Planned","Closed"].includes(status)) return false;
+        }
+
+        const r = findRegistryForEopLog(l, _regMaps, _regAll);
+        const regText = r ? `${r.name} ${r.systemCode} ${r.owner} ${r.criticality} ${r.category} ${(r.tags||[]).join(" ")} ${r.definition}` : "";
+
+        const text = [
+          l?.event, l?.eopTitle, l?.eopId,
+          l?.equipment, l?.location, l?.category,
+          l?.systemId, l?.systemCode, l?.systemName,
+          regText,
+          l?.memo, lDept
+        ].join(" ");
+        return matchCommon(text, baseTs);
+      });
+
+      const trFiltered = trRecs.filter(r => {
+        const rDept = r?.dept || "";
+        const rStatus = r?.status || r?.state || "";
+        const baseTs = r?.updatedAt || r?.finishedAt || r?.startedAt || r?.createdAt || r?.savedAt;
+
+        if (dept !== "__ALL__" && rDept && rDept !== dept) return false;
+
+        if (status !== "__ALL__") {
+          if (["Planned","In Progress","Completed","Closed"].includes(status)) {
+            if (String(rStatus) !== status) return false;
+          } else {
+            if (["In Progress","Completed"].includes(status)) return false;
+          }
+        }
+
+        if (level !== "__ALL__") {
+          const direct = String(r?.level || "") === level;
+          const attached = (r?.attachedDrLogs || r?.attached || []).some(l => String(l?.level || "") === level);
+          if (!direct && !attached) return false;
+        }
+
+        const text = [
+          r?.title, r?.name, r?.scenario, r?.description, r?.memo,
+          rDept, rStatus,
+          JSON.stringify(r?.capa || r?.actions || []),
+        ].join(" ");
+        return matchCommon(text, baseTs);
+      });
+
+      return { drFiltered, eopFiltered, trFiltered };
+    }
+
+    function renderDeptSelect(list){
+      const sel = $("#fDept");
+      sel.innerHTML = "";
+      list.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = (v === "__ALL__") ? "전체" : v;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderKpis(drLogsFiltered){
+      const count = drLogsFiltered.length;
+      const open = drLogsFiltered.filter(l => !l?.finishedAt).length;
+
+      const completions = drLogsFiltered.map(l => computeCompletion(l?.steps || []));
+      const avgComp = completions.length
+        ? Math.round(completions.reduce((a,b)=>a+b,0) / completions.length)
+        : 0;
+
+      const durations = drLogsFiltered
+        .map(l => minutesBetween(l?.startedAt, l?.finishedAt))
+        .filter(v => typeof v === "number");
+      const avgDur = durations.length
+        ? Math.round(durations.reduce((a,b)=>a+b,0) / durations.length)
+        : 0;
+
+      $("#kpiDrCount").textContent = String(count);
+      $("#kpiDrCountSub").textContent = count ? "필터 적용 기준" : "데이터 없음";
+
+      $("#kpiAvgCompletion").textContent = `${avgComp}%`;
+      $("#kpiAvgCompletionSub").textContent = count ? "체크리스트 기준" : "-";
+
+      $("#kpiAvgDuration").textContent = (durations.length ? `${avgDur}분` : "-");
+      $("#kpiAvgDurationSub").textContent = durations.length ? "완료된 실행 기준" : "완료 기록 없음";
+
+      $("#kpiOpenCount").textContent = String(open);
+      $("#kpiOpenCountSub").textContent = open ? "진행중 실행 포함" : "진행중 없음";
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function sanitize(v){
+      return String(v ?? "")
+        .replace(/[\\/:*?"<>|]/g, "_")
+        .replace(/\s+/g, "_")
+        .slice(0, 60) || "NA";
+    }
+
+    /* ---------- Render DR List ---------- */
+    function renderDrList(drLogs){
+      const mount = $("#drList");
+      mount.innerHTML = "";
+
+      if (!drLogs.length) {
+        mount.innerHTML = `<div class="empty">조건에 맞는 DR 실행 로그가 없습니다.</div>`;
+        return;
+      }
+
+      const sorted = [...drLogs].sort((a,b) => {
+        const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
+        const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
+        return tb - ta;
+      });
+
+      sorted.forEach((l, idx) => {
+        const level = l?.level || "-";
+        const dept = l?.dept || "-";
+        const proc = l?.process || l?.processName || "-";
+        const sysRaw = l?.system || l?.systemId || "-";
+
+        const reg = findRegistryForDrLog(l, _regMaps, _regAll);
+        const sysLabel = reg ? `${reg.name}${reg.systemCode ? " · " + reg.systemCode : ""}` : sysRaw;
+
+        const sev = getSeverityFromDr(l);
+
+        const startedAt = l?.startedAt;
+        const finishedAt = l?.finishedAt;
+        const status = finishedAt ? "Completed" : "In Progress";
+
+        const durMin = minutesBetween(startedAt, finishedAt);
+        const completion = computeCompletion(l?.steps || []);
+        const dt = fmtDateOnly(l?.savedAt || finishedAt || startedAt);
+
+        const card = document.createElement("details");
+        card.className = "eCard";
+        card.open = false;
+
+        card.innerHTML = `
+          <summary>
+            <div class="eMain">
+              <div class="eTopLine">
+                <span class="eMeta">${dt}</span>
+                <span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)} (SEV)</span>
+                <span class="badge ${levelClass(level)}">${escapeHtml(level)}</span>
+                <span class="badge state">${status}</span>
+                <span class="eMeta">· ${escapeHtml(dept)}</span>
+                <span class="eMeta">· ${escapeHtml(proc)}</span>
+              </div>
+              <div class="eSubLine">
+                <span>시스템: <b>${escapeHtml(sysLabel)}</b></span>
+                <span>완료율: <b>${completion}%</b></span>
+                <span>소요: <b>${durMin != null ? `${durMin}분` : "-"}</b></span>
+                <span>시작: <b>${escapeHtml(fmtDateTime(startedAt))}</b></span>
+                <span>종료: <b>${escapeHtml(fmtDateTime(finishedAt))}</b></span>
+              </div>
+            </div>
+
+            <div class="eActions">
+              <button class="btn ghost" data-act="export-dr" data-idx="${idx}">📤 JSON</button>
+              <button class="btn" data-act="copy-dr" data-idx="${idx}">📋 복사</button>
+            </div>
+          </summary>
+
+          <div class="eBody">
+            <div class="grid2">
+              <div class="box">
+                <h3>실행 정보</h3>
+                <div class="kv">
+                  <div class="k">상황등급</div><div><span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)}</span></div>
+                  <div class="k">부서</div><div>${escapeHtml(dept)}</div>
+                  <div class="k">프로세스</div><div>${escapeHtml(proc)}</div>
+                  <div class="k">중요도</div><div><span class="badge ${levelClass(level)}">${escapeHtml(level)}</span></div>
+                  <div class="k">시스템</div><div>${escapeHtml(sysLabel)}</div>
+                  <div class="k">시작</div><div class="mono">${escapeHtml(fmtDateTime(startedAt))}</div>
+                  <div class="k">종료</div><div class="mono">${escapeHtml(fmtDateTime(finishedAt))}</div>
+                  <div class="k">소요시간</div><div>${durMin != null ? `${durMin}분` : "-"}</div>
+                  <div class="k">저장시각</div><div class="mono">${escapeHtml(fmtDateTime(l?.savedAt))}</div>
+                </div>
+              </div>
+
+              <div class="box">
+                <h3>메모</h3>
+                <div style="color:#a8b3d4; font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
+              </div>
+            </div>
+
+            <div class="box" style="margin-top:10px;">
+              <h3>단계별 체크 로그</h3>
+              <div class="steps">
+                ${
+                  Array.isArray(l?.steps) && l.steps.length
+                    ? l.steps.map(s => `
+                      <div class="step">
+                        <div class="left">
+                          <span class="dot ${s?.checked ? "on" : ""}"></span>
+                          <div class="txt">${escapeHtml(s?.text || "-")}</div>
+                        </div>
+                        <div class="time">${s?.checked ? escapeHtml(fmtDateTime(s?.checkedAt)) : "—"}</div>
+                      </div>
+                    `).join("")
+                    : `<div class="empty">체크리스트 단계 정보가 없습니다.</div>`
+                }
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.querySelectorAll("button").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        });
+
+        mount.appendChild(card);
+      });
+
+      mount.onclick = (e) => {
+        const btn = e.target.closest("button[data-act]");
+        if (!btn) return;
+        const act = btn.dataset.act;
+        const idx = Number(btn.dataset.idx);
+        if (!Number.isFinite(idx)) return;
+
+        const current = getCurrentFiltered().drFiltered;
+        const sorted = [...current].sort((a,b) => {
+          const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
+          const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
+          return tb - ta;
+        });
+        const one = sorted[idx];
+        if (!one) return;
+
+        if (act === "export-dr") {
+          const filename = `dr-evidence_${fmtDateOnly(one?.savedAt || one?.finishedAt || one?.startedAt)}_${sanitize(one?.dept)}_${sanitize(one?.system || one?.systemId)}.json`;
+          downloadJson(filename, one);
+          toast("DR 실행 로그 JSON 다운로드");
+        }
+        if (act === "copy-dr") {
+          navigator.clipboard?.writeText(JSON.stringify(one, null, 2));
+          toast("클립보드에 복사했습니다");
+        }
+      };
+    }
+
+    /* ---------- Render EOP List (✅ Registry 매칭 표시) ---------- */
+    function renderEopList(eopLogs){
+      const mount = $("#eopList");
+      mount.innerHTML = "";
+
+      if (!eopLogs.length) {
+        mount.innerHTML = `<div class="empty">조건에 맞는 EOP 실행 로그가 없습니다.</div>`;
+        return;
+      }
+
+      const sorted = [...eopLogs].sort((a,b) => {
+        const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
+        const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
+        return tb - ta;
+      });
+
+      sorted.forEach((l, idx) => {
+        const sev = getSeverityFromEop(l);
+        const dept = l?.dept || "-";
+        const evt  = l?.event || l?.eopTitle || l?.eopId || "EOP";
+        const eq   = l?.equipment || "-";
+        const loc  = l?.location || "-";
+        const cat  = l?.category || "-";
+
+        const reg = findRegistryForEopLog(l, _regMaps, _regAll);
+        const regLabel = reg ? `${reg.name}${reg.systemCode ? " · " + reg.systemCode : ""}` : "";
+        const regOwner = reg?.owner || "";
+        const regCrit = reg?.criticality || "";
+        const regCat = reg ? normCatLabel(reg.category) : "";
+
+        const startedAt = l?.startedAt;
+        const finishedAt = l?.finishedAt;
+        const status = finishedAt ? "Completed" : "In Progress";
+        const completion = computeCompletion(l?.steps || []);
+        const durMin = minutesBetween(startedAt, finishedAt);
+        const dt = fmtDateOnly(l?.savedAt || finishedAt || startedAt);
+
+        const card = document.createElement("details");
+        card.className = "eCard";
+
+        card.innerHTML = `
+          <summary>
+            <div class="eMain">
+              <div class="eTopLine">
+                <span class="eMeta">${dt}</span>
+                <span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)} (SEV)</span>
+                <span class="badge state">${status}</span>
+                <span class="eMeta">· ${escapeHtml(cat)}</span>
+                <span class="eMeta">· ${escapeHtml(eq)}</span>
+                ${reg ? `<span class="badge state">Registry 매칭</span>` : `<span class="badge state">Registry 없음</span>`}
+              </div>
+              <div class="eSubLine">
+                <span>이벤트: <b>${escapeHtml(evt)}</b></span>
+                <span>위치: <b>${escapeHtml(loc)}</b></span>
+                <span>부서: <b>${escapeHtml(dept)}</b></span>
+                <span>완료율: <b>${completion}%</b></span>
+                <span>소요: <b>${durMin != null ? `${durMin}분` : "-"}</b></span>
+                ${reg ? `<span>표준 설비: <b>${escapeHtml(regLabel)}</b></span>` : ``}
+              </div>
+            </div>
+
+            <div class="eActions">
+              <button class="btn ghost" data-act="export-eop" data-idx="${idx}">📤 JSON</button>
+              <button class="btn" data-act="copy-eop" data-idx="${idx}">📋 복사</button>
+            </div>
+          </summary>
+
+          <div class="eBody">
+            <div class="grid2">
+              <div class="box">
+                <h3>실행 정보</h3>
+                <div class="kv">
+                  <div class="k">상황등급</div><div><span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)}</span></div>
+                  <div class="k">카테고리</div><div>${escapeHtml(cat)}</div>
+                  <div class="k">장비/설비</div><div>${escapeHtml(eq)}</div>
+                  <div class="k">이벤트</div><div>${escapeHtml(evt)}</div>
+                  <div class="k">위치</div><div>${escapeHtml(loc)}</div>
+                  <div class="k">부서</div><div>${escapeHtml(dept)}</div>
+
+                  <div class="k">표준 설비(Registry)</div><div>${reg ? `<b>${escapeHtml(regLabel)}</b>` : "—"}</div>
+                  <div class="k">소유부서(Registry)</div><div>${regOwner ? escapeHtml(regOwner) : "—"}</div>
+                  <div class="k">중요도(Registry)</div><div>${regCrit ? `<span class="badge ${levelClass(regCrit)}">${escapeHtml(regCrit)}</span>` : "—"}</div>
+                  <div class="k">카테고리(Registry)</div><div>${regCat ? escapeHtml(regCat) : "—"}</div>
+
+                  <div class="k">시작</div><div class="mono">${escapeHtml(fmtDateTime(startedAt))}</div>
+                  <div class="k">종료</div><div class="mono">${escapeHtml(fmtDateTime(finishedAt))}</div>
+                </div>
+              </div>
+
+              <div class="box">
+                <h3>메모</h3>
+                <div style="color:#a8b3d4; font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
+              </div>
+            </div>
+
+            <div class="box" style="margin-top:10px;">
+              <h3>단계별 체크 로그</h3>
+              <div class="steps">
+                ${
+                  Array.isArray(l?.steps) && l.steps.length
+                    ? l.steps.map(s => `
+                      <div class="step">
+                        <div class="left">
+                          <span class="dot ${s?.checked ? "on" : ""}"></span>
+                          <div class="txt">${escapeHtml(s?.text || "-")}</div>
+                        </div>
+                        <div class="time">${s?.checked ? escapeHtml(fmtDateTime(s?.checkedAt)) : "—"}</div>
+                      </div>
+                    `).join("")
+                    : `<div class="empty">체크리스트 단계 정보가 없습니다.</div>`
+                }
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.querySelectorAll("button").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        });
+
+        mount.appendChild(card);
+      });
+
+      mount.onclick = (e) => {
+        const btn = e.target.closest("button[data-act]");
+        if (!btn) return;
+        const act = btn.dataset.act;
+        const idx = Number(btn.dataset.idx);
+        if (!Number.isFinite(idx)) return;
+
+        const current = getCurrentFiltered().eopFiltered;
+        const sorted = [...current].sort((a,b) => {
+          const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
+          const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
+          return tb - ta;
+        });
+        const one = sorted[idx];
+        if (!one) return;
+
+        if (act === "export-eop") {
+          const filename = `eop-evidence_${fmtDateOnly(one?.savedAt || one?.finishedAt || one?.startedAt)}_${sanitize(one?.equipment)}_${sanitize(one?.event || one?.eopTitle || one?.eopId)}.json`;
+          downloadJson(filename, one);
+          toast("EOP 실행 로그 JSON 다운로드");
+        }
+        if (act === "copy-eop") {
+          navigator.clipboard?.writeText(JSON.stringify(one, null, 2));
+          toast("클립보드에 복사했습니다");
+        }
+      };
+    }
+
+    /* ---------- Render Training List (요약) ---------- */
+    function renderTrainingList(trRecs){
+      const mount = $("#trList");
+      mount.innerHTML = "";
+
+      if (!trRecs.length) {
+        mount.innerHTML = `<div class="empty">조건에 맞는 Training 기록이 없습니다.</div>`;
+        return;
+      }
+
+      const sorted = [...trRecs].sort((a,b) => {
+        const ta = toDate(a?.updatedAt || a?.finishedAt || a?.startedAt || a?.createdAt || a?.savedAt)?.getTime() || 0;
+        const tb = toDate(b?.updatedAt || b?.finishedAt || b?.startedAt || b?.createdAt || b?.savedAt)?.getTime() || 0;
+        return tb - ta;
+      });
+
+      sorted.forEach((r, idx) => {
+        const title = r?.title || r?.name || "Training Record";
+        const dept = r?.dept || "-";
+        const status = r?.status || r?.state || "-";
+        const baseTs = r?.updatedAt || r?.finishedAt || r?.startedAt || r?.createdAt || r?.savedAt;
+
+        const attached = (r?.attachedDrLogs || r?.attached || []);
+        const attachCount = Array.isArray(attached) ? attached.length : 0;
+
+        let completion = (typeof r?.completion === "number") ? Math.round(r.completion) : null;
+        if (completion == null && attachCount) {
+          const comps = attached.map(l => computeCompletion(l?.steps || []));
+          completion = Math.round(comps.reduce((a,b)=>a+b,0) / comps.length);
+        }
+        if (completion == null) completion = 0;
+
+        const capa = (r?.capa || r?.actions || []);
+        const capaOpen = Array.isArray(capa) ? capa.filter(x => {
+          const st = String(x?.status || x?.state || "").toLowerCase();
+          return st && !["closed","done","completed"].includes(st);
+        }).length : 0;
+
+        const card = document.createElement("details");
+        card.className = "eCard";
+
+        card.innerHTML = `
+          <summary>
+            <div class="eMain">
+              <div class="eTopLine">
+                <span class="eMeta">${fmtDateOnly(baseTs)}</span>
+                <span class="badge state">${escapeHtml(status)}</span>
+                <span class="eMeta">· ${escapeHtml(dept)}</span>
+                <span class="eMeta">· ${escapeHtml(title)}</span>
+              </div>
+              <div class="eSubLine">
+                <span>Attach: <b>${attachCount}건</b></span>
+                <span>평가(완료율): <b>${completion}%</b></span>
+                <span>CAPA 오픈: <b>${capaOpen}건</b></span>
+              </div>
+            </div>
+
+            <div class="eActions">
+              <button class="btn ghost" data-act="export-tr" data-idx="${idx}">📤 JSON</button>
+              <button class="btn" data-act="copy-tr" data-idx="${idx}">📋 복사</button>
+            </div>
+          </summary>
+
+          <div class="eBody">
+            <div class="grid2">
+              <div class="box">
+                <h3>기본 정보</h3>
+                <div class="kv">
+                  <div class="k">제목</div><div>${escapeHtml(title)}</div>
+                  <div class="k">부서</div><div>${escapeHtml(dept)}</div>
+                  <div class="k">상태</div><div><span class="badge state">${escapeHtml(status)}</span></div>
+                  <div class="k">기준일</div><div class="mono">${escapeHtml(fmtDateTime(baseTs))}</div>
+                  <div class="k">완료율</div><div>${completion}%</div>
+                  <div class="k">Attach</div><div>${attachCount}건</div>
+                </div>
+              </div>
+
+              <div class="box">
+                <h3>메모</h3>
+                <div style="color:#a8b3d4; font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(r?.memo || r?.note || "—")}</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.querySelectorAll("button").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        });
+
+        mount.appendChild(card);
+      });
+
+      mount.onclick = (e) => {
+        const btn = e.target.closest("button[data-act]");
+        if (!btn) return;
+        const act = btn.dataset.act;
+        const idx = Number(btn.dataset.idx);
+        if (!Number.isFinite(idx)) return;
+
+        const current = getCurrentFiltered().trFiltered;
+        const sorted = [...current].sort((a,b) => {
+          const ta = toDate(a?.updatedAt || a?.finishedAt || a?.startedAt || a?.createdAt || a?.savedAt)?.getTime() || 0;
+          const tb = toDate(b?.updatedAt || b?.finishedAt || b?.startedAt || b?.createdAt || b?.savedAt)?.getTime() || 0;
+          return tb - ta;
+        });
+        const one = sorted[idx];
+        if (!one) return;
+
+        if (act === "export-tr") {
+          const filename = `training-evidence_${fmtDateOnly(one?.updatedAt || one?.finishedAt || one?.startedAt || one?.createdAt || one?.savedAt)}_${sanitize(one?.dept)}_${sanitize(one?.title || one?.name || "training")}.json`;
+          downloadJson(filename, one);
+          toast("Training 기록 JSON 다운로드");
+        }
+        if (act === "copy-tr") {
+          navigator.clipboard?.writeText(JSON.stringify(one, null, 2));
+          toast("클립보드에 복사했습니다");
+        }
+      };
+    }
+
+    /* ---------- State ---------- */
+    let _drAll = [];
+    let _eopAll = [];
+    let _trAll = [];
+
+    function getCurrentFiltered(){
+      return applyFilters(_drAll, _eopAll, _trAll);
+    }
+
+    function refresh(){
+      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
+      renderKpis(drFiltered);
+      renderDrList(drFiltered);
+      renderEopList(eopFiltered);
+      renderTrainingList(trFiltered);
+    }
+
+    function fillDeptOptions(){
+      const list = pickDeptList(_drAll, _eopAll, _trAll);
+      renderDeptSelect(list);
+      if (!$("#fDept").value) $("#fDept").value = "__ALL__";
+    }
+
+    function loadAll(){
+      // ✅ registry 먼저 로드
+      _regAll = loadRegistry();
+      _regMaps = buildRegistryMaps(_regAll);
+
+      _drAll = loadArray(KEY_DRP);
+      _eopAll = loadArray(KEY_EOP);
+      _trAll = loadArray(KEY_TRN);
+
+      fillDeptOptions();
+      refresh();
+    }
+
+    /* ---------- Exports / Tools ---------- */
+    function exportAuditSnapshot(){
+      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
+      const payload = {
+        generatedAt: new Date().toISOString(),
+        keys: { drp: KEY_DRP, eop: KEY_EOP, training: KEY_TRN, registry: KEY_SYS },
+        filters: {
+          dept: $("#fDept").value,
+          sev: $("#fSev").value,
+          level: $("#fLevel").value,
+          status: $("#fStatus").value,
+          days: $("#fDays").value,
+          q: $("#fQ").value
+        },
+        counts: {
+          dr: drFiltered.length,
+          eop: eopFiltered.length,
+          training: trFiltered.length
+        },
+        registrySnapshot: _regAll,
+        drEvidence: drFiltered,
+        eopEvidence: eopFiltered,
+        trainingEvidence: trFiltered
+      };
+      downloadJson(`audit_snapshot_${fmtDateOnly(Date.now())}.json`, payload);
+      toast("Audit Snapshot 다운로드");
+    }
+
+    function exportFiltered(){
+      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
+      downloadJson(`audit_filtered_${fmtDateOnly(Date.now())}.json`, { drFiltered, eopFiltered, trFiltered });
+      toast("필터 결과 Export 완료");
+    }
+
+    function exportAllDr(){
+      downloadJson(`dr_logs_all_${fmtDateOnly(Date.now())}.json`, _drAll);
+      toast("DR 전체 Export 완료");
+    }
+
+    function exportAllEop(){
+      downloadJson(`eop_logs_all_${fmtDateOnly(Date.now())}.json`, _eopAll);
+      toast("EOP 전체 Export 완료");
+    }
+
+    function exportAllTr(){
+      downloadJson(`training_all_${fmtDateOnly(Date.now())}.json`, _trAll);
+      toast("Training 전체 Export 완료");
+    }
+
+    function resetFilters(){
+      $("#fDept").value = "__ALL__";
+      $("#fSev").value = "__ALL__";
+      $("#fLevel").value = "__ALL__";
+      $("#fStatus").value = "__ALL__";
+      $("#fDays").value = "__ALL__";
+      $("#fQ").value = "";
+      refresh();
+      toast("필터 초기화");
+    }
+
+    function clearFiltered(){
+      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
+
+      const drSet = new Set(drFiltered.map(x => JSON.stringify(x)));
+      const eopSet = new Set(eopFiltered.map(x => JSON.stringify(x)));
+      const trSet = new Set(trFiltered.map(x => JSON.stringify(x)));
+
+      const drRemain = _drAll.filter(x => !drSet.has(JSON.stringify(x)));
+      const eopRemain = _eopAll.filter(x => !eopSet.has(JSON.stringify(x)));
+      const trRemain = _trAll.filter(x => !trSet.has(JSON.stringify(x)));
+
+      saveArray(KEY_DRP, drRemain);
+      saveArray(KEY_EOP, eopRemain);
+      saveArray(KEY_TRN, trRemain);
+
+      _drAll = drRemain;
+      _eopAll = eopRemain;
+      _trAll = trRemain;
+
+      fillDeptOptions();
+      refresh();
+      toast("필터 결과 삭제 완료");
+    }
+
+    function clearAll(){
+      if (!confirm("정말로 DR + EOP + Training 기록을 모두 삭제할까요? (되돌릴 수 없음)")) return;
+      localStorage.removeItem(KEY_DRP);
+      localStorage.removeItem(KEY_EOP);
+      localStorage.removeItem(KEY_TRN);
+      _drAll = [];
+      _eopAll = [];
+      _trAll = [];
+      fillDeptOptions();
+      resetFilters();
+      refresh();
+      toast("전체 데이터 삭제 완료");
+    }
+
+    /* ---------- Demo Seed ---------- */
+    function seedDemoData(){
+      const now = Date.now();
+      const iso = (ms)=> new Date(ms).toISOString();
+
+      const demoDr = [
+        {
+          systemId:"DB-PRIMARY-01",
+          system:"Primary DB",
+          dept:"IT인프라팀",
+          process:"DB 복구",
+          level:"Critical",
+          severity: 1,
+          startedAt: iso(now - 1000*60*55),
+          finishedAt: iso(now - 1000*60*20),
+          memo:"RTO 내 복구 성공. 장애 원인: 스토리지 I/O 스파이크.",
+          steps:[
+            {text:"DR DB 인스턴스 기동", checked:true, checkedAt: iso(now-1000*60*50)},
+            {text:"스토리지 마운트 확인", checked:true, checkedAt: iso(now-1000*60*45)},
+            {text:"리플리케이션 상태 점검", checked:true, checkedAt: iso(now-1000*60*35)},
+            {text:"애플리케이션 연결 테스트", checked:true, checkedAt: iso(now-1000*60*25)},
+          ],
+          savedAt: iso(now - 1000*60*18)
+        }
+      ];
+
+      const demoEop = [
+        {
+          type:"EOP_EXEC",
+          eopId:"EOP-PWR-UPS-FAIL",
+          eopTitle:"UPS Failure (UPS 장애)",
+          category:"Power (전력)",
+          equipment:"UPS (무정전전원장치)",
+          event:"UPS Failure (UPS 장애)",
+          location:"UPS Room (UPS실)",
+          dept:"IT인프라팀",
+          process:"IDC 운영",
+          level:"High",
+          severity: 2,
+          // ✅ 아래 2개 중 하나만 있어도 Registry 매칭됨
+          systemCode: "UPS-ROOM-01",
+          startedAt: iso(now - 1000*60*25),
+          finishedAt: iso(now - 1000*60*10),
+          memo:"EPMS 확인 후 BYPASS 위험 확인. 즉시 공유 및 절체 준비.",
+          steps:[
+            {idx:0, text:"EPMS에서 UPS 알람/상태 스크린샷 확보", checked:true, checkedAt: iso(now-1000*60*23)},
+            {idx:1, text:"BYPASS 여부 및 부하율 확인", checked:true, checkedAt: iso(now-1000*60*20)},
+            {idx:2, text:"유관부서/당직/벤더 콜", checked:true, checkedAt: iso(now-1000*60*15)},
+          ],
+          savedAt: iso(now - 1000*60*8)
+        }
+      ];
+
+      const demoTraining = [
+        {
+          title:"2026 Q1 DR 모의훈련",
+          dept:"IT인프라팀",
+          status:"Completed",
+          memo:"핵심 시스템 복구 시나리오 훈련. CAPA 생성 후 추적 필요.",
+          attachedDrLogs: demoDr,
+          capa:[
+            {text:"스토리지 I/O 임계치 알림 강화", status:"Open", dueDate: iso(now + 1000*60*60*24*14)},
+            {text:"UPS 절체 절차 Runbook 보강", status:"Open", dueDate: iso(now + 1000*60*60*24*7)},
+          ],
+          createdAt: iso(now - 1000*60*60*24*2),
+          updatedAt: iso(now - 1000*60*60*5)
+        }
+      ];
+
+      saveArray(KEY_DRP, [...demoDr, ...loadArray(KEY_DRP)]);
+      saveArray(KEY_EOP, [...demoEop, ...loadArray(KEY_EOP)]);
+      saveArray(KEY_TRN, [...demoTraining, ...loadArray(KEY_TRN)]);
+
+      loadAll();
+      resetFilters();
+      toast("Demo Seed 생성 완료");
+    }
+
+    /* ---------- Query -> Filters ---------- */
+    function hasOption(selectId, value){
+      const sel = document.querySelector(selectId);
+      if (!sel) return false;
+      return Array.from(sel.options).some(o => o.value === value);
+    }
+
+    function applyQueryToFilters(){
+      const params = new URLSearchParams(location.search);
+
+      const dept = params.get("dept");
+      const sev = params.get("sev");
+      const level = params.get("level");
+      const status = params.get("status");
+      const days = params.get("days");
+      const q = params.get("q");
+
+      if (sev && hasOption("#fSev", sev)) $("#fSev").value = sev;
+      if (level && hasOption("#fLevel", level)) $("#fLevel").value = level;
+      if (status && hasOption("#fStatus", status)) $("#fStatus").value = status;
+      if (days && hasOption("#fDays", days)) $("#fDays").value = days;
+      if (q != null) $("#fQ").value = q;
+
+      if (dept && hasOption("#fDept", dept)) $("#fDept").value = dept;
+
+      refresh();
+    }
+
+    function debounce(fn, wait){
+      let t = null;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), wait);
+      };
+    }
+
+    function bind(){
+      ["#fDept","#fSev","#fLevel","#fStatus","#fDays"].forEach(id => $(id).addEventListener("change", refresh));
+      $("#fQ").addEventListener("input", debounce(refresh, 180));
+
+      $("#btnResetFilters").addEventListener("click", resetFilters);
+      $("#btnExportSnapshot").addEventListener("click", exportAuditSnapshot);
+      $("#btnExportFiltered").addEventListener("click", exportFiltered);
+      $("#btnExportDrAll").addEventListener("click", exportAllDr);
+      $("#btnExportEopAll").addEventListener("click", exportAllEop);
+      $("#btnExportTrAll").addEventListener("click", exportAllTr);
+
+      $("#btnSeedDemo").addEventListener("click", seedDemoData);
+
+      $("#btnClearFiltered").addEventListener("click", () => {
+        if (!confirm("현재 필터 조건에 해당하는 DR/EOP/Training 기록을 삭제할까요?")) return;
+        clearFiltered();
+      });
+
+      $("#btnClearAll").addEventListener("click", clearAll);
+    }
+
+    bind();
+    loadAll();
+    setTimeout(applyQueryToFilters, 0);
+  </script>
+
+  <script src="../assets/sidebar.js"></script>
+</body>
+</html>

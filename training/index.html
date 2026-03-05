@@ -1,0 +1,1045 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Training & Exercise | BCMS Portal v2</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  .mini{ opacity:.85; font-size:14px; line-height:1.6; }
+  .hint{ opacity:.85; font-size:15px; line-height:1.6; }
+  .page-title{ font-size:24px; }
+
+  .layout{
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+  @media (max-width: 1100px){
+    .layout{ grid-template-columns:1fr; }
+  }
+
+  .toolbarRow{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
+
+  .chipBtn{
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e2e8f0;
+    font-weight:900;
+    font-size:15px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chipBtn:hover{ filter:brightness(1.08); }
+  .chipBtn.primary{
+    background:#60a5fa;
+    color:#0b1220;
+    border-color: rgba(96,165,250,.6);
+  }
+  .chipBtn.danger{
+    border-color: rgba(239,68,68,.35);
+    background: rgba(239,68,68,.10);
+    color:#fecaca;
+  }
+  .chipBtn.ghost{ background: transparent; }
+
+  .planCard{
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.02);
+    border-radius:14px;
+    padding:12px;
+    margin-top:10px;
+    cursor:pointer;
+  }
+  .planCard.active{
+    border-color: rgba(96,165,250,.6);
+    box-shadow: 0 0 0 1px rgba(96,165,250,.35);
+  }
+  .planTitle{ font-weight:900; font-size:16px; }
+  .planMeta{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+
+  .pill{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    font-size:13px;
+    color:#cbd5e1;
+    white-space:nowrap;
+  }
+  .tagGood{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color:#bbf7d0; }
+  .tagWarn{ border-color: rgba(234,179,8,.35); background: rgba(234,179,8,.10); color:#fde68a; }
+  .tagBad{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); color:#fecaca; }
+
+  .field{ margin-top:12px; }
+  .field label{
+    display:block;
+    font-weight:900;
+    font-size:14px;
+    margin-bottom:6px;
+    opacity:.95;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.10);
+    background:#0b1220;
+    color:#e2e8f0;
+    outline:none;
+    font-size:16px;
+  }
+  .field textarea{ min-height:90px; resize:vertical; }
+
+  .split{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+  @media (max-width: 1100px){
+    .split{ grid-template-columns:1fr; }
+  }
+
+  .list{ margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+
+  .logItem{
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(0,0,0,.18);
+    border-radius:14px;
+    padding:12px;
+  }
+  .logTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
+  .logTitle{ font-weight:900; font-size:15px; }
+  .logMeta{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+  .muted{ opacity:.75; }
+
+  .hr{ margin:14px 0; border:0; border-top:1px solid rgba(255,255,255,.08); }
+
+  .capaItem{
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.02);
+    border-radius:12px;
+    padding:10px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+  }
+  .capaTxt{ font-weight:800; font-size:14px; line-height:1.45; }
+  .capaMeta{ margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; }
+  .capaRight{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+  .empty{
+    margin-top:10px;
+    border:1px dashed rgba(255,255,255,.18);
+    border-radius:14px;
+    padding:14px;
+    opacity:.85;
+    line-height:1.7;
+  }
+
+  .kbd{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    opacity:.8;
+  }
+
+  .toggleRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .toggleBtn{
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.03);
+    color:#e2e8f0;
+    font-weight:900;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .toggleBtn.active{
+    border-color: rgba(96,165,250,.6);
+    box-shadow: 0 0 0 1px rgba(96,165,250,.35);
+  }
+</style>
+</head>
+
+<body>
+<aside id="sidebarMount"></aside>
+
+<div class="main">
+  <div class="page-title">🎯 Training & Exercise (훈련/점검)</div>
+
+  <div class="layout">
+
+    <!-- 좌측: 계획 목록 -->
+    <div class="card">
+      <div class="toolbarRow">
+        <h3 style="margin:0;">Training Plans (훈련 계획)</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="chipBtn ghost" onclick="exportAllTraining()">Export All (전체 내보내기)</button>
+          <button class="chipBtn primary" onclick="createPlan()">+ New Training (새 훈련)</button>
+        </div>
+      </div>
+      <div class="mini" style="margin-top:8px;">
+        훈련(계획) → 실행 로그 연결(증적) → 평가/개선(CAPA) 흐름을 관리합니다.<br/>
+        저장 키: <span class="kbd">localStorage["bcms_training_records_v2"]</span>
+      </div>
+
+      <div id="planList" class="list"></div>
+    </div>
+
+    <!-- 우측: 상세 -->
+    <div class="card">
+      <div class="toolbarRow">
+        <h3 style="margin:0;">Training Detail (훈련 상세)</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+          <a class="chipBtn" href="../op-center/index.html">Operation Center (운영센터)</a>
+          <a class="chipBtn" href="../audit/index.html?days=90">Audit Center (평가/감사)</a>
+          <button class="chipBtn" onclick="exportSelected()">Export (선택 내보내기)</button>
+          <button class="chipBtn danger" onclick="deleteSelected()">Delete (삭제)</button>
+        </div>
+      </div>
+
+      <div id="detailEmpty" class="mini" style="margin-top:10px;">
+        왼쪽에서 훈련을 선택하거나, “새 훈련”을 생성하세요.
+      </div>
+
+      <div id="detail" style="display:none; margin-top:10px;">
+
+        <div class="split">
+          <div>
+            <div class="field">
+              <label>훈련명 (Title)</label>
+              <input id="f_title" placeholder="예: 2026 Q1 DR 모의훈련" oninput="updateField('title', this.value)"/>
+            </div>
+
+            <div class="field">
+              <label>훈련 유형 (Type)</label>
+              <select id="f_type" onchange="updateField('type', this.value)">
+                <option>DR 테스트</option>
+                <option>EOP 모의훈련</option>
+                <option>BCP 워크스루</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>대상(시스템/설비/프로세스) (Target)</label>
+              <input id="f_target" placeholder="예: UPS 절체 / DB 복구 / IDC 운영" oninput="updateField('target', this.value)"/>
+            </div>
+
+            <div class="split" style="margin-top:0;">
+              <div class="field">
+                <label>주관 부서 (Dept)</label>
+                <input id="f_dept" placeholder="예: IT인프라팀" oninput="updateField('dept', this.value)"/>
+              </div>
+              <div class="field">
+                <label>목표 RTO (Target RTO)</label>
+                <input id="f_rto" placeholder="예: 2h" oninput="updateField('targetRto', this.value)"/>
+              </div>
+            </div>
+
+            <div class="split" style="margin-top:0;">
+              <div class="field">
+                <label>일정 (Date)</label>
+                <input id="f_date" type="date" onchange="updateField('date', this.value)"/>
+              </div>
+              <div class="field">
+                <label>상태 (Status)</label>
+                <select id="f_status" onchange="updateField('status', this.value)">
+                  <option>Planned</option>
+                  <option>In Progress</option>
+                  <option>Completed</option>
+                  <option>Closed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="field">
+              <label>평가 요약 (Evaluation Summary)</label>
+              <div id="evalBox" class="logItem" style="margin-top:0;"></div>
+            </div>
+
+            <div class="field">
+              <label>훈련 메모 (Notes)</label>
+              <textarea id="f_note" placeholder="관찰사항/이슈 요약" oninput="updateField('memo', this.value)"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <hr class="hr"/>
+
+        <div class="split">
+          <!-- 좌: 로그 선택 (DR/EOP 토글) -->
+          <div>
+            <div class="toolbarRow">
+              <h3 style="margin:0; font-size:16px;">Execution Logs (실행 로그)</h3>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a class="chipBtn" href="../library/drp.html">DRP (재해복구)</a>
+                <a class="chipBtn" href="../library/eop.html">EOP (비상대응)</a>
+                <button class="chipBtn" onclick="reloadAllLogs()">Refresh (새로고침)</button>
+              </div>
+            </div>
+
+            <div class="mini" style="margin-top:8px;">
+              DR/EOP 실행 로그를 선택해 훈련에 <b>연결(Attach)</b>할 수 있습니다.
+            </div>
+
+            <div class="toggleRow">
+              <button class="toggleBtn active" id="tabDr" onclick="setLogTab('DR')">DR Logs (DR 실행)</button>
+              <button class="toggleBtn" id="tabEop" onclick="setLogTab('EOP')">EOP Logs (비상대응 실행)</button>
+            </div>
+
+            <div id="drLogList" class="list"></div>
+            <div id="eopLogList" class="list" style="display:none;"></div>
+          </div>
+
+          <!-- 우: 연결된 증적 + CAPA -->
+          <div>
+            <div class="toolbarRow">
+              <h3 style="margin:0; font-size:16px;">Evidence & CAPA (증적 & 개선조치)</h3>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                <button class="chipBtn" onclick="clearAttachments()">Detach All (연결 해제)</button>
+              </div>
+            </div>
+
+            <div id="attachedBox" class="logItem" style="margin-top:10px;"></div>
+
+            <div class="field">
+              <label>CAPA (개선조치)</label>
+              <div id="capaList" class="list"></div>
+
+              <div class="split" style="margin-top:10px;">
+                <div class="field" style="margin-top:0;">
+                  <input id="capaInput" placeholder="예: 절체 승인 절차 단계 추가" />
+                </div>
+                <div class="field" style="margin-top:0;">
+                  <input id="capaDue" type="date" />
+                </div>
+              </div>
+
+              <div style="margin-top:8px; display:flex; justify-content:flex-end;">
+                <button class="chipBtn primary" onclick="addCapa()">+ Add CAPA (추가)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="../assets/sidebar.js"></script>
+<script>
+/* =========================================================
+  Training v2 (DR + EOP Attach) + Registry Matching
+  - Training: localStorage["bcms_training_records_v2"]
+  - DR logs:  localStorage["bcms_drp_exec_logs"]
+  - EOP logs: localStorage["bcms_eop_exec_logs"]
+  - Registry: localStorage["bcms_system_registry_v1"]
+========================================================= */
+
+const TRAIN_KEY = "bcms_training_records_v2";
+const DR_LOG_KEY = "bcms_drp_exec_logs";
+const EOP_LOG_KEY = "bcms_eop_exec_logs";
+const SYS_KEY = "bcms_system_registry_v1";
+
+let selectedId = null;
+let _drCache = [];
+let _eopCache = [];
+let _logTab = "DR";
+
+// Registry state
+let _regAll = [];
+let _regByRegId = new Map();
+let _regBySystemCode = new Map();
+
+const $ = (sel)=>document.querySelector(sel);
+
+function safeParse(v, fallback){ try{ return JSON.parse(v); }catch(e){ return fallback; } }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
+function nowISO(){ return new Date().toISOString(); }
+
+function loadPlans(){ const arr = safeParse(localStorage.getItem(TRAIN_KEY) || "[]", []); return Array.isArray(arr) ? arr : []; }
+function savePlans(plans){ localStorage.setItem(TRAIN_KEY, JSON.stringify(plans)); }
+
+function loadRegistry(){
+  const arr = safeParse(localStorage.getItem(SYS_KEY) || "[]", []);
+  if(!Array.isArray(arr)) return [];
+  return arr.map(x=>({
+    regId: x?.id || "",
+    category: x?.category || "",
+    systemCode: x?.systemId || "",
+    name: x?.displayName || "",
+    owner: x?.ownerDept || "",
+    criticality: x?.criticality || "",
+    tags: Array.isArray(x?.tags) ? x.tags : [],
+    definition: x?.definition || ""
+  })).filter(r => r.regId && r.name);
+}
+
+function rebuildRegistryMaps(){
+  _regAll = loadRegistry();
+  _regByRegId = new Map();
+  _regBySystemCode = new Map();
+  _regAll.forEach(r=>{
+    if(r.regId) _regByRegId.set(r.regId, r);
+    if(r.systemCode) _regBySystemCode.set(r.systemCode, r);
+  });
+}
+
+// DR 로그 → Registry 매칭
+function findRegistryForDr(log){
+  // 신버전: systemId가 Registry record id
+  const sysId = String(log?.systemId || "").trim();
+  if(sysId && _regByRegId.has(sysId)) return _regByRegId.get(sysId);
+
+  // 신버전: systemCode
+  const sysCode = String(log?.systemCode || "").trim();
+  if(sysCode && _regBySystemCode.has(sysCode)) return _regBySystemCode.get(sysCode);
+
+  // 구버전: systemId가 업무용 systemId일 수 있음
+  if(sysId && _regBySystemCode.has(sysId)) return _regBySystemCode.get(sysId);
+
+  // name 직접 매칭(약)
+  const name = String(log?.systemName || log?.system || "").trim();
+  if(name){
+    const hit = _regAll.find(r => r.name === name);
+    if(hit) return hit;
+  }
+  return null;
+}
+
+// EOP 로그 → Registry 매칭
+function findRegistryForEop(log){
+  const sysId = String(log?.systemId || "").trim();
+  if(sysId && _regByRegId.has(sysId)) return _regByRegId.get(sysId);
+
+  const sysCode = String(log?.systemCode || "").trim();
+  if(sysCode && _regBySystemCode.has(sysCode)) return _regBySystemCode.get(sysCode);
+
+  const name = String(log?.systemName || "").trim();
+  if(name){
+    const hit = _regAll.find(r => r.name === name);
+    if(hit) return hit;
+  }
+  return null;
+}
+
+function fmtRegLabel(reg){
+  if(!reg) return "";
+  const code = reg.systemCode ? ` · ${reg.systemCode}` : "";
+  return `${reg.name}${code}`;
+}
+
+function loadDRLogs(){
+  const logs = safeParse(localStorage.getItem(DR_LOG_KEY) || "[]", []);
+  const arr = Array.isArray(logs) ? logs : [];
+  arr.sort((a,b)=>{
+    const ta = Date.parse(String(a?.savedAt || a?.finishedAt || a?.startedAt || "").replace(" ", "T")) || 0;
+    const tb = Date.parse(String(b?.savedAt || b?.finishedAt || b?.startedAt || "").replace(" ", "T")) || 0;
+    return tb - ta;
+  });
+  return arr;
+}
+
+function loadEOPLogs(){
+  const logs = safeParse(localStorage.getItem(EOP_LOG_KEY) || "[]", []);
+  const arr = Array.isArray(logs) ? logs : [];
+  arr.sort((a,b)=>{
+    const ta = Date.parse(String(a?.savedAt || a?.finishedAt || a?.startedAt || "").replace(" ", "T")) || 0;
+    const tb = Date.parse(String(b?.savedAt || b?.finishedAt || b?.startedAt || "").replace(" ", "T")) || 0;
+    return tb - ta;
+  });
+  return arr;
+}
+
+function computeCompletion(log){
+  const steps = log?.steps || [];
+  if(!Array.isArray(steps) || steps.length===0) return {done:0,total:0,pct:0};
+  const done = steps.filter(s=>s && s.checked).length;
+  const total = steps.length;
+  return {done,total,pct: Math.round((done/total)*100)};
+}
+
+function diffMinutes(a, b){
+  const ta = Date.parse(String(a||"").replace(" ", "T"));
+  const tb = Date.parse(String(b||"").replace(" ", "T"));
+  if(Number.isNaN(ta) || Number.isNaN(tb)) return null;
+  return Math.max(0, Math.round((tb - ta)/60000));
+}
+
+function pickPillClass(pct){
+  if(pct >= 80) return "tagGood";
+  if(pct >= 40) return "tagWarn";
+  return "tagBad";
+}
+
+/* ===== Tabs ===== */
+function setLogTab(tab){
+  _logTab = tab;
+  $("#tabDr").classList.toggle("active", tab==="DR");
+  $("#tabEop").classList.toggle("active", tab==="EOP");
+  $("#drLogList").style.display = (tab==="DR") ? "block" : "none";
+  $("#eopLogList").style.display = (tab==="EOP") ? "block" : "none";
+}
+
+/* ===== CRUD ===== */
+function createPlan(){
+  const plans = loadPlans();
+  const id = "TR-" + Date.now();
+  const p = {
+    id,
+    title: "New Training",
+    type: "DR 테스트",
+    target: "",
+    dept: "",
+    targetRto: "2h",
+    date: "",
+    status: "Planned",
+    memo: "",
+    attachedDrLogs: [],
+    attachedEopLogs: [],
+    capa: [],
+    createdAt: nowISO(),
+    updatedAt: nowISO()
+  };
+  plans.unshift(p);
+  savePlans(plans);
+  selectedId = id;
+  renderAll();
+}
+
+function deleteSelected(){
+  if(!selectedId) return;
+  if(!confirm("이 훈련을 삭제할까요?")) return;
+  const plans = loadPlans().filter(p => p.id !== selectedId);
+  savePlans(plans);
+  selectedId = null;
+  renderAll();
+}
+
+function getSelectedPlan(){
+  return loadPlans().find(p => p.id === selectedId) || null;
+}
+
+function updateField(key, value){
+  const plans = loadPlans();
+  const idx = plans.findIndex(p => p.id === selectedId);
+  if(idx < 0) return;
+  plans[idx][key] = value;
+  plans[idx].updatedAt = nowISO();
+  savePlans(plans);
+  renderPlans();
+  renderEval();
+}
+
+/* ===== Attach DR/EOP ===== */
+function reloadAllLogs(){
+  rebuildRegistryMaps();
+  _drCache = loadDRLogs();
+  _eopCache = loadEOPLogs();
+  renderDRLogs();
+  renderEOPLogs();
+  renderAttached();
+  renderEval();
+}
+
+function attachDrByIndex(i){
+  const plan = getSelectedPlan();
+  if(!plan) return;
+  const log = _drCache[i];
+  if(!log) return;
+
+  const plans = loadPlans();
+  const idx = plans.findIndex(p => p.id === selectedId);
+  if(idx < 0) return;
+
+  if(!Array.isArray(plans[idx].attachedDrLogs)) plans[idx].attachedDrLogs = [];
+  const key = `${log.systemId || log.systemCode || log.system || ""}||${log.savedAt || log.finishedAt || log.startedAt}`;
+
+  const exists = plans[idx].attachedDrLogs.some(x => `${x?.systemId || x?.systemCode || x?.system || ""}||${x?.savedAt || x?.finishedAt || x?.startedAt}` === key);
+  if(!exists){
+    plans[idx].attachedDrLogs.unshift(log);
+    plans[idx].updatedAt = nowISO();
+    savePlans(plans);
+    renderAttached(); renderEval(); renderPlans();
+  }
+}
+
+function attachEopByIndex(i){
+  const plan = getSelectedPlan();
+  if(!plan) return;
+  const log = _eopCache[i];
+  if(!log) return;
+
+  const plans = loadPlans();
+  const idx = plans.findIndex(p => p.id === selectedId);
+  if(idx < 0) return;
+
+  if(!Array.isArray(plans[idx].attachedEopLogs)) plans[idx].attachedEopLogs = [];
+  const key = `${log.systemId || log.systemCode || log.eopId || log.eopTitle || ""}||${log.savedAt || log.finishedAt || log.startedAt}`;
+
+  const exists = plans[idx].attachedEopLogs.some(x => `${x?.systemId || x?.systemCode || x?.eopId || x?.eopTitle || ""}||${x?.savedAt || x?.finishedAt || x?.startedAt}` === key);
+  if(!exists){
+    plans[idx].attachedEopLogs.unshift(log);
+    plans[idx].updatedAt = nowISO();
+    savePlans(plans);
+    renderAttached(); renderEval(); renderPlans();
+  }
+}
+
+function clearAttachments(){
+  const plans = loadPlans();
+  const idx = plans.findIndex(p => p.id === selectedId);
+  if(idx < 0) return;
+  plans[idx].attachedDrLogs = [];
+  plans[idx].attachedEopLogs = [];
+  plans[idx].updatedAt = nowISO();
+  savePlans(plans);
+  renderAttached(); renderEval(); renderPlans();
+}
+
+/* ===== CAPA ===== */
+function addCapa(){
+  const plan = getSelectedPlan();
+  if(!plan) return;
+
+  const txt = ($("#capaInput").value || "").trim();
+  const due = $("#capaDue").value || "";
+  if(!txt) return;
+
+  const plans = loadPlans();
+  const idx = plans.findIndex(p => p.id === selectedId);
+  if(idx < 0) return;
+
+  if(!Array.isArray(plans[idx].capa)) plans[idx].capa = [];
+  plans[idx].capa.unshift({
+    text: txt,
+    status: "Open",
+    dueDate: due || "",
+    createdAt: nowISO(),
+    closedAt: ""
+  });
+  plans[idx].updatedAt = nowISO();
+  savePlans(plans);
+
+  $("#capaInput").value = "";
+  $("#capaDue").value = "";
+  renderCapa();
+  renderPlans();
+  renderEval();
+}
+
+function toggleCapa(i){
+  const plans = loadPlans();
+  const idx = plans.findIndex(p => p.id === selectedId);
+  if(idx < 0) return;
+  const item = plans[idx].capa?.[i];
+  if(!item) return;
+
+  if(String(item.status) === "Closed"){
+    item.status = "Open";
+    item.closedAt = "";
+  }else{
+    item.status = "Closed";
+    item.closedAt = nowISO();
+  }
+  plans[idx].updatedAt = nowISO();
+  savePlans(plans);
+  renderCapa();
+  renderPlans();
+  renderEval();
+}
+
+function removeCapa(i){
+  const plans = loadPlans();
+  const idx = plans.findIndex(p => p.id === selectedId);
+  if(idx < 0) return;
+  plans[idx].capa.splice(i, 1);
+  plans[idx].updatedAt = nowISO();
+  savePlans(plans);
+  renderCapa();
+  renderPlans();
+  renderEval();
+}
+
+/* ===== Export ===== */
+function downloadJson(filename, data){
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportSelected(){
+  const plan = getSelectedPlan();
+  if(!plan) return;
+  downloadJson(`training_${plan.id}.json`, plan);
+}
+
+function exportAllTraining(){
+  downloadJson(`training_all_${new Date().toISOString().slice(0,10)}.json`, loadPlans());
+}
+
+/* ===== Render ===== */
+function renderPlans(){
+  const plans = loadPlans();
+  const root = $("#planList");
+  root.innerHTML = "";
+
+  if(!plans.length){
+    root.innerHTML = `<div class="empty">아직 훈련 계획이 없습니다.<br/>“+ New Training (새 훈련)”을 만들어보세요.</div>`;
+    return;
+  }
+
+  plans.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "planCard" + (p.id === selectedId ? " active" : "");
+    const drCount = (p.attachedDrLogs || []).length;
+    const eopCount = (p.attachedEopLogs || []).length;
+    const capaCount = (p.capa || []).length;
+    const capaOpen = (p.capa || []).filter(x => String(x?.status) !== "Closed").length;
+
+    div.innerHTML = `
+      <div class="planTitle">${esc(p.title || p.type)} <span class="muted" style="font-weight:800;">(${esc(p.id)})</span></div>
+      <div class="planMeta">
+        <span class="pill">${esc(p.status || "-")}</span>
+        ${p.dept ? `<span class="pill">🏷 ${esc(p.dept)}</span>` : ``}
+        ${p.date ? `<span class="pill">📅 ${esc(p.date)}</span>` : ``}
+        ${p.target ? `<span class="pill">🎯 ${esc(p.target)}</span>` : ``}
+        ${p.targetRto ? `<span class="pill">RTO ${esc(p.targetRto)}</span>` : ``}
+      </div>
+      <div class="mini" style="margin-top:8px;">
+        DR Attach ${drCount} · EOP Attach ${eopCount} · CAPA ${capaCount}(오픈 ${capaOpen})
+      </div>
+    `;
+    div.onclick = ()=>{
+      selectedId = p.id;
+      renderAll();
+    };
+    root.appendChild(div);
+  });
+}
+
+function renderDetailForm(){
+  const plan = getSelectedPlan();
+  $("#detailEmpty").style.display = plan ? "none" : "block";
+  $("#detail").style.display = plan ? "block" : "none";
+  if(!plan) return;
+
+  $("#f_title").value = plan.title || "New Training";
+  $("#f_type").value = plan.type || "DR 테스트";
+  $("#f_target").value = plan.target || "";
+  $("#f_dept").value = plan.dept || "";
+  $("#f_rto").value = plan.targetRto || "";
+  $("#f_date").value = plan.date || "";
+  $("#f_status").value = plan.status || "Planned";
+  $("#f_note").value = plan.memo || "";
+}
+
+function renderDRLogs(){
+  const plan = getSelectedPlan();
+  const root = $("#drLogList");
+  root.innerHTML = "";
+
+  if(!_drCache.length) _drCache = loadDRLogs();
+  const logs = _drCache.slice(0,10);
+
+  if(!logs.length){
+    root.innerHTML = `<div class="empty">DR 실행 로그가 없습니다.<br/>DRP에서 “실행 완료”를 먼저 만들어주세요.</div>`;
+    return;
+  }
+
+  logs.forEach((l, i)=>{
+    const comp = computeCompletion(l);
+    const mins = diffMinutes(l.startedAt, l.finishedAt);
+
+    const reg = findRegistryForDr(l);
+    const title = reg ? fmtRegLabel(reg) : (l.systemName || l.system || l.systemId || "DR");
+
+    const div = document.createElement("div");
+    div.className = "logItem";
+    div.innerHTML = `
+      <div class="logTop">
+        <div class="logTitle">${esc(title)}</div>
+        <span class="pill ${pickPillClass(comp.pct)}">완료율 ${comp.pct}%</span>
+      </div>
+      <div class="logMeta">
+        ${reg ? `<span class="pill">Registry</span>` : ``}
+        <span class="pill">${esc(l.systemCode || l.systemId || "-")}</span>
+        <span class="pill">${esc(reg?.owner || l.dept || "-")}</span>
+        <span class="pill">${esc(l.process || l.processName || "-")}</span>
+        <span class="pill">${esc(reg?.criticality || l.level || "-")}</span>
+        <span class="pill">${mins===null ? "소요 -" : `소요 ${mins}m`}</span>
+      </div>
+      <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+        <button class="chipBtn" ${plan ? "" : "disabled"} onclick="attachDrByIndex(${i})">Attach (연결)</button>
+      </div>
+    `;
+    root.appendChild(div);
+  });
+}
+
+function renderEOPLogs(){
+  const plan = getSelectedPlan();
+  const root = $("#eopLogList");
+  root.innerHTML = "";
+
+  if(!_eopCache.length) _eopCache = loadEOPLogs();
+  const logs = _eopCache.slice(0,10);
+
+  if(!logs.length){
+    root.innerHTML = `<div class="empty">EOP 실행 로그가 없습니다.<br/>EOP에서 “실행 완료”를 먼저 만들어주세요.</div>`;
+    return;
+  }
+
+  logs.forEach((l, i)=>{
+    const comp = computeCompletion(l);
+    const mins = diffMinutes(l.startedAt, l.finishedAt);
+    const title = l.event || l.eopTitle || l.eopId || "EOP";
+    const equip = l.equipment || "-";
+
+    const reg = findRegistryForEop(l);
+    const std = reg ? fmtRegLabel(reg) : "";
+
+    const div = document.createElement("div");
+    div.className = "logItem";
+    div.innerHTML = `
+      <div class="logTop">
+        <div class="logTitle">${esc(title)}</div>
+        <span class="pill ${pickPillClass(comp.pct)}">완료율 ${comp.pct}%</span>
+      </div>
+      <div class="logMeta">
+        ${std ? `<span class="pill">표준 설비: ${esc(std)}</span>` : ``}
+        <span class="pill">${esc(equip)}</span>
+        <span class="pill">${esc(l.location || "-")}</span>
+        <span class="pill">${esc(l.category || "-")}</span>
+        <span class="pill">${esc(reg?.owner || l.dept || "-")}</span>
+        <span class="pill">${mins===null ? "소요 -" : `소요 ${mins}m`}</span>
+      </div>
+      <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+        <button class="chipBtn" ${plan ? "" : "disabled"} onclick="attachEopByIndex(${i})">Attach (연결)</button>
+      </div>
+    `;
+    root.appendChild(div);
+  });
+}
+
+function renderAttached(){
+  const plan = getSelectedPlan();
+  const box = $("#attachedBox");
+
+  if(!plan){
+    box.innerHTML = `<div class="mini">훈련을 선택하세요.</div>`;
+    return;
+  }
+
+  const dr = plan.attachedDrLogs || [];
+  const eop = plan.attachedEopLogs || [];
+
+  if(!dr.length && !eop.length){
+    box.innerHTML = `<div class="mini">연결된 증적이 없습니다. 왼쪽에서 DR/EOP 로그를 선택해 연결하세요.</div>`;
+    return;
+  }
+
+  const drRows = dr.slice(0,3).map(log=>{
+    const comp = computeCompletion(log);
+    const mins = diffMinutes(log.startedAt, log.finishedAt);
+    const reg = findRegistryForDr(log);
+    const title = reg ? fmtRegLabel(reg) : (log.systemName || log.system || log.systemId || "DR");
+
+    return `
+      <div class="logItem" style="margin-top:10px;">
+        <div class="logTop">
+          <div class="logTitle">DR: ${esc(title)}</div>
+          <span class="pill ${pickPillClass(comp.pct)}">완료율 ${comp.pct}%</span>
+        </div>
+        <div class="logMeta">
+          ${reg ? `<span class="pill">Registry</span>` : ``}
+          <span class="pill">${esc(log.systemCode || log.systemId || "-")}</span>
+          <span class="pill">${esc(reg?.owner || log.dept || "-")}</span>
+          <span class="pill">${esc(log.process || log.processName || "-")}</span>
+          <span class="pill">${mins===null ? "소요 -" : `소요 ${mins}m`}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const eopRows = eop.slice(0,3).map(log=>{
+    const comp = computeCompletion(log);
+    const mins = diffMinutes(log.startedAt, log.finishedAt);
+    const title = log.event || log.eopTitle || log.eopId || "EOP";
+    const reg = findRegistryForEop(log);
+    const std = reg ? fmtRegLabel(reg) : "";
+
+    return `
+      <div class="logItem" style="margin-top:10px;">
+        <div class="logTop">
+          <div class="logTitle">EOP: ${esc(title)}</div>
+          <span class="pill ${pickPillClass(comp.pct)}">완료율 ${comp.pct}%</span>
+        </div>
+        <div class="logMeta">
+          ${std ? `<span class="pill">표준 설비: ${esc(std)}</span>` : ``}
+          <span class="pill">${esc(log.equipment || "-")}</span>
+          <span class="pill">${esc(log.location || "-")}</span>
+          <span class="pill">${mins===null ? "소요 -" : `소요 ${mins}m`}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  box.innerHTML = `
+    <div class="mini">
+      연결된 증적: DR ${dr.length}건 / EOP ${eop.length}건 (각 최근 3건 표시)
+    </div>
+    ${drRows}
+    ${eopRows}
+  `;
+}
+
+function renderCapa(){
+  const plan = getSelectedPlan();
+  const root = $("#capaList");
+  root.innerHTML = "";
+
+  if(!plan){
+    root.innerHTML = `<div class="mini">훈련을 선택하세요.</div>`;
+    return;
+  }
+
+  const capa = plan.capa || [];
+  if(!capa.length){
+    root.innerHTML = `<div class="mini">CAPA가 없습니다. 아래에서 추가하세요.</div>`;
+    return;
+  }
+
+  capa.forEach((it, i)=>{
+    const isClosed = String(it?.status) === "Closed";
+    const due = it?.dueDate ? `Due ${esc(it.dueDate)}` : "Due -";
+    const stClass = isClosed ? "tagGood" : "tagWarn";
+
+    const div = document.createElement("div");
+    div.className = "capaItem";
+    div.innerHTML = `
+      <div style="min-width:0;">
+        <div class="capaTxt">${esc(it?.text || "-")}</div>
+        <div class="capaMeta">
+          <span class="pill ${stClass}">${isClosed ? "Closed (완료)" : "Open (진행중)"}</span>
+          <span class="pill">${due}</span>
+        </div>
+      </div>
+      <div class="capaRight">
+        <button class="chipBtn" onclick="toggleCapa(${i})">${isClosed ? "Reopen (재오픈)" : "Close (완료 처리)"}</button>
+        <button class="chipBtn danger" onclick="removeCapa(${i})">삭제</button>
+      </div>
+    `;
+    root.appendChild(div);
+  });
+}
+
+function avgPct(logs){
+  if(!logs.length) return null;
+  const arr = logs.map(l => computeCompletion(l).pct);
+  return Math.round(arr.reduce((a,b)=>a+b,0) / arr.length);
+}
+
+function avgMinutes(logs){
+  const arr = logs.map(l => diffMinutes(l.startedAt, l.finishedAt)).filter(v => typeof v === "number");
+  if(!arr.length) return null;
+  return Math.round(arr.reduce((a,b)=>a+b,0) / arr.length);
+}
+
+function renderEval(){
+  const plan = getSelectedPlan();
+  const box = $("#evalBox");
+
+  if(!plan){
+    box.innerHTML = `<div class="mini">훈련을 선택하세요.</div>`;
+    return;
+  }
+
+  const dr = plan.attachedDrLogs || [];
+  const eop = plan.attachedEopLogs || [];
+
+  const capa = plan.capa || [];
+  const capaOpen = capa.filter(x => String(x?.status) !== "Closed").length;
+
+  if(!dr.length && !eop.length){
+    box.innerHTML = `
+      <div class="mini">연결된 실행 로그가 없습니다.</div>
+      <div class="logMeta" style="margin-top:8px;">
+        <span class="pill">목표 RTO: ${esc(plan.targetRto || "-")}</span>
+        <span class="pill">상태: ${esc(plan.status || "-")}</span>
+        <span class="pill">CAPA 오픈: ${capaOpen}건</span>
+      </div>
+    `;
+    return;
+  }
+
+  // ✅ 설계 철학: DR 평균 + EOP 평균의 평균(= (DR+EOP)/2)
+  const drAvg = avgPct(dr);
+  const eopAvg = avgPct(eop);
+
+  let finalAvg = null;
+  if(drAvg != null && eopAvg != null) finalAvg = Math.round((drAvg + eopAvg) / 2);
+  else finalAvg = (drAvg != null) ? drAvg : eopAvg;
+
+  const avgMin = avgMinutes([...dr, ...eop]);
+
+  const ok = (finalAvg ?? 0) >= 80;
+  const lvl = ok ? "tagGood" : "tagBad";
+
+  box.innerHTML = `
+    <div class="logTop">
+      <div class="logTitle">자동 평가 (Auto Evaluation)</div>
+      <span class="pill ${lvl}">${ok ? "OK (적합)" : "NG (미흡)"}</span>
+    </div>
+    <div class="logMeta">
+      <span class="pill">DR Attach ${dr.length}</span>
+      <span class="pill">EOP Attach ${eop.length}</span>
+      <span class="pill">DR 평균 ${drAvg==null ? "-" : drAvg+"%"}</span>
+      <span class="pill">EOP 평균 ${eopAvg==null ? "-" : eopAvg+"%"}</span>
+      <span class="pill">최종 완료율 ${finalAvg==null ? "-" : finalAvg+"%"}</span>
+      <span class="pill">${avgMin==null ? "평균 소요 -" : `평균 소요 ${avgMin}m`}</span>
+      <span class="pill">목표 RTO ${esc(plan.targetRto || "-")}</span>
+      <span class="pill">상태 ${esc(plan.status || "-")}</span>
+      <span class="pill">CAPA 오픈 ${capaOpen}건</span>
+    </div>
+    <div class="mini" style="margin-top:8px;">
+      • 평가 기준(데모): 최종 완료율 80% 이상이면 OK<br/>
+      • 최종 완료율 = (DR 평균 + EOP 평균) / 2 (둘 다 있을 때)
+    </div>
+  `;
+}
+
+function renderAll(){
+  renderPlans();
+  renderDetailForm();
+  renderDRLogs();
+  renderEOPLogs();
+  renderAttached();
+  renderCapa();
+  renderEval();
+  setLogTab(_logTab);
+}
+
+/* init */
+rebuildRegistryMaps();
+reloadAllLogs();
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>문서체계 | BCMS</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+
+  <style>
+    /* ===== 레이아웃 FIX (docs에서만 화면 밀림 방지) ===== */
+    html, body{ height:auto !important; min-height:100% !important; }
+    .layout{
+      display:flex !important;
+      align-items:stretch !important;
+      justify-content:flex-start !important;
+      min-height:100vh !important;
+      height:auto !important;
+    }
+    .main{
+      display:block !important;
+      flex:1 1 auto !important;
+      min-height:100vh !important;
+      height:auto !important;
+      justify-content:flex-start !important;
+      align-items:stretch !important;
+      padding-top: 0 !important;
+      margin-top: 0 !important;
+    }
+    .main > *{ justify-content:flex-start !important; align-items:stretch !important; }
+
+    :root{
+      --cardBg: rgba(255,255,255,.03);
+      --cardBd: rgba(255,255,255,.12);
+      --muted: rgba(255,255,255,.72);
+      --muted2: rgba(255,255,255,.52);
+    }
+
+    .wrap{ max-width:1200px; margin:0 auto; padding:24px 16px 60px; }
+
+    .pageTitle h1{ font-size:26px; margin:0; }
+    .pageTitle p{ margin-top:8px; color:var(--muted); line-height:1.6; }
+
+    .metaRow{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+    .pill{
+      border:1px solid var(--cardBd);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      background:rgba(255,255,255,.02);
+    }
+
+    .board{
+      margin-top:20px;
+      border:1px solid var(--cardBd);
+      border-radius:18px;
+      padding:20px;
+      background:rgba(255,255,255,.02);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:16px;
+      align-items:start;
+    }
+    @media(max-width:1020px){
+      .grid{ grid-template-columns:1fr; }
+    }
+
+    /* ===== 좌측 스택형 레벨 ===== */
+    .stack{
+      position:relative;
+      padding-left:32px;
+    }
+    .stack::before{
+      content:"";
+      position:absolute;
+      left:14px;
+      top:0;
+      bottom:0;
+      width:2px;
+      background:linear-gradient(to bottom,
+        rgba(126,231,255,.55),
+        rgba(200,210,255,.45),
+        rgba(176,255,214,.45),
+        rgba(255,214,130,.45),
+        rgba(255,135,135,.55)
+      );
+      border-radius:2px;
+      opacity:.9;
+    }
+
+    .level{
+      position:relative;
+      border:1px solid var(--cardBd);
+      background:var(--cardBg);
+      border-radius:16px;
+      padding:16px 18px 16px 22px;
+      margin-bottom:16px;
+      box-shadow:0 14px 28px rgba(0,0,0,.15);
+      transition:.15s ease;
+    }
+    .level:hover{
+      transform:translateY(-2px);
+      box-shadow:0 20px 40px rgba(0,0,0,.22);
+    }
+
+    .level::before{
+      content:attr(data-step);
+      position:absolute;
+      left:-18px;
+      top:18px;
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      font-size:12px;
+      color:#0b1220;
+      background:#7ee7ff;
+      box-shadow:0 0 0 4px rgba(0,0,0,.40);
+    }
+
+    .level.l1{ border-left:4px solid #7ee7ff; }
+    .level.l1::before{ background:#7ee7ff; }
+
+    .level.l2{ border-left:4px solid #c8d2ff; }
+    .level.l2::before{ background:#c8d2ff; }
+
+    .level.l3{ border-left:4px solid #b0ffd6; }
+    .level.l3::before{ background:#b0ffd6; }
+
+    .level.l4{ border-left:4px solid #ffd682; }
+    .level.l4::before{ background:#ffd682; }
+
+    .level.l5{ border-left:4px solid #ff8787; }
+    .level.l5::before{ background:#ff8787; }
+
+    .level b{ font-size:14px; }
+    .level small{ display:block; margin-top:6px; color:var(--muted); line-height:1.5; }
+
+    /* ===== 오른쪽 패널 ===== */
+    .panel{
+      border:1px solid var(--cardBd);
+      border-radius:18px;
+      padding:20px;
+      background:rgba(255,255,255,.02);
+      min-height: 360px;
+    }
+    .panel h2{ margin:0; font-size:16px; }
+    .panel p{ margin-top:8px; color:var(--muted); line-height:1.6; }
+
+    .flow{
+      margin-top:14px;
+      padding:12px;
+      border:1px dashed rgba(255,255,255,.12);
+      border-radius:14px;
+      font-size:13px;
+      color:var(--muted);
+      background: rgba(255,255,255,.015);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="layout">
+    <!-- ✅ 다른 페이지들과 동일하게 유지 -->
+    <aside id="sidebarMount"></aside>
+
+    <main class="main">
+      <div class="wrap">
+        <div class="pageTitle">
+          <h1>문서체계</h1>
+          <p>실행 기반 운영 + Records 자동 생성 구조</p>
+          <div class="metaRow">
+            <span class="pill">Documents = 기준</span>
+            <span class="pill">Procedures = 실행</span>
+            <span class="pill">Records = Evidence</span>
+          </div>
+        </div>
+
+        <section class="board">
+          <div class="grid">
+            <div class="stack">
+              <div class="level l1" data-step="1">
+                <b>Level 1. Governance</b>
+                <small>정책 · 범위 · 역할 정의</small>
+              </div>
+
+              <div class="level l2" data-step="2">
+                <b>Level 2. Risk &amp; BIA</b>
+                <small>우선순위 · RTO · 복구 기준</small>
+              </div>
+
+              <div class="level l3" data-step="3">
+                <b>Level 3. Strategy &amp; Plans</b>
+                <small>DRP / BCP 전략 및 계획</small>
+              </div>
+
+              <div class="level l4" data-step="4">
+                <b>Level 4. Procedures</b>
+                <small>실행 중심 절차</small>
+              </div>
+
+              <div class="level l5" data-step="5">
+                <b>Level 5. Records / Evidence</b>
+                <small>Logs · Audit · Improvement</small>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2>Records = Logs/Evidence (v2 핵심)</h2>
+              <p>Incident → Decision → 실행 → Logs → Audit → Improvement → Governance 환류 구조</p>
+              <div class="flow">
+                Incident → YES/NO Gate → DRP/EOP/BCP 실행 → Logs 생성 → Audit → Improvement → Governance 업데이트
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ✅ 사이드바는 기존 방식 그대로: defer/async 없이 로드 -->
+  <script src="../assets/sidebar.js"></script>
+</body>
+</html>
