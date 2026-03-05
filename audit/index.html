@@ -18,8 +18,8 @@
     .rightTools { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 
     .btn {
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(15,23,42,.04);
       color:#e9eefc;
       padding: 8px 10px;
       border-radius: 10px;
@@ -31,15 +31,15 @@
       align-items:center;
       user-select:none;
     }
-    .btn:hover { background: rgba(255,255,255,.05); }
+    .btn:hover { background: rgba(15,23,42,.04); }
     .btn.danger { border-color: rgba(255,120,120,.35); }
     .btn.ghost { background: transparent; }
 
     /* Severity 기준표 */
     details.sevBox{
       margin: 8px 0 14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.02);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.94);
       border-radius:14px;
       padding:12px;
     }
@@ -57,19 +57,19 @@
       width:100%;
       border-collapse:collapse;
       margin-top:10px;
-      border:1px solid rgba(255,255,255,.10);
+      border:1px solid rgba(15,23,42,.12);
       border-radius:12px;
       overflow:hidden;
-      background: rgba(0,0,0,.14);
+      background: rgba(15,23,42,.04);
       font-size:14px;
     }
     table.sevTable th, table.sevTable td{
       padding:10px 10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
+      border-bottom:1px solid rgba(15,23,42,.10);
       vertical-align:top;
       line-height:1.5;
     }
-    table.sevTable th{ color:#a8b3d4; text-align:left; }
+    table.sevTable th{ color:rgba(15,23,42,.62); text-align:left; }
     table.sevTable tr:last-child td{ border-bottom:none; }
 
     /* KPI */
@@ -78,8 +78,8 @@
     @media (max-width: 520px){ .kpiGrid { grid-template-columns: 1fr; } }
 
     .kpi{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.96);
       border-radius: 14px;
       padding: 12px 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,.25);
@@ -88,9 +88,9 @@
     .kpi:hover{
       transform: translateY(-2px);
       box-shadow: 0 12px 28px rgba(0,0,0,.35);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.98);
     }
-    .kpi .label { color:#a8b3d4; font-size: 13px; }
+    .kpi .label { color:rgba(15,23,42,.62); font-size: 13px; }
     .kpi .value {
       font-size: 26px;
       margin-top: 6px;
@@ -99,12 +99,12 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .kpi .sub { margin-top: 4px; color:#a8b3d4; font-size: 12px; }
+    .kpi .sub { margin-top: 4px; color:rgba(15,23,42,.62); font-size: 12px; }
 
     /* Filters */
     .filters {
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.02);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.94);
       border-radius: 14px;
       padding: 10px;
       display:flex;
@@ -115,12 +115,12 @@
     }
     .filters .pill {
       display:flex; align-items:center; gap:8px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.14);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(15,23,42,.04);
       padding: 8px 10px;
       border-radius: 999px;
     }
-    .filters label { color:#a8b3d4; font-size: 12px; }
+    .filters label { color:rgba(15,23,42,.62); font-size: 12px; }
     .filters select, .filters input {
       background: transparent;
       border: none;
@@ -134,21 +134,21 @@
 
     /* Sections */
     .section {
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.02);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.94);
       border-radius: 16px;
       padding: 12px;
       margin-top: 12px;
     }
     .sectionHead { display:flex; justify-content:space-between; align-items:flex-end; gap:10px; margin-bottom: 10px; }
     .sectionHead h2 { margin:0; font-size: 19px; }
-    .sectionHead .hint { color:#a8b3d4; font-size: 12px; }
+    .sectionHead .hint { color:rgba(15,23,42,.62); font-size: 12px; }
 
     /* Evidence cards */
     .eList { display:flex; flex-direction:column; gap:10px; }
     details.eCard {
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.96);
       border-radius: 14px;
       overflow:hidden;
     }
@@ -164,8 +164,8 @@
     details.eCard summary::-webkit-details-marker { display:none; }
     .eMain { display:flex; flex-direction:column; gap:8px; min-width: 0; }
     .eTopLine { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .eMeta { color:#a8b3d4; font-size:14px; }
-    .eSubLine { display:flex; gap:10px; flex-wrap:wrap; color:#a8b3d4; font-size:14px; }
+    .eMeta { color:rgba(15,23,42,.62); font-size:14px; }
+    .eSubLine { display:flex; gap:10px; flex-wrap:wrap; color:rgba(15,23,42,.62); font-size:14px; }
     .eActions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 
     /* Badges */
@@ -173,46 +173,46 @@
       font-size: 11px;
       padding: 4px 8px;
       border-radius: 999px;
-      border:1px solid rgba(255,255,255,.14);
+      border:1px solid rgba(15,23,42,.14);
       color:#e9eefc;
-      background: rgba(255,255,255,.03);
+      background: rgba(255,255,255,.96);
       white-space:nowrap;
     }
     .badge.critical { border-color: rgba(255,80,80,.55); background: rgba(255,80,80,.10); }
     .badge.high { border-color: rgba(255,170,60,.55); background: rgba(255,170,60,.10); }
     .badge.medium { border-color: rgba(120,200,255,.45); background: rgba(120,200,255,.10); }
     .badge.low { border-color: rgba(170,255,170,.35); background: rgba(170,255,170,.08); }
-    .badge.state { border-color: rgba(255,255,255,.14); background: rgba(0,0,0,.18); color:#a8b3d4; }
+    .badge.state { border-color: rgba(255,255,255,.14); background: rgba(15,23,42,.04); color:rgba(15,23,42,.62); }
 
     .badge.sev1{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); color:#fecaca; }
     .badge.sev2{ border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
     .badge.sev3{ border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
     .badge.sev4{ border-color: rgba(59,130,246,.40); background: rgba(59,130,246,.10); color:#bfdbfe; }
-    .badge.sev5{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#e2e8f0; }
+    .badge.sev5{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#0f172a; }
 
     /* Details body */
-    .eBody { padding: 0 12px 12px; border-top:1px solid rgba(255,255,255,.08); }
+    .eBody { padding: 0 12px 12px; border-top:1px solid rgba(15,23,42,.10); }
     .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 10px; }
     @media (max-width: 860px){ .grid2 { grid-template-columns: 1fr; } }
 
     .box {
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.14);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(15,23,42,.04);
       border-radius: 14px;
       padding: 10px;
     }
     .box h3 { margin:0 0 8px; font-size: 13px; color:#e9eefc; }
     .kv { display:grid; grid-template-columns: 130px 1fr; gap:8px 10px; }
     .kv div { font-size: 12px; }
-    .kv .k { color:#a8b3d4; }
+    .kv .k { color:rgba(15,23,42,.62); }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
     .steps { display:flex; flex-direction:column; gap:8px; }
     .step {
       display:flex; justify-content:space-between; gap:10px;
       padding: 8px 10px; border-radius: 12px;
-      border:1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.02);
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.94);
     }
     .step .left { display:flex; gap:8px; align-items:flex-start; min-width:0; }
     .dot {
@@ -222,15 +222,15 @@
     }
     .dot.on { border-color: rgba(170,255,170,.6); background: rgba(170,255,170,.18); }
     .step .txt { font-size: 14px; color:#e9eefc; }
-    .step .time { font-size: 12px; color:#a8b3d4; white-space:nowrap; }
+    .step .time { font-size: 12px; color:rgba(15,23,42,.62); white-space:nowrap; }
 
     .empty {
-      color:#a8b3d4;
+      color:rgba(15,23,42,.62);
       font-size: 13px;
       padding: 14px;
       border-radius: 14px;
       border:1px dashed rgba(255,255,255,.16);
-      background: rgba(0,0,0,.10);
+      background: rgba(15,23,42,.03);
     }
 
     .toast {
@@ -238,7 +238,7 @@
       right: 14px;
       bottom: 14px;
       max-width: 420px;
-      border:1px solid rgba(255,255,255,.12);
+      border:1px solid rgba(15,23,42,.12);
       background: rgba(10,12,20,.92);
       color:#e9eefc;
       padding: 10px 12px;
@@ -276,7 +276,7 @@
       <details class="sevBox" open>
         <summary>
           <span>📌 Severity Level (상황등급) 기준표</span>
-          <span class="mini" style="margin:0; color:#a8b3d4; font-weight:800;">(클릭하면 접기/펼치기)</span>
+          <span class="mini" style="margin:0; color:rgba(15,23,42,.62); font-weight:800;">(클릭하면 접기/펼치기)</span>
         </summary>
 
         <table class="sevTable">
@@ -451,7 +451,7 @@
           <button class="btn" id="btnExportFiltered">📤 필터 결과 Export</button>
           <button class="btn danger" id="btnClearAll">🧨 전체 데이터 초기화(감사)</button>
         </div>
-        <p style="margin:10px 0 0; color:#a8b3d4; font-size:12px; line-height:1.6;">
+        <p style="margin:10px 0 0; color:rgba(15,23,42,.62); font-size:12px; line-height:1.6;">
           ※ <b>전체 데이터 초기화</b>는 Demo 환경에서만 사용하세요. 실 운영이라면 Admin 권한 영역으로 분리하는 것이 적절합니다.
         </p>
       </section>
@@ -968,7 +968,7 @@
 
               <div class="box">
                 <h3>메모</h3>
-                <div style="color:#a8b3d4; font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
+                <div style="color:rgba(15,23,42,.62); font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
               </div>
             </div>
 
@@ -1122,7 +1122,7 @@
 
               <div class="box">
                 <h3>메모</h3>
-                <div style="color:#a8b3d4; font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
+                <div style="color:rgba(15,23,42,.62); font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
               </div>
             </div>
 
@@ -1264,7 +1264,7 @@
 
               <div class="box">
                 <h3>메모</h3>
-                <div style="color:#a8b3d4; font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(r?.memo || r?.note || "—")}</div>
+                <div style="color:rgba(15,23,42,.62); font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(r?.memo || r?.note || "—")}</div>
               </div>
             </div>
           </div>

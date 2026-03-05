@@ -167,6 +167,37 @@ body{
   display:block;
 }
 
+
+
+/* ===== LIGHT THEME HARMONIZATION (GLOBAL OVERRIDES) ===== */
+.panel, .box, .tile, .kpi, .node, .rowItem, .item, .tableWrap, table{
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(15,23,42,.12) !important;
+}
+
+p, small, .muted, .sub, .hint, .meta, .desc, .rowSub, .tileMeta, .panelHint{
+  color: rgba(15,23,42,.64) !important;
+}
+
+.btn, .chip, .chipBtn, .linkBtn{
+  background: rgba(255,255,255,.94) !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid rgba(15,23,42,.14) !important;
+}
+.btn:hover, .chipBtn:hover, .linkBtn:hover{
+  background: rgba(15,23,42,.05) !important;
+}
+
+input, textarea{
+  background: #ffffff !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid rgba(15,23,42,.16) !important;
+}
+
+th{ color: rgba(15,23,42,.72) !important; }
+td{ color: rgba(15,23,42,.86) !important; }
+
 /* ===== RESPONSIVE: 1024px 이하에서는 상단바처럼 ===== */
 @media (max-width: 1024px){
   body{ flex-direction: column; }
@@ -251,6 +282,37 @@ input, select, textarea{
 button, .btn, .chipBtn{
   font-size: 16px;
 }
+
+
+
+/* ===== LIGHT THEME HARMONIZATION (GLOBAL OVERRIDES) ===== */
+.panel, .box, .tile, .kpi, .node, .rowItem, .item, .tableWrap, table{
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(15,23,42,.12) !important;
+}
+
+p, small, .muted, .sub, .hint, .meta, .desc, .rowSub, .tileMeta, .panelHint{
+  color: rgba(15,23,42,.64) !important;
+}
+
+.btn, .chip, .chipBtn, .linkBtn{
+  background: rgba(255,255,255,.94) !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid rgba(15,23,42,.14) !important;
+}
+.btn:hover, .chipBtn:hover, .linkBtn:hover{
+  background: rgba(15,23,42,.05) !important;
+}
+
+input, textarea{
+  background: #ffffff !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid rgba(15,23,42,.16) !important;
+}
+
+th{ color: rgba(15,23,42,.72) !important; }
+td{ color: rgba(15,23,42,.86) !important; }
 
 /* ===== RESPONSIVE: 1024px 이하에서는 상단바처럼 ===== */
 @media (max-width: 1024px){
