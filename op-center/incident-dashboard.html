@@ -74,6 +74,7 @@
     .serviceSearch{ margin-bottom:8px; }
     .serviceList{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:8px; max-height:140px; overflow:auto; }
     .checkPill{ display:flex; align-items:center; gap:6px; border:1px solid rgba(15,23,42,.12); border-radius:999px; padding:6px 10px; font-size:12px; margin-bottom:6px; width:fit-content; background:#fff; }
+    .inlineCheck{ display:flex; align-items:center; gap:6px; margin-top:8px; font-size:12px; color:rgba(15,23,42,.68); }
     .serviceEmpty{ font-size:12px; color:rgba(15,23,42,.62); line-height:1.5; }
     .serviceEmpty a{ color:#2563eb; text-decoration:none; }
 
@@ -190,6 +191,7 @@
               <div class="row">
                 <label for="finalSummary">최종 요약 (1줄)</label>
                 <input id="finalSummary" type="text" placeholder="예: 핵심 서비스 정상화, 후속 점검 진행"/>
+                <label class="inlineCheck" for="autoEvidenceToggle"><input id="autoEvidenceToggle" type="checkbox" checked/> Incident 종료 시 증적 1건 자동 생성</label>
               </div>
               <button class="btn actionBtn" id="btnEndIncident" type="button">Incident 종료</button>
             </section>
@@ -223,6 +225,7 @@
       const STORAGE_KEY = DataStore.KEY_INCIDENTS;
       const DEMO_MODE_KEY = DataStore.KEY_DEMO_MODE;
       const SERVICE_REGISTRY_KEY = DataStore.KEY_SERVICE_REGISTRY || 'bcms_service_registry_v1';
+      const EVIDENCE_KEY = DataStore.KEY_EVIDENCE || 'bcms_audit_evidence_v1';
 
       const logBody = document.getElementById('incidentLogBody');
       const incidentStatusText = document.getElementById('incidentStatusText');
@@ -236,6 +239,7 @@
       const severitySelect = document.getElementById('severitySelect');
       const statusSelect = document.getElementById('statusSelect');
       const finalSummary = document.getElementById('finalSummary');
+      const autoEvidenceToggle = document.getElementById('autoEvidenceToggle');
       const demoModeToggle = document.getElementById('demoModeToggle');
       const serviceSearchInput = document.getElementById('serviceSearchInput');
       const impactChecks = document.getElementById('impactChecks');
@@ -296,6 +300,25 @@
       const addLog = ({ system, event, action, operator = '운영자' }) => {
         state.logs.unshift({ time: nowTime(), system, event, action, operator });
         if (state.logs.length > 20) state.logs = state.logs.slice(0, 20);
+      };
+
+      const createEvidenceFromIncident = (summaryText) => {
+        const incidentId = DataStore.uid ? DataStore.uid('INC') : `INC-${Date.now()}`;
+        const evidence = {
+          id: DataStore.uid ? DataStore.uid('EVD') : `EVD-${Date.now()}`,
+          createdAt: DataStore.nowISO ? DataStore.nowISO() : new Date().toISOString(),
+          type: '장애대응',
+          services: [...state.currentIncident.impactedServiceNames],
+          incident: `${incidentId} / ${state.currentIncident.status}`,
+          description: `Incident 종료 요약: ${summaryText || '최종 요약 미입력'}`,
+          attachment: null,
+          status: '확인필요',
+        };
+
+        DataStore.update(EVIDENCE_KEY, (prev) => {
+          const list = Array.isArray(prev) ? prev : [];
+          return [evidence, ...list];
+        });
       };
 
       const loadDemoMode = () => DataStore.get(DEMO_MODE_KEY, true);
@@ -537,6 +560,10 @@
         state.currentIncident.endTime = nowText();
         state.currentIncident.finalSummary = summary;
         addLog({ system: '사고 대응 콘솔', event: 'Incident 종료 (복구 완료)', action: `종료 시각 기록 / 요약: ${summary}`, operator: '사고 관리자' });
+        if (autoEvidenceToggle.checked) {
+          createEvidenceFromIncident(summary);
+          addLog({ system: '증적 연동', event: '증적 자동 생성', action: 'Incident 종료 결과를 증적 관리에 등록', operator: '시스템' });
+        }
         saveState();
         renderAll();
       });

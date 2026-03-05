@@ -73,6 +73,9 @@
 
     <div class="sidebar-section" data-section="audit">
       <a href="${H("/audit/index.html")}" class="sidebar-section-title">📈 7. Performance & Audit (평가·감사)</a>
+      <div class="sub-menu">
+        <a href="${H("/audit/evidence.html")}">증적 관리</a>
+      </div>
     </div>
 
     <div class="sidebar-section" data-section="admin">
