@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Incident Response Dashboard (사고 대응 대시보드) | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .wrap{ max-width: 1320px; margin: 0 auto; }
+
+    .hero{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .hero h1{ margin:0; font-size:28px; font-weight:950; letter-spacing:-.02em; }
+    .hero p{ margin:8px 0 0; color:rgba(15,23,42,.62); }
+
+    .statusBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(15,23,42,.14);
+      background:#fff;
+      font-size:13px;
+      font-weight:900;
+      color:#0f172a;
+    }
+    .statusBadge .dot{ width:8px; height:8px; border-radius:999px; background:#16a34a; }
+    .statusBadge.normal{ color:#166534; border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.08); }
+    .statusBadge.normal .dot{ background:#16a34a; }
+    .statusBadge.dr{ color:#991b1b; border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.10); }
+    .statusBadge.dr .dot{ background:#dc2626; }
+    .statusBadge.recovering{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.10); }
+    .statusBadge.recovering .dot{ background:#d97706; }
+
+    .grid{ display:grid; grid-template-columns: repeat(12,minmax(0,1fr)); gap:14px; }
+    .card{ border-radius:16px; }
+
+    .incidentCard{ grid-column: span 6; }
+    .countdownCard{ grid-column: span 3; text-align:center; }
+    .drCard{ grid-column: span 3; }
+    .logCard{ grid-column: span 12; }
+
+    @media (max-width: 1180px){
+      .incidentCard{ grid-column: span 12; }
+      .countdownCard, .drCard{ grid-column: span 6; }
+    }
+    @media (max-width: 760px){
+      .countdownCard, .drCard{ grid-column: span 12; }
+    }
+
+    .metaGrid{
+      margin-top:8px;
+      display:grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .metaItem{
+      border:1px solid rgba(15,23,42,.10);
+      border-radius:12px;
+      padding:10px;
+      background:rgba(255,255,255,.96);
+    }
+    .metaItem .k{ font-size:12px; font-weight:800; color:rgba(15,23,42,.58); }
+    .metaItem .v{ margin-top:4px; font-size:15px; font-weight:900; color:#0f172a; }
+
+    .rto{
+      font-size:40px;
+      font-weight:950;
+      letter-spacing:.04em;
+      line-height:1.1;
+      margin-top:10px;
+    }
+    .rtoHint{ margin-top:6px; color:rgba(15,23,42,.58); font-size:13px; }
+
+    .toggleRow{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+    .toggleBtn{
+      border:1px solid rgba(15,23,42,.14);
+      background:#fff;
+      color:#0f172a;
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .toggleBtn.active{ border-color:rgba(37,99,235,.35); box-shadow:0 0 0 2px rgba(37,99,235,.12) inset; }
+
+    .tableWrap{ overflow:auto; }
+    table{ width:100%; min-width:900px; }
+    th, td{ padding:10px 12px; font-size:14px; }
+    .evt{ font-weight:800; }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+
+  <main class="main">
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <h1>Incident Response Dashboard (사고 대응 대시보드)</h1>
+          <p>운영센터의 실시간 사고 현황, DR 상태, 복구 목표(RTO)를 한 화면에서 확인합니다.</p>
+        </div>
+        <div id="globalStatusBadge" class="statusBadge normal"><span class="dot"></span>정상 (Normal)</div>
+      </div>
+
+      <section class="grid">
+        <!-- A. Incident Status Card -->
+        <article class="card incidentCard">
+          <h3>현재 사고 현황 (Incident Snapshot)</h3>
+          <div class="metaGrid">
+            <div class="metaItem">
+              <div class="k">현재 사고 상태</div>
+              <div class="v" id="incidentStatusText">모니터링 (Monitoring)</div>
+            </div>
+            <div class="metaItem">
+              <div class="k">심각도 등급 (Severity)</div>
+              <div class="v" id="severityText">SEV2</div>
+            </div>
+            <div class="metaItem">
+              <div class="k">영향 서비스</div>
+              <div class="v" id="impactedText">Auth API, Payment Gateway</div>
+            </div>
+            <div class="metaItem">
+              <div class="k">사고 시작 시각</div>
+              <div class="v" id="startTimeText">2026-03-05 09:24 KST</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- B. RTO 카운트다운 -->
+        <article class="card countdownCard">
+          <h3>RTO 카운트다운</h3>
+          <div class="rto" id="rtoTimer">01:35:22</div>
+          <div class="rtoHint">목표 복구시간(RTO) 남은 시간</div>
+        </article>
+
+        <!-- C. DR 전환 상태 (DR Activation) -->
+        <article class="card drCard">
+          <h3>DR 전환 상태 (DR Activation)</h3>
+          <div id="drBadge" class="statusBadge normal" style="margin-top:10px;"><span class="dot"></span>정상 (Normal)</div>
+          <div class="toggleRow" id="drStatusToggles">
+            <button class="toggleBtn active" data-state="normal">정상 (Normal)</button>
+            <button class="toggleBtn" data-state="dr">DR 가동 (DR Activated)</button>
+            <button class="toggleBtn" data-state="recovering">복구 중 (Recovering)</button>
+          </div>
+        </article>
+
+        <!-- D. 사고 로그 (Incident Log) Table -->
+        <article class="card logCard">
+          <h3>사고 로그 (Incident Log)</h3>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>시간 (Time)</th>
+                  <th>시스템 (System)</th>
+                  <th>이벤트 (Event)</th>
+                  <th>조치 내용 (Action Taken)</th>
+                  <th>담당자 (Operator)</th>
+                </tr>
+              </thead>
+              <tbody id="incidentLogBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script>
+    (() => {
+      // ===== Mock incident timeline =====
+      const updates = [
+        { status: '모니터링 (Monitoring)', severity: 'SEV2', impacted: 'Auth API, Payment Gateway', action: '초기 장애 감지 및 상황 브리핑', system: 'API Gateway', operator: 'NOC-1' },
+        { status: '원인 분석 중 (Investigating)', severity: 'SEV2', impacted: 'Auth API, Payment Gateway, Web Portal', action: '원인 분석 및 트래픽 우회 적용', system: 'Traffic Controller', operator: 'Ops-Lee' },
+        { status: '완화 조치 중 (Mitigating)', severity: 'SEV1', impacted: 'Auth API, Payment Gateway, Web Portal, CRM', action: 'DR 대상 우선순위 반영 및 복구 절차 실행', system: 'DR Orchestrator', operator: 'DR-Kim' },
+        { status: '복구 중 (Recovering)', severity: 'SEV2', impacted: 'Web Portal, CRM', action: '핵심 서비스 정상화 확인, 잔여 서비스 복구 중', system: 'Portal Cluster', operator: 'Ops-Park' },
+        { status: '안정화 (Stabilized)', severity: 'SEV3', impacted: 'CRM', action: '후속 검증 및 사후 점검 계획 등록', system: 'Service Desk', operator: 'QA-Han' },
+      ];
+
+      const logBody = document.getElementById('incidentLogBody');
+      const incidentStatusText = document.getElementById('incidentStatusText');
+      const severityText = document.getElementById('severityText');
+      const impactedText = document.getElementById('impactedText');
+      const startTimeText = document.getElementById('startTimeText');
+      const globalStatusBadge = document.getElementById('globalStatusBadge');
+      const drBadge = document.getElementById('drBadge');
+      const rtoTimer = document.getElementById('rtoTimer');
+
+      startTimeText.textContent = new Date().toLocaleString('ko-KR', { hour12: false });
+
+      const appendLog = (u) => {
+        const tr = document.createElement('tr');
+        const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+        tr.innerHTML = `
+          <td>${now}</td>
+          <td>${u.system}</td>
+          <td class="evt">${u.status} / ${u.severity}</td>
+          <td>${u.action}</td>
+          <td>${u.operator}</td>
+        `;
+        logBody.prepend(tr);
+        while (logBody.children.length > 8) logBody.removeChild(logBody.lastChild);
+      };
+
+      let idx = 0;
+      const applyUpdate = (u) => {
+        incidentStatusText.textContent = u.status;
+        severityText.textContent = u.severity;
+        impactedText.textContent = u.impacted;
+        appendLog(u);
+      };
+
+      applyUpdate(updates[0]);
+      setInterval(() => {
+        idx = (idx + 1) % updates.length;
+        applyUpdate(updates[idx]);
+      }, 7000);
+
+      // ===== DR status controls =====
+      const drStateMap = {
+        normal: { label: '정상 (Normal)', cls: 'normal' },
+        dr: { label: 'DR 가동 (DR Activated)', cls: 'dr' },
+        recovering: { label: '복구 중 (Recovering)', cls: 'recovering' },
+      };
+
+      const setDrState = (state) => {
+        const info = drStateMap[state] || drStateMap.normal;
+        drBadge.className = `statusBadge ${info.cls}`;
+        drBadge.innerHTML = `<span class="dot"></span>${info.label}`;
+        globalStatusBadge.className = `statusBadge ${info.cls}`;
+        globalStatusBadge.innerHTML = `<span class="dot"></span>${info.label}`;
+
+        document.querySelectorAll('#drStatusToggles .toggleBtn').forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.state === state);
+        });
+      };
+
+      document.getElementById('drStatusToggles').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-state]');
+        if (!btn) return;
+        setDrState(btn.dataset.state);
+      });
+
+      setDrState('normal');
+
+      // ===== RTO countdown timer =====
+      let remaining = (1 * 60 * 60) + (35 * 60) + 22; // 01:35:22
+      const pad = (n) => String(n).padStart(2, '0');
+      const renderTimer = () => {
+        const h = Math.floor(remaining / 3600);
+        const m = Math.floor((remaining % 3600) / 60);
+        const s = remaining % 60;
+        rtoTimer.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+      };
+
+      renderTimer();
+      setInterval(() => {
+        if (remaining > 0) remaining -= 1;
+        renderTimer();
+      }, 1000);
+    })();
+  </script>
+</body>
+</html>
