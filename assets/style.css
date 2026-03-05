@@ -25,8 +25,8 @@ html, body{
 }
 
 body{
-  background:#0f172a;
-  color:#e2e8f0;
+  background:#f6f7fb;
+  color:#0f172a;
   display:flex;
   min-height: 100vh;
 }
@@ -167,23 +167,7 @@ body{
   display:block;
 }
 
-/* ===== RESPONSIVE: 1024px 이하에서는 상단바처럼 ===== */
-@media (max-width: 1024px){
-  body{ flex-direction: column; }
 
-  .sidebar{
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    min-height: auto;
-    height: auto;
-
-    border-right: none;
-    border-bottom: 1px solid var(--sbBd);
-
-    box-shadow: none;
-  }
-}
 
 /* ===== MAIN (GLOBAL) ===== */
 .main{
@@ -191,6 +175,7 @@ body{
   min-width: 0;        /* ✅ 테이블/카드가 옆으로 밀리는 현상 방지 */
   padding: 38px 36px;  /* ✅ 400px 사이드바 기준 밸런스 */
   font-size: 16px;     /* ✅ 본문 기본 크기 */
+  background:#f6f7fb;
 }
 
 /* 페이지 타이틀 (통일) */
@@ -202,11 +187,11 @@ body{
 
 /* 카드 UI */
 .card{
-  background:#1e293b;
+  background:#ffffff;
   padding:26px;
   border-radius:14px;
   margin-bottom:22px;
-  border:1px solid rgba(255,255,255,0.05);
+  border:1px solid rgba(15,23,42,.10);
 }
 
 .card h3{
@@ -218,7 +203,7 @@ body{
 .card p{
   font-size:16px;
   line-height:1.7;
-  color:#cbd5e1;
+  color:rgba(15,23,42,.74);
 }
 
 /* 공통 보조 텍스트 */
@@ -227,8 +212,9 @@ body{
 
 /* ===== GLOBAL: Select dropdown option visibility (Dark UI fix) ===== */
 select{
-  color: #e9eefc;
-  background: rgba(0,0,0,.18);
+  color: rgba(15,23,42,.88);
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,.16);
 }
 select option{
   color: #0b1220;
@@ -249,6 +235,37 @@ input, select, textarea{
 button, .btn, .chipBtn{
   font-size: 16px;
 }
+
+
+
+/* ===== LIGHT THEME HARMONIZATION (GLOBAL OVERRIDES) ===== */
+.panel, .box, .tile, .kpi, .rowItem, .item, .tableWrap, table{
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(15,23,42,.12) !important;
+}
+
+p, small, .muted, .sub, .hint, .meta, .desc, .rowSub, .tileMeta, .panelHint{
+  color: rgba(15,23,42,.64) !important;
+}
+
+.btn, .chip, .chipBtn, .linkBtn{
+  background: rgba(255,255,255,.94) !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid rgba(15,23,42,.14) !important;
+}
+.btn:hover, .chipBtn:hover, .linkBtn:hover{
+  background: rgba(15,23,42,.05) !important;
+}
+
+input, textarea{
+  background: #ffffff !important;
+  color: rgba(15,23,42,.88) !important;
+  border: 1px solid rgba(15,23,42,.16) !important;
+}
+
+th{ color: rgba(15,23,42,.72) !important; }
+td{ color: rgba(15,23,42,.86) !important; }
 
 /* ===== RESPONSIVE: 1024px 이하에서는 상단바처럼 ===== */
 @media (max-width: 1024px){
