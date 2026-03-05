@@ -75,6 +75,7 @@
       <a href="${H("/audit/index.html")}" class="sidebar-section-title">📈 7. Performance & Audit (평가·감사)</a>
       <div class="sub-menu">
         <a href="${H("/audit/evidence.html")}">증적 관리</a>
+        <a href="${H("/audit/capa.html")}">개선조치(CAPA)</a>
       </div>
     </div>
 
