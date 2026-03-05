@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Service Registry (서비스 레지스트리) | Governance</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .layout-grid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:14px; }
+    .form-card{ grid-column: span 12; }
+    .list-card{ grid-column: span 12; }
+
+    .form-grid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:12px; }
+    .col-6{ grid-column: span 6; }
+    .col-4{ grid-column: span 4; }
+    .col-3{ grid-column: span 3; }
+    .col-12{ grid-column: span 12; }
+
+    .field label{ display:block; font-size:13px; font-weight:800; margin-bottom:6px; }
+    .field input, .field select, .field textarea{ width:100%; padding:10px 12px; }
+    .field textarea{ min-height:88px; resize:vertical; }
+
+    .inline-split{ display:grid; grid-template-columns: 1fr 110px; gap:8px; }
+    .actions-row{ display:flex; flex-wrap:wrap; gap:8px; }
+    .hint-line{ margin-top:8px; font-size:13px; }
+
+    .toolbar{ display:grid; grid-template-columns: 1fr 220px; gap:10px; margin-bottom:12px; }
+    .tableWrap{ overflow:auto; }
+    table{ width:100%; min-width:980px; }
+    th, td{ padding:10px 12px; font-size:14px; text-align:left; }
+
+    .importance{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--lineStrong); font-size:12px; font-weight:800; }
+    .imp-low{ background:rgba(34,197,94,.10); color:#166534; border-color:rgba(34,197,94,.32); }
+    .imp-mid{ background:rgba(234,179,8,.16); color:#854d0e; border-color:rgba(234,179,8,.34); }
+    .imp-high{ background:rgba(249,115,22,.14); color:#9a3412; border-color:rgba(249,115,22,.34); }
+    .imp-critical{ background:rgba(239,68,68,.12); color:#991b1b; border-color:rgba(239,68,68,.34); }
+
+    .table-actions{ display:flex; gap:6px; }
+    .empty{ padding:16px 12px; text-align:center; color:var(--muted); }
+
+    @media (max-width: 980px){
+      .toolbar{ grid-template-columns: 1fr; }
+      .col-6, .col-4, .col-3{ grid-column: span 12; }
+      .inline-split{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+
+  <main class="main">
+    <div class="wrap">
+      <h1 class="page-title">🗂️ Service Registry (서비스 레지스트리)</h1>
+
+      <section class="layout-grid">
+        <article class="card form-card">
+          <h3>서비스 등록 / 수정</h3>
+          <p class="hint">BCMS 관리 대상 서비스를 등록하고 RTO/RPO를 유지 관리합니다.</p>
+
+          <form id="serviceForm" class="form-grid">
+            <input type="hidden" id="serviceId"/>
+
+            <div class="field col-6">
+              <label for="serviceName">서비스명 *</label>
+              <input id="serviceName" type="text" required placeholder="예: 결제 API"/>
+            </div>
+
+            <div class="field col-6">
+              <label for="ownerDept">담당부서 *</label>
+              <input id="ownerDept" type="text" required placeholder="예: IT인프라팀"/>
+            </div>
+
+            <div class="field col-4">
+              <label for="importance">중요도 *</label>
+              <select id="importance" required>
+                <option value="낮음">낮음</option>
+                <option value="보통" selected>보통</option>
+                <option value="높음">높음</option>
+                <option value="매우높음">매우높음</option>
+              </select>
+            </div>
+
+            <div class="field col-4">
+              <label for="rtoValue">RTO (복구목표시간)</label>
+              <div class="inline-split">
+                <input id="rtoValue" type="number" min="0" step="1" placeholder="예: 4"/>
+                <select id="rtoUnit">
+                  <option value="분">분</option>
+                  <option value="시간" selected>시간</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field col-4">
+              <label for="rpoValue">RPO (복구목표시점)</label>
+              <div class="inline-split">
+                <input id="rpoValue" type="number" min="0" step="1" placeholder="예: 30"/>
+                <select id="rpoUnit">
+                  <option value="분" selected>분</option>
+                  <option value="시간">시간</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field col-12">
+              <label for="note">비고</label>
+              <textarea id="note" placeholder="선택 입력"></textarea>
+            </div>
+
+            <div class="col-12 actions-row">
+              <button class="btn" id="saveBtn" type="submit">저장</button>
+              <button class="btn" id="cancelEditBtn" type="button">입력 초기화</button>
+            </div>
+          </form>
+          <p class="hint-line">저장 키: <strong>bcms_service_registry_v1</strong></p>
+        </article>
+
+        <article class="card list-card">
+          <h3>서비스 목록</h3>
+          <div class="toolbar">
+            <input id="searchInput" type="search" placeholder="서비스명/담당부서 검색"/>
+            <select id="importanceFilter">
+              <option value="전체">전체 중요도</option>
+              <option value="낮음">낮음</option>
+              <option value="보통">보통</option>
+              <option value="높음">높음</option>
+              <option value="매우높음">매우높음</option>
+            </select>
+          </div>
+
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>서비스명</th>
+                  <th>담당부서</th>
+                  <th>중요도</th>
+                  <th>RTO</th>
+                  <th>RPO</th>
+                  <th>최종 수정일시</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody id="registryBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
+  <script>
+    (() => {
+      const STORAGE_KEY = 'bcms_service_registry_v1';
+
+      const fallbackStore = {
+        get: (key, fallback) => {
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw === null) return fallback;
+            return JSON.parse(raw);
+          } catch {
+            return fallback;
+          }
+        },
+        set: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
+        update: (key, updaterFn) => {
+          const current = fallbackStore.get(key, []);
+          const next = updaterFn(current);
+          fallbackStore.set(key, next);
+          return next;
+        },
+      };
+
+      const store = window.DataStore && DataStore.get && DataStore.set && DataStore.update ? DataStore : fallbackStore;
+      const nowISO = () => (window.DataStore && DataStore.nowISO ? DataStore.nowISO() : new Date().toISOString());
+      const makeUid = () => (window.DataStore && DataStore.uid ? DataStore.uid('SRV') : `SRV-${Date.now()}`);
+
+      const serviceForm = document.getElementById('serviceForm');
+      const serviceId = document.getElementById('serviceId');
+      const serviceName = document.getElementById('serviceName');
+      const ownerDept = document.getElementById('ownerDept');
+      const importance = document.getElementById('importance');
+      const rtoValue = document.getElementById('rtoValue');
+      const rtoUnit = document.getElementById('rtoUnit');
+      const rpoValue = document.getElementById('rpoValue');
+      const rpoUnit = document.getElementById('rpoUnit');
+      const note = document.getElementById('note');
+      const searchInput = document.getElementById('searchInput');
+      const importanceFilter = document.getElementById('importanceFilter');
+      const registryBody = document.getElementById('registryBody');
+
+      const toDisplayDate = (isoString) => {
+        if (!isoString) return '-';
+        const d = new Date(isoString);
+        if (Number.isNaN(d.getTime())) return '-';
+        return d.toLocaleString('ko-KR', { hour12: false });
+      };
+
+      const formatObjective = (value, unit) => {
+        if (value === '' || value === null || value === undefined) return '-';
+        return `${value}${unit || ''}`;
+      };
+
+      const importanceClass = (level) => {
+        if (level === '낮음') return 'imp-low';
+        if (level === '높음') return 'imp-high';
+        if (level === '매우높음') return 'imp-critical';
+        return 'imp-mid';
+      };
+
+      const sampleData = () => ([
+        { id: makeUid(), name: '결제 API', dept: '금융플랫폼팀', importance: '매우높음', rtoValue: 1, rtoUnit: '시간', rpoValue: 10, rpoUnit: '분', note: 'PG 연동 핵심', updatedAt: nowISO() },
+        { id: makeUid(), name: '인증 서비스', dept: '보안플랫폼팀', importance: '매우높음', rtoValue: 30, rtoUnit: '분', rpoValue: 5, rpoUnit: '분', note: 'SSO/OAuth', updatedAt: nowISO() },
+        { id: makeUid(), name: '고객 포털', dept: '디지털채널팀', importance: '높음', rtoValue: 4, rtoUnit: '시간', rpoValue: 30, rpoUnit: '분', note: '', updatedAt: nowISO() },
+        { id: makeUid(), name: '모니터링', dept: 'SRE팀', importance: '높음', rtoValue: 2, rtoUnit: '시간', rpoValue: 15, rpoUnit: '분', note: '관제 대시보드', updatedAt: nowISO() },
+        { id: makeUid(), name: '로그 수집', dept: '플랫폼운영팀', importance: '보통', rtoValue: 8, rtoUnit: '시간', rpoValue: 1, rpoUnit: '시간', note: '보안 감사 연계', updatedAt: nowISO() },
+        { id: makeUid(), name: 'DB 클러스터', dept: 'DBA팀', importance: '매우높음', rtoValue: 1, rtoUnit: '시간', rpoValue: 5, rpoUnit: '분', note: '주요 거래 데이터', updatedAt: nowISO() },
+        { id: makeUid(), name: '배치 처리', dept: '데이터플랫폼팀', importance: '보통', rtoValue: 12, rtoUnit: '시간', rpoValue: 4, rpoUnit: '시간', note: '야간 정산', updatedAt: nowISO() },
+        { id: makeUid(), name: 'VPN', dept: '네트워크팀', importance: '높음', rtoValue: 2, rtoUnit: '시간', rpoValue: 30, rpoUnit: '분', note: '원격접속 필수', updatedAt: nowISO() },
+        { id: makeUid(), name: 'DNS', dept: '인프라팀', importance: '높음', rtoValue: 1, rtoUnit: '시간', rpoValue: '', rpoUnit: '분', note: '내/외부 DNS', updatedAt: nowISO() },
+        { id: makeUid(), name: '파일 스토리지', dept: 'IT인프라팀', importance: '보통', rtoValue: 6, rtoUnit: '시간', rpoValue: 1, rpoUnit: '시간', note: '문서 보관', updatedAt: nowISO() },
+      ]);
+
+      const loadItems = () => {
+        const items = store.get(STORAGE_KEY, null);
+        if (!Array.isArray(items) || !items.length) {
+          const seeds = sampleData();
+          store.set(STORAGE_KEY, seeds);
+          return seeds;
+        }
+        return items;
+      };
+
+      let rows = loadItems();
+
+      const resetForm = () => {
+        serviceForm.reset();
+        serviceId.value = '';
+        importance.value = '보통';
+        rtoUnit.value = '시간';
+        rpoUnit.value = '분';
+      };
+
+      const saveRows = () => {
+        rows = store.update(STORAGE_KEY, () => rows);
+      };
+
+      const filteredRows = () => {
+        const q = (searchInput.value || '').trim().toLowerCase();
+        const filter = importanceFilter.value;
+        return rows.filter((item) => {
+          const matchKeyword = !q || item.name.toLowerCase().includes(q) || item.dept.toLowerCase().includes(q);
+          const matchImportance = filter === '전체' || item.importance === filter;
+          return matchKeyword && matchImportance;
+        });
+      };
+
+      const renderTable = () => {
+        const view = filteredRows();
+        registryBody.innerHTML = '';
+
+        if (!view.length) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td class="empty" colspan="7">조건에 맞는 서비스가 없습니다.</td>';
+          registryBody.appendChild(tr);
+          return;
+        }
+
+        view.forEach((item) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.dept}</td>
+            <td><span class="importance ${importanceClass(item.importance)}">${item.importance}</span></td>
+            <td>${formatObjective(item.rtoValue, item.rtoUnit)}</td>
+            <td>${formatObjective(item.rpoValue, item.rpoUnit)}</td>
+            <td>${toDisplayDate(item.updatedAt)}</td>
+            <td>
+              <div class="table-actions">
+                <button type="button" class="btn" data-edit="${item.id}">수정</button>
+                <button type="button" class="btn" data-delete="${item.id}">삭제</button>
+              </div>
+            </td>
+          `;
+          registryBody.appendChild(tr);
+        });
+      };
+
+      serviceForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const payload = {
+          id: serviceId.value || makeUid(),
+          name: serviceName.value.trim(),
+          dept: ownerDept.value.trim(),
+          importance: importance.value,
+          rtoValue: rtoValue.value === '' ? '' : Number(rtoValue.value),
+          rtoUnit: rtoUnit.value,
+          rpoValue: rpoValue.value === '' ? '' : Number(rpoValue.value),
+          rpoUnit: rpoUnit.value,
+          note: note.value.trim(),
+          updatedAt: nowISO(),
+        };
+
+        if (!payload.name || !payload.dept) {
+          window.alert('서비스명과 담당부서는 필수 입력입니다.');
+          return;
+        }
+
+        const idx = rows.findIndex((item) => item.id === payload.id);
+        if (idx >= 0) rows[idx] = payload;
+        else rows.unshift(payload);
+
+        saveRows();
+        resetForm();
+        renderTable();
+      });
+
+      document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+      registryBody.addEventListener('click', (e) => {
+        const editId = e.target.getAttribute('data-edit');
+        const deleteId = e.target.getAttribute('data-delete');
+
+        if (editId) {
+          const found = rows.find((item) => item.id === editId);
+          if (!found) return;
+
+          serviceId.value = found.id;
+          serviceName.value = found.name;
+          ownerDept.value = found.dept;
+          importance.value = found.importance;
+          rtoValue.value = found.rtoValue;
+          rtoUnit.value = found.rtoUnit || '시간';
+          rpoValue.value = found.rpoValue;
+          rpoUnit.value = found.rpoUnit || '분';
+          note.value = found.note || '';
+          serviceName.focus();
+          return;
+        }
+
+        if (deleteId) {
+          const target = rows.find((item) => item.id === deleteId);
+          if (!target) return;
+          if (!window.confirm(`'${target.name}' 서비스를 삭제하시겠습니까?`)) return;
+
+          rows = rows.filter((item) => item.id !== deleteId);
+          saveRows();
+          renderTable();
+        }
+      });
+
+      searchInput.addEventListener('input', renderTable);
+      importanceFilter.addEventListener('change', renderTable);
+
+      resetForm();
+      renderTable();
+    })();
+  </script>
+</body>
+</html>

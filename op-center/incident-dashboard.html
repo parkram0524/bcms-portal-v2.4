@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Incident Response Dashboard (사고 대응 대시보드) | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .wrap{ max-width: 1320px; margin: 0 auto; }
+
+    .hero{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
+    .hero h1{ margin:0; font-size:28px; font-weight:950; letter-spacing:-.02em; }
+    .hero p{ margin:8px 0 0; color:rgba(15,23,42,.62); }
+    .heroRight{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+    .demoToggle{ display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:6px 10px; background:#fff; }
+    .demoToggle label{ font-size:12px; font-weight:900; color:#0f172a; margin:0; }
+    .demoToggle input{ width:18px; height:18px; accent-color:#2563eb; }
+
+    .statusBadge{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid rgba(15,23,42,.14); background:#fff; font-size:13px; font-weight:900; color:#0f172a; white-space:nowrap; }
+    .statusBadge .dot{ width:8px; height:8px; border-radius:999px; background:#16a34a; }
+    .statusBadge.normal{ color:#166534; border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.08); }
+    .statusBadge.normal .dot{ background:#16a34a; }
+    .statusBadge.dr{ color:#991b1b; border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.10); }
+    .statusBadge.dr .dot{ background:#dc2626; }
+    .statusBadge.recovering{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.10); }
+    .statusBadge.recovering .dot{ background:#d97706; }
+    .statusBadge.caution{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.12); }
+    .statusBadge.caution .dot{ background:#d97706; }
+    .statusBadge.outage{ color:#991b1b; border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.12); }
+    .statusBadge.outage .dot{ background:#dc2626; }
+
+    .quickActions{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+    .quickCard{ display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(15,23,42,.12); border-radius:14px; padding:12px; background:rgba(255,255,255,.96); text-decoration:none; color:#0f172a; font-weight:900; font-size:14px; }
+    .quickCard:hover{ background:rgba(15,23,42,.04); }
+    @media (max-width: 900px){ .quickActions{ grid-template-columns:1fr; } }
+
+    .grid{ display:grid; grid-template-columns: repeat(12,minmax(0,1fr)); gap:14px; }
+    .card{ border-radius:16px; }
+
+    .incidentCard{ grid-column: span 6; }
+    .countdownCard{ grid-column: span 3; text-align:center; }
+    .drCard{ grid-column: span 3; }
+    .scenarioCard{ grid-column: span 12; }
+    .impactCard{ grid-column: span 12; }
+    .logCard{ grid-column: span 12; }
+
+    @media (max-width: 1180px){
+      .incidentCard{ grid-column: span 12; }
+      .countdownCard, .drCard{ grid-column: span 6; }
+    }
+    @media (max-width: 760px){ .countdownCard, .drCard{ grid-column: span 12; } }
+
+    .metaGrid{ margin-top:8px; display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px; }
+    .metaItem{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:10px; background:rgba(255,255,255,.96); }
+    .metaItem .k{ font-size:12px; font-weight:800; color:rgba(15,23,42,.58); }
+    .metaItem .v{ margin-top:4px; font-size:15px; font-weight:900; color:#0f172a; }
+
+    .rto{ font-size:40px; font-weight:950; letter-spacing:.04em; line-height:1.1; margin-top:10px; }
+    .rtoHint{ margin-top:6px; color:rgba(15,23,42,.58); font-size:13px; }
+
+    .toggleRow{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+    .toggleBtn{ border:1px solid rgba(15,23,42,.14); background:#fff; color:#0f172a; border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; cursor:pointer; }
+    .toggleBtn.active{ border-color:rgba(37,99,235,.35); box-shadow:0 0 0 2px rgba(37,99,235,.12) inset; }
+
+    .scenarioGrid{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:12px; margin-top:10px; }
+    @media (max-width: 980px){ .scenarioGrid{ grid-template-columns:1fr; } }
+
+    .scenarioBox{ border:1px solid rgba(15,23,42,.10); border-radius:14px; padding:12px; background:rgba(255,255,255,.96); }
+    .scenarioBox h4{ margin:0 0 8px; font-size:15px; }
+    .scenarioBox .row{ margin-top:8px; }
+    .scenarioBox label{ display:block; font-size:12px; font-weight:800; color:rgba(15,23,42,.62); margin-bottom:4px; }
+
+    .serviceSearch{ margin-bottom:8px; }
+    .serviceList{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:8px; max-height:140px; overflow:auto; }
+    .checkPill{ display:flex; align-items:center; gap:6px; border:1px solid rgba(15,23,42,.12); border-radius:999px; padding:6px 10px; font-size:12px; margin-bottom:6px; width:fit-content; background:#fff; }
+    .serviceEmpty{ font-size:12px; color:rgba(15,23,42,.62); line-height:1.5; }
+    .serviceEmpty a{ color:#2563eb; text-decoration:none; }
+
+    .chipRow{ margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(15,23,42,.14); border-radius:999px; background:#fff; padding:4px 10px; font-size:12px; font-weight:700; }
+    .chip button{ border:none !important; background:transparent !important; padding:0 !important; font-size:14px; line-height:1; cursor:pointer; color:#475569 !important; }
+
+    .impactGrid{ margin-top:10px; display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:10px; }
+    .impactItem{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:12px; background:rgba(255,255,255,.96); }
+    .impactItem h4{ margin:0 0 8px; font-size:14px; }
+    .impactMeta{ font-size:12px; color:rgba(15,23,42,.62); margin:2px 0; }
+    @media (max-width: 980px){ .impactGrid{ grid-template-columns:1fr; } }
+
+    .actionBtn{ width:100%; margin-top:10px; }
+
+    .tableWrap{ overflow:auto; }
+    table{ width:100%; min-width:900px; }
+    th, td{ padding:10px 12px; font-size:14px; }
+    .evt{ font-weight:800; }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+
+  <main class="main">
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <h1>Incident Response Dashboard (사고 대응 대시보드)</h1>
+          <p>운영센터의 실시간 사고 현황, DR 상태, 복구 목표(RTO)를 한 화면에서 확인합니다.</p>
+        </div>
+        <div class="heroRight">
+          <div id="globalStatusBadge" class="statusBadge normal"><span class="dot"></span>정상 (Normal)</div>
+          <div class="demoToggle">
+            <label for="demoModeToggle">데모 모드</label>
+            <input id="demoModeToggle" type="checkbox"/>
+          </div>
+          <button class="btn" id="resetDemoBtn" type="button">데모 데이터 리셋</button>
+        </div>
+      </div>
+
+      <section class="quickActions">
+        <a class="quickCard" href="../library/eop.html">🚨 EOP 실행</a>
+        <a class="quickCard" href="../library/drp.html">🛠️ DR 계획 확인</a>
+        <a class="quickCard" href="../library/sop.html">📘 SOP 절차 확인</a>
+      </section>
+
+      <section class="grid">
+        <article class="card incidentCard">
+          <h3>현재 사고 현황 (Incident Snapshot)</h3>
+          <div class="metaGrid">
+            <div class="metaItem"><div class="k">현재 Incident 상태</div><div class="v" id="incidentStatusText">안정화 모니터링</div></div>
+            <div class="metaItem"><div class="k">심각도</div><div class="v" id="severityText">보통</div></div>
+            <div class="metaItem"><div class="k">영향 서비스</div><div class="v" id="impactedText">-</div></div>
+            <div class="metaItem"><div class="k">사고 시작 시각</div><div class="v" id="startTimeText">-</div></div>
+          </div>
+        </article>
+
+        <article class="card countdownCard">
+          <h3>RTO 카운트다운</h3>
+          <div class="rto" id="rtoTimer">01:35:22</div>
+          <div class="rtoHint">목표 복구시간(RTO) 남은 시간</div>
+        </article>
+
+        <article class="card drCard">
+          <h3>DR 전환 상태 (DR Activation)</h3>
+          <div id="drBadge" class="statusBadge normal" style="margin-top:10px;"><span class="dot"></span>정상 (Normal)</div>
+          <div class="toggleRow" id="drStatusToggles">
+            <button class="toggleBtn active" data-state="normal">정상 (Normal)</button>
+            <button class="toggleBtn" data-state="dr">DR 가동 (DR Activated)</button>
+            <button class="toggleBtn" data-state="recovering">복구 중 (Recovering)</button>
+          </div>
+        </article>
+
+        <article class="card scenarioCard">
+          <h3>운영 시나리오</h3>
+          <div class="scenarioGrid">
+            <section class="scenarioBox">
+              <h4>Incident 시작</h4>
+              <div class="row">
+                <label for="severitySelect">Severity 선택 (경미 / 보통 / 심각 / 치명)</label>
+                <select id="severitySelect">
+                  <option>경미</option><option selected>보통</option><option>심각</option><option>치명</option>
+                </select>
+              </div>
+              <div class="row">
+                <label for="serviceSearchInput">영향 서비스 선택</label>
+                <input id="serviceSearchInput" class="serviceSearch" type="search" placeholder="서비스명 검색"/>
+                <div id="serviceEmptyMessage" class="serviceEmpty" style="display:none;">
+                  등록된 서비스가 없습니다. <a href="../governance/service-registry.html">거버넌스 &gt; 서비스 레지스트리</a>에서 서비스를 먼저 등록해 주세요.
+                </div>
+                <div id="impactChecks" class="serviceList"></div>
+                <div id="selectedServiceChips" class="chipRow"></div>
+              </div>
+              <button class="btn actionBtn" id="btnStartIncident" type="button">Incident 시작</button>
+            </section>
+
+            <section class="scenarioBox">
+              <h4>상태 업데이트</h4>
+              <div class="row">
+                <label for="statusSelect">새 상태</label>
+                <select id="statusSelect">
+                  <option>원인 조사</option>
+                  <option>영향 완화</option>
+                  <option selected>안정화 모니터링</option>
+                  <option>복구 완료</option>
+                </select>
+              </div>
+              <button class="btn actionBtn" id="btnChangeStatus" type="button">상태 업데이트</button>
+            </section>
+
+            <section class="scenarioBox">
+              <h4>Incident 종료</h4>
+              <div class="row">
+                <label for="finalSummary">최종 요약 (1줄)</label>
+                <input id="finalSummary" type="text" placeholder="예: 핵심 서비스 정상화, 후속 점검 진행"/>
+              </div>
+              <button class="btn actionBtn" id="btnEndIncident" type="button">Incident 종료</button>
+            </section>
+          </div>
+        </article>
+
+        <article class="card impactCard">
+          <h3>영향 서비스 현황</h3>
+          <div id="impactStatusGrid" class="impactGrid"></div>
+        </article>
+
+        <article class="card logCard">
+          <h3>사고 로그 (Incident Log)</h3>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr><th>시간</th><th>시스템</th><th>이벤트</th><th>조치 내용</th><th>담당자</th></tr>
+              </thead>
+              <tbody id="incidentLogBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
+  <script>
+    (() => {
+      const STORAGE_KEY = DataStore.KEY_INCIDENTS;
+      const DEMO_MODE_KEY = DataStore.KEY_DEMO_MODE;
+      const SERVICE_REGISTRY_KEY = DataStore.KEY_SERVICE_REGISTRY || 'bcms_service_registry_v1';
+
+      const logBody = document.getElementById('incidentLogBody');
+      const incidentStatusText = document.getElementById('incidentStatusText');
+      const severityText = document.getElementById('severityText');
+      const impactedText = document.getElementById('impactedText');
+      const startTimeText = document.getElementById('startTimeText');
+      const globalStatusBadge = document.getElementById('globalStatusBadge');
+      const drBadge = document.getElementById('drBadge');
+      const rtoTimer = document.getElementById('rtoTimer');
+      const resetDemoBtn = document.getElementById('resetDemoBtn');
+      const severitySelect = document.getElementById('severitySelect');
+      const statusSelect = document.getElementById('statusSelect');
+      const finalSummary = document.getElementById('finalSummary');
+      const demoModeToggle = document.getElementById('demoModeToggle');
+      const serviceSearchInput = document.getElementById('serviceSearchInput');
+      const impactChecks = document.getElementById('impactChecks');
+      const selectedServiceChips = document.getElementById('selectedServiceChips');
+      const serviceEmptyMessage = document.getElementById('serviceEmptyMessage');
+      const impactStatusGrid = document.getElementById('impactStatusGrid');
+
+      const drStateMap = {
+        normal: { label: '정상 (Normal)', cls: 'normal' },
+        dr: { label: 'DR 가동 (DR Activated)', cls: 'dr' },
+        recovering: { label: '복구 중 (Recovering)', cls: 'recovering' },
+      };
+
+      const nowText = () => new Date().toLocaleString('ko-KR', { hour12: false });
+      const nowTime = () => new Date().toLocaleTimeString('ko-KR', { hour12: false });
+      const uniq = (arr) => [...new Set(Array.isArray(arr) ? arr.filter(Boolean) : [])];
+
+      const createDefaultState = () => ({
+        currentIncident: {
+          status: '안정화 모니터링',
+          severity: '보통',
+          impacted: '',
+          impactedServiceIds: [],
+          impactedServiceNames: [],
+          startTime: '-',
+          endTime: '-',
+          finalSummary: '',
+        },
+        drState: 'normal',
+        logs: [
+          { time: nowTime(), system: '운영 관제', event: '대시보드 초기화', action: '샘플 데이터 로드', operator: '시스템' },
+        ],
+      });
+
+      const saveState = () => DataStore.update(STORAGE_KEY, () => state);
+      const loadState = () => {
+        const parsed = DataStore.get(STORAGE_KEY, null);
+        if (!parsed || typeof parsed !== 'object') return createDefaultState();
+
+        const merged = {
+          currentIncident: { ...createDefaultState().currentIncident, ...(parsed.currentIncident || {}) },
+          drState: parsed.drState || 'normal',
+          logs: Array.isArray(parsed.logs) ? parsed.logs : createDefaultState().logs,
+        };
+
+        if (!Array.isArray(merged.currentIncident.impactedServiceIds) || !merged.currentIncident.impactedServiceIds.length) {
+          merged.currentIncident.impactedServiceIds = [];
+        }
+        if (!Array.isArray(merged.currentIncident.impactedServiceNames)) {
+          merged.currentIncident.impactedServiceNames = merged.currentIncident.impacted
+            ? String(merged.currentIncident.impacted).split(',').map((v) => v.trim()).filter(Boolean)
+            : [];
+        }
+
+        return merged;
+      };
+
+      const addLog = ({ system, event, action, operator = '운영자' }) => {
+        state.logs.unshift({ time: nowTime(), system, event, action, operator });
+        if (state.logs.length > 20) state.logs = state.logs.slice(0, 20);
+      };
+
+      const loadDemoMode = () => DataStore.get(DEMO_MODE_KEY, true);
+      const saveDemoMode = (flag) => DataStore.set(DEMO_MODE_KEY, Boolean(flag));
+
+      const loadServices = () => {
+        const rows = DataStore.get(SERVICE_REGISTRY_KEY, []);
+        if (!Array.isArray(rows)) return [];
+        return rows
+          .filter((row) => row && row.id && row.name)
+          .map((row) => ({
+            id: row.id,
+            name: row.name,
+            dept: row.dept || '-',
+            rto: row.rtoValue === '' || row.rtoValue === undefined || row.rtoValue === null ? '-' : `${row.rtoValue}${row.rtoUnit || ''}`,
+          }));
+      };
+
+      let services = loadServices();
+      let impactStatusMap = {};
+      let suppressImpactLog = true;
+      let state = loadState();
+
+      const selectedNames = () => {
+        const map = new Map(services.map((svc) => [svc.id, svc.name]));
+        const names = state.currentIncident.impactedServiceIds.map((id) => map.get(id)).filter(Boolean);
+        return names.length ? names : uniq(state.currentIncident.impactedServiceNames);
+      };
+
+      const syncImpactedCache = () => {
+        state.currentIncident.impactedServiceIds = uniq(state.currentIncident.impactedServiceIds);
+        state.currentIncident.impactedServiceNames = selectedNames();
+        state.currentIncident.impacted = state.currentIncident.impactedServiceNames.join(', ');
+      };
+
+      const logImpactChange = (prevIds, nextIds) => {
+        if (suppressImpactLog) return;
+        const map = new Map(services.map((svc) => [svc.id, svc.name]));
+        const added = nextIds.filter((id) => !prevIds.includes(id)).map((id) => map.get(id)).filter(Boolean);
+        const removed = prevIds.filter((id) => !nextIds.includes(id)).map((id) => map.get(id)).filter(Boolean);
+        if (!added.length && !removed.length) return;
+
+        const action = `추가: ${added.length ? added.join(', ') : '-'} / 제거: ${removed.length ? removed.join(', ') : '-'}`;
+        addLog({ system: 'Incident 엔진', event: '영향 서비스 변경', action, operator: '시스템' });
+      };
+
+      const setImpactedServiceIds = (nextIds, persist = true) => {
+        const prev = [...state.currentIncident.impactedServiceIds];
+        state.currentIncident.impactedServiceIds = uniq(nextIds);
+        syncImpactedCache();
+        logImpactChange(prev, state.currentIncident.impactedServiceIds);
+        renderIncident();
+        renderSelectedServiceChips();
+        renderServiceChecks();
+        renderImpactStatus();
+        if (persist) saveState();
+      };
+
+      const renderIncident = () => {
+        incidentStatusText.textContent = state.currentIncident.status;
+        severityText.textContent = state.currentIncident.severity;
+        impactedText.textContent = state.currentIncident.impacted || '영향 서비스 미선택';
+        startTimeText.textContent = state.currentIncident.startTime || '-';
+      };
+
+      const renderLogs = () => {
+        logBody.innerHTML = '';
+        state.logs.forEach((row) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${row.time}</td><td>${row.system}</td><td class="evt">${row.event}</td><td>${row.action}</td><td>${row.operator}</td>`;
+          logBody.appendChild(tr);
+        });
+      };
+
+      const renderDrState = () => {
+        const info = drStateMap[state.drState] || drStateMap.normal;
+        drBadge.className = `statusBadge ${info.cls}`;
+        drBadge.innerHTML = `<span class="dot"></span>${info.label}`;
+        globalStatusBadge.className = `statusBadge ${info.cls}`;
+        globalStatusBadge.innerHTML = `<span class="dot"></span>${info.label}`;
+        document.querySelectorAll('#drStatusToggles .toggleBtn').forEach((btn) => btn.classList.toggle('active', btn.dataset.state === state.drState));
+      };
+
+      const statusInfo = (code) => {
+        if (code === 'outage') return { label: '장애', cls: 'outage' };
+        if (code === 'caution') return { label: '주의', cls: 'caution' };
+        return { label: '정상', cls: 'normal' };
+      };
+
+      const refreshImpactStatusMap = () => {
+        if (!demoModeToggle.checked) {
+          impactStatusMap = {};
+          return;
+        }
+
+        const nextMap = {};
+        state.currentIncident.impactedServiceIds.forEach((id) => {
+          const rnd = Math.random();
+          nextMap[id] = rnd < 0.2 ? 'outage' : rnd < 0.45 ? 'caution' : 'normal';
+        });
+        impactStatusMap = nextMap;
+      };
+
+      const renderImpactStatus = () => {
+        impactStatusGrid.innerHTML = '';
+        const map = new Map(services.map((svc) => [svc.id, svc]));
+        const impacted = state.currentIncident.impactedServiceIds.map((id) => map.get(id)).filter(Boolean);
+
+        if (!impacted.length) {
+          impactStatusGrid.innerHTML = '<div class="serviceEmpty">선택된 영향 서비스가 없습니다.</div>';
+          return;
+        }
+
+        impacted.forEach((svc) => {
+          const status = statusInfo(impactStatusMap[svc.id] || 'normal');
+          const box = document.createElement('div');
+          box.className = 'impactItem';
+          box.innerHTML = `
+            <h4>${svc.name}</h4>
+            <p class="impactMeta">담당부서: ${svc.dept}</p>
+            <p class="impactMeta">RTO: ${svc.rto}</p>
+            <div class="statusBadge ${status.cls}" style="margin-top:8px;"><span class="dot"></span>${status.label}</div>
+          `;
+          impactStatusGrid.appendChild(box);
+        });
+      };
+
+      const renderSelectedServiceChips = () => {
+        selectedServiceChips.innerHTML = '';
+        const map = new Map(services.map((svc) => [svc.id, svc]));
+        state.currentIncident.impactedServiceIds.forEach((id) => {
+          const svc = map.get(id);
+          if (!svc) return;
+
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.innerHTML = `${svc.name} <button type="button" data-remove-id="${svc.id}" aria-label="${svc.name} 제거">×</button>`;
+          selectedServiceChips.appendChild(chip);
+        });
+      };
+
+      const renderServiceChecks = () => {
+        const query = (serviceSearchInput.value || '').trim().toLowerCase();
+        const filtered = services.filter((svc) => !query || svc.name.toLowerCase().includes(query));
+
+        impactChecks.innerHTML = '';
+        if (!services.length) {
+          impactChecks.style.display = 'none';
+          serviceEmptyMessage.style.display = 'block';
+          selectedServiceChips.innerHTML = '';
+          return;
+        }
+
+        impactChecks.style.display = 'block';
+        serviceEmptyMessage.style.display = 'none';
+
+        if (!filtered.length) {
+          impactChecks.innerHTML = '<div class="serviceEmpty">검색 결과가 없습니다.</div>';
+          return;
+        }
+
+        filtered.forEach((svc) => {
+          const checked = state.currentIncident.impactedServiceIds.includes(svc.id);
+          const label = document.createElement('label');
+          label.className = 'checkPill';
+          label.innerHTML = `<input type="checkbox" data-svc-id="${svc.id}" ${checked ? 'checked' : ''}/> ${svc.name}`;
+          impactChecks.appendChild(label);
+        });
+      };
+
+      const renderAll = () => {
+        syncImpactedCache();
+        renderIncident();
+        renderLogs();
+        renderDrState();
+        renderServiceChecks();
+        renderSelectedServiceChips();
+        renderImpactStatus();
+      };
+
+      document.getElementById('drStatusToggles').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-state]');
+        if (!btn) return;
+        state.drState = btn.dataset.state;
+        addLog({ system: 'DR 제어기', event: `DR 상태 변경: ${btn.textContent}`, action: '운영센터 수동 전환', operator: 'DR 담당' });
+        saveState();
+        renderAll();
+      });
+
+      impactChecks.addEventListener('change', (e) => {
+        if (!e.target.matches('input[type="checkbox"][data-svc-id]')) return;
+        const id = e.target.getAttribute('data-svc-id');
+        const set = new Set(state.currentIncident.impactedServiceIds);
+        if (e.target.checked) set.add(id);
+        else set.delete(id);
+        setImpactedServiceIds([...set]);
+      });
+
+      selectedServiceChips.addEventListener('click', (e) => {
+        const id = e.target.getAttribute('data-remove-id');
+        if (!id) return;
+        setImpactedServiceIds(state.currentIncident.impactedServiceIds.filter((svcId) => svcId !== id));
+      });
+
+      serviceSearchInput.addEventListener('input', renderServiceChecks);
+
+      document.getElementById('btnStartIncident').addEventListener('click', () => {
+        syncImpactedCache();
+        state.currentIncident = {
+          ...state.currentIncident,
+          status: '원인 조사',
+          severity: severitySelect.value,
+          startTime: nowText(),
+          endTime: '-',
+          finalSummary: '',
+        };
+        addLog({
+          system: '사고 대응 콘솔',
+          event: `Incident 시작 / ${state.currentIncident.severity}`,
+          action: `시작 시각 기록, 영향 서비스: ${state.currentIncident.impacted || '영향 서비스 미선택'}`,
+          operator: '사고 관리자',
+        });
+        refreshImpactStatusMap();
+        saveState();
+        renderAll();
+      });
+
+      document.getElementById('btnChangeStatus').addEventListener('click', () => {
+        const nextStatus = statusSelect.value;
+        state.currentIncident.status = nextStatus;
+        addLog({ system: '사고 대응 콘솔', event: `상태 업데이트: ${nextStatus}`, action: '운영 시나리오 상태 전이 반영', operator: '당직 담당자' });
+        saveState();
+        renderAll();
+      });
+
+      document.getElementById('btnEndIncident').addEventListener('click', () => {
+        const summary = (finalSummary.value || '').trim() || '최종 요약 미입력';
+        state.currentIncident.status = '복구 완료';
+        state.currentIncident.endTime = nowText();
+        state.currentIncident.finalSummary = summary;
+        addLog({ system: '사고 대응 콘솔', event: 'Incident 종료 (복구 완료)', action: `종료 시각 기록 / 요약: ${summary}`, operator: '사고 관리자' });
+        saveState();
+        renderAll();
+      });
+
+      const demoStatusSequence = ['원인 조사', '영향 완화', '안정화 모니터링', '복구 완료'];
+      let demoTimer = null;
+      let demoIdx = 0;
+
+      const runDemoTick = () => {
+        const next = demoStatusSequence[demoIdx % demoStatusSequence.length];
+        demoIdx += 1;
+        state.currentIncident.status = next;
+        addLog({ system: '데모 엔진', event: `자동 상태 전환: ${next}`, action: '데모 모드 자동 시뮬레이션', operator: 'SYSTEM' });
+        refreshImpactStatusMap();
+        saveState();
+        renderAll();
+      };
+
+      const startDemoMode = () => {
+        if (demoTimer) return;
+        refreshImpactStatusMap();
+        renderImpactStatus();
+        demoTimer = setInterval(runDemoTick, 15000);
+      };
+      const stopDemoMode = () => {
+        if (!demoTimer) return;
+        clearInterval(demoTimer);
+        demoTimer = null;
+        refreshImpactStatusMap();
+        renderImpactStatus();
+      };
+
+      demoModeToggle.addEventListener('change', () => {
+        const on = demoModeToggle.checked;
+        saveDemoMode(on);
+        if (on) startDemoMode();
+        else stopDemoMode();
+      });
+
+      resetDemoBtn.addEventListener('click', () => {
+        state = createDefaultState();
+        services = loadServices();
+        refreshImpactStatusMap();
+        saveState();
+        renderAll();
+      });
+
+      let remaining = (1 * 60 * 60) + (35 * 60) + 22;
+      const pad = (n) => String(n).padStart(2, '0');
+      const renderTimer = () => {
+        const h = Math.floor(remaining / 3600);
+        const m = Math.floor((remaining % 3600) / 60);
+        const s = remaining % 60;
+        rtoTimer.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+      };
+      renderTimer();
+      setInterval(() => {
+        if (remaining > 0) remaining -= 1;
+        renderTimer();
+      }, 1000);
+
+      services = loadServices();
+      if (services.length && !state.currentIncident.impactedServiceIds.length) {
+        state.currentIncident.impactedServiceIds = services.slice(0, 2).map((svc) => svc.id);
+      }
+      syncImpactedCache();
+
+      const demoOn = loadDemoMode();
+      demoModeToggle.checked = demoOn;
+      refreshImpactStatusMap();
+      suppressImpactLog = false;
+
+      if (demoOn) startDemoMode();
+
+      saveState();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
