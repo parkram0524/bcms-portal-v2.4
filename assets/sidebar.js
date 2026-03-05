@@ -49,6 +49,10 @@
 
     <div class="sidebar-section" data-section="op-center">
       <a href="${H("/op-center/index.html")}" class="sidebar-section-title">🚨 4. Operation Center (운영센터)</a>
+      <div class="sub-menu">
+        <a href="${H("/op-center/index.html")}">운영 현황</a>
+        <a href="${H("/op-center/incident-dashboard.html")}">Incident Dashboard (사고 대응 현황)</a>
+      </div>
     </div>
 
     <div class="sidebar-section" data-section="library">
