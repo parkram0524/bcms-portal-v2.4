@@ -60,13 +60,19 @@
     .moved{ background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); }
     .badge{ margin-left:4px; font-size:10px; font-weight:900; color:#9a3412; }
 
-    .bcpNode h4{ background:#0f766e; }
-    .bcpSub{ margin-top:8px; padding-top:8px; border-top:1px dashed rgba(15,23,42,.18); display:grid; gap:7px; }
-    .bcpSubItem strong{ font-size:12px; }
+    .bcpFlow{ margin-top:12px; display:grid; justify-items:center; gap:8px; }
+    .stageBox{ border:1px dashed rgba(15,23,42,.3); border-radius:10px; background:#fff; padding:7px 12px; font-size:12px; font-weight:900; color:#0f172a; }
+    .flowArrow{ font-size:14px; color:rgba(15,23,42,.55); line-height:1; }
 
-    @media (max-width:1280px){ .roleRow{ grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+    .bcpOrgNode{ width:min(100%, 520px); }
+    .bcpOrgNode h4{ background:#0f766e; }
+    .bcpTeamGrid{ margin-top:10px; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; }
+    .bcpTeamNode{ border:1px solid var(--lineStrong); border-radius:10px; background:#fff; padding:7px; }
+    .bcpTeamNode strong{ display:block; font-size:12px; margin-bottom:6px; color:#0f172a; }
+
+    @media (max-width:1280px){ .roleRow{ grid-template-columns:repeat(3, minmax(0, 1fr)); } .bcpTeamGrid{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
     @media (max-width:860px){ .roleRow{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-    @media (max-width:560px){ .roleRow{ grid-template-columns:1fr; } }
+    @media (max-width:560px){ .roleRow{ grid-template-columns:1fr; } .bcpTeamGrid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -168,19 +174,16 @@
           `;
         });
 
-        if (mode === 'post') {
-          roleNodes.push(`
-            <section class="node bcpNode">
-              <h4>BCP 운영지원</h4>
-              <div class="body">
-                <div class="chipWrap">${chipsHtml(['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀'], available, movedTeams)}</div>
-                <div class="bcpSub">
-                  ${bcpDefs.map((b) => `<div class="bcpSubItem"><strong>${b.label}</strong><div class="chipWrap" style="margin-top:4px;">${chipsHtml(mapping[b.key] || [], available, mapping[b.key] || [])}</div></div>`).join('')}
-                </div>
-              </div>
+        const bcpTeamNodes = bcpDefs.map((b) => {
+          const names = mapping[b.key] || [];
+          const movedMarks = mode === 'post' ? names : [];
+          return `
+            <section class="bcpTeamNode">
+              <strong>${b.label}</strong>
+              <div class="chipWrap">${chipsHtml(names, available, movedMarks)}</div>
             </section>
-          `);
-        }
+          `;
+        }).join('');
 
         treeMount.innerHTML = `
           <section class="rootWrap">
@@ -192,8 +195,21 @@
               </div>
             </section>
           </section>
+
           <section class="roleRow">
             ${roleNodes.join('')}
+          </section>
+
+          <section class="bcpFlow">
+            <div class="stageBox">재난선포 / BCP 가동 ${mode === 'post' ? '(활성)' : '(대기)'}</div>
+            <div class="flowArrow">↓</div>
+            <section class="node bcpOrgNode">
+              <h4>BCP 운영조직</h4>
+              <div class="body">
+                <div class="chipWrap">${chipsHtml(['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀'], available, mode === 'post' ? movedTeams : [])}</div>
+                <div class="bcpTeamGrid">${bcpTeamNodes}</div>
+              </div>
+            </section>
           </section>
         `;
       };

@@ -83,6 +83,11 @@
     .chip{ display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(15,23,42,.14); border-radius:999px; background:#fff; padding:4px 10px; font-size:12px; font-weight:700; }
     .chip button{ border:none !important; background:transparent !important; padding:0 !important; font-size:14px; line-height:1; cursor:pointer; color:#475569 !important; }
 
+    .orgSummary{ margin-top:10px; border:1px solid rgba(15,23,42,.10); border-radius:12px; background:#fff; padding:10px; }
+    .orgSummary h5{ margin:0 0 8px; font-size:12px; color:rgba(15,23,42,.62); }
+    .orgList{ display:flex; flex-wrap:wrap; gap:6px; }
+    .orgPill{ display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:4px 10px; font-size:12px; font-weight:700; background:#fff; }
+
     .impactGrid{ margin-top:10px; display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:10px; }
     .impactItem{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:12px; background:rgba(255,255,255,.96); }
     .impactItem h4{ margin:0 0 8px; font-size:14px; }
@@ -165,10 +170,14 @@
                 <label for="serviceSearchInput">영향 서비스 선택</label>
                 <input id="serviceSearchInput" class="serviceSearch" type="search" placeholder="서비스명 검색"/>
                 <div id="serviceEmptyMessage" class="serviceEmpty" style="display:none;">
-                  등록된 서비스가 없습니다. <a href="../governance/service-registry.html">거버넌스 &gt; 서비스 레지스트리</a>에서 서비스를 먼저 등록해 주세요.
+                  등록된 서비스가 없습니다. 먼저 서비스 레지스트리에서 서비스를 등록해 주세요. <a class="btn" href="../governance/service-registry.html" style="margin-left:6px;">서비스 레지스트리로 이동</a>
                 </div>
                 <div id="impactChecks" class="serviceList"></div>
                 <div id="selectedServiceChips" class="chipRow"></div>
+                <div class="orgSummary">
+                  <h5>담당 조직</h5>
+                  <div id="relatedOrgList" class="orgList"></div>
+                </div>
               </div>
               <button class="btn actionBtn" id="btnStartIncident" type="button">Incident 시작</button>
             </section>
@@ -229,6 +238,7 @@
       const STORAGE_KEY = DataStore.KEY_INCIDENTS;
       const DEMO_MODE_KEY = DataStore.KEY_DEMO_MODE;
       const SERVICE_REGISTRY_KEY = DataStore.KEY_SERVICE_REGISTRY || 'bcms_service_registry_v1';
+      const ORG_REGISTRY_KEY = DataStore.KEY_ORG_REGISTRY || 'bcms_org_registry_v1';
       const EVIDENCE_KEY = DataStore.KEY_EVIDENCE || 'bcms_audit_evidence_v1';
       const CAPA_KEY = DataStore.KEY_CAPA || 'bcms_capa_v1';
 
@@ -250,6 +260,7 @@
       const serviceSearchInput = document.getElementById('serviceSearchInput');
       const impactChecks = document.getElementById('impactChecks');
       const selectedServiceChips = document.getElementById('selectedServiceChips');
+      const relatedOrgList = document.getElementById('relatedOrgList');
       const serviceEmptyMessage = document.getElementById('serviceEmptyMessage');
       const impactStatusGrid = document.getElementById('impactStatusGrid');
 
@@ -270,6 +281,7 @@
           impacted: '',
           impactedServiceIds: [],
           impactedServiceNames: [],
+          relatedOrgUnits: [],
           startTime: '-',
           endTime: '-',
           finalSummary: '',
@@ -298,6 +310,9 @@
           merged.currentIncident.impactedServiceNames = merged.currentIncident.impacted
             ? String(merged.currentIncident.impacted).split(',').map((v) => v.trim()).filter(Boolean)
             : [];
+        }
+        if (!Array.isArray(merged.currentIncident.relatedOrgUnits)) {
+          merged.currentIncident.relatedOrgUnits = [];
         }
 
         return merged;
@@ -355,17 +370,65 @@
       const loadDemoMode = () => DataStore.get(DEMO_MODE_KEY, true);
       const saveDemoMode = (flag) => DataStore.set(DEMO_MODE_KEY, Boolean(flag));
 
+      const loadOrgTeamMap = () => {
+        const org = DataStore.get(ORG_REGISTRY_KEY, { divisions: [] });
+        const divisions = Array.isArray(org?.divisions) ? org.divisions : [];
+        const teamMap = new Map();
+        divisions.forEach((division) => {
+          if (!division || !division.id) return;
+          const divisionName = division.name || '미지정 본부';
+          (Array.isArray(division.teams) ? division.teams : []).forEach((team) => {
+            if (!team || !team.id) return;
+            teamMap.set(team.id, {
+              divisionId: division.id,
+              divisionName,
+              teamId: team.id,
+              teamName: team.name || '미지정 팀',
+            });
+          });
+        });
+        return teamMap;
+      };
+
+      const resolveServiceOrg = (row, orgTeamMap) => {
+        if (row.teamId && orgTeamMap.has(row.teamId)) {
+          return orgTeamMap.get(row.teamId);
+        }
+        if (row.teamId || row.teamName || row.divisionName) {
+          return {
+            divisionId: row.divisionId || null,
+            divisionName: row.divisionName || '삭제된 조직',
+            teamId: row.teamId || null,
+            teamName: row.teamName || '삭제된 조직',
+          };
+        }
+        return {
+          divisionId: null,
+          divisionName: '미지정',
+          teamId: null,
+          teamName: '조직 미연결',
+        };
+      };
+
+      const orgLabel = (orgUnit) => `${orgUnit.divisionName || '미지정'} / ${orgUnit.teamName || '미지정'}`;
+
       const loadServices = () => {
         const rows = DataStore.get(SERVICE_REGISTRY_KEY, []);
         if (!Array.isArray(rows)) return [];
+        const orgTeamMap = loadOrgTeamMap();
+
         return rows
           .filter((row) => row && row.id && row.name)
-          .map((row) => ({
-            id: row.id,
-            name: row.name,
-            dept: row.dept || '-',
-            rto: row.rtoValue === '' || row.rtoValue === undefined || row.rtoValue === null ? '-' : `${row.rtoValue}${row.rtoUnit || ''}`,
-          }));
+          .map((row) => {
+            const orgUnit = resolveServiceOrg(row, orgTeamMap);
+            return {
+              id: row.id,
+              name: row.name,
+              dept: orgLabel(orgUnit),
+              orgUnit,
+              rto: row.rtoValue === '' || row.rtoValue === undefined || row.rtoValue === null ? '-' : `${row.rtoValue}${row.rtoUnit || ''}`,
+            };
+          });
       };
 
       let services = loadServices();
@@ -379,9 +442,28 @@
         return names.length ? names : uniq(state.currentIncident.impactedServiceNames);
       };
 
+      const selectedOrgUnits = () => {
+        const map = new Map(services.map((svc) => [svc.id, svc]));
+        const dedup = new Map();
+        state.currentIncident.impactedServiceIds.forEach((id) => {
+          const svc = map.get(id);
+          if (!svc || !svc.orgUnit) return;
+          const key = svc.orgUnit.teamId || `${svc.orgUnit.divisionName}::${svc.orgUnit.teamName}`;
+          if (!dedup.has(key)) dedup.set(key, { ...svc.orgUnit });
+        });
+        if (!dedup.size && Array.isArray(state.currentIncident.relatedOrgUnits)) {
+          state.currentIncident.relatedOrgUnits.forEach((orgUnit, idx) => {
+            const key = orgUnit.teamId || `legacy-${idx}`;
+            dedup.set(key, orgUnit);
+          });
+        }
+        return [...dedup.values()];
+      };
+
       const syncImpactedCache = () => {
         state.currentIncident.impactedServiceIds = uniq(state.currentIncident.impactedServiceIds);
         state.currentIncident.impactedServiceNames = selectedNames();
+        state.currentIncident.relatedOrgUnits = selectedOrgUnits();
         state.currentIncident.impacted = state.currentIncident.impactedServiceNames.join(', ');
       };
 
@@ -396,13 +478,30 @@
         addLog({ system: 'Incident 엔진', event: '영향 서비스 변경', action, operator: '시스템' });
       };
 
+      const logRelatedOrgChange = (prevOrgs, nextOrgs) => {
+        if (suppressImpactLog) return;
+        const norm = (orgs) => (orgs || []).map((u) => orgLabel(u)).sort();
+        const prev = norm(prevOrgs);
+        const next = norm(nextOrgs);
+        if (prev.join('|') === next.join('|')) return;
+        addLog({
+          system: 'Incident 엔진',
+          event: '담당 조직 연결',
+          action: next.length ? next.join(', ') : '조직 미연결',
+          operator: '시스템',
+        });
+      };
+
       const setImpactedServiceIds = (nextIds, persist = true) => {
         const prev = [...state.currentIncident.impactedServiceIds];
+        const prevOrgs = [...(state.currentIncident.relatedOrgUnits || [])];
         state.currentIncident.impactedServiceIds = uniq(nextIds);
         syncImpactedCache();
         logImpactChange(prev, state.currentIncident.impactedServiceIds);
+        logRelatedOrgChange(prevOrgs, state.currentIncident.relatedOrgUnits);
         renderIncident();
         renderSelectedServiceChips();
+        renderRelatedOrgs();
         renderServiceChecks();
         renderImpactStatus();
         if (persist) saveState();
@@ -491,6 +590,21 @@
         });
       };
 
+      const renderRelatedOrgs = () => {
+        relatedOrgList.innerHTML = '';
+        const orgs = state.currentIncident.relatedOrgUnits || [];
+        if (!orgs.length) {
+          relatedOrgList.innerHTML = '<span class="serviceEmpty">미지정</span>';
+          return;
+        }
+        orgs.forEach((orgUnit) => {
+          const chip = document.createElement('span');
+          chip.className = 'orgPill';
+          chip.textContent = orgLabel(orgUnit);
+          relatedOrgList.appendChild(chip);
+        });
+      };
+
       const renderServiceChecks = () => {
         const query = (serviceSearchInput.value || '').trim().toLowerCase();
         const filtered = services.filter((svc) => !query || svc.name.toLowerCase().includes(query));
@@ -527,6 +641,7 @@
         renderDrState();
         renderServiceChecks();
         renderSelectedServiceChips();
+        renderRelatedOrgs();
         renderImpactStatus();
       };
 
@@ -555,6 +670,20 @@
       });
 
       serviceSearchInput.addEventListener('input', renderServiceChecks);
+
+      const refreshServicesFromRegistry = () => {
+        services = loadServices();
+        const valid = new Set(services.map((svc) => svc.id));
+        state.currentIncident.impactedServiceIds = state.currentIncident.impactedServiceIds.filter((id) => valid.has(id));
+        syncImpactedCache();
+        refreshImpactStatusMap();
+        saveState();
+        renderAll();
+      };
+
+      window.addEventListener('storage', (e) => {
+        if ([SERVICE_REGISTRY_KEY, ORG_REGISTRY_KEY].includes(e.key)) refreshServicesFromRegistry();
+      });
 
       document.getElementById('btnStartIncident').addEventListener('click', () => {
         syncImpactedCache();
