@@ -9,7 +9,22 @@
     body{ display:flex; }
     .main{ padding:20px; }
     .wrap{ max-width:100%; }
+
     .topBar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .navBtn{
+      display:inline-flex;
+      align-items:center;
+      text-decoration:none;
+      border:1px solid var(--lineStrong);
+      background:#fff;
+      color:var(--ink);
+      border-radius:10px;
+      padding:8px 12px;
+      font-size:13px;
+      font-weight:800;
+    }
+    .navBtn:hover{ background:rgba(15,23,42,.04); }
+    .navBtn.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
 
     .orgView{ display:flex; flex-direction:column; gap:14px; min-height:calc(100vh - 160px); }
     .ceoRow{ display:flex; justify-content:center; }
@@ -36,9 +51,10 @@
   <main class="main"><div class="wrap">
     <h1 class="page-title">🏛️ 평상시 조직도</h1>
     <div class="topBar">
-      <a class="btn" href="./org-registry.html">조직 관리 페이지로 이동</a>
-      <a class="btn" href="./eop-org-chart.html">비상대응 조직도 보기</a>
-      <a class="btn" href="./index.html">거버넌스 홈</a>
+      <a class="navBtn" href="./org-registry.html">조직 관리 페이지로 이동</a>
+      <a class="navBtn" href="./eop-org-chart.html">비상대응 조직도 보기</a>
+      <a class="navBtn active" href="./org.html">평상시 조직도</a>
+      <a class="navBtn" href="./index.html">거버넌스 홈</a>
     </div>
 
     <article class="card">
@@ -58,9 +74,8 @@
       };
       const mount = document.getElementById('orgView');
 
-
       const baseTemplate = {
-        companyName: 'Apex Digital',
+        companyName: 'SJ Digital',
         divisions: [
           { id:'risk', name:'리스크·컴플라이언스본부', teams:[{id:'bcm',name:'재난안전(BCM)팀'},{id:'security',name:'정보보호팀'},{id:'audit',name:'감사·컴플라이언스팀'}]},
           { id:'it', name:'IT서비스운영본부', teams:[{id:'sre',name:'SRE/플랫폼운영팀'},{id:'app',name:'애플리케이션운영팀'},{id:'db',name:'데이터/DB운영팀'},{id:'network',name:'네트워크운영팀'}]},
@@ -113,8 +128,8 @@
         mount.innerHTML = `
           <section class="ceoRow">
             <section class="ceoNode">
-              <h4>대표이사</h4>
-              <p>${data.companyName || '회사명 미설정'}</p>
+              <h4>SJ Digital</h4>
+              <p>대표이사 박성준</p>
             </section>
           </section>
           <section class="divisionGrid">${divisionCards}</section>

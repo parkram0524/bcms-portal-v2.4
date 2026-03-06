@@ -7,34 +7,67 @@
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
     .topBar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-    .modeToggle{ display:inline-flex; border:1px solid var(--lineStrong); border-radius:999px; overflow:hidden; }
-    .modeToggle button{ border:none; background:#fff; padding:8px 12px; font-weight:800; cursor:pointer; }
-    .modeToggle button.active{ background:#0f172a; color:#fff; }
+    .navBtn{
+      display:inline-flex;
+      align-items:center;
+      text-decoration:none;
+      border:1px solid var(--lineStrong);
+      background:#fff;
+      color:var(--ink);
+      border-radius:10px;
+      padding:8px 12px;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .navBtn:hover{ background:rgba(15,23,42,.04); }
+    .navBtn.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
 
-    .tree{ margin-top:10px; overflow:auto; }
-    .tree ul{ margin:0 auto; padding-top:24px; position:relative; display:table; }
-    .tree li{ list-style:none; display:table-cell; text-align:center; vertical-align:top; position:relative; padding:24px 10px 0; }
-    .tree li::before, .tree li::after{ content:''; position:absolute; top:0; width:50%; height:24px; border-top:2px solid rgba(15,23,42,.18); }
-    .tree li::before{ right:50%; }
-    .tree li::after{ left:50%; border-left:2px solid rgba(15,23,42,.18); }
-    .tree li:only-child::before, .tree li:only-child::after{ display:none; }
-    .tree li:only-child{ padding-top:0; }
-    .tree li:first-child::before{ border-top:none; }
-    .tree li:last-child::after{ border-top:none; }
-    .tree ul ul::before{ content:''; position:absolute; top:0; left:50%; width:0; height:24px; border-left:2px solid rgba(15,23,42,.18); }
+    .treeShell{ overflow:auto; padding-bottom:6px; }
+    .treeCanvas{ min-width:1260px; }
 
-    .node{ width:230px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; box-shadow:var(--shadowSm); text-align:left; }
-    .node h4{ margin:0; padding:8px 10px; color:#fff; font-size:13px; background:#7f1d1d; }
-    .node .body{ padding:10px; }
+    .rootWrap{ display:flex; justify-content:center; position:relative; padding-bottom:18px; }
+    .rootWrap::after{ content:''; position:absolute; left:50%; transform:translateX(-50%); top:100%; width:2px; height:18px; background:rgba(15,23,42,.2); }
+    .rootCard{
+      width:360px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:var(--shadowSm);
+      background:#fff;
+    }
+    .rootCard h3{ margin:0; padding:9px 12px; font-size:14px; color:#fff; background:#0f172a; }
+    .rootBody{ padding:10px 12px; background:#f8fafc; }
+    .rootBody .company{ font-size:16px; font-weight:900; color:var(--ink); }
+    .rootBody .leader{ margin-top:4px; font-size:13px; color:var(--mutedStrong); font-weight:800; }
+
+    .roleRow{ position:relative; display:grid; gap:10px; align-items:start; }
+    .roleRow::before{ content:''; position:absolute; top:0; left:3%; right:3%; border-top:2px solid rgba(15,23,42,.18); }
+
+    .roleCol{ position:relative; padding-top:18px; }
+    .roleCol::before{ content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:2px; height:18px; background:rgba(15,23,42,.18); }
+
+    .node{ border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadowSm); background:#fff; }
+    .node h4{ margin:0; padding:9px 10px; color:#fff; font-size:13px; background:#1d4f89; }
+    .node .body{ padding:9px; background:#eef4ff; }
+
     .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
-    .chip{ border:1px solid var(--lineStrong); border-radius:999px; padding:4px 8px; font-size:12px; background:#f8fafc; }
-    .moved{ background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); }
+    .chip{ border:1px solid var(--lineStrong); border-radius:999px; padding:4px 8px; font-size:12px; background:#fff; }
     .missing{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); color:#991b1b; }
+    .moved{ background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); }
     .badge{ margin-left:4px; font-size:10px; font-weight:900; color:#9a3412; }
 
-    .root .node h4{ background:#0f172a; }
-    .role .node h4{ background:#1d4f89; }
-    .bcp .node h4{ background:#0f766e; }
+    .bcpNode h4{ background:#0f766e; }
+    .bcpSub{ margin-top:8px; padding-top:8px; border-top:1px dashed rgba(15,23,42,.18); display:grid; gap:8px; }
+    .bcpSubItem strong{ font-size:12px; }
+
+    @media (max-width:1360px){ .treeCanvas{ min-width:1120px; } }
+    @media (max-width:980px){
+      .treeCanvas{ min-width:920px; }
+      .roleRow{ grid-template-columns: repeat(3, minmax(200px, 1fr)) !important; }
+      .roleRow::before{ display:none; }
+      .roleCol::before{ display:none; }
+    }
   </style>
 </head>
 <body>
@@ -42,17 +75,16 @@
   <main class="main"><div class="wrap">
     <h1 class="page-title">🚨 비상대응 조직도</h1>
     <div class="topBar">
-      <a class="btn" href="./org.html">평상시 조직도</a>
-      <a class="btn" href="./org-registry.html">조직 관리</a>
-      <a class="btn" href="./index.html">거버넌스 홈</a>
-      <div class="modeToggle" role="tablist" aria-label="BCP 가동 모드">
-        <button id="modePre" type="button">BCP 가동 전</button>
-        <button id="modePost" type="button">BCP 가동 후</button>
-      </div>
+      <a class="navBtn" href="./org-registry.html">조직 관리</a>
+      <a class="navBtn" href="./org.html">평상시 조직도</a>
+      <a class="navBtn active" href="./eop-org-chart.html">비상대응 조직도</a>
+      <a class="navBtn" href="./index.html">거버넌스 홈</a>
+      <button id="modePre" class="navBtn" type="button">BCP 가동 전</button>
+      <button id="modePost" class="navBtn" type="button">BCP 가동 후</button>
     </div>
 
     <article class="card">
-      <div class="tree" id="treeMount"></div>
+      <div class="treeShell"><div id="treeMount" class="treeCanvas"></div></div>
     </article>
   </div></main>
 
@@ -129,20 +161,45 @@
 
         const roleNodes = roleDefs.map((r) => {
           const names = (mapping[r.key] || []).filter((n) => mode === 'pre' || !movedTeams.includes(n));
-          return `<li class="role"><section class="node"><h4>${r.label}</h4><div class="body"><div class="chipWrap">${chipsHtml(names, available)}</div></div></section></li>`;
-        }).join('');
+          return `
+            <section class="roleCol">
+              <section class="node">
+                <h4>${r.label}</h4>
+                <div class="body"><div class="chipWrap">${chipsHtml(names, available)}</div></div>
+              </section>
+            </section>
+          `;
+        });
 
-        const bcpNode = mode === 'post'
-          ? `<li class="bcp"><section class="node"><h4>BCP 운영지원 (가동 시 추가)</h4><div class="body"><ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px;">${bcpDefs.map((b) => `<li><strong style="font-size:12px;">${b.label}</strong><div class="chipWrap" style="margin-top:4px;">${chipsHtml(mapping[b.key] || [], available, mapping[b.key] || [])}</div></li>`).join('')}</ul></div></section></li>`
-          : '';
+        if (mode === 'post') {
+          roleNodes.push(`
+            <section class="roleCol">
+              <section class="node bcpNode">
+                <h4>BCP 운영지원</h4>
+                <div class="body">
+                  <div class="chipWrap">${chipsHtml(['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀'], available, movedTeams)}</div>
+                  <div class="bcpSub">
+                    ${bcpDefs.map((b) => `<div class="bcpSubItem"><strong>${b.label}</strong><div class="chipWrap" style="margin-top:4px;">${chipsHtml(mapping[b.key] || [], available, mapping[b.key] || [])}</div></div>`).join('')}
+                  </div>
+                </div>
+              </section>
+            </section>
+          `);
+        }
 
         treeMount.innerHTML = `
-          <ul>
-            <li class="root">
-              <section class="node"><h4>재난대책본부</h4><div class="body"><div class="chipWrap"><span class="chip">본부장: 대표이사</span></div></div></section>
-              <ul>${roleNodes}${bcpNode}</ul>
-            </li>
-          </ul>
+          <section class="rootWrap">
+            <section class="rootCard">
+              <h3>재난대책본부</h3>
+              <div class="rootBody">
+                <div class="company">SJ Digital</div>
+                <div class="leader">본부장: 대표이사 박성준</div>
+              </div>
+            </section>
+          </section>
+          <section class="roleRow" style="grid-template-columns: repeat(${roleNodes.length}, minmax(180px, 1fr));">
+            ${roleNodes.join('')}
+          </section>
         `;
       };
 
