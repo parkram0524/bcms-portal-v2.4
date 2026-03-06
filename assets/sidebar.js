@@ -49,6 +49,12 @@
 
     <div class="sidebar-section" data-section="strategy-plans">
       <a href="${H("/strategy-plans/index.html")}" class="sidebar-section-title">🧱 3. Strategy & Plans (전략·계획)</a>
+      <div class="sub-menu">
+        <a href="${H("/strategy-plans/index.html")}">전략 대시보드</a>
+        <a href="${H("/strategy-plans/bcp.html")}">BCP 전략</a>
+        <a href="${H("/strategy-plans/drp.html")}">DRP 절차</a>
+        <a href="${H("/strategy-plans/priority.html")}">복구 우선순위</a>
+      </div>
     </div>
 
     <div class="sidebar-section" data-section="op-center">
