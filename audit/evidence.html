@@ -99,7 +99,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>등록일시</th><th>유형</th><th>관련 서비스</th><th>관련 Incident</th><th>설명</th><th>첨부파일</th><th>상태(토글)</th><th>작업</th>
+                  <th>등록일시</th><th>유형</th><th>관련 서비스</th><th>관련 조직</th><th>관련 Incident</th><th>설명</th><th>첨부파일</th><th>상태(토글)</th><th>작업</th>
                 </tr>
               </thead>
               <tbody id="evidenceBody"></tbody>
@@ -156,7 +156,7 @@
       }
 
       const sampleData = () => ([
-        { id: uid(), createdAt: nowISO(), type:'장애대응', services:['결제 API','인증 서비스'], incident:'INC-20260305-AX1B', description:'장애 전환 및 우회 처리 로그 정리', attachment:{name:'incident-log.txt',size:18432}, status:'확인필요' },
+        { id: uid(), createdAt: nowISO(), type:'장애대응', services:['결제 API','인증 서비스'], relatedOrgText:'IT서비스운영본부 / 애플리케이션운영팀', incident:'INC-20260305-AX1B', description:'장애 전환 및 우회 처리 로그 정리', attachment:{name:'incident-log.txt',size:18432}, status:'확인필요' },
         { id: uid(), createdAt: nowISO(), type:'DR전환', services:['DB 클러스터'], incident:'INC-20260304-PQ2R', description:'DR센터 전환 체크리스트 완료 증적', attachment:{name:'dr-checklist.pdf',size:98212}, status:'확인완료' },
         { id: uid(), createdAt: nowISO(), type:'훈련', services:['고객 포털'], incident:'', description:'분기 복구 훈련 결과 보고', attachment:{name:'training-result.xlsx',size:64122}, status:'확인필요' },
         { id: uid(), createdAt: nowISO(), type:'테스트', services:['DNS','VPN'], incident:'', description:'장애 복구 시나리오 테스트 캡처', attachment:{name:'test-capture.zip',size:124012}, status:'확인완료' },
@@ -226,7 +226,7 @@
       const filteredRows = () => {
         const q = (searchInput.value || '').trim().toLowerCase();
         return rows.filter((r) => {
-          const matchQ = !q || (r.description || '').toLowerCase().includes(q) || (r.incident || '').toLowerCase().includes(q) || (r.services || []).join(', ').toLowerCase().includes(q);
+          const matchQ = !q || (r.description || '').toLowerCase().includes(q) || (r.incident || '').toLowerCase().includes(q) || (r.relatedOrgText || '').toLowerCase().includes(q) || (r.services || []).join(', ').toLowerCase().includes(q);
           const matchType = typeFilter.value === '전체' || r.type === typeFilter.value;
           const matchStatus = statusFilter.value === '전체' || r.status === statusFilter.value;
           return matchQ && matchType && matchStatus;
@@ -237,7 +237,7 @@
         evidenceBody.innerHTML = '';
         const view = filteredRows();
         if (!view.length) {
-          evidenceBody.innerHTML = '<tr><td colspan="8" class="sub">조건에 맞는 증적이 없습니다.</td></tr>';
+          evidenceBody.innerHTML = '<tr><td colspan="9" class="sub">조건에 맞는 증적이 없습니다.</td></tr>';
           return;
         }
 
@@ -248,6 +248,7 @@
             <td>${toText(r.createdAt)}</td>
             <td>${r.type}</td>
             <td>${(r.services || []).join(', ') || '-'}</td>
+            <td>${r.relatedOrgText || '-'}</td>
             <td>${r.incident || '-'}</td>
             <td>${r.description || '-'}</td>
             <td>${r.attachment ? `${r.attachment.name} (${Math.round(r.attachment.size / 1024)}KB)` : '-'}</td>
@@ -291,6 +292,7 @@
           createdAt: new Date(evCollectedAt.value).toISOString(),
           type: evType.value,
           services: serviceNames,
+          relatedOrgText: '-',
           incident: incidentText,
           description: evDescription.value.trim(),
           attachment: readAttachment(),

@@ -44,6 +44,7 @@
             <div class="field col-3"><label for="incident">관련 Incident (선택)</label><select id="incident"><option value="">선택 안함</option></select></div>
 
             <div class="field col-6"><label for="service">관련 서비스 (선택)</label><input id="service" placeholder="예: 결제 API, 고객 포털" list="serviceList"/><datalist id="serviceList"></datalist></div>
+            <div class="field col-6"><label for="orgUnit">관련 조직 (선택)</label><input id="orgUnit" placeholder="예: IT서비스운영본부 / SRE/플랫폼운영팀"/></div>
             <div class="field col-3"><label for="owner">담당자 *</label><input id="owner" required placeholder="예: 김운영"/></div>
             <div class="field col-3"><label for="dueDate">완료 기한 *</label><input id="dueDate" type="date" required/></div>
 
@@ -68,7 +69,7 @@
           </div>
           <div class="tableWrap">
             <table>
-              <thead><tr><th>등록일</th><th>제목</th><th>우선순위</th><th>상태</th><th>담당자</th><th>기한</th><th>관련 Incident</th><th>관련 서비스</th><th>최종수정</th><th>작업</th></tr></thead>
+              <thead><tr><th>등록일</th><th>제목</th><th>우선순위</th><th>상태</th><th>담당자</th><th>기한</th><th>관련 Incident</th><th>관련 서비스</th><th>관련 조직</th><th>최종수정</th><th>작업</th></tr></thead>
               <tbody id="capaBody"></tbody>
             </table>
           </div>
@@ -98,6 +99,7 @@
       const cause=document.getElementById('cause');
       const incident=document.getElementById('incident');
       const service=document.getElementById('service');
+      const orgUnit=document.getElementById('orgUnit');
       const owner=document.getElementById('owner');
       const dueDate=document.getElementById('dueDate');
       const actionPlan=document.getElementById('actionPlan');
@@ -123,7 +125,7 @@
       (store.get(SERVICE_KEY,[])||[]).forEach((s)=>{ if(!s || !s.name) return; const opt=document.createElement('option'); opt.value=s.name; serviceList.appendChild(opt); });
 
       const sampleData=()=>[
-        {id:uid(), createdAt:nowISO(), updatedAt:nowISO(), title:'결제 오류 재발 방지 절차 수립', cause:'프로세스', incident:'INC-20260305-AX1B', service:'결제 API', actionPlan:'장애 대응 체크리스트 개정 및 승인 프로세스 보완', owner:'김운영', dueDate:'2026-03-20', status:'진행중', priority:'높음'},
+        {id:uid(), createdAt:nowISO(), updatedAt:nowISO(), title:'결제 오류 재발 방지 절차 수립', cause:'프로세스', incident:'INC-20260305-AX1B', service:'결제 API', orgUnit:'IT서비스운영본부 / 애플리케이션운영팀', actionPlan:'장애 대응 체크리스트 개정 및 승인 프로세스 보완', owner:'김운영', dueDate:'2026-03-20', status:'진행중', priority:'높음'},
         {id:uid(), createdAt:nowISO(), updatedAt:nowISO(), title:'인증 서버 용량 증설', cause:'시스템', incident:'INC-20260304-ZT7Q', service:'인증 서비스', actionPlan:'오토스케일 임계치 조정 및 노드 증설', owner:'이인프라', dueDate:'2026-03-18', status:'미착수', priority:'매우높음'},
         {id:uid(), createdAt:nowISO(), updatedAt:nowISO(), title:'야간 당직 교육 보강', cause:'인력', incident:'', service:'고객 포털', actionPlan:'야간 장애 핸들링 교육 월 1회 정례화', owner:'박매니저', dueDate:'2026-03-25', status:'진행중', priority:'보통'},
         {id:uid(), createdAt:nowISO(), updatedAt:nowISO(), title:'백업 벤더 SLA 재협상', cause:'협력사', incident:'', service:'파일 스토리지', actionPlan:'복구 시간 SLA 명문화 및 위약 조항 추가', owner:'최구매', dueDate:'2026-03-30', status:'미착수', priority:'높음'},
@@ -136,12 +138,12 @@
 
       const prioClass=(v)=> v==='매우높음' ? 'prio-critical' : v==='높음' ? 'prio-high' : v==='낮음' ? 'prio-low' : 'prio-mid';
       const persist=()=>store.set(KEY,rows);
-      const clearForm=()=>{ capaForm.reset(); capaId.value=''; cause.value='프로세스'; status.value='미착수'; priority.value='보통'; dueDate.value=new Date(Date.now()+14*24*3600*1000).toISOString().slice(0,10); };
+      const clearForm=()=>{ capaForm.reset(); capaId.value=''; orgUnit.value=''; cause.value='프로세스'; status.value='미착수'; priority.value='보통'; dueDate.value=new Date(Date.now()+14*24*3600*1000).toISOString().slice(0,10); };
 
       const filtered=()=>{
         const q=(searchInput.value||'').trim().toLowerCase();
         return rows.filter((r)=>{
-          const mq=!q || r.title.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q) || (r.service||'').toLowerCase().includes(q);
+          const mq=!q || r.title.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q) || (r.service||'').toLowerCase().includes(q) || (r.orgUnit||'').toLowerCase().includes(q);
           const ms=statusFilter.value==='전체' || r.status===statusFilter.value;
           const mp=priorityFilter.value==='전체' || r.priority===priorityFilter.value;
           const mc=causeFilter.value==='전체' || r.cause===causeFilter.value;
@@ -152,7 +154,7 @@
       const render=()=>{
         capaBody.innerHTML='';
         const view=filtered();
-        if(!view.length){ capaBody.innerHTML='<tr><td colspan="10" class="sub">조건에 맞는 CAPA가 없습니다.</td></tr>'; return; }
+        if(!view.length){ capaBody.innerHTML='<tr><td colspan="11" class="sub">조건에 맞는 CAPA가 없습니다.</td></tr>'; return; }
         view.forEach((r)=>{
           const tr=document.createElement('tr');
           tr.innerHTML=`
@@ -170,6 +172,7 @@
             <td>${r.dueDate || '-'}</td>
             <td>${r.incident || '-'}</td>
             <td>${r.service || '-'}</td>
+            <td>${r.orgUnit || '-'}</td>
             <td>${toDateTime(r.updatedAt)}</td>
             <td class="actions"><button class="btn" type="button" data-edit="${r.id}">수정</button><button class="btn" type="button" data-del="${r.id}">삭제</button></td>
           `;
@@ -187,6 +190,7 @@
           cause:cause.value,
           incident:incident.value,
           service:service.value.trim(),
+          orgUnit:orgUnit.value.trim(),
           actionPlan:actionPlan.value.trim(),
           owner:owner.value.trim(),
           dueDate:dueDate.value,
@@ -210,7 +214,7 @@
         const delId=e.target.getAttribute('data-del');
         if(editId){
           const r=rows.find((x)=>x.id===editId); if(!r) return;
-          capaId.value=r.id; title.value=r.title; cause.value=r.cause; incident.value=r.incident||''; service.value=r.service||''; actionPlan.value=r.actionPlan; owner.value=r.owner; dueDate.value=r.dueDate; status.value=r.status; priority.value=r.priority;
+          capaId.value=r.id; title.value=r.title; cause.value=r.cause; incident.value=r.incident||''; service.value=r.service||''; orgUnit.value=r.orgUnit||''; actionPlan.value=r.actionPlan; owner.value=r.owner; dueDate.value=r.dueDate; status.value=r.status; priority.value=r.priority;
           title.focus();
           return;
         }

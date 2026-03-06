@@ -199,8 +199,10 @@
             <section class="scenarioBox">
               <h4>Incident 종료</h4>
               <div class="row">
-                <label for="finalSummary">최종 요약 (1줄)</label>
+                <label for="finalSummary">종료 요약 (1줄)</label>
                 <input id="finalSummary" type="text" placeholder="예: 핵심 서비스 정상화, 후속 점검 진행"/>
+                <label for="preventionMemo" style="margin-top:8px;">재발 방지 메모 (선택)</label>
+                <input id="preventionMemo" type="text" placeholder="예: 온콜 절차 보완 및 감지 룰 튜닝"/>
                 <div class="inlineChecks">
                   <label class="inlineCheck" for="autoEvidenceToggle"><input id="autoEvidenceToggle" type="checkbox" checked/> Incident 종료 시 증적 1건 자동 생성</label>
                   <label class="inlineCheck" for="autoCapaToggle"><input id="autoCapaToggle" type="checkbox" checked/> Incident 종료 시 CAPA 1건 자동 생성</label>
@@ -254,6 +256,7 @@
       const severitySelect = document.getElementById('severitySelect');
       const statusSelect = document.getElementById('statusSelect');
       const finalSummary = document.getElementById('finalSummary');
+      const preventionMemo = document.getElementById('preventionMemo');
       const autoEvidenceToggle = document.getElementById('autoEvidenceToggle');
       const autoCapaToggle = document.getElementById('autoCapaToggle');
       const demoModeToggle = document.getElementById('demoModeToggle');
@@ -282,9 +285,11 @@
           impactedServiceIds: [],
           impactedServiceNames: [],
           relatedOrgUnits: [],
+          incidentId: '',
           startTime: '-',
           endTime: '-',
           finalSummary: '',
+          preventionMemo: '',
         },
         drState: 'normal',
         logs: [
@@ -323,15 +328,24 @@
         if (state.logs.length > 20) state.logs = state.logs.slice(0, 20);
       };
 
-      const createEvidenceFromIncident = (summaryText) => {
-        const incidentId = DataStore.uid ? DataStore.uid('INC') : `INC-${Date.now()}`;
+      const createEvidenceFromIncident = ({ incidentRef, summaryText, preventionText }) => {
+        const nowIso = DataStore.nowISO ? DataStore.nowISO() : new Date().toISOString();
+        const orgText = (state.currentIncident.relatedOrgUnits || []).map((u) => orgLabel(u)).join(', ');
+        const detailLines = [
+          '사고 종료에 따른 대응 증적 자동 생성',
+          summaryText ? `종료 요약: ${summaryText}` : '',
+          preventionText ? `재발 방지 메모: ${preventionText}` : '',
+        ].filter(Boolean);
+
         const evidence = {
           id: DataStore.uid ? DataStore.uid('EVD') : `EVD-${Date.now()}`,
-          createdAt: DataStore.nowISO ? DataStore.nowISO() : new Date().toISOString(),
+          createdAt: nowIso,
           type: '장애대응',
           services: [...state.currentIncident.impactedServiceNames],
-          incident: `${incidentId} / ${state.currentIncident.status}`,
-          description: `Incident 종료 요약: ${summaryText || '최종 요약 미입력'}`,
+          relatedOrgUnits: [...(state.currentIncident.relatedOrgUnits || [])],
+          relatedOrgText: orgText,
+          incident: `${incidentRef} / ${state.currentIncident.status}`,
+          description: detailLines.join(' / '),
           attachment: null,
           status: '확인필요',
         };
@@ -342,19 +356,28 @@
         });
       };
 
-      const createCapaFromIncident = () => {
+      const createCapaFromIncident = ({ incidentRef, summaryText, preventionText }) => {
         const now = new Date();
+        const nowIso = DataStore.nowISO ? DataStore.nowISO() : now.toISOString();
         const due = new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10);
-        const incidentId = DataStore.uid ? DataStore.uid('INC') : `INC-${Date.now()}`;
+        const orgText = (state.currentIncident.relatedOrgUnits || []).map((u) => orgLabel(u)).join(', ');
+        const actionDetails = [
+          '재발 방지 및 운영 절차 보완',
+          summaryText ? `종료 요약 반영: ${summaryText}` : '',
+          preventionText ? `메모 반영: ${preventionText}` : '',
+        ].filter(Boolean).join(' / ');
+
         const capa = {
           id: DataStore.uid ? DataStore.uid('CAPA') : `CAPA-${Date.now()}`,
-          createdAt: DataStore.nowISO ? DataStore.nowISO() : now.toISOString(),
-          updatedAt: DataStore.nowISO ? DataStore.nowISO() : now.toISOString(),
-          title: `Incident 사후 개선조치 - ${incidentId}`,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          title: `사고 사후 개선조치 - ${incidentRef}`,
           cause: '프로세스',
-          incident: `${incidentId} / ${state.currentIncident.status}`,
+          incident: `${incidentRef} / ${state.currentIncident.status}`,
           service: state.currentIncident.impactedServiceNames.join(', '),
-          actionPlan: '재발 방지 및 운영 절차 보완',
+          relatedOrgUnits: [...(state.currentIncident.relatedOrgUnits || [])],
+          orgUnit: orgText,
+          actionPlan: actionDetails,
           owner: '담당자 미정',
           dueDate: due,
           status: '미착수',
@@ -691,9 +714,11 @@
           ...state.currentIncident,
           status: '원인 조사',
           severity: severitySelect.value,
+          incidentId: state.currentIncident.incidentId || (DataStore.uid ? DataStore.uid('INC') : `INC-${Date.now()}`),
           startTime: nowText(),
           endTime: '-',
           finalSummary: '',
+          preventionMemo: '',
         };
         addLog({
           system: '사고 대응 콘솔',
@@ -715,18 +740,33 @@
       });
 
       document.getElementById('btnEndIncident').addEventListener('click', () => {
-        const summary = (finalSummary.value || '').trim() || '최종 요약 미입력';
+        const summary = (finalSummary.value || '').trim();
+        const prevention = (preventionMemo.value || '').trim();
+        const incidentRef = state.currentIncident.incidentId || (DataStore.uid ? DataStore.uid('INC') : `INC-${Date.now()}`);
+
         state.currentIncident.status = '복구 완료';
+        state.currentIncident.incidentId = incidentRef;
         state.currentIncident.endTime = nowText();
         state.currentIncident.finalSummary = summary;
-        addLog({ system: '사고 대응 콘솔', event: 'Incident 종료 (복구 완료)', action: `종료 시각 기록 / 요약: ${summary}`, operator: '사고 관리자' });
+        state.currentIncident.preventionMemo = prevention;
+
+        const followups = [];
+        if (autoEvidenceToggle.checked) followups.push('증적 생성');
+        if (autoCapaToggle.checked) followups.push('개선조치 생성');
+        addLog({
+          system: 'Incident 엔진',
+          event: '사고 종료',
+          action: `복구 완료 및 후속조치 생성 (${followups.length ? followups.join(', ') : '없음'})`,
+          operator: '시스템',
+        });
+
         if (autoEvidenceToggle.checked) {
-          createEvidenceFromIncident(summary);
-          addLog({ system: '증적 연동', event: '증적 자동 생성', action: 'Incident 종료 결과를 증적 관리에 등록', operator: '시스템' });
+          createEvidenceFromIncident({ incidentRef, summaryText: summary, preventionText: prevention });
+          addLog({ system: 'Evidence 연동', event: '증적 생성', action: '사고 종료 증적 자동 생성', operator: '시스템' });
         }
         if (autoCapaToggle.checked) {
-          createCapaFromIncident();
-          addLog({ system: 'CAPA 연동', event: 'CAPA 자동 생성', action: 'Incident 사후 개선조치를 CAPA 관리에 등록', operator: '시스템' });
+          createCapaFromIncident({ incidentRef, summaryText: summary, preventionText: prevention });
+          addLog({ system: 'CAPA 연동', event: '개선조치 생성', action: '사고 사후 개선조치 자동 생성', operator: '시스템' });
         }
         saveState();
         renderAll();
