@@ -25,11 +25,14 @@
       <a href="${H("/governance/index.html")}" class="sidebar-section-title">🧭 1. Governance (거버넌스)</a>
       <div class="sub-menu">
         <a href="${H("/governance/policy.html")}">정책/목표/범위</a>
-        <a href="${H("/governance/org.html")}">조직/역할</a>
+        <a href="${H("/governance/org-registry.html")}">조직 관리</a>
+        <a href="${H("/governance/org.html")}">평상시 조직도</a>
+        <a href="${H("/governance/eop-org-chart.html")}">비상대응 조직도</a>
         <a href="${H("/governance/docs.html")}">문서체계</a>
         <a href="${H("/governance/requirements.html")}">법규·요구사항</a>
         <a href="${H("/governance/bcms-map.html")}">BCMS 체계 맵</a>
         <a href="${H("/governance/system-registry.html")}">업무 시스템 목록</a>
+        <a href="${H("/governance/service-registry.html")}">서비스 레지스트리(서비스 목록)</a>
       </div>
     </div>
 
@@ -49,6 +52,11 @@
 
     <div class="sidebar-section" data-section="op-center">
       <a href="${H("/op-center/index.html")}" class="sidebar-section-title">🚨 4. Operation Center (운영센터)</a>
+      <div class="sub-menu">
+        <a href="${H("/op-center/ops-status.html")}">상황판(운영 현황)</a>
+        <a href="${H("/op-center/service-health.html")}">서비스 상태 맵</a>
+        <a href="${H("/op-center/incident-dashboard.html")}">Incident Dashboard (사고 대응 현황)</a>
+      </div>
     </div>
 
     <div class="sidebar-section" data-section="library">
@@ -67,6 +75,10 @@
 
     <div class="sidebar-section" data-section="audit">
       <a href="${H("/audit/index.html")}" class="sidebar-section-title">📈 7. Performance & Audit (평가·감사)</a>
+      <div class="sub-menu">
+        <a href="${H("/audit/evidence.html")}">증적 관리</a>
+        <a href="${H("/audit/capa.html")}">개선조치(CAPA)</a>
+      </div>
     </div>
 
     <div class="sidebar-section" data-section="admin">
@@ -105,14 +117,27 @@
     { key: "admin", match: "/admin/" },
   ];
 
+  const currentPath = path.replace(BASE, "");
+
   const activeKey = (() => {
-    const p = path.replace(BASE, "");
-    const hit = sections.find(s => p.includes(s.match));
+    const hit = sections.find(s => currentPath.includes(s.match));
     return hit ? hit.key : "home";
   })();
 
   document.querySelectorAll(".sidebar-section").forEach(section => {
     const key = section.getAttribute("data-section");
     if (key === activeKey) section.classList.add("active");
+  });
+
+  // ✅ 현재 페이지와 일치하는 링크 하이라이트 + 접근성 속성 지정
+  document.querySelectorAll(".sidebar a[href]").forEach(link => {
+    const href = link.getAttribute("href");
+    if (!href) return;
+
+    const normalizedHref = href.replace(BASE, "");
+    if (normalizedHref === currentPath) {
+      link.classList.add("active-link");
+      link.setAttribute("aria-current", "page");
+    }
   });
 })();
