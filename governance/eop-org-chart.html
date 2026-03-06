@@ -61,7 +61,7 @@
     .badge{ margin-left:4px; font-size:10px; font-weight:900; color:#9a3412; }
 
     .bcpFlow{ margin-top:12px; display:grid; justify-items:center; gap:8px; }
-    .stageBox{ border:1px dashed rgba(15,23,42,.3); border-radius:10px; background:#fff; padding:7px 12px; font-size:12px; font-weight:900; color:#0f172a; }
+    .stageBox{ border:1px solid rgba(249,115,22,.45); border-radius:10px; background:rgba(249,115,22,.10); padding:7px 12px; font-size:12px; font-weight:900; color:#9a3412; }
     .flowArrow{ font-size:14px; color:rgba(15,23,42,.55); line-height:1; }
 
     .bcpOrgNode{ width:min(100%, 520px); }
@@ -113,10 +113,10 @@
         security: ['정보보호팀'],
         communication: ['고객지원팀','서비스품질팀'],
         record: ['감사·컴플라이언스팀','재난안전(BCM)팀'],
-        bcpWorkEnv: ['인사총무팀','SRE/플랫폼운영팀'],
+        bcpWorkEnv: ['인사총무팀','SRE/플랫폼운영팀','DC운영(NOC/관제)팀'],
         bcpPeople: ['인사총무팀'],
         bcpSupply: ['구매·자산관리팀'],
-        bcpAdmin: ['인사총무팀'],
+        bcpAdmin: ['인사총무팀','재무회계팀'],
       };
 
       const roleDefs = [
@@ -176,7 +176,7 @@
 
         const bcpTeamNodes = bcpDefs.map((b) => {
           const names = mapping[b.key] || [];
-          const movedMarks = mode === 'post' ? names : [];
+          const movedMarks = names;
           return `
             <section class="bcpTeamNode">
               <strong>${b.label}</strong>
@@ -206,7 +206,7 @@
             <section class="node bcpOrgNode">
               <h4>BCP 운영조직</h4>
               <div class="body">
-                <div class="chipWrap">${chipsHtml(['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀'], available, mode === 'post' ? movedTeams : [])}</div>
+                <div class="chipWrap">${chipsHtml(['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀','DC운영(NOC/관제)팀','재무회계팀'], available, ['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀','DC운영(NOC/관제)팀','재무회계팀'])}</div>
                 <div class="bcpTeamGrid">${bcpTeamNodes}</div>
               </div>
             </section>
