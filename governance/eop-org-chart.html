@@ -50,12 +50,12 @@
       align-items:start;
     }
 
-    .node{ border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadowSm); background:#fff; }
-    .node h4{ margin:0; padding:8px 9px; color:#fff; font-size:12px; background:#1d4f89; }
-    .node .body{ padding:8px; background:#eef4ff; }
+    .node{ min-width:220px; border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadowSm); background:#fff; }
+    .node h4{ margin:0; padding:9px 11px; color:#fff; font-size:13px; background:#1d4f89; }
+    .node .body{ padding:10px; background:#eef4ff; }
 
-    .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
-    .chip{ border:1px solid var(--lineStrong); border-radius:999px; padding:3px 7px; font-size:11px; background:#fff; max-width:100%; word-break:break-word; }
+    .chipWrap{ display:flex; flex-wrap:wrap; gap:7px; align-items:flex-start; }
+    .chip{ display:inline-flex; align-items:center; border:1px solid var(--lineStrong); border-radius:999px; padding:5px 10px; font-size:12px; line-height:1.3; background:#fff; max-width:100%; white-space:normal; overflow-wrap:anywhere; word-break:keep-all; }
     .missing{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); color:#991b1b; }
     .moved{ background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); }
     .badge{ margin-left:4px; font-size:10px; font-weight:900; color:#9a3412; }
@@ -64,13 +64,13 @@
     .stageBox{ border:1px solid rgba(249,115,22,.45); border-radius:10px; background:rgba(249,115,22,.10); padding:7px 12px; font-size:12px; font-weight:900; color:#9a3412; }
     .flowArrow{ font-size:14px; color:rgba(15,23,42,.55); line-height:1; }
 
-    .bcpOrgNode{ width:min(100%, 520px); }
+    .bcpOrgNode{ width:min(100%, 780px); }
     .bcpOrgNode h4{ background:#0f766e; }
-    .bcpTeamGrid{ margin-top:10px; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; }
-    .bcpTeamNode{ border:1px solid var(--lineStrong); border-radius:10px; background:#fff; padding:7px; }
-    .bcpTeamNode strong{ display:block; font-size:12px; margin-bottom:6px; color:#0f172a; }
+    .bcpTeamGrid{ margin-top:10px; display:grid; grid-template-columns:repeat(2, minmax(260px, 1fr)); gap:10px; }
+    .bcpTeamNode{ border:1px solid var(--lineStrong); border-radius:10px; background:#fff; padding:10px; min-height:92px; }
+    .bcpTeamNode strong{ display:block; font-size:13px; margin-bottom:7px; color:#0f172a; }
 
-    @media (max-width:1280px){ .roleRow{ grid-template-columns:repeat(3, minmax(0, 1fr)); } .bcpTeamGrid{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+    @media (max-width:1280px){ .roleRow{ grid-template-columns:repeat(3, minmax(0, 1fr)); } .bcpTeamGrid{ grid-template-columns:repeat(2, minmax(220px, 1fr)); } }
     @media (max-width:860px){ .roleRow{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
     @media (max-width:560px){ .roleRow{ grid-template-columns:1fr; } .bcpTeamGrid{ grid-template-columns:1fr; } }
   </style>
@@ -144,9 +144,9 @@
       };
 
       const chipsHtml = (names, available, moved=[]) => {
-        if (!names.length) return '<span class="chip missing">미지정 (조직 관리에서 설정 필요)</span>';
+        if (!names.length) return '<span class="chip missing">미지정</span>';
         return names.map((n) => {
-          if (!available.has(n)) return `<span class="chip missing">${n} (미지정)</span>`;
+          if (!available.has(n)) return `<span class="chip missing">${n}</span>`;
           const movedFlag = moved.includes(n);
           return `<span class="chip ${movedFlag ? 'moved' : ''}">${n}${movedFlag ? '<span class="badge">BCP 편성</span>' : ''}</span>`;
         }).join('');
