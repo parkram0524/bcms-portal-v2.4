@@ -54,12 +54,17 @@
     .orgSummary{ display:flex; flex-wrap:wrap; gap:6px; }
     .orgChip{ display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:4px 9px; font-size:12px; background:#fff; color:#0f172a; }
     .orgMore{ font-size:12px; color:var(--mutedStrong); font-weight:800; align-self:center; }
+    .jumpBtn{ display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.16); border-radius:999px; background:#fff; color:#0f172a; padding:4px 9px; font-size:12px; cursor:pointer; text-decoration:none; }
+    .jumpBtn:hover{ background:rgba(15,23,42,.05); }
+    .jumpInline{ border:none; padding:0; border-radius:0; background:transparent; color:#1d4ed8; font-size:13px; font-weight:800; }
+    .jumpInline:hover{ text-decoration:underline; background:transparent; }
 
     .incidentNow{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
     .incidentMeta{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; margin-top:8px; }
     .metaItem{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:10px; background:#f8fafc; }
     .metaItem .k{ font-size:12px; color:var(--mutedStrong); font-weight:800; }
     .metaItem .v{ margin-top:4px; font-size:13px; font-weight:800; }
+    .incidentAction{ margin-top:10px; }
 
     @media (max-width: 980px){ .followPanel{ grid-column: span 12; } .incidentMeta{ grid-template-columns:1fr; } }
   </style>
@@ -91,6 +96,7 @@
           <div class="metaItem"><div class="k">영향 서비스</div><div class="v" id="incServices">-</div></div>
           <div class="metaItem"><div class="k">관련 조직</div><div class="v"><div id="incOrgSummary" class="orgSummary"></div></div></div>
         </div>
+        <div id="incActionWrap" class="incidentAction"></div>
       </section>
 
       <section class="statusBoard">
@@ -154,6 +160,11 @@
       const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
       const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
+      const NAV_INCIDENT_KEY = 'bcms_nav_focus_incident';
+      const NAV_SERVICE_KEY = 'bcms_nav_focus_service';
+      const NAV_ORG_KEY = 'bcms_nav_focus_org';
+      const NAV_EVIDENCE_KEY = 'bcms_nav_focus_evidence';
+      const NAV_CAPA_KEY = 'bcms_nav_focus_capa';
       const store = (window.DataStore && DataStore.get) ? DataStore : {
         get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
       };
@@ -190,6 +201,7 @@
       const serviceMap = new Map(serviceRows.map((svc) => [svc.id, svc]));
       const serviceNameMap = new Map(serviceRows.map((svc) => [svc.name, svc]));
       const orgLabel = (u) => `${u.divisionName || '미지정'} / ${u.teamName || '미지정'}`;
+      const esc = (v) => String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
       const dedupOrgUnits = (units) => {
         const m = new Map();
@@ -244,8 +256,13 @@
           return;
         }
         units.slice(0, limit).forEach((u) => {
-          const chip = document.createElement('span');
-          chip.className = 'orgChip';
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'jumpBtn';
+          chip.dataset.navTarget = '../governance/eop-org-chart.html';
+          chip.dataset.navKind = 'org';
+          chip.dataset.navDivision = u.divisionName || '';
+          chip.dataset.navTeam = u.teamName || '';
           chip.textContent = orgLabel(u);
           el.appendChild(chip);
         });
@@ -256,6 +273,70 @@
           el.appendChild(more);
         }
       };
+
+      const toServiceButtons = (services) => {
+        const list = (services || []).filter(Boolean);
+        if (!list.length) return '-';
+        return list.map((name) => `<button type="button" class="jumpBtn" data-nav-target="../governance/service-registry.html" data-nav-kind="service" data-nav-value="${esc(name)}">${esc(name)}</button>`).join(' ');
+      };
+
+      const toOrgButtons = (units, limit = 2, target = '../governance/org.html') => {
+        if (!units.length) return '-';
+        const head = units.slice(0, limit).map((u) => `<button type="button" class="jumpBtn" data-nav-target="${target}" data-nav-kind="org" data-nav-division="${esc(u.divisionName)}" data-nav-team="${esc(u.teamName)}">${esc(orgLabel(u))}</button>`);
+        if (units.length > limit) head.push(`<span class="orgMore">+${units.length - limit}</span>`);
+        return head.join(' ');
+      };
+
+      const renderIncidentAction = (incidentRef) => {
+        const wrap = document.getElementById('incActionWrap');
+        if (!incidentRef) {
+          wrap.innerHTML = '';
+          return;
+        }
+        wrap.innerHTML = `<button type="button" class="jumpBtn" data-nav-target="./incident-dashboard.html" data-nav-kind="incident" data-nav-value="${esc(incidentRef)}">사고 대응 화면에서 보기</button>`;
+      };
+
+      const routeWithContext = (target, kind, payload) => {
+        const param = new URLSearchParams();
+        if (kind === 'incident') {
+          localStorage.setItem(NAV_INCIDENT_KEY, JSON.stringify({ incidentRef: payload.incidentRef }));
+          param.set('incidentRef', payload.incidentRef || '');
+        }
+        if (kind === 'service') {
+          localStorage.setItem(NAV_SERVICE_KEY, JSON.stringify({ serviceName: payload.serviceName }));
+          param.set('q', payload.serviceName || '');
+        }
+        if (kind === 'org') {
+          localStorage.setItem(NAV_ORG_KEY, JSON.stringify({ divisionName: payload.divisionName, teamName: payload.teamName }));
+          if (payload.teamName) param.set('team', payload.teamName);
+        }
+        if (kind === 'evidence') {
+          localStorage.setItem(NAV_EVIDENCE_KEY, JSON.stringify({ evidenceId: payload.evidenceId }));
+          param.set('focus', payload.evidenceId || '');
+        }
+        if (kind === 'capa') {
+          localStorage.setItem(NAV_CAPA_KEY, JSON.stringify({ capaId: payload.capaId }));
+          param.set('focus', payload.capaId || '');
+        }
+        const qs = param.toString();
+        location.href = qs ? `${target}?${qs}` : target;
+      };
+
+      document.body.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-nav-target]');
+        if (!btn) return;
+        const target = btn.dataset.navTarget;
+        const kind = btn.dataset.navKind;
+        const payload = {
+          incidentRef: btn.dataset.navValue,
+          serviceName: btn.dataset.navValue,
+          divisionName: btn.dataset.navDivision,
+          teamName: btn.dataset.navTeam,
+          evidenceId: btn.dataset.navValue,
+          capaId: btn.dataset.navValue,
+        };
+        routeWithContext(target, kind, payload);
+      });
 
       const incident = store.get(INCIDENT_KEY, {});
       const evidenceRows = Array.isArray(store.get(EVIDENCE_KEY, [])) ? store.get(EVIDENCE_KEY, []) : [];
@@ -327,8 +408,10 @@
       document.getElementById('kDrHint').textContent = `현재 상태: ${drInfo.text}`;
 
       document.getElementById('incStatus').textContent = currentIncident.status || '-';
-      document.getElementById('incServices').textContent = (currentIncident.impactedServiceNames || []).join(', ') || '영향 서비스 미선택';
+      const currentServices = (currentIncident.impactedServiceNames || []);
+      document.getElementById('incServices').innerHTML = toServiceButtons(currentServices);
       renderOrgSummary('incOrgSummary', currentOrgUnits, 3);
+      renderIncidentAction(currentIncident.incidentId || currentIncident.id || 'INC-CURRENT');
 
       const evidenceBody = document.getElementById('evidencePendingBody');
       const evView = limitRows(evidencePending, 5);
@@ -342,11 +425,11 @@
             <tr>
               <td>${toDateTime(r.createdAt)}</td>
               <td>${r.type || '-'}</td>
-              <td>${r.incident || '-'}</td>
-              <td>${(r.services || []).join(', ') || '-'}</td>
-              <td>${orgText || '-'}</td>
+              <td><button type="button" class="jumpBtn jumpInline" data-nav-target="./incident-dashboard.html" data-nav-kind="incident" data-nav-value="${esc(r.incident || '')}">${r.incident || '-'}</button></td>
+              <td>${toServiceButtons(r.services || [])}</td>
+              <td>${toOrgButtons(r.resolvedOrgUnits || [], 2, '../governance/org.html')}</td>
               <td>${r.description || '-'}</td>
-              <td><span class="tag st-pending">확인필요</span></td>
+              <td><button type="button" class="tag st-pending" data-nav-target="../audit/evidence.html" data-nav-kind="evidence" data-nav-value="${esc(r.id || '')}">확인필요</button></td>
             </tr>
           `;
         }).join('');
@@ -374,10 +457,10 @@
           const orgText = labels.slice(0,2).join(', ') + (labels.length > 2 ? ` +${labels.length - 2}` : '');
           return `
             <tr>
-              <td>${r.title || '-'}</td>
-              <td>${r.incident || '-'}</td>
-              <td>${r.service || '-'}</td>
-              <td>${orgText || '-'}</td>
+              <td><button type="button" class="jumpBtn jumpInline" data-nav-target="../audit/capa.html" data-nav-kind="capa" data-nav-value="${esc(r.id || '')}">${r.title || '-'}</button></td>
+              <td><button type="button" class="jumpBtn jumpInline" data-nav-target="./incident-dashboard.html" data-nav-kind="incident" data-nav-value="${esc(r.incident || '')}">${r.incident || '-'}</button></td>
+              <td>${toServiceButtons((r.service || '').split(',').map((v)=>v.trim()).filter(Boolean))}</td>
+              <td>${toOrgButtons(r.resolvedOrgUnits || [], 2, '../governance/org.html')}</td>
               <td>${r.owner || '-'}</td>
               <td>${toDate(r.dueDate)} ${isDueSoon(r.dueDate) ? '<span class="tag dueSoon" style="margin-left:6px;">기한 임박</span>' : ''}</td>
               <td>${statusTag(String(r.status || ''))}</td>
