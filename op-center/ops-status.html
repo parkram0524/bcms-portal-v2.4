@@ -12,12 +12,12 @@
     .hero p{ margin:8px 0 0; color:rgba(15,23,42,.62); }
 
     .kpiGrid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:12px; }
-    .kpi{ grid-column: span 2; border:1px solid rgba(15,23,42,.10); border-radius:14px; background:#fff; padding:14px; }
+    .kpi{ grid-column: span 3; border:1px solid rgba(15,23,42,.10); border-radius:14px; background:#fff; padding:14px; }
     .kLabel{ font-size:12px; font-weight:800; color:rgba(15,23,42,.58); }
     .kValue{ margin-top:8px; font-size:28px; font-weight:950; }
     .kHint{ margin-top:5px; font-size:12px; color:rgba(15,23,42,.56); }
-    @media (max-width: 1200px){ .kpi{ grid-column: span 4; } }
-    @media (max-width: 760px){ .kpi{ grid-column: span 6; } }
+    @media (max-width: 1200px){ .kpi{ grid-column: span 6; } }
+    @media (max-width: 760px){ .kpi{ grid-column: span 12; } }
     @media (max-width: 520px){ .kpi{ grid-column: span 12; } }
 
     .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
@@ -36,6 +36,24 @@
     .normal{ color:#166534; border-color:rgba(22,163,74,.28); background:rgba(22,163,74,.10); }
     .switch{ color:#991b1b; border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.10); }
     .recover{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.10); }
+
+    .statusBoard{ margin-top:14px; display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:14px; }
+    .followPanel{ grid-column: span 6; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
+    .panelHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .panelHead h3{ margin:0; font-size:18px; }
+    .miniBtn{ display:inline-flex; align-items:center; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; color:#0f172a; background:#fff; }
+    .miniBtn:hover{ background:rgba(15,23,42,.04); }
+    .noteEmpty{ font-size:13px; color:var(--muted); padding:10px 2px; }
+
+    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--lineStrong); font-size:12px; font-weight:800; }
+    .st-pending{ background:rgba(217,119,6,.12); color:#92400e; border-color:rgba(217,119,6,.32); }
+    .st-start{ background:rgba(148,163,184,.18); color:#334155; border-color:rgba(148,163,184,.38); }
+    .st-progress{ background:rgba(37,99,235,.12); color:#1d4ed8; border-color:rgba(37,99,235,.34); }
+    .st-done{ background:rgba(22,163,74,.12); color:#166534; border-color:rgba(22,163,74,.32); }
+    .dueSoon{ background:rgba(220,38,38,.12); color:#991b1b; border-color:rgba(220,38,38,.36); }
+
+    @media (max-width: 980px){ .followPanel{ grid-column: span 12; } }
+
   </style>
 </head>
 <body>
@@ -51,12 +69,44 @@
       </div>
 
       <section class="kpiGrid">
-        <article class="kpi"><div class="kLabel">진행 중 장애(건)</div><div class="kValue" id="kOngoing">0</div><div class="kHint">현재 Incident 상태 기준</div></article>
-        <article class="kpi"><div class="kLabel">복구 목표(RTO) 임박(건)</div><div class="kValue" id="kRtoDue">0</div><div class="kHint">1시간 이내 임박</div></article>
+        <article class="kpi"><div class="kLabel">진행 중 사고 건수</div><div class="kValue" id="kOngoing">0</div><div class="kHint">현재 Incident 상태 기준</div></article>
+        <article class="kpi"><div class="kLabel">미확인 증적 건수</div><div class="kValue" id="kEvidencePending">0</div><div class="kHint">확인 대기 중인 증적</div></article>
+        <article class="kpi"><div class="kLabel">미완료 개선조치 건수</div><div class="kValue" id="kCapaOpen">0</div><div class="kHint">아직 완료되지 않은 개선조치</div></article>
+        <article class="kpi"><div class="kLabel">기한 임박 개선조치 건수</div><div class="kValue" id="kCapaDueSoon">0</div><div class="kHint">7일 이내 마감 예정</div></article>
         <article class="kpi"><div class="kLabel">DR 전환 상태</div><div class="kValue" id="kDrState">정상</div><div class="kHint" id="kDrHint">-</div></article>
-        <article class="kpi"><div class="kLabel">오늘 훈련 진행 여부</div><div class="kValue" id="kTraining">아니오</div><div class="kHint">bcms_training_records_v2 연동</div></article>
-        <article class="kpi"><div class="kLabel">CAPA 미조치(건)</div><div class="kValue" id="kCapaOpen">0</div><div class="kHint">OPEN/IN_PROGRESS 합계</div></article>
-        <article class="kpi"><div class="kLabel">감사 증적 누락(건)</div><div class="kValue" id="kAuditMiss">0</div><div class="kHint">샘플 키 자동 생성 지원</div></article>
+      </section>
+
+
+      <section class="statusBoard">
+        <article class="followPanel">
+          <div class="panelHead">
+            <h3>미확인 증적</h3>
+            <a class="miniBtn" href="../audit/evidence.html">전체 보기</a>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr><th>등록일시</th><th>유형</th><th>관련 사고</th><th>관련 서비스</th><th>설명</th><th>상태</th></tr>
+              </thead>
+              <tbody id="evidencePendingBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="followPanel">
+          <div class="panelHead">
+            <h3>미완료 개선조치</h3>
+            <a class="miniBtn" href="../audit/capa.html">전체 보기</a>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr><th>제목</th><th>관련 사고</th><th>관련 서비스</th><th>담당자</th><th>완료 기한</th><th>상태</th><th>우선순위</th></tr>
+              </thead>
+              <tbody id="capaOpenBody"></tbody>
+            </table>
+          </div>
+        </article>
       </section>
 
       <section class="panel">
@@ -80,50 +130,37 @@
   </main>
 
   <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
   <script>
     (() => {
-      const INCIDENT_KEY = 'bcms_incidents_v1';
-      const TRAIN_KEY = 'bcms_training_records_v2';
-      const CAPA_KEY = 'bcms_capa_v1';
-      const EVIDENCE_KEY = 'bcms_audit_evidence_v1';
-
-      const safeParse = (raw, fb) => { try { return JSON.parse(raw); } catch { return fb; } };
-      const todayStr = () => new Date().toISOString().slice(0,10);
-
-      const ensureCapa = () => {
-        const list = safeParse(localStorage.getItem(CAPA_KEY), null);
-        if (Array.isArray(list) && list.length) return list;
-        const sample = [
-          { id:'CAPA-001', title:'장애 보고 템플릿 보완', status:'OPEN' },
-          { id:'CAPA-002', title:'DR 체크리스트 갱신', status:'IN_PROGRESS' },
-          { id:'CAPA-003', title:'로그 보관정책 검토', status:'DONE' },
-        ];
-        localStorage.setItem(CAPA_KEY, JSON.stringify(sample));
-        return sample;
+      const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
+      const CAPA_KEY = (window.DataStore && DataStore.KEY_CAPA) || 'bcms_capa_v1';
+      const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
+      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
+        get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
+        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v)),
       };
 
-      const ensureEvidence = () => {
-        const list = safeParse(localStorage.getItem(EVIDENCE_KEY), null);
-        if (Array.isArray(list) && list.length) return list;
-        const sample = [
-          { id:'EV-001', item:'Incident Timeline', required:true, attached:true },
-          { id:'EV-002', item:'DR Drill Record', required:true, attached:false },
-          { id:'EV-003', item:'CAPA Closure Note', required:true, attached:false },
-        ];
-        localStorage.setItem(EVIDENCE_KEY, JSON.stringify(sample));
-        return sample;
+      const safeDate = (value) => {
+        const d = new Date(value || '');
+        return Number.isNaN(d.getTime()) ? null : d;
       };
+      const toDateTime = (v) => {
+        const d = safeDate(v);
+        return d ? d.toLocaleString('ko-KR', { hour12:false }) : '-';
+      };
+      const toDate = (v) => {
+        const d = safeDate(v);
+        return d ? d.toISOString().slice(0,10) : '-';
+      };
+      const limitRows = (arr, n=5) => (Array.isArray(arr) ? arr.slice(0,n) : []);
 
-      const incident = safeParse(localStorage.getItem(INCIDENT_KEY), {});
-      const training = safeParse(localStorage.getItem(TRAIN_KEY), []);
-      const capa = ensureCapa();
-      const evidence = ensureEvidence();
+      const incident = store.get(INCIDENT_KEY, {});
+      const evidenceRows = store.get(EVIDENCE_KEY, []);
+      const capaRows = store.get(CAPA_KEY, []);
 
       const status = String(incident?.currentIncident?.status || '안정화 모니터링');
       const ongoing = ['원인 조사','영향 완화','안정화 모니터링'].includes(status) ? 1 : 0;
-
-      const logs = Array.isArray(incident?.logs) ? incident.logs : [];
-      const recentLogs = logs.slice(0,10);
 
       const drState = String(incident?.drState || 'normal');
       const drMap = {
@@ -133,29 +170,90 @@
       };
       const drInfo = drMap[drState] || drMap.normal;
 
-      const capaOpen = capa.filter(x => x?.status === 'OPEN' || x?.status === 'IN_PROGRESS').length;
-      const evidenceMiss = evidence.filter(x => x?.required && !x?.attached).length;
+      const evidencePending = (Array.isArray(evidenceRows) ? evidenceRows : [])
+        .filter((x) => x && x.status === '확인필요')
+        .sort((a,b) => (safeDate(b.createdAt)?.getTime()||0) - (safeDate(a.createdAt)?.getTime()||0));
 
-      const isTodayTraining = Array.isArray(training) && training.some((x) => {
-        const d = String(x?.date || x?.createdAt || '').slice(0,10);
-        return d === todayStr();
-      });
+      const capaOpenRows = (Array.isArray(capaRows) ? capaRows : [])
+        .filter((x) => x && ['미착수','진행중','OPEN','IN_PROGRESS'].includes(String(x.status || '')))
+        .sort((a,b) => {
+          const ad = safeDate(a.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
+          const bd = safeDate(b.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
+          return ad - bd;
+        });
 
-      const rtoDue = ongoing ? 1 : 0;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const in7 = new Date(today);
+      in7.setDate(in7.getDate() + 7);
+
+      const capaDueSoonCount = capaOpenRows.filter((x) => {
+        const d = safeDate(x.dueDate);
+        if (!d) return false;
+        d.setHours(0,0,0,0);
+        return d.getTime() <= in7.getTime();
+      }).length;
 
       document.getElementById('kOngoing').textContent = String(ongoing);
-      document.getElementById('kRtoDue').textContent = String(rtoDue);
+      document.getElementById('kEvidencePending').textContent = String(evidencePending.length);
+      document.getElementById('kCapaOpen').textContent = String(capaOpenRows.length);
+      document.getElementById('kCapaDueSoon').textContent = String(capaDueSoonCount);
       document.getElementById('kDrState').innerHTML = `<span class="pill ${drInfo.cls}">${drInfo.text}</span>`;
       document.getElementById('kDrHint').textContent = `현재 상태: ${drInfo.text}`;
-      document.getElementById('kTraining').textContent = isTodayTraining ? '예' : '아니오';
-      document.getElementById('kCapaOpen').textContent = String(capaOpen);
-      document.getElementById('kAuditMiss').textContent = String(evidenceMiss);
 
+      const evidenceBody = document.getElementById('evidencePendingBody');
+      const evView = limitRows(evidencePending, 5);
+      if (!evView.length) {
+        evidenceBody.innerHTML = '<tr><td colspan="6" class="noteEmpty">미확인 증적이 없습니다.</td></tr>';
+      } else {
+        evidenceBody.innerHTML = evView.map((r) => `
+          <tr>
+            <td>${toDateTime(r.createdAt)}</td>
+            <td>${r.type || '-'}</td>
+            <td>${r.incident || '-'}</td>
+            <td>${(r.services || []).join(', ') || '-'}</td>
+            <td>${r.description || '-'}</td>
+            <td><span class="tag st-pending">확인필요</span></td>
+          </tr>
+        `).join('');
+      }
+
+      const capaBody = document.getElementById('capaOpenBody');
+      const capaView = limitRows(capaOpenRows, 5);
+      const statusTag = (v) => {
+        if (v === '진행중' || v === 'IN_PROGRESS') return '<span class="tag st-progress">진행중</span>';
+        if (v === '완료' || v === 'DONE') return '<span class="tag st-done">완료</span>';
+        return '<span class="tag st-start">미착수</span>';
+      };
+      const isDueSoon = (dueDate) => {
+        const d = safeDate(dueDate);
+        if (!d) return false;
+        d.setHours(0,0,0,0);
+        return d.getTime() <= in7.getTime();
+      };
+
+      if (!capaView.length) {
+        capaBody.innerHTML = '<tr><td colspan="7" class="noteEmpty">미완료 개선조치가 없습니다.</td></tr>';
+      } else {
+        capaBody.innerHTML = capaView.map((r) => `
+          <tr>
+            <td>${r.title || '-'}</td>
+            <td>${r.incident || '-'}</td>
+            <td>${r.service || '-'}</td>
+            <td>${r.owner || '-'}</td>
+            <td>${toDate(r.dueDate)} ${isDueSoon(r.dueDate) ? '<span class="tag dueSoon" style="margin-left:6px;">기한 임박</span>' : ''}</td>
+            <td>${statusTag(String(r.status || ''))}</td>
+            <td>${r.priority || '-'}</td>
+          </tr>
+        `).join('');
+      }
+
+      const logs = Array.isArray(incident?.logs) ? incident.logs.slice(0,10) : [];
       const tbody = document.getElementById('logTbody');
-      if (!recentLogs.length) {
+      if (!logs.length) {
         tbody.innerHTML = `<tr><td colspan="5" style="color:rgba(15,23,42,.6)">표시할 대응 로그가 없습니다.</td></tr>`;
       } else {
-        tbody.innerHTML = recentLogs.map((r) => `
+        tbody.innerHTML = logs.map((r) => `
           <tr>
             <td>${r.time || '-'}</td>
             <td>${r.system || '-'}</td>
