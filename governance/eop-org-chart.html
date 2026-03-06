@@ -53,6 +53,26 @@
       line-height: 1.5;
     }
 
+    .incidentContext {
+      margin-bottom: 12px;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      background: #eff6ff;
+      padding: 11px 13px;
+    }
+    .incidentContext h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 900;
+      color: #1e3a8a;
+    }
+    .incidentContext p {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: #1e40af;
+      line-height: 1.5;
+    }
+
     .hierarchy {
       display: grid;
       gap: 14px;
@@ -140,6 +160,12 @@
       box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
       overflow: hidden;
       min-height: 150px;
+    }
+    .roleCard.incidentHighlight,
+    .teamCard.incidentHighlight {
+      border-color: rgba(37, 99, 235, .42);
+      background: #f7fbff;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, .12);
     }
     .roleCardHead {
       border-top: 3px solid #1d4f89;
@@ -315,6 +341,7 @@
     </section>
 
     <article class="card">
+      <div id="incidentContextMount"></div>
       <div id="treeMount" class="hierarchy"></div>
     </article>
   </div></main>
@@ -328,6 +355,27 @@
       const MAP_KEY = (window.DataStore && DataStore.KEY_EOP_ROLE_MAPPING) || 'bcms_eop_role_mapping_v1';
       const MODE_KEY = (window.DataStore && DataStore.KEY_BCP_MODE) || 'bcms_bcp_mode';
       const SELECTED_ORG_KEY = 'bcms_selected_org';
+      const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
+      const CURRENT_INCIDENT_ID_KEY = 'bcmsCurrentIncidentId';
+      const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
+
+      const TEAM_ROLE_MAP = {
+        'DC운영(NOC/관제)팀': ['상황관리', '업무환경팀'],
+        'SRE/플랫폼운영팀': ['기술복구', '업무환경팀'],
+        '애플리케이션운영팀': ['기술복구'],
+        '데이터/DB운영팀': ['기술복구'],
+        '네트워크운영팀': ['기술복구'],
+        '전기팀': ['시설지원(IDC)'],
+        '기계(냉각)팀': ['시설지원(IDC)'],
+        '방재·소방팀': ['시설지원(IDC)'],
+        '정보보호팀': ['보안대응'],
+        '고객지원팀': ['대외커뮤니케이션'],
+        '서비스품질팀': ['대외커뮤니케이션'],
+        '감사·컴플라이언스팀': ['기록·증적'],
+        '재난안전(BCM)팀': ['기록·증적'],
+        '인사총무팀': ['인력지원팀', '총무지원팀'],
+        '구매·자산관리팀': ['물자·구매지원팀']
+      };
 
       const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
         get: (k, f) => {
@@ -388,6 +436,7 @@
       ];
 
       const treeMount = document.getElementById('treeMount');
+      const incidentContextMount = document.getElementById('incidentContextMount');
       const modePreBtn = document.getElementById('modePre');
       const modePostBtn = document.getElementById('modePost');
       const query = new URLSearchParams(location.search);
@@ -408,6 +457,53 @@
       };
 
       const selectedTeamName = readSelectedOrg();
+
+      const toTeamName = (orgUnit) => {
+        if (!orgUnit) return '';
+        if (typeof orgUnit === 'string') return orgUnit.trim();
+        if (typeof orgUnit === 'object') return String(orgUnit.teamName || orgUnit.name || '').trim();
+        return '';
+      };
+      const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
+      const normalizeOrgUnits = (orgUnits) => uniq((orgUnits || []).map(toTeamName).filter(Boolean));
+      const deriveResponseRolesFromOrgUnits = (orgUnits) => {
+        const roles = normalizeOrgUnits(orgUnits).flatMap((teamName) => TEAM_ROLE_MAP[teamName] || []);
+        return uniq(roles);
+      };
+
+      const getCurrentIncident = () => {
+        const fromCurrent = store.get(CURRENT_INCIDENT_KEY, null);
+        if (fromCurrent && typeof fromCurrent === 'object') return fromCurrent;
+
+        const currentId = localStorage.getItem(CURRENT_INCIDENT_ID_KEY) || '';
+        const incidentStore = store.get(INCIDENT_KEY, null);
+        const current = incidentStore?.currentIncident;
+        if (current && typeof current === 'object') {
+          if (!currentId || currentId === current.incidentId) return current;
+        }
+        return null;
+      };
+
+      const renderIncidentContextBanner = (incident) => {
+        if (!incident || typeof incident !== 'object') {
+          incidentContextMount.innerHTML = '<section class="incidentContext"><h3>현재 사고 연계 조직</h3><p>현재 선택된 사고가 없어 기본 조직도로 표시합니다.</p></section>';
+          return;
+        }
+
+        const relatedOrgUnits = normalizeOrgUnits(incident.relatedOrgUnits || []);
+        const relatedRoles = uniq((incident.relatedResponseRoles || []).length
+          ? incident.relatedResponseRoles
+          : deriveResponseRolesFromOrgUnits(relatedOrgUnits));
+
+        incidentContextMount.innerHTML = `
+          <section class="incidentContext">
+            <h3>현재 사고 기준 관련 대응조직이 강조되어 있습니다.</h3>
+            <p>영향 서비스: ${incident.serviceName || incident.impactedServiceNames?.[0] || '확인 필요'}</p>
+            <p>관련 조직: ${relatedOrgUnits.length ? relatedOrgUnits.join(', ') : '연계 조직 없음'}</p>
+            <p>관련 대응 역할: ${relatedRoles.length ? relatedRoles.join(', ') : '연계 역할 없음'}</p>
+          </section>
+        `;
+      };
 
       const availableTeams = () => {
         const data = store.get(ORG_KEY, { divisions: [] });
@@ -453,14 +549,14 @@
         return merged;
       };
 
-      const renderChips = ({ names, kind, available, mode }) => {
+      const renderChips = ({ names, kind, available, mode, incidentOrgSet }) => {
         if (!names.length) return '<div class="chipWrap"></div>';
 
         return `<div class="chipWrap">${names.map((name) => {
           const classes = ['chip'];
           if (kind === 'composed') classes.push('composed');
           if (kind === 'support') classes.push('support');
-          if (selectedTeamName && selectedTeamName === name) classes.push('highlight');
+          if ((selectedTeamName && selectedTeamName === name) || incidentOrgSet.has(name)) classes.push('highlight');
 
           const activeBadge = mode === 'post' && (kind === 'composed' || kind === 'support')
             ? '<span class="stateBadge">BCP 편성</span>'
@@ -474,17 +570,27 @@
         const mapData = normalizeMapping(store.get(MAP_KEY, {}) || {});
         const mode = store.get(MODE_KEY, 'pre');
         const available = availableTeams();
+        const currentIncident = getCurrentIncident();
+        const incidentOrgUnits = normalizeOrgUnits(currentIncident?.relatedOrgUnits || []);
+        const incidentRoleNames = uniq((currentIncident?.relatedResponseRoles || []).length
+          ? currentIncident.relatedResponseRoles
+          : deriveResponseRolesFromOrgUnits(incidentOrgUnits));
+        const incidentOrgSet = new Set(incidentOrgUnits);
+        const incidentRoleSet = new Set(incidentRoleNames);
+
+        renderIncidentContextBanner(currentIncident);
 
         modePreBtn.classList.toggle('active', mode === 'pre');
         modePostBtn.classList.toggle('active', mode === 'post');
 
         const basicRoleCards = roleDefs.map((role) => {
           const teams = mapData.basicRoles[role.key] || [];
+          const cardClass = incidentRoleSet.has(role.label) ? 'roleCard incidentHighlight' : 'roleCard';
           return `
-            <section class="roleCard">
+            <section class="${cardClass}">
               <h3 class="roleCardHead">${role.label}</h3>
               <div class="roleCardBody">
-                ${renderChips({ names: teams, kind: 'default', available, mode })}
+                ${renderChips({ names: teams, kind: 'default', available, mode, incidentOrgSet })}
               </div>
             </section>
           `;
@@ -493,14 +599,15 @@
         const bcpTeamCards = bcpDefs.map((team) => {
           const teamData = mapData.bcpTeams[team.key] || { composed: [], support: [] };
           const supportNames = team.key === 'workEnv' ? ['SRE/플랫폼운영팀', 'DC운영(NOC/관제)팀'] : teamData.support;
+          const cardClass = incidentRoleSet.has(team.label) ? 'teamCard incidentHighlight' : 'teamCard';
 
           return `
-            <section class="teamCard">
+            <section class="${cardClass}">
               <h4 class="teamTitle">${team.label}</h4>
               <p class="subLabel">편성 조직</p>
-              ${renderChips({ names: teamData.composed, kind: 'composed', available, mode })}
+              ${renderChips({ names: teamData.composed, kind: 'composed', available, mode, incidentOrgSet })}
               <p class="subLabel">지원 조직</p>
-              ${renderChips({ names: supportNames, kind: 'support', available, mode })}
+              ${renderChips({ names: supportNames, kind: 'support', available, mode, incidentOrgSet })}
             </section>
           `;
         }).join('');
@@ -562,7 +669,7 @@
       modePreBtn.addEventListener('click', () => { store.set(MODE_KEY, 'pre'); render(); });
       modePostBtn.addEventListener('click', () => { store.set(MODE_KEY, 'post'); render(); });
       window.addEventListener('storage', (e) => {
-        if ([ORG_KEY, MAP_KEY, MODE_KEY].includes(e.key)) render();
+        if ([ORG_KEY, MAP_KEY, MODE_KEY, INCIDENT_KEY, CURRENT_INCIDENT_KEY, CURRENT_INCIDENT_ID_KEY].includes(e.key)) render();
       });
 
       setInterval(render, 3000);
