@@ -39,10 +39,11 @@
     <div class="sidebar-section" data-section="risk-bia">
       <a href="${H("/risk-bia/index.html")}" class="sidebar-section-title">🧩 2. Risk & BIA (리스크·업무영향분석)</a>
       <div class="sub-menu">
+        <a href="${H("/risk-bia/index.html")}">대시보드</a>
         <a href="${H("/risk-bia/risk.html")}">리스크 평가</a>
-        <a href="${H("/risk-bia/bia.html")}">BIA</a>
-        <a href="${H("/risk-bia/priority.html")}">중요도 / 우선순위</a>
-        <a href="${H("/risk-bia/dependency.html")}">자원 / 의존성</a>
+        <a href="${H("/risk-bia/bia.html")}">업무영향분석</a>
+        <a href="${H("/risk-bia/priority.html")}">통합 우선순위</a>
+        <a href="${H("/risk-bia/core-functions.html")}">핵심업무 관리</a>
       </div>
     </div>
 
