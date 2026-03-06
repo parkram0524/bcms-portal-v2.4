@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>상황판(운영 현황) | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .wrap{ max-width:1320px; margin:0 auto; }
+    .hero{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .hero h1{ margin:0; font-size:28px; font-weight:950; }
+    .hero p{ margin:8px 0 0; color:rgba(15,23,42,.62); }
+
+    .kpiGrid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:12px; }
+    .kpi{ grid-column: span 3; border:1px solid rgba(15,23,42,.10); border-radius:14px; background:#fff; padding:14px; }
+    .kLabel{ font-size:12px; font-weight:800; color:rgba(15,23,42,.58); }
+    .kValue{ margin-top:8px; font-size:28px; font-weight:950; }
+    .kHint{ margin-top:5px; font-size:12px; color:rgba(15,23,42,.56); }
+    @media (max-width: 1200px){ .kpi{ grid-column: span 6; } }
+    @media (max-width: 760px){ .kpi{ grid-column: span 12; } }
+    @media (max-width: 520px){ .kpi{ grid-column: span 12; } }
+
+    .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
+    .panel h3{ margin:0 0 10px; font-size:18px; }
+
+    .tableWrap{ overflow:auto; }
+    table{ width:100%; min-width:840px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.10); border-radius:12px; overflow:hidden; }
+    th, td{ padding:10px 12px; font-size:14px; }
+    th{ background:rgba(15,23,42,.03); color:rgba(15,23,42,.72); text-align:left; font-weight:800; }
+
+    .actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    .quickBtn{ display:inline-flex; align-items:center; gap:8px; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:10px 14px; background:#fff; color:#0f172a; font-weight:900; }
+    .quickBtn:hover{ background:rgba(15,23,42,.04); }
+
+    .pill{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px; border:1px solid rgba(15,23,42,.14); font-size:12px; font-weight:900; }
+    .normal{ color:#166534; border-color:rgba(22,163,74,.28); background:rgba(22,163,74,.10); }
+    .switch{ color:#991b1b; border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.10); }
+    .recover{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.10); }
+
+    .statusBoard{ margin-top:14px; display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:14px; }
+    .followPanel{ grid-column: span 6; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
+    .panelHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .panelHead h3{ margin:0; font-size:18px; }
+    .miniBtn{ display:inline-flex; align-items:center; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; color:#0f172a; background:#fff; }
+    .miniBtn:hover{ background:rgba(15,23,42,.04); }
+    .noteEmpty{ font-size:13px; color:var(--muted); padding:10px 2px; }
+
+    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--lineStrong); font-size:12px; font-weight:800; }
+    .st-pending{ background:rgba(217,119,6,.12); color:#92400e; border-color:rgba(217,119,6,.32); }
+    .st-start{ background:rgba(148,163,184,.18); color:#334155; border-color:rgba(148,163,184,.38); }
+    .st-progress{ background:rgba(37,99,235,.12); color:#1d4ed8; border-color:rgba(37,99,235,.34); }
+    .st-done{ background:rgba(22,163,74,.12); color:#166534; border-color:rgba(22,163,74,.32); }
+    .dueSoon{ background:rgba(220,38,38,.12); color:#991b1b; border-color:rgba(220,38,38,.36); }
+
+    @media (max-width: 980px){ .followPanel{ grid-column: span 12; } }
+
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+
+  <main class="main">
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <h1>상황판(운영 현황)</h1>
+          <p>운영센터 핵심 지표와 최근 대응 로그를 실시간 확인합니다.</p>
+        </div>
+      </div>
+
+      <section class="kpiGrid">
+        <article class="kpi"><div class="kLabel">진행 중 사고 건수</div><div class="kValue" id="kOngoing">0</div><div class="kHint">현재 Incident 상태 기준</div></article>
+        <article class="kpi"><div class="kLabel">미확인 증적 건수</div><div class="kValue" id="kEvidencePending">0</div><div class="kHint">확인 대기 중인 증적</div></article>
+        <article class="kpi"><div class="kLabel">미완료 개선조치 건수</div><div class="kValue" id="kCapaOpen">0</div><div class="kHint">아직 완료되지 않은 개선조치</div></article>
+        <article class="kpi"><div class="kLabel">기한 임박 개선조치 건수</div><div class="kValue" id="kCapaDueSoon">0</div><div class="kHint">7일 이내 마감 예정</div></article>
+        <article class="kpi"><div class="kLabel">DR 전환 상태</div><div class="kValue" id="kDrState">정상</div><div class="kHint" id="kDrHint">-</div></article>
+      </section>
+
+
+      <section class="statusBoard">
+        <article class="followPanel">
+          <div class="panelHead">
+            <h3>미확인 증적</h3>
+            <a class="miniBtn" href="../audit/evidence.html">전체 보기</a>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr><th>등록일시</th><th>유형</th><th>관련 사고</th><th>관련 서비스</th><th>설명</th><th>상태</th></tr>
+              </thead>
+              <tbody id="evidencePendingBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="followPanel">
+          <div class="panelHead">
+            <h3>미완료 개선조치</h3>
+            <a class="miniBtn" href="../audit/capa.html">전체 보기</a>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr><th>제목</th><th>관련 사고</th><th>관련 서비스</th><th>담당자</th><th>완료 기한</th><th>상태</th><th>우선순위</th></tr>
+              </thead>
+              <tbody id="capaOpenBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h3>최근 10건 대응 로그</h3>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr><th>시간</th><th>시스템</th><th>이벤트</th><th>조치</th><th>담당자</th></tr>
+            </thead>
+            <tbody id="logTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="actions">
+          <a class="quickBtn" href="./incident-dashboard.html">🧭 사고 대응 현황</a>
+          <a class="quickBtn" href="../library/drp.html">🛠️ DR 계획</a>
+          <a class="quickBtn" href="../library/eop.html">🚨 EOP</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
+  <script>
+    (() => {
+      const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
+      const CAPA_KEY = (window.DataStore && DataStore.KEY_CAPA) || 'bcms_capa_v1';
+      const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
+      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
+        get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
+        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v)),
+      };
+
+      const safeDate = (value) => {
+        const d = new Date(value || '');
+        return Number.isNaN(d.getTime()) ? null : d;
+      };
+      const toDateTime = (v) => {
+        const d = safeDate(v);
+        return d ? d.toLocaleString('ko-KR', { hour12:false }) : '-';
+      };
+      const toDate = (v) => {
+        const d = safeDate(v);
+        return d ? d.toISOString().slice(0,10) : '-';
+      };
+      const limitRows = (arr, n=5) => (Array.isArray(arr) ? arr.slice(0,n) : []);
+
+      const incident = store.get(INCIDENT_KEY, {});
+      const evidenceRows = store.get(EVIDENCE_KEY, []);
+      const capaRows = store.get(CAPA_KEY, []);
+
+      const status = String(incident?.currentIncident?.status || '안정화 모니터링');
+      const ongoing = ['원인 조사','영향 완화','안정화 모니터링'].includes(status) ? 1 : 0;
+
+      const drState = String(incident?.drState || 'normal');
+      const drMap = {
+        normal: { text:'정상', cls:'normal' },
+        dr: { text:'전환', cls:'switch' },
+        recovering: { text:'복구중', cls:'recover' },
+      };
+      const drInfo = drMap[drState] || drMap.normal;
+
+      const evidencePending = (Array.isArray(evidenceRows) ? evidenceRows : [])
+        .filter((x) => x && x.status === '확인필요')
+        .sort((a,b) => (safeDate(b.createdAt)?.getTime()||0) - (safeDate(a.createdAt)?.getTime()||0));
+
+      const capaOpenRows = (Array.isArray(capaRows) ? capaRows : [])
+        .filter((x) => x && ['미착수','진행중','OPEN','IN_PROGRESS'].includes(String(x.status || '')))
+        .sort((a,b) => {
+          const ad = safeDate(a.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
+          const bd = safeDate(b.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
+          return ad - bd;
+        });
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const in7 = new Date(today);
+      in7.setDate(in7.getDate() + 7);
+
+      const capaDueSoonCount = capaOpenRows.filter((x) => {
+        const d = safeDate(x.dueDate);
+        if (!d) return false;
+        d.setHours(0,0,0,0);
+        return d.getTime() <= in7.getTime();
+      }).length;
+
+      document.getElementById('kOngoing').textContent = String(ongoing);
+      document.getElementById('kEvidencePending').textContent = String(evidencePending.length);
+      document.getElementById('kCapaOpen').textContent = String(capaOpenRows.length);
+      document.getElementById('kCapaDueSoon').textContent = String(capaDueSoonCount);
+      document.getElementById('kDrState').innerHTML = `<span class="pill ${drInfo.cls}">${drInfo.text}</span>`;
+      document.getElementById('kDrHint').textContent = `현재 상태: ${drInfo.text}`;
+
+      const evidenceBody = document.getElementById('evidencePendingBody');
+      const evView = limitRows(evidencePending, 5);
+      if (!evView.length) {
+        evidenceBody.innerHTML = '<tr><td colspan="6" class="noteEmpty">미확인 증적이 없습니다.</td></tr>';
+      } else {
+        evidenceBody.innerHTML = evView.map((r) => `
+          <tr>
+            <td>${toDateTime(r.createdAt)}</td>
+            <td>${r.type || '-'}</td>
+            <td>${r.incident || '-'}</td>
+            <td>${(r.services || []).join(', ') || '-'}</td>
+            <td>${r.description || '-'}</td>
+            <td><span class="tag st-pending">확인필요</span></td>
+          </tr>
+        `).join('');
+      }
+
+      const capaBody = document.getElementById('capaOpenBody');
+      const capaView = limitRows(capaOpenRows, 5);
+      const statusTag = (v) => {
+        if (v === '진행중' || v === 'IN_PROGRESS') return '<span class="tag st-progress">진행중</span>';
+        if (v === '완료' || v === 'DONE') return '<span class="tag st-done">완료</span>';
+        return '<span class="tag st-start">미착수</span>';
+      };
+      const isDueSoon = (dueDate) => {
+        const d = safeDate(dueDate);
+        if (!d) return false;
+        d.setHours(0,0,0,0);
+        return d.getTime() <= in7.getTime();
+      };
+
+      if (!capaView.length) {
+        capaBody.innerHTML = '<tr><td colspan="7" class="noteEmpty">미완료 개선조치가 없습니다.</td></tr>';
+      } else {
+        capaBody.innerHTML = capaView.map((r) => `
+          <tr>
+            <td>${r.title || '-'}</td>
+            <td>${r.incident || '-'}</td>
+            <td>${r.service || '-'}</td>
+            <td>${r.owner || '-'}</td>
+            <td>${toDate(r.dueDate)} ${isDueSoon(r.dueDate) ? '<span class="tag dueSoon" style="margin-left:6px;">기한 임박</span>' : ''}</td>
+            <td>${statusTag(String(r.status || ''))}</td>
+            <td>${r.priority || '-'}</td>
+          </tr>
+        `).join('');
+      }
+
+      const logs = Array.isArray(incident?.logs) ? incident.logs.slice(0,10) : [];
+      const tbody = document.getElementById('logTbody');
+      if (!logs.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:rgba(15,23,42,.6)">표시할 대응 로그가 없습니다.</td></tr>`;
+      } else {
+        tbody.innerHTML = logs.map((r) => `
+          <tr>
+            <td>${r.time || '-'}</td>
+            <td>${r.system || '-'}</td>
+            <td>${r.event || '-'}</td>
+            <td>${r.action || '-'}</td>
+            <td>${r.operator || '-'}</td>
+          </tr>
+        `).join('');
+      }
+    })();
+  </script>
+</body>
+</html>
