@@ -3,713 +3,183 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>조직 / R&amp;R | BCMS</title>
+  <title>평상시 조직도 | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
-
   <style>
-    /* =============================
-       org.html only styles
-       - ✅ Sidebar는 이제 assets/style.css(공통)만 사용
-       - ✅ 본문/카드/트리/배지/팀만 org.html에서 정의
-       ============================= */
-    :root{
-      --pageBg:#f6f7fb;
-      --panel:#ffffff;
-      --ink:#0f172a;
-      --muted:rgba(15,23,42,.72);
-      --muted2:rgba(15,23,42,.55);
-      --bd:rgba(15,23,42,.12);
-      --line:rgba(15,23,42,.18);
+    body{ display:flex; }
+    .main{ padding:20px; }
+    .wrap{ max-width:100%; }
 
-      --shadow:0 12px 28px rgba(15,23,42,.08);
-      --shadow2:0 6px 16px rgba(15,23,42,.08);
-
-      --radius:18px;
-      --radius2:14px;
-
-      /* ✅ 노드 폭 */
-      --nodeW: 320px;
-
-      /* =========================================================
-         ✅ Tier palette (Hierarchy only)
-         ========================================================= */
-      --L0-bg:#0f172a;
-      --L0-bar:#38bdf8;
-      --L0-ink:#ffffff;
-
-      --L1-bg: rgba(15,23,42,.05);
-      --L1-bar:#94a3b8;
-
-      --L2-bg: rgba(37,99,235,.10);
-      --L2-bar:#2563eb;
-
-      --L3-bg: rgba(22,163,74,.10);
-      --L3-bar:#16a34a;
-    }
-
-    html, body{
-      background:var(--pageBg);
-      color:var(--ink);
-      font-size: 18px;
-      height:auto;
-      min-height:100%;
-    }
-
-    /* =============================
-       Main layout (org 페이지용)
-       ============================= */
-    .main{
-      background:var(--pageBg);
-      padding: 22px 22px 64px;
-    }
-    .wrap{
-      max-width: 1440px;
-      margin:0 auto;
-    }
-
-    /* =============================
-       Header
-       ============================= */
-    .header{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:14px;
-      flex-wrap:wrap;
-      margin: 4px 0 14px;
-    }
-    .header h1{
-      margin:0;
-      font-size: 32px;
-      font-weight: 950;
-      letter-spacing:-.02em;
-      color: var(--ink);
-    }
-    .header p{
-      margin: 10px 0 0;
-      color: var(--muted);
-      line-height: 1.65;
-      max-width: 1040px;
-      font-size: 16px;
-    }
-
-    /* Segmented */
-    .seg{
-      display:inline-flex;
-      border:1px solid var(--bd);
-      background:rgba(255,255,255,.92);
-      border-radius:999px;
-      padding:5px;
-      gap:5px;
-      box-shadow:var(--shadow2);
-    }
-    .seg button{
-      appearance:none; border:0; cursor:pointer;
-      padding: 11px 16px;
-      border-radius: 999px;
-      background: transparent;
-      color: var(--muted);
-      font-weight: 950;
-      font-size: 15px;
-      white-space:nowrap;
-    }
-    .seg button.active{
-      background:#0f172a;
-      color:#fff;
-    }
-
-    /* Legend */
-    .legend{
-      margin-top: 12px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      color: var(--muted2);
-      font-size: 14px;
-    }
-    .pill{
+    .topBar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .navBtn{
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      padding: 9px 12px;
-      border-radius:999px;
-      border:1px solid var(--bd);
-      background: rgba(255,255,255,.92);
-      box-shadow: var(--shadow2);
-      white-space:nowrap;
-    }
-    .dot  { width:11px; height:11px; border-radius:999px; background: var(--L0-bar); }
-    .dot2 { width:11px; height:11px; border-radius:999px; background: var(--L1-bar); }
-    .dot3 { width:11px; height:11px; border-radius:999px; background: var(--L2-bar); }
-    .dot4 { width:11px; height:11px; border-radius:999px; background: var(--L3-bar); }
-
-    /* =============================
-       Board
-       ============================= */
-    .board{
-      border:1px solid var(--bd);
-      background:rgba(255,255,255,.80);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding: 18px;
-    }
-
-    .secTitle{
-      display:flex;
-      justify-content:space-between;
-      align-items:baseline;
-      gap:10px;
-      margin: 8px 0 14px;
-    }
-    .secTitle h2{
-      margin:0;
-      font-size: 18px;
-      font-weight: 950;
-      color: var(--ink);
-    }
-    .secTitle .hint{
-      color: var(--muted2);
-      font-size: 14px;
-      white-space:nowrap;
-    }
-
-    /* =============================
-       Tree (상위 계층만)
-       ============================= */
-    .tree{
-      width:100%;
-      margin: 10px 0 14px;
-    }
-    .tree ul{
-      margin:0 auto;
-      padding-top: 28px;
-      position: relative;
-      display: table;
-      padding-left:0;
-    }
-    .tree li{
-      list-style:none;
-      display: table-cell;
-      vertical-align: top;
-      text-align: center;
-      position: relative;
-      padding: 28px 16px 0 16px;
-    }
-    .tree li::before,
-    .tree li::after{
-      content:'';
-      position:absolute;
-      top:0;
-      width:50%;
-      height:28px;
-      border-top:2px solid var(--line);
-    }
-    .tree li::before{ right:50%; }
-    .tree li::after{ left:50%; border-left:2px solid var(--line); }
-
-    .tree li:only-child::before,
-    .tree li:only-child::after{ display:none; }
-    .tree li:only-child{ padding-top: 0; }
-
-    .tree li:first-child::before{ border-top:0; }
-    .tree li:last-child::after{ border-top:0; }
-
-    .tree ul ul::before{
-      content:'';
-      position:absolute;
-      top:0;
-      left:50%;
-      transform: translateX(-50%);
-      border-left:2px solid var(--line);
-      height:28px;
-      width:0;
-    }
-
-    /* =============================
-       Node Card
-       ============================= */
-    .node{
-      width: var(--nodeW);
-      margin: 0 auto;
-      background: var(--panel);
-      border:1px solid var(--bd);
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow2);
-      padding: 16px 16px;
-      text-align:left;
-      position:relative;
-      overflow:hidden;
-    }
-    .node::before{
-      content:'';
-      position:absolute;
-      left:0; top:0; bottom:0;
-      width:7px;
-      background: var(--L1-bar);
-      opacity:.95;
-    }
-    .node .t{
-      font-weight: 950;
-      font-size: 18px;
-      letter-spacing:-.01em;
-      line-height: 1.2;
-      color: var(--ink);
-    }
-    .node .d{
-      margin-top: 8px;
-      font-size: 15px;
-      color: var(--muted);
-      line-height: 1.55;
-      word-break: keep-all;
-    }
-
-    .node.level0{
-      background: var(--L0-bg);
-      border-color: rgba(15,23,42,.18);
-      box-shadow: 0 18px 40px rgba(15,23,42,.14);
-    }
-    .node.level0::before{ background: var(--L0-bar); }
-    .node.level0 .t{ color: var(--L0-ink); font-size:19px; }
-    .node.level0 .d{ color: rgba(255,255,255,.74); }
-
-    .node.level1{
-      background: var(--L1-bg);
-      border-color: rgba(148,163,184,.28);
-    }
-    .node.level1::before{ background: var(--L1-bar); }
-
-    /* =============================
-       Grid Cards
-       ============================= */
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 14px;
-      margin-top: 10px;
-    }
-
-    .card{
-      grid-column: span 4;
-      background: var(--panel);
-      border:1px solid var(--bd);
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow2);
-      padding: 16px 16px;
-      position:relative;
-      overflow:hidden;
-      min-height: 118px;
-    }
-    .card::before{
-      content:'';
-      position:absolute;
-      left:0; top:0; bottom:0;
-      width:7px;
-      background: var(--L2-bar);
-      opacity:.95;
-    }
-
-    .cardHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-    }
-    .card .t{
-      font-weight: 950;
-      font-size: 17px;
-      letter-spacing:-.01em;
-      line-height: 1.2;
-      margin-right: 8px;
-      color: var(--ink);
-    }
-    .card .d{
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.55;
-      word-break: keep-all;
-    }
-
-    .card.level2{
-      background: var(--L2-bg);
-      border-color: rgba(37,99,235,.20);
-    }
-    .card.level2::before{ background: var(--L2-bar); }
-
-    .card.level3{
-      background: var(--L3-bg);
-      border-color: rgba(22,163,74,.20);
-    }
-    .card.level3::before{ background: var(--L3-bar); }
-
-    /* =============================
-       Domain badges (chips)
-       ============================= */
-    .badges{
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      align-items:center;
-      margin-top: 1px;
-    }
-    .badge{
-      --bdg:#64748b;
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 12.5px;
-      font-weight: 950;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(15,23,42,.14);
-      color: rgba(15,23,42,.72);
-      box-shadow: 0 4px 10px rgba(15,23,42,.06);
-      white-space:nowrap;
-    }
-    .badge::before{
-      content:'';
-      width:8px;
-      height:8px;
-      border-radius:999px;
-      background: var(--bdg);
-      box-shadow: 0 0 0 3px rgba(15,23,42,.06);
-    }
-
-    .dom-mgmt{ --bdg:#64748b; }
-    .dom-risk{ --bdg:#2563eb; }
-    .dom-fac { --bdg:#f59e0b; }
-    .dom-it  { --bdg:#0ea5e9; }
-    .dom-sec { --bdg:#16a34a; }
-    .dom-comm{ --bdg:#a855f7; }
-    .dom-evi { --bdg:#ea580c; }
-    .dom-bcp { --bdg:#dc2626; }
-
-    /* =============================
-       Teams
-       ============================= */
-    .teamLabel{
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed rgba(15,23,42,.14);
-      font-size: 13px;
-      font-weight: 950;
-      color: rgba(15,23,42,.58);
-      letter-spacing: .02em;
-    }
-
-    .teamGrid{
-      margin-top: 10px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .teamItem{
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(15,23,42,.12);
-      border-radius: 12px;
-      padding: 11px 12px;
-      position: relative;
-      box-shadow: 0 4px 10px rgba(15,23,42,.05);
-    }
-
-    .teamItem::before{
-      content:'';
-      position:absolute;
-      left:0; top:0; bottom:0;
-      width:5px;
-      background: rgba(15,23,42,.18);
-      border-radius: 12px 0 0 12px;
-    }
-
-    .teamItem .name{
-      font-weight: 950;
-      font-size: 15px;
-      letter-spacing: -.01em;
-      line-height: 1.2;
-      color: rgba(15,23,42,.92);
-    }
-
-    .teamItem .role{
-      margin-top: 6px;
-      font-size: 13.5px;
-      color: rgba(15,23,42,.62);
-      line-height: 1.45;
-      word-break: keep-all;
-    }
-
-    @media (max-width: 520px){
-      .teamGrid{ grid-template-columns: 1fr; }
-    }
-
-    /* =============================
-       BCP buttons
-       ============================= */
-    .actionsRow{
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      margin-top: 14px;
-    }
-    .btn{
-      appearance:none;
-      border:1px solid var(--bd);
+      text-decoration:none;
+      border:1px solid var(--lineStrong);
       background:#fff;
       color:var(--ink);
-      padding: 11px 16px;
-      border-radius: 12px;
-      cursor:pointer;
-      font-weight: 950;
-      font-size: 15px;
-      box-shadow: var(--shadow2);
-      transition:.12s ease;
-      white-space:nowrap;
+      border-radius:10px;
+      padding:8px 12px;
+      font-size:13px;
+      font-weight:800;
     }
-    .btn:hover{ transform: translateY(-1px); }
-    .btn.danger{
-      border-color: rgba(220,38,38,.24);
-      background: rgba(220,38,38,.06);
-      color:#7f1d1d;
-    }
+    .navBtn:hover{ background:rgba(15,23,42,.04); }
+    .navBtn.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
 
-    .hidden{ display:none !important; }
+    .orgView{ display:flex; flex-direction:column; gap:14px; min-height:calc(100vh - 160px); }
+    .ceoRow{ display:flex; justify-content:center; }
+    .ceoNode{ width:min(420px, 100%); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadowSm); overflow:hidden; }
+    .ceoNode h4{ margin:0; padding:10px 12px; background:#0f172a; color:#fff; font-size:14px; font-weight:900; }
+    .ceoNode p{ margin:0; padding:12px; background:#f8fafc; text-align:center; font-weight:800; color:var(--ink); }
 
-    /* =============================
-       Responsive
-       ============================= */
-    @media (max-width: 1280px){
-      :root{ --nodeW: 300px; }
-      .card{ grid-column: span 6; }
-    }
-    @media (max-width: 820px){
-      :root{ --nodeW: 92vw; }
-      .tree ul{ display:block; }
-      .tree li{ display:block; padding: 10px 0 0 0; }
-      .tree li::before, .tree li::after, .tree ul ul::before{ display:none; }
-      .card{ grid-column: span 12; }
-      .actionsRow{ justify-content:flex-start; }
-    }
+    .divisionGrid{ display:grid; grid-template-columns: repeat(5, minmax(180px, 1fr)); gap:10px; }
+    .divisionCard{ border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadowSm); background:var(--panel); }
+    .divisionCard h4{ margin:0; padding:9px 10px; background:#1d4f89; color:#fff; font-size:13px; font-weight:900; }
+    .divisionBody{ padding:8px; background:#eef4ff; }
+
+    .teamGrid{ display:grid; grid-template-columns: 1fr; gap:6px; }
+    .teamCard{ border:1px solid var(--lineStrong); border-radius:10px; background:#fff; padding:7px 9px; font-size:12px; color:var(--ink); }
+    .focusDivision{ border-color:rgba(37,99,235,.38); box-shadow:0 0 0 2px rgba(37,99,235,.12); }
+    .focusTeam{ border-color:rgba(37,99,235,.38); background:rgba(37,99,235,.08); font-weight:900; }
+    .focusBadge{ display:inline-flex; align-items:center; border:1px solid rgba(37,99,235,.35); border-radius:999px; padding:3px 8px; font-size:11px; color:#1d4ed8; background:rgba(37,99,235,.10); margin-left:6px; }
+    .empty{ color:var(--muted); font-size:13px; }
+
+    @media (max-width:1200px){ .divisionGrid{ grid-template-columns:repeat(3,minmax(170px,1fr)); } }
+    @media (max-width:900px){ .divisionGrid{ grid-template-columns:repeat(2,minmax(160px,1fr)); } }
+    @media (max-width:680px){ .divisionGrid{ grid-template-columns:1fr; } }
   </style>
 </head>
-
 <body>
   <aside id="sidebarMount"></aside>
-
-  <div class="main">
-    <div class="wrap">
-
-      <div class="header">
-        <div>
-          <h1>조직 / R&amp;R</h1>
-          <p>
-            (공통 사이드바 스타일은 <b>assets/style.css</b>에서 불러옵니다.)<br/>
-            동일 계층은 동일 색(레벨 색) + 도메인 배지로 구분, 본부 하위 팀은 항상 표시됩니다.
-          </p>
-
-          <div class="legend">
-            <span class="pill"><span class="dot"></span>레벨 0 (대표/CMT)</span>
-            <span class="pill"><span class="dot2"></span>레벨 1 (사장/EOC)</span>
-            <span class="pill"><span class="dot3"></span>레벨 2 (본부/기능반)</span>
-            <span class="pill"><span class="dot4"></span>레벨 3 (BCP 전환반)</span>
-          </div>
-        </div>
-
-        <div class="seg" role="tablist" aria-label="조직도 모드">
-          <button id="tabNormal" class="active" type="button" role="tab" aria-selected="true">회사 조직</button>
-          <button id="tabEoc" type="button" role="tab" aria-selected="false">비상대응 조직</button>
-        </div>
-      </div>
-
-      <section class="board">
-
-        <!-- ================== NORMAL ================== -->
-        <div id="viewNormal">
-          <div class="secTitle">
-            <h2>회사 조직(기본)</h2>
-            <div class="hint">대표 → 사장(COO) → 본부(카드 + 팀)</div>
-          </div>
-
-          <div class="tree" aria-label="회사 조직 상위 트리">
-            <ul>
-              <li>
-                <div class="node level0">
-                  <div class="t">대표이사</div>
-                  <div class="d">최종 의사결정 · 위기 대응 승인</div>
-                </div>
-                <ul>
-                  <li>
-                    <div class="node level1">
-                      <div class="t">사장(COO)</div>
-                      <div class="d">전사 운영 총괄 · 비상조직 소집 승인</div>
-                    </div>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-
-          <div class="secTitle" style="margin-top:8px;">
-            <h2>본부(조직 단위)</h2>
-            <div class="hint">레벨2 동일색 + 배지(도메인) + 하위 팀</div>
-          </div>
-
-          <div class="grid">
-            <div class="card level2" style="grid-column: span 6;">
-              <div class="cardHead">
-                <div class="t">경영지원본부</div>
-                <div class="badges"><span class="badge dom-mgmt">경영지원</span></div>
-              </div>
-              <div class="d">비상 인력/자원/대체근무 환경 등 운영 지원</div>
-              <div class="teamLabel">하위 팀</div>
-              <div class="teamGrid">
-                <div class="teamItem"><div class="name">인사팀</div><div class="role">비상연락망 · 인력 운영 · 교대/근무 지원</div></div>
-                <div class="teamItem"><div class="name">총무·구매팀</div><div class="role">물자/장비/협력사 · 긴급 구매/조달</div></div>
-                <div class="teamItem"><div class="name">재무·법무지원</div><div class="role">비용 집행 · 계약/대외 이슈 지원</div></div>
-              </div>
-            </div>
-
-            <div class="card level2" style="grid-column: span 6;">
-              <div class="cardHead">
-                <div class="t">리스크·품질본부</div>
-                <div class="badges"><span class="badge dom-risk">리스크/품질</span></div>
-              </div>
-              <div class="d">BCMS 운영(기준/훈련/감사)과 서비스 품질 관리</div>
-              <div class="teamLabel">하위 팀</div>
-              <div class="teamGrid">
-                <div class="teamItem"><div class="name">BCMS/재난안전팀</div><div class="role">정책/체계 운영 · 훈련·점검 · 감사 대응</div></div>
-                <div class="teamItem"><div class="name">서비스품질팀</div><div class="role">SOP 운영 · 공지/고객 대응 · 품질 지표</div></div>
-                <div class="teamItem"><div class="name">요구사항·컴플라이언스</div><div class="role">ISO/법규 매핑 · 기준 유지 · 개선 추적</div></div>
-              </div>
-            </div>
-
-            <div class="card level2" style="grid-column: span 6;">
-              <div class="cardHead">
-                <div class="t">시설·안전본부</div>
-                <div class="badges"><span class="badge dom-fac">시설/안전</span></div>
-              </div>
-              <div class="d">전력/설비/방재 운영과 현장 안전 관리</div>
-              <div class="teamLabel">하위 팀</div>
-              <div class="teamGrid">
-                <div class="teamItem"><div class="name">전기·전력팀</div><div class="role">UPS/발전/수전/절체 · 전력 장애 대응</div></div>
-                <div class="teamItem"><div class="name">설비·환경팀</div><div class="role">냉각/공조/환경 · 설비 상태 점검/복구</div></div>
-                <div class="teamItem"><div class="name">방재·안전팀</div><div class="role">대피/현장 통제 · 안전 조치 · 초기 대응</div></div>
-              </div>
-            </div>
-
-            <div class="card level2" style="grid-column: span 6;">
-              <div class="cardHead">
-                <div class="t">IT·보안본부</div>
-                <div class="badges">
-                  <span class="badge dom-it">IT</span>
-                  <span class="badge dom-sec">보안</span>
-                </div>
-              </div>
-              <div class="d">인프라/DR 운영과 보안/IR 대응 총괄</div>
-              <div class="teamLabel">하위 팀</div>
-              <div class="teamGrid">
-                <div class="teamItem"><div class="name">인프라 운영팀</div><div class="role">모니터링 · 장애 대응 · 서비스 안정화</div></div>
-                <div class="teamItem"><div class="name">DR·백업팀</div><div class="role">전환/복구 · 백업/복원 · 복구 검증</div></div>
-                <div class="teamItem"><div class="name">보안·IR팀</div><div class="role">차단/분석 · 침해 대응 · 재발 방지 조치</div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ================== EOC / CMT ================== -->
-        <div id="viewEoc" class="hidden">
-          <div class="secTitle">
-            <h2>비상대응 조직(위기관리위원회)</h2>
-            <div class="hint">CMT → EOC → 기능반</div>
-          </div>
-
-          <div class="tree" aria-label="비상대응 상위 트리">
-            <ul>
-              <li>
-                <div class="node level0">
-                  <div class="t">위기관리위원회(CMT)</div>
-                  <div class="d">위원장: 대표이사 · 대응 방향/자원/대외 메시지 승인</div>
-                </div>
-                <ul>
-                  <li>
-                    <div class="node level1">
-                      <div class="t">상황실(EOC)</div>
-                      <div class="d">상황실장: COO · 실행 지휘/조정 · 현황 브리핑</div>
-                    </div>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-
-          <div class="secTitle" style="margin-top:8px;">
-            <h2>기능반(운영)</h2>
-            <div class="hint">레벨2 동일색 + 배지(도메인)</div>
-          </div>
-
-          <div class="grid">
-            <div class="card level2"><div class="cardHead"><div class="t">상황·기획반</div><div class="badges"><span class="badge dom-risk">상황/영향</span><span class="badge dom-risk">기획</span></div></div><div class="d">상황 수집/영향 분석 · 우선순위 · 다음 액션 계획</div></div>
-            <div class="card level2"><div class="cardHead"><div class="t">대외 커뮤니케이션반</div><div class="badges"><span class="badge dom-comm">커뮤니케이션</span></div></div><div class="d">대내/대외 공지 · 고객/협력사 커뮤니케이션</div></div>
-            <div class="card level2"><div class="cardHead"><div class="t">기록·증적반</div><div class="badges"><span class="badge dom-evi">증적</span><span class="badge dom-evi">감사</span></div></div><div class="d">의사결정/조치 로그화 · 사후 감사 패키지 준비</div></div>
-            <div class="card level2"><div class="cardHead"><div class="t">IT 복구반(DR)</div><div class="badges"><span class="badge dom-it">IT</span><span class="badge dom-it">복구</span></div></div><div class="d">전환/복구 실행 · 복구 검증 · 서비스 정상화</div></div>
-            <div class="card level2"><div class="cardHead"><div class="t">시설·안전 복구반(EOP)</div><div class="badges"><span class="badge dom-fac">시설</span><span class="badge dom-fac">안전</span></div></div><div class="d">전력/설비/방재 조치 · 현장 안전 확보</div></div>
-            <div class="card level2"><div class="cardHead"><div class="t">보안 대응반(IR)</div><div class="badges"><span class="badge dom-sec">보안</span><span class="badge dom-sec">IR</span></div></div><div class="d">차단/분석 · 침해 대응 · 재발 방지 조치</div></div>
-            <div class="card level2" style="grid-column: span 12;"><div class="cardHead"><div class="t">지원반(경영지원)</div><div class="badges"><span class="badge dom-mgmt">지원</span><span class="badge dom-mgmt">자원/물자</span></div></div><div class="d">인사/총무/구매/재무 지원 · 협력사/자원/물자 확보 · 대체근무 환경 지원</div></div>
-          </div>
-
-          <div class="actionsRow">
-            <button id="btnBcpOn" class="btn" type="button">BCP 전환(업무연속) 활성화</button>
-            <button id="btnBcpOff" class="btn danger hidden" type="button">BCP 전환 종료</button>
-          </div>
-
-          <div id="bcpGrid" class="grid hidden" style="margin-top:12px;">
-            <div class="card level3"><div class="cardHead"><div class="t">업무환경 전환반</div><div class="badges"><span class="badge dom-bcp">BCP</span><span class="badge dom-mgmt">업무환경</span></div></div><div class="d">대체공간/원격/좌석 · 접근권한 · 업무환경 셋업</div></div>
-            <div class="card level3"><div class="cardHead"><div class="t">업무 전환반</div><div class="badges"><span class="badge dom-bcp">BCP</span><span class="badge dom-risk">우선순위</span></div></div><div class="d">핵심업무 우선순위 기반 운영 전환 · RTO 준수</div></div>
-            <div class="card level3"><div class="cardHead"><div class="t">자원·인력 운영반</div><div class="badges"><span class="badge dom-bcp">BCP</span><span class="badge dom-mgmt">자원/인력</span></div></div><div class="d">인력 재배치 · 협력사 가동 · 자원/물자 운영</div></div>
-          </div>
-        </div>
-
-      </section>
+  <main class="main"><div class="wrap">
+    <h1 class="page-title">🏛️ 평상시 조직도</h1>
+    <div class="topBar">
+      <a class="navBtn" href="./org-registry.html">조직 관리 페이지로 이동</a>
+      <a class="navBtn" href="./eop-org-chart.html">비상대응 조직도 보기</a>
+      <a class="navBtn active" href="./org.html">평상시 조직도</a>
+      <a class="navBtn" href="./index.html">거버넌스 홈</a>
     </div>
-  </div>
+
+    <article class="card">
+      <h3>조직 레지스트리 기반 조직도 (계층형)</h3>
+      <p class="hint">대표이사 → 본부(부모 카드) → 팀(하위 카드) 구조로 표시됩니다.</p>
+      <div id="orgView" class="orgView"></div>
+    </article>
+  </div></main>
 
   <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
   <script>
-    const tabNormal = document.getElementById('tabNormal');
-    const tabEoc = document.getElementById('tabEoc');
-    const viewNormal = document.getElementById('viewNormal');
-    const viewEoc = document.getElementById('viewEoc');
+    (() => {
+      const KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const SELECTED_ORG_KEY = 'bcms_selected_org';
+      const store = (window.DataStore && DataStore.get) ? DataStore : {
+        get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } }
+      };
+      const mount = document.getElementById('orgView');
+      const query = new URLSearchParams(location.search);
+      const readSelectedOrg = () => {
+        const fromTeam = (query.get('team') || '').trim();
+        let fromStorage = { divisionName: '', teamName: '' };
+        try {
+          const parsed = JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || 'null');
+          fromStorage = {
+            divisionName: (parsed?.divisionName || '').trim(),
+            teamName: (parsed?.teamName || '').trim(),
+          };
+        } catch {
+          fromStorage = { divisionName: '', teamName: '' };
+        }
+        localStorage.removeItem(SELECTED_ORG_KEY);
+        return {
+          divisionName: fromStorage.divisionName,
+          teamName: fromTeam || fromStorage.teamName,
+        };
+      };
+      const selectedOrg = readSelectedOrg();
+      let focused = false;
 
-    const btnBcpOn = document.getElementById('btnBcpOn');
-    const btnBcpOff = document.getElementById('btnBcpOff');
-    const bcpGrid = document.getElementById('bcpGrid');
+      const baseTemplate = {
+        companyName: 'SJ Digital',
+        divisions: [
+          { id:'risk', name:'리스크·컴플라이언스본부', teams:[{id:'bcm',name:'재난안전(BCM)팀'},{id:'security',name:'정보보호팀'},{id:'audit',name:'감사·컴플라이언스팀'}]},
+          { id:'it', name:'IT서비스운영본부', teams:[{id:'sre',name:'SRE/플랫폼운영팀'},{id:'app',name:'애플리케이션운영팀'},{id:'db',name:'데이터/DB운영팀'},{id:'network',name:'네트워크운영팀'}]},
+          { id:'dc', name:'IDC운영본부', teams:[{id:'power',name:'전기팀'},{id:'hvac',name:'기계(냉각)팀'},{id:'fire',name:'방재·소방팀'},{id:'noc',name:'DC운영(NOC/관제)팀'}]},
+          { id:'customer', name:'고객서비스본부', teams:[{id:'cs',name:'고객지원팀'},{id:'quality',name:'서비스품질팀'}]},
+          { id:'management', name:'경영지원본부', teams:[{id:'hr',name:'인사총무팀'},{id:'finance',name:'재무회계팀'},{id:'procurement',name:'구매·자산관리팀'}]},
+        ]
+      };
 
-    function setTab(mode){
-      const isNormal = mode === 'normal';
-      tabNormal.classList.toggle('active', isNormal);
-      tabEoc.classList.toggle('active', !isNormal);
-      tabNormal.setAttribute('aria-selected', String(isNormal));
-      tabEoc.setAttribute('aria-selected', String(!isNormal));
+      const normalizeOrgData = (raw) => {
+        const current = raw && Array.isArray(raw.divisions) ? raw : { companyName: baseTemplate.companyName, divisions: [] };
+        const currentMap = new Map((current.divisions || []).map((d) => [d.id, d]));
+        const mergedDivisions = baseTemplate.divisions.map((tpl) => {
+          const hit = currentMap.get(tpl.id);
+          if (!hit) return tpl;
+          return {
+            id: hit.id || tpl.id,
+            name: hit.name || tpl.name,
+            teams: Array.isArray(hit.teams) && hit.teams.length ? hit.teams : tpl.teams,
+          };
+        });
 
-      viewNormal.classList.toggle('hidden', !isNormal);
-      viewEoc.classList.toggle('hidden', isNormal);
-    }
+        return {
+          companyName: current.companyName || baseTemplate.companyName,
+          divisions: mergedDivisions,
+        };
+      };
 
-    tabNormal.addEventListener('click', () => setTab('normal'));
-    tabEoc.addEventListener('click', () => setTab('eoc'));
+      const render = () => {
+        const data = normalizeOrgData(store.get(KEY, null));
+        store.set && store.set(KEY, data);
+        if (!Array.isArray(data.divisions) || !data.divisions.length) {
+          mount.innerHTML = '<p class="empty">조직 레지스트리 데이터가 없습니다. 조직 관리 페이지에서 기본 템플릿을 초기화해 주세요.</p>';
+          return;
+        }
 
-    btnBcpOn?.addEventListener('click', () => {
-      bcpGrid.classList.remove('hidden');
-      btnBcpOn.classList.add('hidden');
-      btnBcpOff.classList.remove('hidden');
-    });
-    btnBcpOff?.addEventListener('click', () => {
-      bcpGrid.classList.add('hidden');
-      btnBcpOn.classList.remove('hidden');
-      btnBcpOff.classList.add('hidden');
-    });
+        const divisionCards = data.divisions.map((division) => {
+          const divisionMatch = selectedOrg.divisionName && division.name === selectedOrg.divisionName;
+          const teams = (division.teams || []).length
+            ? `<div class="teamGrid">${(division.teams || []).map((team) => {
+              const teamMatch = selectedOrg.teamName && team.name === selectedOrg.teamName;
+              return `<div class="teamCard ${teamMatch ? 'focusTeam' : ''}" data-team-name="${team.name}">${team.name}${teamMatch ? '<span class="focusBadge">선택 조직</span>' : ''}</div>`;
+            }).join('')}</div>`
+            : '<p class="empty">등록된 팀이 없습니다.</p>';
+
+          return `
+            <section class="divisionCard ${divisionMatch ? 'focusDivision' : ''}" data-division-name="${division.name}">
+              <h4>${division.name}${divisionMatch ? '<span class="focusBadge">선택 조직</span>' : ''}</h4>
+              <div class="divisionBody">${teams}</div>
+            </section>
+          `;
+        }).join('');
+
+        mount.innerHTML = `
+          <section class="ceoRow">
+            <section class="ceoNode">
+              <h4>SJ Digital</h4>
+              <p>대표이사 박성준</p>
+            </section>
+          </section>
+          <section class="divisionGrid">${divisionCards}</section>
+        `;
+
+        if (!focused && (selectedOrg.teamName || selectedOrg.divisionName)) {
+          const selector = selectedOrg.teamName
+            ? `[data-team-name="${CSS.escape(selectedOrg.teamName)}"]`
+            : `[data-division-name="${CSS.escape(selectedOrg.divisionName)}"]`;
+          const target = mount.querySelector(selector);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            focused = true;
+          }
+        }
+      };
+
+      window.addEventListener('storage', (e) => { if (e.key === KEY) render(); });
+      setInterval(render, 3000);
+      render();
+    })();
   </script>
 </body>
 </html>
