@@ -6,80 +6,300 @@
   <title>비상대응 조직도 | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    .main{ padding:18px 20px; }
-    .wrap{ width:100%; max-width:1500px; }
+    /* ===== 페이지 기본 레이아웃 ===== */
+    .main { padding: 18px 20px 28px; }
+    .wrap { width: 100%; max-width: 1280px; }
 
-    .topBar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-    .navBtn{
-      display:inline-flex;
-      align-items:center;
-      text-decoration:none;
-      border:1px solid var(--lineStrong);
-      background:#fff;
-      color:var(--ink);
-      border-radius:10px;
-      padding:8px 12px;
-      font-size:13px;
-      font-weight:800;
-      cursor:pointer;
+    .topBar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
     }
-    .navBtn:hover{ background:rgba(15,23,42,.04); }
-    .navBtn.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
-
-    .treeShell{ overflow:visible; }
-    .treeCanvas{ width:100%; }
-
-    .rootWrap{ display:flex; justify-content:center; padding-bottom:14px; }
-    .rootCard{
-      width:min(100%, 320px);
-      border:1px solid var(--line);
-      border-radius:12px;
-      overflow:hidden;
-      box-shadow:var(--shadowSm);
-      background:#fff;
+    .navBtn {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      border: 1px solid var(--lineStrong);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
     }
-    .rootCard h3{ margin:0; padding:8px 10px; font-size:13px; color:#fff; background:#0f172a; }
-    .rootBody{ padding:9px 10px; background:#f8fafc; }
-    .rootBody .company{ font-size:15px; font-weight:900; color:var(--ink); }
-    .rootBody .leader{ margin-top:4px; font-size:12px; color:var(--mutedStrong); font-weight:800; }
+    .navBtn:hover { background: rgba(15, 23, 42, .04); }
+    .navBtn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
 
-    .roleRow{
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0, 1fr));
-      gap:10px;
-      align-items:start;
+    .overviewCard {
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: var(--shadowSm);
+      padding: 14px 16px;
+    }
+    .overviewTitle {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .overviewDesc {
+      margin: 7px 0 0;
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
     }
 
-    .node{ min-width:220px; border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadowSm); background:#fff; }
-    .node h4{ margin:0; padding:9px 11px; color:#fff; font-size:13px; background:#1d4f89; }
-    .node .body{ padding:10px; background:#eef4ff; }
+    .hierarchy {
+      display: grid;
+      gap: 14px;
+    }
 
-    .chipWrap{ display:flex; flex-wrap:wrap; gap:7px; align-items:flex-start; }
-    .chip{ display:inline-flex; align-items:center; border:1px solid var(--lineStrong); border-radius:999px; padding:5px 10px; font-size:12px; line-height:1.3; background:#fff; max-width:100%; white-space:normal; overflow-wrap:anywhere; word-break:keep-all; }
-    .chip.focusChip{ border-color:rgba(37,99,235,.38); background:rgba(37,99,235,.10); box-shadow:0 0 0 2px rgba(37,99,235,.10); font-weight:900; }
-    .missing{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); color:#991b1b; }
-    .moved{ background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); }
-    .badge{ margin-left:4px; font-size:10px; font-weight:900; color:#9a3412; }
+    /* ===== 재난대책본부 ===== */
+    .hqWrap {
+      display: flex;
+      justify-content: center;
+    }
+    .hqCard {
+      width: min(100%, 620px);
+      border: 1px solid #cfd8e3;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: var(--shadowSm);
+      overflow: hidden;
+    }
+    .hqHead {
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .01em;
+    }
+    .hqBody {
+      padding: 14px 16px 16px;
+      background: #f8fafc;
+    }
+    .hqBody .company {
+      font-size: 20px;
+      color: #0f172a;
+      font-weight: 900;
+    }
+    .hqBody .leader {
+      margin-top: 6px;
+      font-size: 14px;
+      color: #334155;
+      font-weight: 800;
+    }
 
-    .bcpFlow{ margin-top:12px; display:grid; justify-items:center; gap:8px; }
-    .stageBox{ border:1px solid rgba(249,115,22,.45); border-radius:10px; background:rgba(249,115,22,.10); padding:7px 12px; font-size:12px; font-weight:900; color:#9a3412; }
-    .flowArrow{ font-size:14px; color:rgba(15,23,42,.55); line-height:1; }
+    /* ===== 기본 대응 조직 ===== */
+    .sectionPanel {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 14px;
+    }
+    .sectionHeader {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .sectionHeader h2 {
+      margin: 0;
+      font-size: 15px;
+      color: #0f172a;
+      font-weight: 900;
+    }
+    .sectionBadge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 9px;
+    }
 
-    .bcpOrgNode{ width:min(100%, 780px); }
-    .bcpOrgNode h4{ background:#0f766e; }
-    .bcpTeamGrid{ margin-top:10px; display:grid; grid-template-columns:repeat(2, minmax(260px, 1fr)); gap:10px; }
-    .bcpTeamNode{ border:1px solid var(--lineStrong); border-radius:10px; background:#fff; padding:10px; min-height:92px; }
-    .bcpTeamNode strong{ display:block; font-size:13px; margin-bottom:7px; color:#0f172a; }
+    .roleGrid {
+      width: min(100%, 1060px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .roleCard {
+      border: 1px solid #d7deea;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
+      overflow: hidden;
+      min-height: 150px;
+    }
+    .roleCardHead {
+      border-top: 3px solid #1d4f89;
+      padding: 10px 11px 8px;
+      font-size: 14px;
+      color: #0f172a;
+      font-weight: 900;
+    }
+    .roleCardBody {
+      padding: 8px 10px 12px;
+    }
 
-    @media (max-width:1280px){ .roleRow{ grid-template-columns:repeat(3, minmax(0, 1fr)); } .bcpTeamGrid{ grid-template-columns:repeat(2, minmax(220px, 1fr)); } }
-    @media (max-width:860px){ .roleRow{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-    @media (max-width:560px){ .roleRow{ grid-template-columns:1fr; } .bcpTeamGrid{ grid-template-columns:1fr; } }
+    /* ===== 전환 단계 ===== */
+    .transitionWrap {
+      display: flex;
+      justify-content: center;
+    }
+    .transitionCard {
+      width: min(100%, 760px);
+      border: 1px solid rgba(245, 158, 11, .42);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255, 251, 235, .95), rgba(255, 247, 237, .95));
+      box-shadow: 0 5px 14px rgba(180, 83, 9, .10);
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .transitionTitle {
+      margin: 0;
+      color: #9a3412;
+      font-size: 17px;
+      font-weight: 900;
+    }
+    .transitionDesc {
+      margin: 6px 0 0;
+      color: #9a3412;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* ===== BCP 운영 조직 ===== */
+    .bcpPanel {
+      border: 1px solid #d4ece8;
+      border-radius: 14px;
+      background: #f4fbfa;
+      padding: 14px;
+    }
+    .bcpMainCard {
+      border: 1px solid #9fd4cb;
+      border-radius: 13px;
+      background: #fff;
+      box-shadow: 0 2px 7px rgba(15, 23, 42, .05);
+      overflow: hidden;
+      width: min(100%, 1060px);
+      margin: 0 auto;
+    }
+    .bcpMainHead {
+      padding: 11px 13px;
+      border-top: 3px solid #0f766e;
+      font-size: 15px;
+      color: #0f172a;
+      font-weight: 900;
+      background: #f8fffd;
+    }
+    .bcpMainBody {
+      padding: 8px 10px 12px;
+    }
+
+    .teamGrid {
+      width: min(100%, 1060px);
+      margin: 12px auto 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 10px;
+    }
+    .teamCard {
+      border: 1px solid #d4e0ef;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+      min-height: 170px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
+    }
+    .teamTitle {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .subLabel {
+      margin: 9px 0 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748b;
+    }
+
+    /* ===== 공통 칩 ===== */
+    .chipWrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: flex-start;
+      min-height: 28px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid #cfd8e3;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+      color: #1e293b;
+      background: #fff;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+    .chip.highlight {
+      border-color: rgba(37, 99, 235, .38);
+      background: rgba(37, 99, 235, .10);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, .10);
+      font-weight: 900;
+    }
+    .chip.composed {
+      border-color: rgba(13, 148, 136, .38);
+      background: rgba(20, 184, 166, .10);
+    }
+    .chip.support {
+      border-color: rgba(245, 158, 11, .45);
+      background: rgba(251, 191, 36, .15);
+    }
+
+    .stateBadge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(13, 148, 136, .45);
+      background: rgba(20, 184, 166, .13);
+      color: #0f766e;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 7px;
+      margin-left: 6px;
+    }
+
+    @media (max-width: 1040px) {
+      .roleGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .roleGrid, .teamGrid { grid-template-columns: 1fr; }
+      .teamGrid { margin-top: 10px; }
+    }
   </style>
 </head>
 <body>
   <aside id="sidebarMount"></aside>
   <main class="main"><div class="wrap">
-    <h1 class="page-title">🚨 비상대응 조직도</h1>
     <div class="topBar">
       <a class="navBtn" href="./org-registry.html">조직 관리</a>
       <a class="navBtn" href="./org.html">평상시 조직도</a>
@@ -89,8 +309,13 @@
       <button id="modePost" class="navBtn" type="button">BCP 가동 후</button>
     </div>
 
+    <section class="overviewCard">
+      <h1 class="overviewTitle">비상대응 조직도</h1>
+      <p class="overviewDesc">사고 발생 시 기본 대응조직과 재난선포 이후 BCP 가동으로 확장되는 운영조직을 함께 보여줍니다.</p>
+    </section>
+
     <article class="card">
-      <div class="treeShell"><div id="treeMount" class="treeCanvas"></div></div>
+      <div id="treeMount" class="hierarchy"></div>
     </article>
   </div></main>
 
@@ -98,152 +323,248 @@
   <script src="../assets/data-store.js"></script>
   <script>
     (() => {
+      // ===== 저장 키 =====
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
       const MAP_KEY = (window.DataStore && DataStore.KEY_EOP_ROLE_MAPPING) || 'bcms_eop_role_mapping_v1';
       const MODE_KEY = (window.DataStore && DataStore.KEY_BCP_MODE) || 'bcms_bcp_mode';
       const SELECTED_ORG_KEY = 'bcms_selected_org';
+
       const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
-        get:(k,f)=>{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;} catch { return f; } },
-        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v))
+        get: (k, f) => {
+          try {
+            const raw = localStorage.getItem(k);
+            return raw ? JSON.parse(raw) : f;
+          } catch {
+            return f;
+          }
+        },
+        set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
       };
 
+      // ===== 기본 데이터 정의 =====
       const defaultMapping = {
-        incidentCommander: ['재난안전(BCM)팀'],
-        situation: ['DC운영(NOC/관제)팀'],
-        techRecovery: ['SRE/플랫폼운영팀','애플리케이션운영팀','데이터/DB운영팀','네트워크운영팀'],
-        facility: ['전기팀','기계(냉각)팀','방재·소방팀'],
-        security: ['정보보호팀'],
-        communication: ['고객지원팀','서비스품질팀'],
-        record: ['감사·컴플라이언스팀','재난안전(BCM)팀'],
-        bcpWorkEnv: ['인사총무팀','SRE/플랫폼운영팀','DC운영(NOC/관제)팀'],
-        bcpPeople: ['인사총무팀'],
-        bcpSupply: ['구매·자산관리팀'],
-        bcpAdmin: ['인사총무팀','재무회계팀'],
+        basicRoles: {
+          situation: ['DC운영(NOC/관제)팀'],
+          techRecovery: ['SRE/플랫폼운영팀', '애플리케이션운영팀', '데이터/DB운영팀', '네트워크운영팀'],
+          facility: ['전기팀', '기계(냉각)팀', '방재·소방팀'],
+          security: ['정보보호팀'],
+          communication: ['고객지원팀', '서비스품질팀'],
+          record: ['감사·컴플라이언스팀', '재난안전(BCM)팀']
+        },
+        bcpTeams: {
+          workEnv: {
+            composed: ['SRE/플랫폼운영팀', 'DC운영(NOC/관제)팀'],
+            support: []
+          },
+          people: {
+            composed: ['인사총무팀'],
+            support: []
+          },
+          supply: {
+            composed: ['구매·자산관리팀'],
+            support: []
+          },
+          admin: {
+            composed: ['인사총무팀'],
+            support: []
+          }
+        }
       };
 
       const roleDefs = [
-        { key:'situation', label:'상황관리' },
-        { key:'techRecovery', label:'기술복구' },
-        { key:'facility', label:'시설지원(IDC)' },
-        { key:'security', label:'보안대응' },
-        { key:'communication', label:'대외커뮤니케이션' },
-        { key:'record', label:'기록·증적' },
+        { key: 'situation', label: '상황관리' },
+        { key: 'techRecovery', label: '기술복구' },
+        { key: 'facility', label: '시설지원(IDC)' },
+        { key: 'security', label: '보안대응' },
+        { key: 'communication', label: '대외커뮤니케이션' },
+        { key: 'record', label: '기록·증적' }
       ];
+
       const bcpDefs = [
-        { key:'bcpWorkEnv', label:'업무환경팀' },
-        { key:'bcpPeople', label:'인력지원팀' },
-        { key:'bcpSupply', label:'물자·구매지원팀' },
-        { key:'bcpAdmin', label:'총무지원팀' },
+        { key: 'workEnv', label: '업무환경팀' },
+        { key: 'people', label: '인력지원팀' },
+        { key: 'supply', label: '물자·구매지원팀' },
+        { key: 'admin', label: '총무지원팀' }
       ];
 
       const treeMount = document.getElementById('treeMount');
-      const modePre = document.getElementById('modePre');
-      const modePost = document.getElementById('modePost');
+      const modePreBtn = document.getElementById('modePre');
+      const modePostBtn = document.getElementById('modePost');
       const query = new URLSearchParams(location.search);
 
-      const readSelectedOrg = () => {
-        const fromTeam = (query.get('team') || '').trim();
-        let teamName = '';
-        try {
-          const parsed = JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || 'null');
-          teamName = (parsed?.teamName || '').trim();
-        } catch {
-          teamName = '';
-        }
-        localStorage.removeItem(SELECTED_ORG_KEY);
-        return fromTeam || teamName;
-      };
-      const selectedTeamName = readSelectedOrg();
       let focused = false;
 
-      const teamSet = () => {
-        const data = store.get(ORG_KEY, { divisions: [] });
-        return new Set((data.divisions || []).flatMap((d) => d.teams || []).map((t) => t.name));
+      const readSelectedOrg = () => {
+        const fromQuery = (query.get('team') || '').trim();
+        let fromStorage = '';
+        try {
+          const parsed = JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || 'null');
+          fromStorage = (parsed?.teamName || '').trim();
+        } catch {
+          fromStorage = '';
+        }
+        localStorage.removeItem(SELECTED_ORG_KEY);
+        return fromQuery || fromStorage;
       };
 
-      const chipsHtml = (names, available, moved=[]) => {
-        if (!names.length) return '<span class="chip missing">미지정</span>';
-        return names.map((n) => {
-          if (!available.has(n)) return `<span class="chip missing">${n}</span>`;
-          const movedFlag = moved.includes(n);
-          const focusFlag = selectedTeamName && selectedTeamName === n;
-          return `<span class="chip ${movedFlag ? 'moved' : ''} ${focusFlag ? 'focusChip' : ''}" data-team-name="${n}">${n}${focusFlag ? '<span class="badge">선택 조직</span>' : ''}${movedFlag ? '<span class="badge">BCP 편성</span>' : ''}</span>`;
-        }).join('');
+      const selectedTeamName = readSelectedOrg();
+
+      const availableTeams = () => {
+        const data = store.get(ORG_KEY, { divisions: [] });
+        return new Set(
+          (data.divisions || [])
+            .flatMap((division) => division.teams || [])
+            .map((team) => team.name)
+        );
+      };
+
+      const normalizeMapping = (rawMap) => {
+        const merged = { ...defaultMapping };
+
+        // 기존 키 구조와의 호환
+        merged.basicRoles = {
+          situation: rawMap?.situation || defaultMapping.basicRoles.situation,
+          techRecovery: rawMap?.techRecovery || defaultMapping.basicRoles.techRecovery,
+          facility: rawMap?.facility || defaultMapping.basicRoles.facility,
+          security: rawMap?.security || defaultMapping.basicRoles.security,
+          communication: rawMap?.communication || defaultMapping.basicRoles.communication,
+          record: rawMap?.record || defaultMapping.basicRoles.record
+        };
+
+        merged.bcpTeams = {
+          workEnv: {
+            composed: rawMap?.bcpWorkEnv || defaultMapping.bcpTeams.workEnv.composed,
+            support: ['SRE/플랫폼운영팀', 'DC운영(NOC/관제)팀']
+          },
+          people: {
+            composed: rawMap?.bcpPeople || defaultMapping.bcpTeams.people.composed,
+            support: []
+          },
+          supply: {
+            composed: rawMap?.bcpSupply || defaultMapping.bcpTeams.supply.composed,
+            support: []
+          },
+          admin: {
+            composed: rawMap?.bcpAdmin || defaultMapping.bcpTeams.admin.composed,
+            support: []
+          }
+        };
+
+        return merged;
+      };
+
+      const renderChips = ({ names, kind, available, mode }) => {
+        if (!names.length) return '<div class="chipWrap"></div>';
+
+        return `<div class="chipWrap">${names.map((name) => {
+          const classes = ['chip'];
+          if (kind === 'composed') classes.push('composed');
+          if (kind === 'support') classes.push('support');
+          if (selectedTeamName && selectedTeamName === name) classes.push('highlight');
+
+          const activeBadge = mode === 'post' && (kind === 'composed' || kind === 'support')
+            ? '<span class="stateBadge">BCP 편성</span>'
+            : '';
+
+          return `<span class="${classes.join(' ')}" data-team-name="${name}" title="${available.has(name) ? '' : '조직 관리에서 팀 등록 필요'}">${name}${activeBadge}</span>`;
+        }).join('')}</div>`;
       };
 
       const render = () => {
-        const available = teamSet();
-        const mapping = { ...defaultMapping, ...(store.get(MAP_KEY, {}) || {}) };
+        const mapData = normalizeMapping(store.get(MAP_KEY, {}) || {});
         const mode = store.get(MODE_KEY, 'pre');
+        const available = availableTeams();
 
-        modePre.classList.toggle('active', mode === 'pre');
-        modePost.classList.toggle('active', mode === 'post');
+        modePreBtn.classList.toggle('active', mode === 'pre');
+        modePostBtn.classList.toggle('active', mode === 'post');
 
-        const movedTeams = mode === 'post'
-          ? [...new Set([...(mapping.bcpWorkEnv||[]), ...(mapping.bcpPeople||[]), ...(mapping.bcpSupply||[]), ...(mapping.bcpAdmin||[])])]
-          : [];
-
-        const roleNodes = roleDefs.map((r) => {
-          const names = (mapping[r.key] || []).filter((n) => mode === 'pre' || !movedTeams.includes(n));
+        const basicRoleCards = roleDefs.map((role) => {
+          const teams = mapData.basicRoles[role.key] || [];
           return `
-            <section class="node">
-              <h4>${r.label}</h4>
-              <div class="body"><div class="chipWrap">${chipsHtml(names, available)}</div></div>
+            <section class="roleCard">
+              <h3 class="roleCardHead">${role.label}</h3>
+              <div class="roleCardBody">
+                ${renderChips({ names: teams, kind: 'default', available, mode })}
+              </div>
             </section>
           `;
-        });
+        }).join('');
 
-        const bcpTeamNodes = bcpDefs.map((b) => {
-          const names = mapping[b.key] || [];
-          const movedMarks = names;
+        const bcpTeamCards = bcpDefs.map((team) => {
+          const teamData = mapData.bcpTeams[team.key] || { composed: [], support: [] };
+          const supportNames = team.key === 'workEnv' ? ['SRE/플랫폼운영팀', 'DC운영(NOC/관제)팀'] : teamData.support;
+
           return `
-            <section class="bcpTeamNode">
-              <strong>${b.label}</strong>
-              <div class="chipWrap">${chipsHtml(names, available, movedMarks)}</div>
+            <section class="teamCard">
+              <h4 class="teamTitle">${team.label}</h4>
+              <p class="subLabel">편성 조직</p>
+              ${renderChips({ names: teamData.composed, kind: 'composed', available, mode })}
+              <p class="subLabel">지원 조직</p>
+              ${renderChips({ names: supportNames, kind: 'support', available, mode })}
             </section>
           `;
         }).join('');
 
         treeMount.innerHTML = `
-          <section class="rootWrap">
-            <section class="rootCard">
-              <h3>재난대책본부</h3>
-              <div class="rootBody">
+          <section class="hqWrap">
+            <section class="hqCard">
+              <div class="hqHead">재난대책본부</div>
+              <div class="hqBody">
                 <div class="company">SJ Digital</div>
                 <div class="leader">본부장: 대표이사 박성준</div>
               </div>
             </section>
           </section>
 
-          <section class="roleRow">
-            ${roleNodes.join('')}
+          <section class="sectionPanel">
+            <header class="sectionHeader">
+              <h2>기본 대응 조직</h2>
+              <span class="sectionBadge">1단계</span>
+            </header>
+            <div class="roleGrid">${basicRoleCards}</div>
           </section>
 
-          <section class="bcpFlow">
-            <div class="stageBox">재난선포 / BCP 가동 ${mode === 'post' ? '(활성)' : '(대기)'}</div>
-            <div class="flowArrow">↓</div>
-            <section class="node bcpOrgNode">
-              <h4>BCP 운영조직</h4>
-              <div class="body">
-                <div class="chipWrap">${chipsHtml(['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀','DC운영(NOC/관제)팀','재무회계팀'], available, ['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀','DC운영(NOC/관제)팀','재무회계팀'])}</div>
-                <div class="bcpTeamGrid">${bcpTeamNodes}</div>
+          <section class="transitionWrap">
+            <section class="transitionCard">
+              <h2 class="transitionTitle">재난선포 / BCP 가동</h2>
+              <p class="transitionDesc">현재 상태: ${mode === 'post' ? '가동' : '대기'} · 기본 대응조직을 유지한 채 BCP 운영조직으로 확장합니다.</p>
+            </section>
+          </section>
+
+          <section class="bcpPanel">
+            <header class="sectionHeader">
+              <h2>BCP 운영조직</h2>
+              <span class="sectionBadge">3~4단계</span>
+            </header>
+
+            <section class="bcpMainCard">
+              <div class="bcpMainHead">BCP 운영조직 (확장 운영)</div>
+              <div class="bcpMainBody">
+                <div class="chipWrap">
+                  <span class="chip composed">원 조직은 유지되며, BCP 가동 시 각 팀이 운영 역할로 편성됩니다.</span>
+                </div>
               </div>
             </section>
+
+            <div class="teamGrid">${bcpTeamCards}</div>
           </section>
         `;
 
         if (!focused && selectedTeamName) {
           const target = treeMount.querySelector(`[data-team-name="${CSS.escape(selectedTeamName)}"]`);
           if (target) {
-            target.scrollIntoView({ behavior:'smooth', block:'center' });
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
             focused = true;
           }
         }
       };
 
-      modePre.addEventListener('click', () => { store.set(MODE_KEY, 'pre'); render(); });
-      modePost.addEventListener('click', () => { store.set(MODE_KEY, 'post'); render(); });
-      window.addEventListener('storage', (e) => { if ([ORG_KEY, MAP_KEY, MODE_KEY].includes(e.key)) render(); });
+      modePreBtn.addEventListener('click', () => { store.set(MODE_KEY, 'pre'); render(); });
+      modePostBtn.addEventListener('click', () => { store.set(MODE_KEY, 'post'); render(); });
+      window.addEventListener('storage', (e) => {
+        if ([ORG_KEY, MAP_KEY, MODE_KEY].includes(e.key)) render();
+      });
+
       setInterval(render, 3000);
       render();
     })();
