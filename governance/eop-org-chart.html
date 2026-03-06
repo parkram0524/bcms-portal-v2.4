@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>비상대응 조직도 | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .topBar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .navBtn{
+      display:inline-flex;
+      align-items:center;
+      text-decoration:none;
+      border:1px solid var(--lineStrong);
+      background:#fff;
+      color:var(--ink);
+      border-radius:10px;
+      padding:8px 12px;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .navBtn:hover{ background:rgba(15,23,42,.04); }
+    .navBtn.active{ background:#0f172a; color:#fff; border-color:#0f172a; }
+
+    .treeShell{ overflow:auto; padding-bottom:6px; }
+    .treeCanvas{ min-width:1260px; }
+
+    .rootWrap{ display:flex; justify-content:center; position:relative; padding-bottom:18px; }
+    .rootWrap::after{ content:''; position:absolute; left:50%; transform:translateX(-50%); top:100%; width:2px; height:18px; background:rgba(15,23,42,.2); }
+    .rootCard{
+      width:360px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:var(--shadowSm);
+      background:#fff;
+    }
+    .rootCard h3{ margin:0; padding:9px 12px; font-size:14px; color:#fff; background:#0f172a; }
+    .rootBody{ padding:10px 12px; background:#f8fafc; }
+    .rootBody .company{ font-size:16px; font-weight:900; color:var(--ink); }
+    .rootBody .leader{ margin-top:4px; font-size:13px; color:var(--mutedStrong); font-weight:800; }
+
+    .roleRow{ position:relative; display:grid; gap:10px; align-items:start; }
+    .roleRow::before{ content:''; position:absolute; top:0; left:3%; right:3%; border-top:2px solid rgba(15,23,42,.18); }
+
+    .roleCol{ position:relative; padding-top:18px; }
+    .roleCol::before{ content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:2px; height:18px; background:rgba(15,23,42,.18); }
+
+    .node{ border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadowSm); background:#fff; }
+    .node h4{ margin:0; padding:9px 10px; color:#fff; font-size:13px; background:#1d4f89; }
+    .node .body{ padding:9px; background:#eef4ff; }
+
+    .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
+    .chip{ border:1px solid var(--lineStrong); border-radius:999px; padding:4px 8px; font-size:12px; background:#fff; }
+    .missing{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); color:#991b1b; }
+    .moved{ background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); }
+    .badge{ margin-left:4px; font-size:10px; font-weight:900; color:#9a3412; }
+
+    .bcpNode h4{ background:#0f766e; }
+    .bcpSub{ margin-top:8px; padding-top:8px; border-top:1px dashed rgba(15,23,42,.18); display:grid; gap:8px; }
+    .bcpSubItem strong{ font-size:12px; }
+
+    @media (max-width:1360px){ .treeCanvas{ min-width:1120px; } }
+    @media (max-width:980px){
+      .treeCanvas{ min-width:920px; }
+      .roleRow{ grid-template-columns: repeat(3, minmax(200px, 1fr)) !important; }
+      .roleRow::before{ display:none; }
+      .roleCol::before{ display:none; }
+    }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+  <main class="main"><div class="wrap">
+    <h1 class="page-title">🚨 비상대응 조직도</h1>
+    <div class="topBar">
+      <a class="navBtn" href="./org-registry.html">조직 관리</a>
+      <a class="navBtn" href="./org.html">평상시 조직도</a>
+      <a class="navBtn active" href="./eop-org-chart.html">비상대응 조직도</a>
+      <a class="navBtn" href="./index.html">거버넌스 홈</a>
+      <button id="modePre" class="navBtn" type="button">BCP 가동 전</button>
+      <button id="modePost" class="navBtn" type="button">BCP 가동 후</button>
+    </div>
+
+    <article class="card">
+      <div class="treeShell"><div id="treeMount" class="treeCanvas"></div></div>
+    </article>
+  </div></main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
+  <script>
+    (() => {
+      const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const MAP_KEY = (window.DataStore && DataStore.KEY_EOP_ROLE_MAPPING) || 'bcms_eop_role_mapping_v1';
+      const MODE_KEY = (window.DataStore && DataStore.KEY_BCP_MODE) || 'bcms_bcp_mode';
+      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
+        get:(k,f)=>{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;} catch { return f; } },
+        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v))
+      };
+
+      const defaultMapping = {
+        incidentCommander: ['재난안전(BCM)팀'],
+        situation: ['DC운영(NOC/관제)팀'],
+        techRecovery: ['SRE/플랫폼운영팀','애플리케이션운영팀','데이터/DB운영팀','네트워크운영팀'],
+        facility: ['전기팀','기계(냉각)팀','방재·소방팀'],
+        security: ['정보보호팀'],
+        communication: ['고객지원팀','서비스품질팀'],
+        record: ['감사·컴플라이언스팀','재난안전(BCM)팀'],
+        bcpWorkEnv: ['인사총무팀','SRE/플랫폼운영팀'],
+        bcpPeople: ['인사총무팀'],
+        bcpSupply: ['구매·자산관리팀'],
+        bcpAdmin: ['인사총무팀'],
+      };
+
+      const roleDefs = [
+        { key:'situation', label:'상황관리' },
+        { key:'techRecovery', label:'기술복구' },
+        { key:'facility', label:'시설지원(IDC)' },
+        { key:'security', label:'보안대응' },
+        { key:'communication', label:'대외커뮤니케이션' },
+        { key:'record', label:'기록·증적' },
+      ];
+      const bcpDefs = [
+        { key:'bcpWorkEnv', label:'업무환경팀' },
+        { key:'bcpPeople', label:'인력지원팀' },
+        { key:'bcpSupply', label:'물자·구매지원팀' },
+        { key:'bcpAdmin', label:'총무지원팀' },
+      ];
+
+      const treeMount = document.getElementById('treeMount');
+      const modePre = document.getElementById('modePre');
+      const modePost = document.getElementById('modePost');
+
+      const teamSet = () => {
+        const data = store.get(ORG_KEY, { divisions: [] });
+        return new Set((data.divisions || []).flatMap((d) => d.teams || []).map((t) => t.name));
+      };
+
+      const chipsHtml = (names, available, moved=[]) => {
+        if (!names.length) return '<span class="chip missing">미지정 (조직 관리에서 설정 필요)</span>';
+        return names.map((n) => {
+          if (!available.has(n)) return `<span class="chip missing">${n} (미지정)</span>`;
+          const movedFlag = moved.includes(n);
+          return `<span class="chip ${movedFlag ? 'moved' : ''}">${n}${movedFlag ? '<span class="badge">BCP 편성</span>' : ''}</span>`;
+        }).join('');
+      };
+
+      const render = () => {
+        const available = teamSet();
+        const mapping = { ...defaultMapping, ...(store.get(MAP_KEY, {}) || {}) };
+        const mode = store.get(MODE_KEY, 'pre');
+
+        modePre.classList.toggle('active', mode === 'pre');
+        modePost.classList.toggle('active', mode === 'post');
+
+        const movedTeams = mode === 'post'
+          ? [...new Set([...(mapping.bcpWorkEnv||[]), ...(mapping.bcpPeople||[]), ...(mapping.bcpSupply||[]), ...(mapping.bcpAdmin||[])])]
+          : [];
+
+        const roleNodes = roleDefs.map((r) => {
+          const names = (mapping[r.key] || []).filter((n) => mode === 'pre' || !movedTeams.includes(n));
+          return `
+            <section class="roleCol">
+              <section class="node">
+                <h4>${r.label}</h4>
+                <div class="body"><div class="chipWrap">${chipsHtml(names, available)}</div></div>
+              </section>
+            </section>
+          `;
+        });
+
+        if (mode === 'post') {
+          roleNodes.push(`
+            <section class="roleCol">
+              <section class="node bcpNode">
+                <h4>BCP 운영지원</h4>
+                <div class="body">
+                  <div class="chipWrap">${chipsHtml(['인사총무팀','구매·자산관리팀','SRE/플랫폼운영팀'], available, movedTeams)}</div>
+                  <div class="bcpSub">
+                    ${bcpDefs.map((b) => `<div class="bcpSubItem"><strong>${b.label}</strong><div class="chipWrap" style="margin-top:4px;">${chipsHtml(mapping[b.key] || [], available, mapping[b.key] || [])}</div></div>`).join('')}
+                  </div>
+                </div>
+              </section>
+            </section>
+          `);
+        }
+
+        treeMount.innerHTML = `
+          <section class="rootWrap">
+            <section class="rootCard">
+              <h3>재난대책본부</h3>
+              <div class="rootBody">
+                <div class="company">SJ Digital</div>
+                <div class="leader">본부장: 대표이사 박성준</div>
+              </div>
+            </section>
+          </section>
+          <section class="roleRow" style="grid-template-columns: repeat(${roleNodes.length}, minmax(180px, 1fr));">
+            ${roleNodes.join('')}
+          </section>
+        `;
+      };
+
+      modePre.addEventListener('click', () => { store.set(MODE_KEY, 'pre'); render(); });
+      modePost.addEventListener('click', () => { store.set(MODE_KEY, 'post'); render(); });
+      window.addEventListener('storage', (e) => { if ([ORG_KEY, MAP_KEY, MODE_KEY].includes(e.key)) render(); });
+      setInterval(render, 3000);
+      render();
+    })();
+  </script>
+</body>
+</html>

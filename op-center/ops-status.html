@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>상황판(운영 현황) | BCMS Portal v2</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .wrap{ max-width:1320px; margin:0 auto; }
+    .hero{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .hero h1{ margin:0; font-size:28px; font-weight:950; }
+    .hero p{ margin:8px 0 0; color:rgba(15,23,42,.62); }
+
+    .kpiGrid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:12px; }
+    .kpi{ grid-column: span 2; border:1px solid rgba(15,23,42,.10); border-radius:14px; background:#fff; padding:14px; }
+    .kLabel{ font-size:12px; font-weight:800; color:rgba(15,23,42,.58); }
+    .kValue{ margin-top:8px; font-size:28px; font-weight:950; }
+    .kHint{ margin-top:5px; font-size:12px; color:rgba(15,23,42,.56); }
+    @media (max-width: 1200px){ .kpi{ grid-column: span 4; } }
+    @media (max-width: 760px){ .kpi{ grid-column: span 6; } }
+    @media (max-width: 520px){ .kpi{ grid-column: span 12; } }
+
+    .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
+    .panel h3{ margin:0 0 10px; font-size:18px; }
+
+    .tableWrap{ overflow:auto; }
+    table{ width:100%; min-width:840px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.10); border-radius:12px; overflow:hidden; }
+    th, td{ padding:10px 12px; font-size:14px; }
+    th{ background:rgba(15,23,42,.03); color:rgba(15,23,42,.72); text-align:left; font-weight:800; }
+
+    .actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    .quickBtn{ display:inline-flex; align-items:center; gap:8px; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:10px 14px; background:#fff; color:#0f172a; font-weight:900; }
+    .quickBtn:hover{ background:rgba(15,23,42,.04); }
+
+    .pill{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px; border:1px solid rgba(15,23,42,.14); font-size:12px; font-weight:900; }
+    .normal{ color:#166534; border-color:rgba(22,163,74,.28); background:rgba(22,163,74,.10); }
+    .switch{ color:#991b1b; border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.10); }
+    .recover{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.10); }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+
+  <main class="main">
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <h1>상황판(운영 현황)</h1>
+          <p>운영센터 핵심 지표와 최근 대응 로그를 실시간 확인합니다.</p>
+        </div>
+      </div>
+
+      <section class="kpiGrid">
+        <article class="kpi"><div class="kLabel">진행 중 장애(건)</div><div class="kValue" id="kOngoing">0</div><div class="kHint">현재 Incident 상태 기준</div></article>
+        <article class="kpi"><div class="kLabel">복구 목표(RTO) 임박(건)</div><div class="kValue" id="kRtoDue">0</div><div class="kHint">1시간 이내 임박</div></article>
+        <article class="kpi"><div class="kLabel">DR 전환 상태</div><div class="kValue" id="kDrState">정상</div><div class="kHint" id="kDrHint">-</div></article>
+        <article class="kpi"><div class="kLabel">오늘 훈련 진행 여부</div><div class="kValue" id="kTraining">아니오</div><div class="kHint">bcms_training_records_v2 연동</div></article>
+        <article class="kpi"><div class="kLabel">CAPA 미조치(건)</div><div class="kValue" id="kCapaOpen">0</div><div class="kHint">OPEN/IN_PROGRESS 합계</div></article>
+        <article class="kpi"><div class="kLabel">감사 증적 누락(건)</div><div class="kValue" id="kAuditMiss">0</div><div class="kHint">샘플 키 자동 생성 지원</div></article>
+      </section>
+
+      <section class="panel">
+        <h3>최근 10건 대응 로그</h3>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr><th>시간</th><th>시스템</th><th>이벤트</th><th>조치</th><th>담당자</th></tr>
+            </thead>
+            <tbody id="logTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="actions">
+          <a class="quickBtn" href="./incident-dashboard.html">🧭 사고 대응 현황</a>
+          <a class="quickBtn" href="../library/drp.html">🛠️ DR 계획</a>
+          <a class="quickBtn" href="../library/eop.html">🚨 EOP</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script>
+    (() => {
+      const INCIDENT_KEY = 'bcms_incidents_v1';
+      const TRAIN_KEY = 'bcms_training_records_v2';
+      const CAPA_KEY = 'bcms_capa_v1';
+      const EVIDENCE_KEY = 'bcms_audit_evidence_v1';
+
+      const safeParse = (raw, fb) => { try { return JSON.parse(raw); } catch { return fb; } };
+      const todayStr = () => new Date().toISOString().slice(0,10);
+
+      const ensureCapa = () => {
+        const list = safeParse(localStorage.getItem(CAPA_KEY), null);
+        if (Array.isArray(list) && list.length) return list;
+        const sample = [
+          { id:'CAPA-001', title:'장애 보고 템플릿 보완', status:'OPEN' },
+          { id:'CAPA-002', title:'DR 체크리스트 갱신', status:'IN_PROGRESS' },
+          { id:'CAPA-003', title:'로그 보관정책 검토', status:'DONE' },
+        ];
+        localStorage.setItem(CAPA_KEY, JSON.stringify(sample));
+        return sample;
+      };
+
+      const ensureEvidence = () => {
+        const list = safeParse(localStorage.getItem(EVIDENCE_KEY), null);
+        if (Array.isArray(list) && list.length) return list;
+        const sample = [
+          { id:'EV-001', item:'Incident Timeline', required:true, attached:true },
+          { id:'EV-002', item:'DR Drill Record', required:true, attached:false },
+          { id:'EV-003', item:'CAPA Closure Note', required:true, attached:false },
+        ];
+        localStorage.setItem(EVIDENCE_KEY, JSON.stringify(sample));
+        return sample;
+      };
+
+      const incident = safeParse(localStorage.getItem(INCIDENT_KEY), {});
+      const training = safeParse(localStorage.getItem(TRAIN_KEY), []);
+      const capa = ensureCapa();
+      const evidence = ensureEvidence();
+
+      const status = String(incident?.currentIncident?.status || '안정화 모니터링');
+      const ongoing = ['원인 조사','영향 완화','안정화 모니터링'].includes(status) ? 1 : 0;
+
+      const logs = Array.isArray(incident?.logs) ? incident.logs : [];
+      const recentLogs = logs.slice(0,10);
+
+      const drState = String(incident?.drState || 'normal');
+      const drMap = {
+        normal: { text:'정상', cls:'normal' },
+        dr: { text:'전환', cls:'switch' },
+        recovering: { text:'복구중', cls:'recover' },
+      };
+      const drInfo = drMap[drState] || drMap.normal;
+
+      const capaOpen = capa.filter(x => x?.status === 'OPEN' || x?.status === 'IN_PROGRESS').length;
+      const evidenceMiss = evidence.filter(x => x?.required && !x?.attached).length;
+
+      const isTodayTraining = Array.isArray(training) && training.some((x) => {
+        const d = String(x?.date || x?.createdAt || '').slice(0,10);
+        return d === todayStr();
+      });
+
+      const rtoDue = ongoing ? 1 : 0;
+
+      document.getElementById('kOngoing').textContent = String(ongoing);
+      document.getElementById('kRtoDue').textContent = String(rtoDue);
+      document.getElementById('kDrState').innerHTML = `<span class="pill ${drInfo.cls}">${drInfo.text}</span>`;
+      document.getElementById('kDrHint').textContent = `현재 상태: ${drInfo.text}`;
+      document.getElementById('kTraining').textContent = isTodayTraining ? '예' : '아니오';
+      document.getElementById('kCapaOpen').textContent = String(capaOpen);
+      document.getElementById('kAuditMiss').textContent = String(evidenceMiss);
+
+      const tbody = document.getElementById('logTbody');
+      if (!recentLogs.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:rgba(15,23,42,.6)">표시할 대응 로그가 없습니다.</td></tr>`;
+      } else {
+        tbody.innerHTML = recentLogs.map((r) => `
+          <tr>
+            <td>${r.time || '-'}</td>
+            <td>${r.system || '-'}</td>
+            <td>${r.event || '-'}</td>
+            <td>${r.action || '-'}</td>
+            <td>${r.operator || '-'}</td>
+          </tr>
+        `).join('');
+      }
+    })();
+  </script>
+</body>
+</html>
