@@ -24,10 +24,19 @@
     .actions-row{ display:flex; flex-wrap:wrap; gap:8px; }
     .hint-line{ margin-top:8px; font-size:13px; }
 
+    .dept-picker{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+    .org-warning{ margin-top:8px; padding:10px 12px; border:1px solid var(--lineStrong); border-radius:10px; background:#f8fafc; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .org-warning strong{ font-size:13px; color:var(--mutedStrong); }
+
     .toolbar{ display:grid; grid-template-columns: 1fr 220px; gap:10px; margin-bottom:12px; }
     .tableWrap{ overflow:auto; }
     table{ width:100%; min-width:980px; }
     th, td{ padding:10px 12px; font-size:14px; text-align:left; }
+
+    .ownerCell{ line-height:1.3; }
+    .ownerCell .division{ font-size:12px; color:var(--mutedStrong); font-weight:700; }
+    .ownerCell .team{ font-size:13px; color:var(--ink); font-weight:800; }
+    .ownerCell .deleted{ color:#991b1b; }
 
     .importance{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--lineStrong); font-size:12px; font-weight:800; }
     .imp-low{ background:rgba(34,197,94,.10); color:#166534; border-color:rgba(34,197,94,.32); }
@@ -40,6 +49,7 @@
 
     @media (max-width: 980px){
       .toolbar{ grid-template-columns: 1fr; }
+      .dept-picker{ grid-template-columns: 1fr; }
       .col-6, .col-4, .col-3{ grid-column: span 12; }
       .inline-split{ grid-template-columns: 1fr; }
     }
@@ -66,8 +76,19 @@
             </div>
 
             <div class="field col-6">
-              <label for="ownerDept">담당부서 *</label>
-              <input id="ownerDept" type="text" required placeholder="예: IT인프라팀"/>
+              <label for="divisionSelect">담당부서 *</label>
+              <div class="dept-picker">
+                <select id="divisionSelect" required>
+                  <option value="">본부 선택</option>
+                </select>
+                <select id="teamSelect" required>
+                  <option value="">팀 선택</option>
+                </select>
+              </div>
+              <div id="orgWarning" class="org-warning" hidden>
+                <strong>조직 정보가 없습니다. 거버넌스 &gt; 조직 관리에서 먼저 등록해 주세요.</strong>
+                <a class="btn" href="./org-registry.html">조직 관리로 이동</a>
+              </div>
             </div>
 
             <div class="field col-4">
@@ -137,8 +158,8 @@
                   <th>중요도</th>
                   <th>RTO</th>
                   <th>RPO</th>
-                  <th>최종 수정일시</th>
-                  <th>작업</th>
+                  <th>수정일시</th>
+                  <th>관리</th>
                 </tr>
               </thead>
               <tbody id="registryBody"></tbody>
@@ -153,35 +174,27 @@
   <script src="../assets/data-store.js"></script>
   <script>
     (() => {
-      const STORAGE_KEY = 'bcms_service_registry_v1';
+      const STORAGE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
+      const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
 
       const fallbackStore = {
-        get: (key, fallback) => {
-          try {
-            const raw = localStorage.getItem(key);
-            if (raw === null) return fallback;
-            return JSON.parse(raw);
-          } catch {
-            return fallback;
-          }
-        },
-        set: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
-        update: (key, updaterFn) => {
-          const current = fallbackStore.get(key, []);
-          const next = updaterFn(current);
-          fallbackStore.set(key, next);
-          return next;
-        },
+        get:(k, fallback)=>{ try{ const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; } },
+        set:(k, value)=>localStorage.setItem(k, JSON.stringify(value)),
+        update:(k, updater)=>{ const next = updater(fallbackStore.get(k, null)); fallbackStore.set(k, next); return next; },
+        uid:()=>`svc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        nowISO:()=>new Date().toISOString(),
       };
+      const store = (window.DataStore && DataStore.get && DataStore.set && DataStore.update) ? DataStore : fallbackStore;
 
-      const store = window.DataStore && DataStore.get && DataStore.set && DataStore.update ? DataStore : fallbackStore;
-      const nowISO = () => (window.DataStore && DataStore.nowISO ? DataStore.nowISO() : new Date().toISOString());
-      const makeUid = () => (window.DataStore && DataStore.uid ? DataStore.uid('SRV') : `SRV-${Date.now()}`);
+      const makeUid = () => (store.uid ? store.uid('svc') : fallbackStore.uid());
+      const nowISO = () => (store.nowISO ? store.nowISO() : fallbackStore.nowISO());
 
       const serviceForm = document.getElementById('serviceForm');
       const serviceId = document.getElementById('serviceId');
       const serviceName = document.getElementById('serviceName');
-      const ownerDept = document.getElementById('ownerDept');
+      const divisionSelect = document.getElementById('divisionSelect');
+      const teamSelect = document.getElementById('teamSelect');
+      const orgWarning = document.getElementById('orgWarning');
       const importance = document.getElementById('importance');
       const rtoValue = document.getElementById('rtoValue');
       const rtoUnit = document.getElementById('rtoUnit');
@@ -212,17 +225,40 @@
       };
 
       const sampleData = () => ([
-        { id: makeUid(), name: '결제 API', dept: '금융플랫폼팀', importance: '매우높음', rtoValue: 1, rtoUnit: '시간', rpoValue: 10, rpoUnit: '분', note: 'PG 연동 핵심', updatedAt: nowISO() },
-        { id: makeUid(), name: '인증 서비스', dept: '보안플랫폼팀', importance: '매우높음', rtoValue: 30, rtoUnit: '분', rpoValue: 5, rpoUnit: '분', note: 'SSO/OAuth', updatedAt: nowISO() },
-        { id: makeUid(), name: '고객 포털', dept: '디지털채널팀', importance: '높음', rtoValue: 4, rtoUnit: '시간', rpoValue: 30, rpoUnit: '분', note: '', updatedAt: nowISO() },
-        { id: makeUid(), name: '모니터링', dept: 'SRE팀', importance: '높음', rtoValue: 2, rtoUnit: '시간', rpoValue: 15, rpoUnit: '분', note: '관제 대시보드', updatedAt: nowISO() },
-        { id: makeUid(), name: '로그 수집', dept: '플랫폼운영팀', importance: '보통', rtoValue: 8, rtoUnit: '시간', rpoValue: 1, rpoUnit: '시간', note: '보안 감사 연계', updatedAt: nowISO() },
-        { id: makeUid(), name: 'DB 클러스터', dept: 'DBA팀', importance: '매우높음', rtoValue: 1, rtoUnit: '시간', rpoValue: 5, rpoUnit: '분', note: '주요 거래 데이터', updatedAt: nowISO() },
-        { id: makeUid(), name: '배치 처리', dept: '데이터플랫폼팀', importance: '보통', rtoValue: 12, rtoUnit: '시간', rpoValue: 4, rpoUnit: '시간', note: '야간 정산', updatedAt: nowISO() },
-        { id: makeUid(), name: 'VPN', dept: '네트워크팀', importance: '높음', rtoValue: 2, rtoUnit: '시간', rpoValue: 30, rpoUnit: '분', note: '원격접속 필수', updatedAt: nowISO() },
-        { id: makeUid(), name: 'DNS', dept: '인프라팀', importance: '높음', rtoValue: 1, rtoUnit: '시간', rpoValue: '', rpoUnit: '분', note: '내/외부 DNS', updatedAt: nowISO() },
-        { id: makeUid(), name: '파일 스토리지', dept: 'IT인프라팀', importance: '보통', rtoValue: 6, rtoUnit: '시간', rpoValue: 1, rpoUnit: '시간', note: '문서 보관', updatedAt: nowISO() },
+        { id: makeUid(), name: '결제 API', divisionId: 'it', divisionName: 'IT서비스운영본부', teamId: 'app', teamName: '애플리케이션운영팀', dept: 'IT서비스운영본부 / 애플리케이션운영팀', importance: '매우높음', rtoValue: 1, rtoUnit: '시간', rpoValue: 10, rpoUnit: '분', note: 'PG 연동 핵심', updatedAt: nowISO() },
+        { id: makeUid(), name: '인증 서비스', divisionId: 'risk', divisionName: '리스크·컴플라이언스본부', teamId: 'security', teamName: '정보보호팀', dept: '리스크·컴플라이언스본부 / 정보보호팀', importance: '매우높음', rtoValue: 30, rtoUnit: '분', rpoValue: 5, rpoUnit: '분', note: 'SSO/OAuth', updatedAt: nowISO() },
+        { id: makeUid(), name: '모니터링', divisionId: 'it', divisionName: 'IT서비스운영본부', teamId: 'sre', teamName: 'SRE/플랫폼운영팀', dept: 'IT서비스운영본부 / SRE/플랫폼운영팀', importance: '높음', rtoValue: 2, rtoUnit: '시간', rpoValue: 15, rpoUnit: '분', note: '관제 대시보드', updatedAt: nowISO() },
       ]);
+
+      const getOrgDivisions = () => {
+        const org = store.get(ORG_KEY, { divisions: [] });
+        return Array.isArray(org?.divisions) ? org.divisions : [];
+      };
+
+      const buildOrgIndex = () => {
+        const divisions = getOrgDivisions();
+        const divisionMap = new Map();
+        const teamMap = new Map();
+        divisions.forEach((division) => {
+          if (!division || !division.id) return;
+          const safeDivision = {
+            id: division.id,
+            name: division.name || '미지정 본부',
+            teams: Array.isArray(division.teams) ? division.teams : [],
+          };
+          divisionMap.set(safeDivision.id, safeDivision);
+          safeDivision.teams.forEach((team) => {
+            if (!team || !team.id) return;
+            teamMap.set(team.id, {
+              id: team.id,
+              name: team.name || '미지정 팀',
+              divisionId: safeDivision.id,
+              divisionName: safeDivision.name,
+            });
+          });
+        });
+        return { divisions, divisionMap, teamMap };
+      };
 
       const loadItems = () => {
         const items = store.get(STORAGE_KEY, null);
@@ -235,6 +271,101 @@
       };
 
       let rows = loadItems();
+      let currentOrg = buildOrgIndex();
+
+      const hasOrgData = () => currentOrg.divisions.some((d) => Array.isArray(d.teams) && d.teams.length);
+
+      const setOrgWarning = () => {
+        const empty = !hasOrgData();
+        orgWarning.hidden = !empty;
+        divisionSelect.disabled = empty;
+        teamSelect.disabled = empty;
+      };
+
+      const renderDivisionOptions = () => {
+        const previous = divisionSelect.value;
+        divisionSelect.innerHTML = '<option value="">본부 선택</option>';
+        currentOrg.divisions.forEach((division) => {
+          const opt = document.createElement('option');
+          opt.value = division.id;
+          opt.textContent = division.name || '미지정 본부';
+          divisionSelect.appendChild(opt);
+        });
+        if (previous && currentOrg.divisionMap.has(previous)) divisionSelect.value = previous;
+      };
+
+      const renderTeamOptions = (divisionId, preferredTeamId = '') => {
+        teamSelect.innerHTML = '<option value="">팀 선택</option>';
+        if (!divisionId || !currentOrg.divisionMap.has(divisionId)) return;
+        const division = currentOrg.divisionMap.get(divisionId);
+        (division.teams || []).forEach((team) => {
+          const opt = document.createElement('option');
+          opt.value = team.id;
+          opt.textContent = team.name || '미지정 팀';
+          teamSelect.appendChild(opt);
+        });
+        if (preferredTeamId && currentOrg.teamMap.has(preferredTeamId)) {
+          teamSelect.value = preferredTeamId;
+        }
+      };
+
+      const resolveOwner = (item) => {
+        if (item.teamId && currentOrg.teamMap.has(item.teamId)) {
+          const team = currentOrg.teamMap.get(item.teamId);
+          return {
+            divisionName: team.divisionName,
+            teamName: team.name,
+            status: 'active',
+          };
+        }
+
+        if (item.teamId) {
+          return {
+            divisionName: item.divisionName || '삭제된 조직',
+            teamName: item.teamName || '삭제된 조직',
+            status: 'deleted',
+          };
+        }
+
+        if (item.dept) {
+          return {
+            divisionName: item.dept,
+            teamName: '-',
+            status: 'legacy',
+          };
+        }
+
+        return {
+          divisionName: '미지정',
+          teamName: '미지정',
+          status: 'deleted',
+        };
+      };
+
+      const ownerSearchText = (item) => {
+        const owner = resolveOwner(item);
+        return `${owner.divisionName} ${owner.teamName}`.toLowerCase();
+      };
+
+      const reconcileRowsWithOrg = () => {
+        let changed = false;
+        rows = rows.map((item) => {
+          if (!item.teamId || !currentOrg.teamMap.has(item.teamId)) return item;
+          const team = currentOrg.teamMap.get(item.teamId);
+          const next = {
+            ...item,
+            divisionId: team.divisionId,
+            divisionName: team.divisionName,
+            teamName: team.name,
+            dept: `${team.divisionName} / ${team.name}`,
+          };
+          if (next.divisionName !== item.divisionName || next.teamName !== item.teamName || next.dept !== item.dept || next.divisionId !== item.divisionId) {
+            changed = true;
+          }
+          return next;
+        });
+        if (changed) saveRows();
+      };
 
       const resetForm = () => {
         serviceForm.reset();
@@ -242,6 +373,8 @@
         importance.value = '보통';
         rtoUnit.value = '시간';
         rpoUnit.value = '분';
+        renderDivisionOptions();
+        renderTeamOptions(divisionSelect.value);
       };
 
       const saveRows = () => {
@@ -252,7 +385,9 @@
         const q = (searchInput.value || '').trim().toLowerCase();
         const filter = importanceFilter.value;
         return rows.filter((item) => {
-          const matchKeyword = !q || item.name.toLowerCase().includes(q) || item.dept.toLowerCase().includes(q);
+          const name = (item.name || '').toLowerCase();
+          const dept = ownerSearchText(item);
+          const matchKeyword = !q || name.includes(q) || dept.includes(q);
           const matchImportance = filter === '전체' || item.importance === filter;
           return matchKeyword && matchImportance;
         });
@@ -270,10 +405,18 @@
         }
 
         view.forEach((item) => {
+          const owner = resolveOwner(item);
+          const ownerDeletedClass = owner.status === 'deleted' ? 'deleted' : '';
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.name}</td>
-            <td>${item.dept}</td>
+            <td>
+              <div class="ownerCell ${ownerDeletedClass}">
+                <div class="division">${owner.divisionName}</div>
+                <div class="team ${ownerDeletedClass}">${owner.teamName}</div>
+              </div>
+            </td>
             <td><span class="importance ${importanceClass(item.importance)}">${item.importance}</span></td>
             <td>${formatObjective(item.rtoValue, item.rtoUnit)}</td>
             <td>${formatObjective(item.rpoValue, item.rpoUnit)}</td>
@@ -292,10 +435,28 @@
       serviceForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        if (!hasOrgData()) {
+          window.alert('조직 정보가 없습니다. 거버넌스 > 조직 관리에서 먼저 등록해 주세요.');
+          return;
+        }
+
+        const divisionId = divisionSelect.value;
+        const teamId = teamSelect.value;
+        if (!divisionId || !teamId || !currentOrg.teamMap.has(teamId)) {
+          window.alert('담당 본부/팀을 선택해 주세요.');
+          return;
+        }
+
+        const team = currentOrg.teamMap.get(teamId);
+
         const payload = {
           id: serviceId.value || makeUid(),
           name: serviceName.value.trim(),
-          dept: ownerDept.value.trim(),
+          divisionId,
+          divisionName: team.divisionName,
+          teamId,
+          teamName: team.name,
+          dept: `${team.divisionName} / ${team.name}`,
           importance: importance.value,
           rtoValue: rtoValue.value === '' ? '' : Number(rtoValue.value),
           rtoUnit: rtoUnit.value,
@@ -305,8 +466,8 @@
           updatedAt: nowISO(),
         };
 
-        if (!payload.name || !payload.dept) {
-          window.alert('서비스명과 담당부서는 필수 입력입니다.');
+        if (!payload.name) {
+          window.alert('서비스명은 필수 입력입니다.');
           return;
         }
 
@@ -321,6 +482,10 @@
 
       document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
 
+      divisionSelect.addEventListener('change', () => {
+        renderTeamOptions(divisionSelect.value);
+      });
+
       registryBody.addEventListener('click', (e) => {
         const editId = e.target.getAttribute('data-edit');
         const deleteId = e.target.getAttribute('data-delete');
@@ -331,13 +496,21 @@
 
           serviceId.value = found.id;
           serviceName.value = found.name;
-          ownerDept.value = found.dept;
+          const editableDivisionId = currentOrg.divisionMap.has(found.divisionId) ? found.divisionId : '';
+          const editableTeamId = currentOrg.teamMap.has(found.teamId) ? found.teamId : '';
+          divisionSelect.value = editableDivisionId;
+          renderTeamOptions(editableDivisionId, editableTeamId);
           importance.value = found.importance;
           rtoValue.value = found.rtoValue;
           rtoUnit.value = found.rtoUnit || '시간';
           rpoValue.value = found.rpoValue;
           rpoUnit.value = found.rpoUnit || '분';
           note.value = found.note || '';
+
+          if (!editableTeamId && found.teamId) {
+            window.alert('이 서비스에 연결된 팀이 조직 레지스트리에서 삭제되었습니다. 담당부서를 다시 지정해 주세요.');
+          }
+
           serviceName.focus();
           return;
         }
@@ -353,11 +526,23 @@
         }
       });
 
+      const refreshOrgBindings = () => {
+        currentOrg = buildOrgIndex();
+        setOrgWarning();
+        renderDivisionOptions();
+        renderTeamOptions(divisionSelect.value, teamSelect.value);
+        reconcileRowsWithOrg();
+        renderTable();
+      };
+
       searchInput.addEventListener('input', renderTable);
       importanceFilter.addEventListener('change', renderTable);
+      window.addEventListener('storage', (e) => {
+        if (e.key === ORG_KEY) refreshOrgBindings();
+      });
 
       resetForm();
-      renderTable();
+      refreshOrgBindings();
     })();
   </script>
 </body>
