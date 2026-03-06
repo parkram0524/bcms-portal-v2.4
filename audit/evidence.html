@@ -24,6 +24,8 @@
     .state{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--lineStrong); font-size:12px; font-weight:800; }
     .pending{ background:rgba(217,119,6,.12); color:#92400e; border-color:rgba(217,119,6,.32); }
     .done{ background:rgba(22,163,74,.12); color:#166534; border-color:rgba(22,163,74,.32); }
+    .focusRow td{ background:rgba(37,99,235,.08); }
+    .focusBadge{ display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(37,99,235,.35); background:rgba(37,99,235,.12); color:#1d4ed8; font-size:11px; font-weight:900; padding:3px 8px; margin-left:6px; }
     .sub{ font-size:12px; color:var(--muted); }
     @media (max-width:980px){ .toolbar{ grid-template-columns:1fr; } .col-6,.col-4,.col-3{ grid-column:span 12; } }
   </style>
@@ -115,6 +117,7 @@
   <script>
     (() => {
       const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
+      const SELECTED_EVIDENCE_KEY = 'bcms_selected_evidence';
       const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
       const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
 
@@ -145,6 +148,22 @@
       const statusFilter = document.getElementById('statusFilter');
       const evidenceBody = document.getElementById('evidenceBody');
       const resetSamplesBtn = document.getElementById('resetSamplesBtn');
+      const query = new URLSearchParams(location.search);
+
+      const readSelectedEvidence = () => {
+        const fromQuery = (query.get('focus') || '').trim();
+        let fromStorage = '';
+        try {
+          const parsed = JSON.parse(localStorage.getItem(SELECTED_EVIDENCE_KEY) || 'null');
+          fromStorage = (parsed?.evidenceId || '').trim();
+        } catch {
+          fromStorage = '';
+        }
+        localStorage.removeItem(SELECTED_EVIDENCE_KEY);
+        return fromQuery || fromStorage;
+      };
+      const selectedEvidenceId = readSelectedEvidence();
+      let focusDone = false;
 
       const services = (store.get(SERVICE_KEY, []) || []).filter((v) => v && v.id && v.name);
       const incidentState = store.get(INCIDENT_KEY, null);
@@ -243,20 +262,31 @@
 
         view.forEach((r) => {
           const tr = document.createElement('tr');
+          const focused = selectedEvidenceId && r.id === selectedEvidenceId;
           const stateClass = r.status === '확인완료' ? 'done' : 'pending';
+          tr.dataset.evidenceId = r.id;
+          if (focused) tr.classList.add('focusRow');
           tr.innerHTML = `
             <td>${toText(r.createdAt)}</td>
             <td>${r.type}</td>
             <td>${(r.services || []).join(', ') || '-'}</td>
             <td>${r.relatedOrgText || '-'}</td>
             <td>${r.incident || '-'}</td>
-            <td>${r.description || '-'}</td>
+            <td>${r.description || '-'}${focused ? '<span class="focusBadge">선택됨</span>' : ''}</td>
             <td>${r.attachment ? `${r.attachment.name} (${Math.round(r.attachment.size / 1024)}KB)` : '-'}</td>
             <td><button type="button" class="state ${stateClass}" data-toggle="${r.id}">${r.status}</button></td>
             <td><button type="button" class="btn" data-delete="${r.id}">삭제</button></td>
           `;
           evidenceBody.appendChild(tr);
         });
+
+        if (selectedEvidenceId && !focusDone) {
+          const target = evidenceBody.querySelector(`tr[data-evidence-id="${CSS.escape(selectedEvidenceId)}"]`);
+          if (target) {
+            target.scrollIntoView({ behavior:'smooth', block:'center' });
+            focusDone = true;
+          }
+        }
       };
 
       evAttachment.addEventListener('change', () => {

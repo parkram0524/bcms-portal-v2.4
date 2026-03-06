@@ -46,6 +46,9 @@
 
     .table-actions{ display:flex; gap:6px; }
     .empty{ padding:16px 12px; text-align:center; color:var(--muted); }
+    .focusRow td{ background:rgba(37,99,235,.08); }
+    .focusName{ display:inline-flex; align-items:center; gap:6px; font-weight:900; }
+    .focusBadge{ display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(37,99,235,.35); background:rgba(37,99,235,.12); color:#1d4ed8; font-size:11px; font-weight:900; padding:3px 8px; }
 
     @media (max-width: 980px){
       .toolbar{ grid-template-columns: 1fr; }
@@ -176,6 +179,7 @@
     (() => {
       const STORAGE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const SELECTED_SERVICE_KEY = 'bcms_selected_service';
 
       const fallbackStore = {
         get:(k, fallback)=>{ try{ const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; } },
@@ -204,6 +208,22 @@
       const searchInput = document.getElementById('searchInput');
       const importanceFilter = document.getElementById('importanceFilter');
       const registryBody = document.getElementById('registryBody');
+      const query = new URLSearchParams(location.search);
+
+      const readSelectedService = () => {
+        const fromQuery = (query.get('q') || '').trim();
+        let fromStorage = '';
+        try {
+          const parsed = JSON.parse(localStorage.getItem(SELECTED_SERVICE_KEY) || 'null');
+          fromStorage = (parsed?.serviceName || '').trim();
+        } catch {
+          fromStorage = '';
+        }
+        localStorage.removeItem(SELECTED_SERVICE_KEY);
+        return fromQuery || fromStorage;
+      };
+      const selectedServiceName = readSelectedService();
+      let focusDone = false;
 
       const toDisplayDate = (isoString) => {
         if (!isoString) return '-';
@@ -409,8 +429,11 @@
           const ownerDeletedClass = owner.status === 'deleted' ? 'deleted' : '';
 
           const tr = document.createElement('tr');
+          const isFocus = selectedServiceName && item.name === selectedServiceName;
+          tr.dataset.serviceName = item.name || '';
+          if (isFocus) tr.classList.add('focusRow');
           tr.innerHTML = `
-            <td>${item.name}</td>
+            <td><span class="focusName">${item.name}${isFocus ? '<span class="focusBadge">선택됨</span>' : ''}</span></td>
             <td>
               <div class="ownerCell ${ownerDeletedClass}">
                 <div class="division">${owner.divisionName}</div>
@@ -430,6 +453,14 @@
           `;
           registryBody.appendChild(tr);
         });
+
+        if (selectedServiceName && !focusDone) {
+          const row = registryBody.querySelector(`tr[data-service-name="${CSS.escape(selectedServiceName)}"]`);
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            focusDone = true;
+          }
+        }
       };
 
       serviceForm.addEventListener('submit', (e) => {
@@ -542,6 +573,7 @@
       });
 
       resetForm();
+      if (selectedServiceName && !searchInput.value.trim()) searchInput.value = selectedServiceName;
       refreshOrgBindings();
     })();
   </script>

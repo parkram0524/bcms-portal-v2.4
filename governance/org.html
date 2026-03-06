@@ -39,6 +39,9 @@
 
     .teamGrid{ display:grid; grid-template-columns: 1fr; gap:6px; }
     .teamCard{ border:1px solid var(--lineStrong); border-radius:10px; background:#fff; padding:7px 9px; font-size:12px; color:var(--ink); }
+    .focusDivision{ border-color:rgba(37,99,235,.38); box-shadow:0 0 0 2px rgba(37,99,235,.12); }
+    .focusTeam{ border-color:rgba(37,99,235,.38); background:rgba(37,99,235,.08); font-weight:900; }
+    .focusBadge{ display:inline-flex; align-items:center; border:1px solid rgba(37,99,235,.35); border-radius:999px; padding:3px 8px; font-size:11px; color:#1d4ed8; background:rgba(37,99,235,.10); margin-left:6px; }
     .empty{ color:var(--muted); font-size:13px; }
 
     @media (max-width:1200px){ .divisionGrid{ grid-template-columns:repeat(3,minmax(170px,1fr)); } }
@@ -69,10 +72,32 @@
   <script>
     (() => {
       const KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const SELECTED_ORG_KEY = 'bcms_selected_org';
       const store = (window.DataStore && DataStore.get) ? DataStore : {
         get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } }
       };
       const mount = document.getElementById('orgView');
+      const query = new URLSearchParams(location.search);
+      const readSelectedOrg = () => {
+        const fromTeam = (query.get('team') || '').trim();
+        let fromStorage = { divisionName: '', teamName: '' };
+        try {
+          const parsed = JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || 'null');
+          fromStorage = {
+            divisionName: (parsed?.divisionName || '').trim(),
+            teamName: (parsed?.teamName || '').trim(),
+          };
+        } catch {
+          fromStorage = { divisionName: '', teamName: '' };
+        }
+        localStorage.removeItem(SELECTED_ORG_KEY);
+        return {
+          divisionName: fromStorage.divisionName,
+          teamName: fromTeam || fromStorage.teamName,
+        };
+      };
+      const selectedOrg = readSelectedOrg();
+      let focused = false;
 
       const baseTemplate = {
         companyName: 'SJ Digital',
@@ -113,13 +138,17 @@
         }
 
         const divisionCards = data.divisions.map((division) => {
+          const divisionMatch = selectedOrg.divisionName && division.name === selectedOrg.divisionName;
           const teams = (division.teams || []).length
-            ? `<div class="teamGrid">${(division.teams || []).map((team) => `<div class="teamCard">${team.name}</div>`).join('')}</div>`
+            ? `<div class="teamGrid">${(division.teams || []).map((team) => {
+              const teamMatch = selectedOrg.teamName && team.name === selectedOrg.teamName;
+              return `<div class="teamCard ${teamMatch ? 'focusTeam' : ''}" data-team-name="${team.name}">${team.name}${teamMatch ? '<span class="focusBadge">선택 조직</span>' : ''}</div>`;
+            }).join('')}</div>`
             : '<p class="empty">등록된 팀이 없습니다.</p>';
 
           return `
-            <section class="divisionCard">
-              <h4>${division.name}</h4>
+            <section class="divisionCard ${divisionMatch ? 'focusDivision' : ''}" data-division-name="${division.name}">
+              <h4>${division.name}${divisionMatch ? '<span class="focusBadge">선택 조직</span>' : ''}</h4>
               <div class="divisionBody">${teams}</div>
             </section>
           `;
@@ -134,6 +163,17 @@
           </section>
           <section class="divisionGrid">${divisionCards}</section>
         `;
+
+        if (!focused && (selectedOrg.teamName || selectedOrg.divisionName)) {
+          const selector = selectedOrg.teamName
+            ? `[data-team-name="${CSS.escape(selectedOrg.teamName)}"]`
+            : `[data-division-name="${CSS.escape(selectedOrg.divisionName)}"]`;
+          const target = mount.querySelector(selector);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            focused = true;
+          }
+        }
       };
 
       window.addEventListener('storage', (e) => { if (e.key === KEY) render(); });

@@ -160,11 +160,11 @@
       const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
       const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
-      const NAV_INCIDENT_KEY = 'bcms_nav_focus_incident';
-      const NAV_SERVICE_KEY = 'bcms_nav_focus_service';
-      const NAV_ORG_KEY = 'bcms_nav_focus_org';
-      const NAV_EVIDENCE_KEY = 'bcms_nav_focus_evidence';
-      const NAV_CAPA_KEY = 'bcms_nav_focus_capa';
+      const NAV_INCIDENT_KEY = 'bcms_selected_incident';
+      const NAV_SERVICE_KEY = 'bcms_selected_service';
+      const NAV_ORG_KEY = 'bcms_selected_org';
+      const NAV_EVIDENCE_KEY = 'bcms_selected_evidence';
+      const NAV_CAPA_KEY = 'bcms_selected_capa';
       const store = (window.DataStore && DataStore.get) ? DataStore : {
         get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
       };

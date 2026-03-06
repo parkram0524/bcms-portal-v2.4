@@ -37,6 +37,8 @@
 
     .grid{ display:grid; grid-template-columns: repeat(12,minmax(0,1fr)); gap:14px; }
     .card{ border-radius:16px; }
+    .autoFocusTag{ display:inline-flex; align-items:center; margin-left:8px; border-radius:999px; border:1px solid rgba(37,99,235,.32); background:rgba(37,99,235,.10); color:#1d4ed8; padding:3px 9px; font-size:12px; font-weight:900; }
+    .autoFocusCard{ border-color:rgba(37,99,235,.38) !important; box-shadow:0 0 0 2px rgba(37,99,235,.12); }
 
     .incidentCard{ grid-column: span 6; }
     .countdownCard{ grid-column: span 3; text-align:center; }
@@ -129,8 +131,8 @@
       </section>
 
       <section class="grid">
-        <article class="card incidentCard">
-          <h3>현재 사고 현황 (Incident Snapshot)</h3>
+        <article id="incidentCard" class="card incidentCard">
+          <h3>현재 사고 현황 (Incident Snapshot) <span id="incidentFocusTag" class="autoFocusTag" style="display:none;">선택된 Incident</span></h3>
           <div class="metaGrid">
             <div class="metaItem"><div class="k">현재 Incident 상태</div><div class="v" id="incidentStatusText">안정화 모니터링</div></div>
             <div class="metaItem"><div class="k">심각도</div><div class="v" id="severityText">보통</div></div>
@@ -243,6 +245,7 @@
       const ORG_REGISTRY_KEY = DataStore.KEY_ORG_REGISTRY || 'bcms_org_registry_v1';
       const EVIDENCE_KEY = DataStore.KEY_EVIDENCE || 'bcms_audit_evidence_v1';
       const CAPA_KEY = DataStore.KEY_CAPA || 'bcms_capa_v1';
+      const SELECTED_INCIDENT_KEY = 'bcms_selected_incident';
 
       const logBody = document.getElementById('incidentLogBody');
       const incidentStatusText = document.getElementById('incidentStatusText');
@@ -266,6 +269,24 @@
       const relatedOrgList = document.getElementById('relatedOrgList');
       const serviceEmptyMessage = document.getElementById('serviceEmptyMessage');
       const impactStatusGrid = document.getElementById('impactStatusGrid');
+      const incidentCard = document.getElementById('incidentCard');
+      const incidentFocusTag = document.getElementById('incidentFocusTag');
+
+      const query = new URLSearchParams(location.search);
+      const readOnceSelection = () => {
+        const fromQuery = query.get('incidentRef') || '';
+        let fromStorage = '';
+        try {
+          const parsed = JSON.parse(localStorage.getItem(SELECTED_INCIDENT_KEY) || 'null');
+          fromStorage = parsed?.incidentRef || '';
+        } catch {
+          fromStorage = '';
+        }
+        localStorage.removeItem(SELECTED_INCIDENT_KEY);
+        return (fromQuery || fromStorage || '').trim();
+      };
+      const selectedIncidentRef = readOnceSelection();
+      let focusApplied = false;
 
       const drStateMap = {
         normal: { label: '정상 (Normal)', cls: 'normal' },
@@ -666,6 +687,18 @@
         renderSelectedServiceChips();
         renderRelatedOrgs();
         renderImpactStatus();
+
+        if (!focusApplied || selectedIncidentRef) {
+          const currentRef = String(state.currentIncident.incidentId || '').trim();
+          const matched = selectedIncidentRef && currentRef && selectedIncidentRef === currentRef;
+          incidentFocusTag.style.display = selectedIncidentRef ? 'inline-flex' : 'none';
+          incidentFocusTag.textContent = matched ? `선택된 Incident: ${selectedIncidentRef}` : `선택된 Incident: ${selectedIncidentRef}`;
+          incidentCard.classList.toggle('autoFocusCard', Boolean(selectedIncidentRef));
+          if (selectedIncidentRef && !focusApplied) {
+            requestAnimationFrame(() => incidentCard.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+          }
+          focusApplied = true;
+        }
       };
 
       document.getElementById('drStatusToggles').addEventListener('click', (e) => {
