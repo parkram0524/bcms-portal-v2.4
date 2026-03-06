@@ -18,13 +18,12 @@
     .kHint{ margin-top:5px; font-size:12px; color:rgba(15,23,42,.56); }
     @media (max-width: 1200px){ .kpi{ grid-column: span 6; } }
     @media (max-width: 760px){ .kpi{ grid-column: span 12; } }
-    @media (max-width: 520px){ .kpi{ grid-column: span 12; } }
 
     .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
     .panel h3{ margin:0 0 10px; font-size:18px; }
 
     .tableWrap{ overflow:auto; }
-    table{ width:100%; min-width:840px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.10); border-radius:12px; overflow:hidden; }
+    table{ width:100%; min-width:900px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.10); border-radius:12px; overflow:hidden; }
     th, td{ padding:10px 12px; font-size:14px; }
     th{ background:rgba(15,23,42,.03); color:rgba(15,23,42,.72); text-align:left; font-weight:800; }
 
@@ -52,8 +51,17 @@
     .st-done{ background:rgba(22,163,74,.12); color:#166534; border-color:rgba(22,163,74,.32); }
     .dueSoon{ background:rgba(220,38,38,.12); color:#991b1b; border-color:rgba(220,38,38,.36); }
 
-    @media (max-width: 980px){ .followPanel{ grid-column: span 12; } }
+    .orgSummary{ display:flex; flex-wrap:wrap; gap:6px; }
+    .orgChip{ display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:4px 9px; font-size:12px; background:#fff; color:#0f172a; }
+    .orgMore{ font-size:12px; color:var(--mutedStrong); font-weight:800; align-self:center; }
 
+    .incidentNow{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
+    .incidentMeta{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; margin-top:8px; }
+    .metaItem{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:10px; background:#f8fafc; }
+    .metaItem .k{ font-size:12px; color:var(--mutedStrong); font-weight:800; }
+    .metaItem .v{ margin-top:4px; font-size:13px; font-weight:800; }
+
+    @media (max-width: 980px){ .followPanel{ grid-column: span 12; } .incidentMeta{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -76,6 +84,14 @@
         <article class="kpi"><div class="kLabel">DR 전환 상태</div><div class="kValue" id="kDrState">정상</div><div class="kHint" id="kDrHint">-</div></article>
       </section>
 
+      <section class="incidentNow">
+        <h3>진행 중 사고 요약</h3>
+        <div class="incidentMeta">
+          <div class="metaItem"><div class="k">사고 상태</div><div class="v" id="incStatus">-</div></div>
+          <div class="metaItem"><div class="k">영향 서비스</div><div class="v" id="incServices">-</div></div>
+          <div class="metaItem"><div class="k">관련 조직</div><div class="v"><div id="incOrgSummary" class="orgSummary"></div></div></div>
+        </div>
+      </section>
 
       <section class="statusBoard">
         <article class="followPanel">
@@ -86,7 +102,7 @@
           <div class="tableWrap">
             <table>
               <thead>
-                <tr><th>등록일시</th><th>유형</th><th>관련 사고</th><th>관련 서비스</th><th>설명</th><th>상태</th></tr>
+                <tr><th>등록일시</th><th>유형</th><th>관련 사고</th><th>관련 서비스</th><th>관련 조직</th><th>설명</th><th>상태</th></tr>
               </thead>
               <tbody id="evidencePendingBody"></tbody>
             </table>
@@ -101,7 +117,7 @@
           <div class="tableWrap">
             <table>
               <thead>
-                <tr><th>제목</th><th>관련 사고</th><th>관련 서비스</th><th>담당자</th><th>완료 기한</th><th>상태</th><th>우선순위</th></tr>
+                <tr><th>제목</th><th>관련 사고</th><th>관련 서비스</th><th>관련 조직</th><th>담당자</th><th>완료 기한</th><th>상태</th><th>우선순위</th></tr>
               </thead>
               <tbody id="capaOpenBody"></tbody>
             </table>
@@ -136,9 +152,10 @@
       const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
       const CAPA_KEY = (window.DataStore && DataStore.KEY_CAPA) || 'bcms_capa_v1';
       const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
-      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
+      const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
+      const store = (window.DataStore && DataStore.get) ? DataStore : {
         get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
-        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v)),
       };
 
       const safeDate = (value) => {
@@ -155,12 +172,104 @@
       };
       const limitRows = (arr, n=5) => (Array.isArray(arr) ? arr.slice(0,n) : []);
 
+      const orgData = store.get(ORG_KEY, { divisions: [] });
+      const serviceRows = Array.isArray(store.get(SERVICE_KEY, [])) ? store.get(SERVICE_KEY, []) : [];
+      const orgTeamMap = new Map();
+      (Array.isArray(orgData?.divisions) ? orgData.divisions : []).forEach((division) => {
+        (Array.isArray(division?.teams) ? division.teams : []).forEach((team) => {
+          if (!team?.id) return;
+          orgTeamMap.set(team.id, {
+            divisionId: division.id,
+            divisionName: division.name || '미지정 본부',
+            teamId: team.id,
+            teamName: team.name || '미지정 팀',
+          });
+        });
+      });
+
+      const serviceMap = new Map(serviceRows.map((svc) => [svc.id, svc]));
+      const serviceNameMap = new Map(serviceRows.map((svc) => [svc.name, svc]));
+      const orgLabel = (u) => `${u.divisionName || '미지정'} / ${u.teamName || '미지정'}`;
+
+      const dedupOrgUnits = (units) => {
+        const m = new Map();
+        (units || []).forEach((u) => {
+          if (!u) return;
+          const key = u.teamId || `${u.divisionName}::${u.teamName}`;
+          if (!m.has(key)) m.set(key, { ...u });
+        });
+        return [...m.values()];
+      };
+
+      const resolveSvcOrg = (svc) => {
+        if (!svc) return null;
+        if (svc.teamId && orgTeamMap.has(svc.teamId)) return orgTeamMap.get(svc.teamId);
+        if (svc.teamId || svc.teamName || svc.divisionName) {
+          return {
+            divisionId: svc.divisionId || null,
+            divisionName: svc.divisionName || '미지정',
+            teamId: svc.teamId || null,
+            teamName: svc.teamName || '미지정',
+          };
+        }
+        return null;
+      };
+
+      const inferOrgUnits = ({ relatedOrgUnits = [], serviceNames = [], serviceIds = [], orgText = '' }) => {
+        let units = dedupOrgUnits(relatedOrgUnits);
+
+        if (!units.length && orgText) {
+          units = orgText.split(',').map((s) => s.trim()).filter(Boolean).map((label, idx) => {
+            const [divisionName, teamName] = label.split('/').map((x) => (x || '').trim());
+            return { divisionId: null, divisionName: divisionName || '미지정', teamId: `text-${idx}`, teamName: teamName || '미지정' };
+          });
+        }
+
+        if (!units.length) {
+          const svcHits = [
+            ...serviceIds.map((id) => serviceMap.get(id)).filter(Boolean),
+            ...serviceNames.map((nm) => serviceNameMap.get(nm)).filter(Boolean),
+          ];
+          units = dedupOrgUnits(svcHits.map(resolveSvcOrg).filter(Boolean));
+        }
+
+        return units;
+      };
+
+      const renderOrgSummary = (mountId, units, limit = 2) => {
+        const el = document.getElementById(mountId);
+        el.innerHTML = '';
+        if (!units.length) {
+          el.innerHTML = '<span class="noteEmpty">미지정</span>';
+          return;
+        }
+        units.slice(0, limit).forEach((u) => {
+          const chip = document.createElement('span');
+          chip.className = 'orgChip';
+          chip.textContent = orgLabel(u);
+          el.appendChild(chip);
+        });
+        if (units.length > limit) {
+          const more = document.createElement('span');
+          more.className = 'orgMore';
+          more.textContent = `+${units.length - limit}`;
+          el.appendChild(more);
+        }
+      };
+
       const incident = store.get(INCIDENT_KEY, {});
-      const evidenceRows = store.get(EVIDENCE_KEY, []);
-      const capaRows = store.get(CAPA_KEY, []);
+      const evidenceRows = Array.isArray(store.get(EVIDENCE_KEY, [])) ? store.get(EVIDENCE_KEY, []) : [];
+      const capaRows = Array.isArray(store.get(CAPA_KEY, [])) ? store.get(CAPA_KEY, []) : [];
 
       const status = String(incident?.currentIncident?.status || '안정화 모니터링');
       const ongoing = ['원인 조사','영향 완화','안정화 모니터링'].includes(status) ? 1 : 0;
+
+      const currentIncident = incident?.currentIncident || {};
+      const currentOrgUnits = inferOrgUnits({
+        relatedOrgUnits: currentIncident.relatedOrgUnits || [],
+        serviceNames: currentIncident.impactedServiceNames || [],
+        serviceIds: currentIncident.impactedServiceIds || [],
+      });
 
       const drState = String(incident?.drState || 'normal');
       const drMap = {
@@ -170,17 +279,33 @@
       };
       const drInfo = drMap[drState] || drMap.normal;
 
-      const evidencePending = (Array.isArray(evidenceRows) ? evidenceRows : [])
+      const evidencePending = evidenceRows
         .filter((x) => x && x.status === '확인필요')
-        .sort((a,b) => (safeDate(b.createdAt)?.getTime()||0) - (safeDate(a.createdAt)?.getTime()||0));
+        .sort((a,b) => (safeDate(b.createdAt)?.getTime()||0) - (safeDate(a.createdAt)?.getTime()||0))
+        .map((row) => ({
+          ...row,
+          resolvedOrgUnits: inferOrgUnits({
+            relatedOrgUnits: row.relatedOrgUnits || [],
+            serviceNames: row.services || [],
+            orgText: row.relatedOrgText || '',
+          })
+        }));
 
-      const capaOpenRows = (Array.isArray(capaRows) ? capaRows : [])
+      const capaOpenRows = capaRows
         .filter((x) => x && ['미착수','진행중','OPEN','IN_PROGRESS'].includes(String(x.status || '')))
         .sort((a,b) => {
           const ad = safeDate(a.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
           const bd = safeDate(b.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
           return ad - bd;
-        });
+        })
+        .map((row) => ({
+          ...row,
+          resolvedOrgUnits: inferOrgUnits({
+            relatedOrgUnits: row.relatedOrgUnits || [],
+            serviceNames: row.service ? row.service.split(',').map((v)=>v.trim()).filter(Boolean) : [],
+            orgText: row.orgUnit || '',
+          })
+        }));
 
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -201,21 +326,30 @@
       document.getElementById('kDrState').innerHTML = `<span class="pill ${drInfo.cls}">${drInfo.text}</span>`;
       document.getElementById('kDrHint').textContent = `현재 상태: ${drInfo.text}`;
 
+      document.getElementById('incStatus').textContent = currentIncident.status || '-';
+      document.getElementById('incServices').textContent = (currentIncident.impactedServiceNames || []).join(', ') || '영향 서비스 미선택';
+      renderOrgSummary('incOrgSummary', currentOrgUnits, 3);
+
       const evidenceBody = document.getElementById('evidencePendingBody');
       const evView = limitRows(evidencePending, 5);
       if (!evView.length) {
-        evidenceBody.innerHTML = '<tr><td colspan="6" class="noteEmpty">미확인 증적이 없습니다.</td></tr>';
+        evidenceBody.innerHTML = '<tr><td colspan="7" class="noteEmpty">미확인 증적이 없습니다.</td></tr>';
       } else {
-        evidenceBody.innerHTML = evView.map((r) => `
-          <tr>
-            <td>${toDateTime(r.createdAt)}</td>
-            <td>${r.type || '-'}</td>
-            <td>${r.incident || '-'}</td>
-            <td>${(r.services || []).join(', ') || '-'}</td>
-            <td>${r.description || '-'}</td>
-            <td><span class="tag st-pending">확인필요</span></td>
-          </tr>
-        `).join('');
+        evidenceBody.innerHTML = evView.map((r) => {
+          const labels = r.resolvedOrgUnits.map(orgLabel);
+          const orgText = labels.slice(0,2).join(', ') + (labels.length > 2 ? ` +${labels.length - 2}` : '');
+          return `
+            <tr>
+              <td>${toDateTime(r.createdAt)}</td>
+              <td>${r.type || '-'}</td>
+              <td>${r.incident || '-'}</td>
+              <td>${(r.services || []).join(', ') || '-'}</td>
+              <td>${orgText || '-'}</td>
+              <td>${r.description || '-'}</td>
+              <td><span class="tag st-pending">확인필요</span></td>
+            </tr>
+          `;
+        }).join('');
       }
 
       const capaBody = document.getElementById('capaOpenBody');
@@ -233,19 +367,24 @@
       };
 
       if (!capaView.length) {
-        capaBody.innerHTML = '<tr><td colspan="7" class="noteEmpty">미완료 개선조치가 없습니다.</td></tr>';
+        capaBody.innerHTML = '<tr><td colspan="8" class="noteEmpty">미완료 개선조치가 없습니다.</td></tr>';
       } else {
-        capaBody.innerHTML = capaView.map((r) => `
-          <tr>
-            <td>${r.title || '-'}</td>
-            <td>${r.incident || '-'}</td>
-            <td>${r.service || '-'}</td>
-            <td>${r.owner || '-'}</td>
-            <td>${toDate(r.dueDate)} ${isDueSoon(r.dueDate) ? '<span class="tag dueSoon" style="margin-left:6px;">기한 임박</span>' : ''}</td>
-            <td>${statusTag(String(r.status || ''))}</td>
-            <td>${r.priority || '-'}</td>
-          </tr>
-        `).join('');
+        capaBody.innerHTML = capaView.map((r) => {
+          const labels = r.resolvedOrgUnits.map(orgLabel);
+          const orgText = labels.slice(0,2).join(', ') + (labels.length > 2 ? ` +${labels.length - 2}` : '');
+          return `
+            <tr>
+              <td>${r.title || '-'}</td>
+              <td>${r.incident || '-'}</td>
+              <td>${r.service || '-'}</td>
+              <td>${orgText || '-'}</td>
+              <td>${r.owner || '-'}</td>
+              <td>${toDate(r.dueDate)} ${isDueSoon(r.dueDate) ? '<span class="tag dueSoon" style="margin-left:6px;">기한 임박</span>' : ''}</td>
+              <td>${statusTag(String(r.status || ''))}</td>
+              <td>${r.priority || '-'}</td>
+            </tr>
+          `;
+        }).join('');
       }
 
       const logs = Array.isArray(incident?.logs) ? incident.logs.slice(0,10) : [];
