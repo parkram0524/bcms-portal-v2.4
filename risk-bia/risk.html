@@ -328,7 +328,7 @@
                       <span class="badge ${band.cls}">${band.text}</span>
                     </td>
                     <td>
-                      ${risk.riskScore >= 13 ? '<span class="focusBadge">⚠ 중점관리</span>' : '-'}
+                      ${risk.riskScore >= 13 ? '<span class="focusBadge">⚠ 중점관리</span>' : '<span class="manageText">-</span>'}
                       <div style="margin-top:6px;"><button class="btn" type="button" data-delete="${idx}">삭제</button></div>
                     </td>
                   </tr>
@@ -341,21 +341,79 @@
         matrixMount.innerHTML = buildMatrixHtml(activeCell.likelihood, activeCell.impact);
       };
 
-      const updateRisk = (idx, field, value) => {
+      const isInteractiveTarget = (el) => {
+        return !!(el && el.closest('input, select, textarea, button, option, label'));
+      };
+
+      const setFocusedRisk = (tr, risk) => {
+        tableMount.querySelectorAll('tr.focusRow').forEach((rowEl) => rowEl.classList.remove('focusRow'));
+        if (tr) tr.classList.add('focusRow');
+
+        activeCell = risk ? { likelihood: risk.likelihood, impact: risk.impact } : { likelihood: null, impact: null };
+        matrixHint.textContent = risk
+          ? `선택 항목: 발생가능성 ${risk.likelihood}, 영향도 ${risk.impact}, 위험도 ${risk.riskScore}`
+          : '행을 클릭하면 매트릭스에서 위치가 강조됩니다.';
+        matrixMount.innerHTML = buildMatrixHtml(activeCell.likelihood, activeCell.impact);
+      };
+
+      const refreshRowVisual = (tr, risk) => {
+        if (!tr || !risk) return;
+        const band = scoreBand(risk.riskScore);
+        const scoreEl = tr.querySelector('.score');
+        const badgeEl = tr.querySelector('.badge');
+        const manageCell = tr.children[5];
+
+        if (scoreEl) scoreEl.textContent = String(risk.riskScore);
+        if (badgeEl) {
+          badgeEl.textContent = band.text;
+          badgeEl.className = `badge ${band.cls}`;
+        }
+
+        if (manageCell) {
+          const delBtnWrap = manageCell.querySelector('div');
+          const focusBadge = manageCell.querySelector('.focusBadge');
+          const manageText = manageCell.querySelector('.manageText');
+          if (risk.riskScore >= 13 && !focusBadge) {
+            const badge = document.createElement('span');
+            badge.className = 'focusBadge';
+            badge.textContent = '⚠ 중점관리';
+            manageCell.insertBefore(badge, delBtnWrap || null);
+          }
+          if (risk.riskScore < 13) {
+            if (focusBadge) focusBadge.remove();
+            if (!manageText) {
+              const txt = document.createElement('span');
+              txt.className = 'manageText';
+              txt.textContent = '-';
+              manageCell.insertBefore(txt, delBtnWrap || null);
+            }
+          } else if (manageText) {
+            manageText.remove();
+          }
+        }
+      };
+
+      const updateRisk = (tr, idx, field, value) => {
         const team = teamSelect.value;
         const row = ensureTeamRisk(team);
         const risk = row.risks[idx];
         if (!risk) return;
 
-        if (field === 'risk') risk.risk = String(value || '').trim();
+        if (field === 'risk') risk.risk = String(value || '');
         if (field === 'likelihood') risk.likelihood = clamp(Number(value || 1), 1, 5);
 
         risk.riskScore = Number(risk.likelihood) * Number(risk.impact);
         risk.critical = risk.riskScore >= 13;
-        activeCell = { likelihood: risk.likelihood, impact: risk.impact };
-        matrixHint.textContent = `선택 항목: 발생가능성 ${risk.likelihood}, 영향도 ${risk.impact}, 위험도 ${risk.riskScore}`;
-        renderTable();
+        refreshRowVisual(tr, risk);
+        renderMetrics(row);
+        setFocusedRisk(tr, risk);
       };
+
+      ['pointerdown','mousedown','click'].forEach((evtName) => {
+        tableMount.addEventListener(evtName, (e) => {
+          if (isInteractiveTarget(e.target)) e.stopPropagation();
+        }, true);
+      });
 
       tableMount.addEventListener('input', (e) => {
         const tr = e.target.closest('tr[data-idx]');
@@ -363,7 +421,7 @@
         const idx = Number(tr.dataset.idx);
         const field = e.target.getAttribute('data-field');
         if (!field) return;
-        updateRisk(idx, field, e.target.value);
+        updateRisk(tr, idx, field, e.target.value);
       });
 
       tableMount.addEventListener('change', (e) => {
@@ -372,10 +430,12 @@
         const idx = Number(tr.dataset.idx);
         const field = e.target.getAttribute('data-field');
         if (!field) return;
-        updateRisk(idx, field, e.target.value);
+        updateRisk(tr, idx, field, e.target.value);
       });
 
       tableMount.addEventListener('click', (e) => {
+        if (isInteractiveTarget(e.target) && !e.target.getAttribute('data-delete') && !e.target.getAttribute('data-add-risk')) return;
+
         const addFn = e.target.getAttribute('data-add-risk');
         if (addFn) {
           const team = teamSelect.value;
@@ -392,11 +452,7 @@
           const team = teamSelect.value;
           const row = ensureTeamRisk(team);
           const risk = row.risks[idx];
-          if (risk) {
-            activeCell = { likelihood: risk.likelihood, impact: risk.impact };
-            matrixHint.textContent = `선택 항목: 발생가능성 ${risk.likelihood}, 영향도 ${risk.impact}, 위험도 ${risk.riskScore}`;
-            renderTable();
-          }
+          if (risk) setFocusedRisk(tr, risk);
           return;
         }
 
