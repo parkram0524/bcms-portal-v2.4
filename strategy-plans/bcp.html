@@ -3,41 +3,58 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Risk 연동형 BCP 전략 | BCMS Portal v2</title>
+  <title>BCP 전략 관리 | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    .wrap{ max-width:1400px; margin:0 auto; }
-    .topbar{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px; margin-bottom:14px; }
+    .wrap{ max-width:1460px; margin:0 auto; }
+    .topbar{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
     .topbar h1{ margin:0; font-size:26px; font-weight:950; }
-    .desc{ margin:8px 0 0; color:rgba(15,23,42,.64); font-size:14px; line-height:1.6; max-width:960px; }
-    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .chip{ padding:8px 12px; border:1px solid rgba(15,23,42,.14); border-radius:999px; background:rgba(255,255,255,.96); font-weight:900; font-size:13px; }
-
+    .desc{ margin:8px 0 0; color:rgba(15,23,42,.68); font-size:14px; line-height:1.6; }
     .actions{ display:flex; gap:8px; flex-wrap:wrap; }
-    .btn{ display:inline-flex; align-items:center; gap:8px; text-decoration:none; padding:10px 13px; border-radius:999px; border:1px solid rgba(15,23,42,.14); background:rgba(255,255,255,.96); color:#0f172a; font-size:14px; font-weight:900; }
-    .btn.primary{ background:rgba(96,165,250,.2); border-color:rgba(96,165,250,.46); }
+    .btn{ display:inline-flex; align-items:center; gap:8px; text-decoration:none; padding:10px 13px; border-radius:999px; border:1px solid rgba(15,23,42,.14); background:#fff; color:#0f172a; font-size:14px; font-weight:900; cursor:pointer; }
+    .btn.primary{ background:rgba(96,165,250,.2); border-color:rgba(96,165,250,.45); }
 
-    .grid{ display:grid; grid-template-columns:repeat(12,1fr); gap:14px; }
-    .card{ border:1px solid rgba(15,23,42,.12); border-radius:18px; background:rgba(255,255,255,.94); padding:16px; }
+    .grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; }
+    .card{ border:1px solid rgba(15,23,42,.12); border-radius:16px; background:rgba(255,255,255,.95); padding:14px; }
     .kpi{ grid-column:span 3; }
-    .panel{ grid-column:span 12; }
+    .full{ grid-column:span 12; }
     @media (max-width:1080px){ .kpi{ grid-column:span 6; } }
     @media (max-width:640px){ .kpi{ grid-column:span 12; } }
 
-    .kTitle{ margin:0; font-size:14px; color:rgba(15,23,42,.82); font-weight:900; }
-    .kValue{ margin:10px 0 0; font-size:34px; font-weight:950; }
-    .kSub{ margin:8px 0 0; color:rgba(15,23,42,.6); font-size:13px; }
+    .kTitle{ margin:0; font-size:13px; color:rgba(15,23,42,.7); font-weight:900; }
+    .kValue{ margin:8px 0 0; font-size:32px; font-weight:950; }
 
-    table{ width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:12px; border:1px solid rgba(15,23,42,.12); }
-    th,td{ padding:11px 10px; font-size:13.5px; border-bottom:1px solid rgba(15,23,42,.08); }
-    th{ text-align:left; background:rgba(255,255,255,.98); font-size:12.5px; letter-spacing:.2px; color:rgba(15,23,42,.78); }
+    .filters{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; align-items:end; }
+    .field label{ display:block; font-size:12px; font-weight:800; color:rgba(15,23,42,.7); margin:0 0 6px; }
+    .field select,.field input{ width:100%; padding:9px 11px; border:1px solid rgba(15,23,42,.2); border-radius:10px; background:#fff; }
+    .toggle{ display:flex; align-items:center; gap:8px; padding:8px 0; font-size:13px; font-weight:800; }
+    @media (max-width:900px){ .filters{ grid-template-columns:1fr; } }
+
+    .tableWrap{ overflow:auto; }
+    table{ width:100%; min-width:1650px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.12); border-radius:12px; overflow:hidden; }
+    th,td{ padding:10px 9px; border-bottom:1px solid rgba(15,23,42,.08); font-size:13px; vertical-align:top; background:#fff; }
+    th{ position:sticky; top:0; background:#f8fafc; text-align:left; font-size:12px; color:rgba(15,23,42,.76); white-space:nowrap; }
     tr:last-child td{ border-bottom:none; }
 
-    .badge{ display:inline-flex; padding:5px 9px; border-radius:999px; font-size:12px; font-weight:900; border:1px solid rgba(15,23,42,.14); }
-    .b-high{ color:#fecaca; border-color:rgba(239,68,68,.48); background:rgba(239,68,68,.12); }
-    .b-med{ color:#fde68a; border-color:rgba(234,179,8,.48); background:rgba(234,179,8,.12); }
-    .b-low{ color:#bbf7d0; border-color:rgba(34,197,94,.45); background:rgba(34,197,94,.12); }
-    .note{ font-size:13.5px; color:rgba(15,23,42,.66); line-height:1.6; }
+    .badge{ display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid rgba(15,23,42,.14); white-space:nowrap; }
+    .high{ background:rgba(239,68,68,.12); color:#b91c1c; border-color:rgba(239,68,68,.4); }
+    .normal{ background:rgba(148,163,184,.12); color:#334155; }
+    .status{ background:rgba(15,23,42,.05); }
+
+    .riskCell{ font-weight:800; }
+    .riskMeta{ margin-top:4px; color:rgba(15,23,42,.6); font-size:11.5px; }
+
+    .strategyText{ width:280px; min-width:280px; max-width:320px; min-height:66px; border:1px solid rgba(15,23,42,.2); border-radius:10px; padding:8px; resize:vertical; font-family:inherit; font-size:12.5px; }
+    .resourceBox{ display:flex; flex-wrap:wrap; gap:6px; min-width:210px; }
+    .resourceChip{ border:1px solid rgba(15,23,42,.18); border-radius:999px; padding:5px 8px; font-size:11.5px; background:#fff; }
+    .resourceChip input{ margin-right:4px; vertical-align:middle; }
+
+    .rowActions{ display:flex; gap:6px; flex-wrap:wrap; }
+    .miniBtn{ border:1px solid rgba(15,23,42,.16); border-radius:8px; padding:6px 8px; background:#fff; font-size:11.5px; font-weight:800; cursor:pointer; }
+    .miniBtn.primary{ background:rgba(59,130,246,.15); border-color:rgba(59,130,246,.35); }
+
+    .muted{ color:rgba(15,23,42,.62); }
+    .empty{ text-align:center; color:rgba(15,23,42,.62); padding:26px 12px; }
   </style>
 </head>
 <body>
@@ -47,59 +64,51 @@
     <div class="wrap">
       <div class="topbar">
         <div>
-          <h1>🛡️ Risk 연동형 BCP 전략</h1>
-          <p class="desc">
-            BIA의 핵심업무(<b>Core Final</b>)를 기준으로 Risk 수준을 결합해, 서비스별 복구 전략(대체/우회/이중화/DR)을 빠르게 확정합니다.
-          </p>
-          <div class="chips">
-            <span class="chip">1) Core 선정</span>
-            <span class="chip">2) Risk Band 부여</span>
-            <span class="chip">3) 전략 템플릿 자동 제안</span>
-          </div>
+          <h1>📌 BCP 전략</h1>
+          <p class="desc">중점관리 리스크 기반 연속성 전략을 관리합니다. BIA/Risk 최신 데이터를 기준으로 표시되며, 전략만 저장·보정합니다.</p>
         </div>
         <div class="actions">
           <a class="btn" href="../risk-bia/bia.html">BIA</a>
-          <a class="btn" href="../risk-bia/risk.html">Risk</a>
-          <a class="btn" href="../risk-bia/priority.html">Priority</a>
+          <a class="btn" href="../risk-bia/risk.html">Risk Assessment</a>
           <a class="btn primary" href="./index.html">전략·계획 홈</a>
         </div>
       </div>
 
       <div class="grid">
-        <section class="card kpi">
-          <p class="kTitle">Core 업무</p>
-          <div class="kValue" id="kCore">0</div>
-          <p class="kSub">bcp_core_processes(coreFinal=true)</p>
-        </section>
-        <section class="card kpi">
-          <p class="kTitle">High Risk 부서</p>
-          <div class="kValue" id="kHighDept">0</div>
-          <p class="kSub">impact×like ≥ 16 보유 부서</p>
-        </section>
-        <section class="card kpi">
-          <p class="kTitle">즉시 전략 필요</p>
-          <div class="kValue" id="kUrgent">0</div>
-          <p class="kSub">RTO ≤ 60 또는 High Risk 결합</p>
-        </section>
-        <section class="card kpi">
-          <p class="kTitle">전략 커버리지</p>
-          <div class="kValue" id="kCover">0%</div>
-          <p class="kSub">전략 제안 완료 비율</p>
+        <section class="card kpi"><p class="kTitle">중점관리 리스크 수</p><div class="kValue" id="kCritical">0</div></section>
+        <section class="card kpi"><p class="kTitle">BCP 전략 작성 수</p><div class="kValue" id="kWritten">0</div></section>
+        <section class="card kpi"><p class="kTitle">확정 전략 수</p><div class="kValue" id="kFinal">0</div></section>
+        <section class="card kpi"><p class="kTitle">미작성 전략 수</p><div class="kValue" id="kPending">0</div></section>
+
+        <section class="card full">
+          <div class="filters">
+            <div class="field">
+              <label for="teamFilter">팀 필터</label>
+              <select id="teamFilter"><option value="">전체 팀</option></select>
+            </div>
+            <div class="field">
+              <label for="statusFilter">전략 상태 필터</label>
+              <select id="statusFilter">
+                <option value="">전체 상태</option>
+                <option value="초안">초안</option>
+                <option value="검토중">검토중</option>
+                <option value="확정">확정</option>
+              </select>
+            </div>
+            <label class="toggle"><input id="criticalOnly" type="checkbox" checked/> 중점관리만 보기</label>
+            <div style="text-align:right;"><button class="btn" id="saveAllBtn" type="button">전체 저장</button></div>
+          </div>
         </section>
 
-        <section class="card panel">
-          <p class="kTitle">BCP 전략 매핑 테이블</p>
-          <p class="note" style="margin-top:8px;">Core 업무를 우선 표시하고, 부서 Risk Band를 결합해 추천 전략을 자동 산정했습니다.</p>
-          <div style="overflow:auto; margin-top:10px;">
+        <section class="card full">
+          <p class="kTitle">전략 관리 테이블</p>
+          <p class="muted" style="margin:6px 0 10px; font-size:13px;">팀/핵심업무/BIA 영향값과 리스크 점수를 함께 확인하면서 전략유형·연속성 전략·필요자원·상태를 관리하세요.</p>
+          <div class="tableWrap">
             <table>
               <thead>
                 <tr>
-                  <th style="width:120px;">부서</th>
-                  <th style="width:220px;">업무</th>
-                  <th style="width:80px;">Core</th>
-                  <th style="width:90px;">RTO</th>
-                  <th style="width:100px;">Risk Band</th>
-                  <th>추천 전략</th>
+                  <th>팀</th><th>핵심업무</th><th>업무등급</th><th>MTPD</th><th>RTO</th><th>중단 리스크</th><th>위험도</th><th>BIA 정보</th>
+                  <th>전략유형</th><th>BCP 전략</th><th>필요자원</th><th>상태</th><th>관리</th>
                 </tr>
               </thead>
               <tbody id="rows"></tbody>
@@ -112,68 +121,345 @@
 
   <script src="../assets/sidebar.js"></script>
   <script>
-    const toNum = (v)=>{ if(v===null||v===undefined||v==='') return null; const n=Number(v); return Number.isFinite(n)?n:null; };
-    const j = (k,fb=[])=>{ try{ return JSON.parse(sessionStorage.getItem(k) || localStorage.getItem(k) || JSON.stringify(fb)); }catch(e){ return fb; } };
+    (() => {
+      const KEY_BIA = 'bcmsBIAData';
+      const KEY_RISK = 'bcmsRiskAssessment';
+      const KEY_BCP = 'bcmsBCP';
 
-    const cores = (Array.isArray(j('bcp_core_processes')) ? j('bcp_core_processes') : []).filter(x => x && (x.coreFinal===true || x.core_final===true));
-    const risks = Array.isArray(j('risks')) ? j('risks') : [];
+      const STRATEGY_TYPES = ['예방/감축','대체 운영','대체 설비','수동 처리','우회 처리','외부 지원','자원 이중화','모니터링 강화'];
+      const RESOURCE_OPTIONS = ['인력','시스템','데이터','설비','유틸리티','협력업체','예비부품','작업공간'];
+      const STATUS_OPTIONS = ['초안','검토중','확정'];
 
-    const riskByDept = new Map();
-    for(const r of risks){
-      const dept = r.dept || r.department || '';
-      if(!dept) continue;
-      const score = (toNum(r.impact)||1) * (toNum(r.like)||1);
-      const band = score >= 16 ? 'high' : (score >= 8 ? 'med' : 'low');
-      const prev = riskByDept.get(dept);
-      if(!prev || (prev==='low' && band!=='low') || (prev==='med' && band==='high')) riskByDept.set(dept, band);
-    }
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+      const parseJSON = (raw, fallback) => { try { return JSON.parse(raw); } catch { return fallback; } };
+      const get = (key, fallback = []) => parseJSON(localStorage.getItem(key) || 'null', fallback) ?? fallback;
+      const toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+      const normalizeText = (v, fb = '-') => {
+        const s = String(v ?? '').trim();
+        return s || fb;
+      };
+      const unique = (arr) => [...new Set((arr || []).filter(Boolean))];
 
-    const bandBadge = (band)=>{
-      if(band==='high') return '<span class="badge b-high">HIGH</span>';
-      if(band==='med') return '<span class="badge b-med">MED</span>';
-      return '<span class="badge b-low">LOW</span>';
-    };
+      const state = {
+        rows: [],
+        draftMap: new Map(),
+        viewRows: []
+      };
 
-    function planFor(rto, band){
-      if((rto!==null && rto<=60) || band==='high') return '핵심 인력 이중화 + 대체 사이트 + DR 훈련(월 1회)';
-      if((rto!==null && rto<=240) || band==='med') return '우회 절차(SOP) + 주요 자원 선확보 + 분기 모의훈련';
-      return '기본 복구절차 문서화 + 반기 점검';
-    }
+      function normalizeBiaRows(raw) {
+        const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
+        return rows
+          .map((row) => ({
+            team: String(row.team || '').trim(),
+            functions: Array.isArray(row.functions) ? row.functions : []
+          }))
+          .filter((row) => row.team)
+          .map((row) => ({
+            team: row.team,
+            functions: row.functions
+              .map((fn) => ({
+                function: normalizeText(fn.name || fn.function || fn.process || fn.work, ''),
+                importance: normalizeText(fn.importance, '일반'),
+                grade: normalizeText(fn.grade, '일반'),
+                mtpd: normalizeText(fn.mtpd, '-'),
+                rto: normalizeText(fn.rto || `${fn.rtoValue ?? ''}${fn.rtoUnit ?? ''}`.trim(), '-'),
+                impact: toNum(fn.impact || fn.overallImpact) ?? 3,
+                coreFinal: !!fn.coreFinal
+              }))
+              .filter((fn) => fn.function)
+          }));
+      }
 
-    const rows = [];
-    for(const c of cores){
-      const dept = c.dept || c.department || '-';
-      const work = c.work || c.process || c.processName || c.name || '-';
-      const rto = toNum(c.rto ?? c.rtoMin ?? c.rto_minutes);
-      const band = riskByDept.get(dept) || 'low';
-      rows.push({ dept, work, rto, band, core:true, plan:planFor(rto, band) });
-    }
+      function normalizeRiskRows(raw) {
+        const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
+        return rows
+          .map((row) => ({
+            team: String(row.team || '').trim(),
+            risks: Array.isArray(row.risks) ? row.risks : []
+          }))
+          .filter((row) => row.team)
+          .map((row) => ({
+            team: row.team,
+            risks: row.risks
+              .map((risk) => {
+                const impact = toNum(risk.impact) ?? 3;
+                const likelihood = toNum(risk.likelihood || risk.like) ?? 1;
+                const riskScore = toNum(risk.riskScore) ?? (impact * likelihood);
+                const critical = risk.critical === undefined ? (riskScore >= 13) : !!risk.critical;
+                return {
+                  function: normalizeText(risk.function || risk.process || risk.work || risk.name, ''),
+                  risk: normalizeText(risk.risk || risk.threat || risk.hazard, ''),
+                  riskScore,
+                  critical
+                };
+              })
+              .filter((risk) => risk.function && risk.risk)
+          }));
+      }
 
-    rows.sort((a,b)=>{
-      const wb = {high:3,med:2,low:1};
-      return (wb[b.band]-wb[a.band]) || ((a.rto??99999)-(b.rto??99999));
-    });
+      function bcpToDraftMap(raw) {
+        const parsed = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? [raw] : []);
+        const map = new Map();
 
-    const tbody = document.getElementById('rows');
-    tbody.innerHTML = rows.length ? rows.map(r=>`
-      <tr>
-        <td>${r.dept}</td>
-        <td>${r.work}</td>
-        <td><span class="badge b-low">CORE</span></td>
-        <td>${r.rto===null ? '-' : r.rto + '분'}</td>
-        <td>${bandBadge(r.band)}</td>
-        <td>${r.plan}</td>
-      </tr>
-    `).join('') : '<tr><td colspan="6" style="text-align:center; color:rgba(15,23,42,.62);">BIA Core 데이터가 없습니다. 먼저 BIA를 입력해 주세요.</td></tr>';
+        const put = (item, teamFallback = '') => {
+          const team = normalizeText(item.team || teamFallback, '미지정 팀');
+          const fn = normalizeText(item.function || item.coreFunction || item.work, '');
+          const risk = normalizeText(item.risk || item.riskName || item.threat, '');
+          if (!fn || !risk) return;
+          const key = `${team}||${fn}||${risk}`;
+          const resources = Array.isArray(item.requiredResources)
+            ? item.requiredResources.filter((x) => RESOURCE_OPTIONS.includes(x))
+            : [];
+          map.set(key, {
+            team,
+            function: fn,
+            risk,
+            riskScore: toNum(item.riskScore),
+            critical: !!item.critical,
+            importance: normalizeText(item.importance, '일반'),
+            grade: normalizeText(item.grade, '일반'),
+            mtpd: normalizeText(item.mtpd, '-'),
+            rto: normalizeText(item.rto, '-'),
+            impact: toNum(item.impact) ?? 3,
+            coreFinal: !!item.coreFinal,
+            strategyType: STRATEGY_TYPES.includes(item.strategyType) ? item.strategyType : '',
+            strategyText: normalizeText(item.strategyText || item.strategy || item.recovery, ''),
+            requiredResources: resources,
+            status: STATUS_OPTIONS.includes(item.status) ? item.status : '초안'
+          });
+        };
 
-    const highDepts = new Set([...riskByDept.entries()].filter(([_,b])=>b==='high').map(([d])=>d));
-    const urgent = rows.filter(r => (r.rto!==null && r.rto<=60) || r.band==='high').length;
-    const cover = rows.length ? Math.round((rows.filter(r=>!!r.plan).length / rows.length) * 100) : 0;
+        parsed.forEach((row) => {
+          if (Array.isArray(row?.strategies)) row.strategies.forEach((s) => put(s, row.team || ''));
+          else if (row && typeof row === 'object') put(row, row.team || '');
+        });
 
-    document.getElementById('kCore').textContent = rows.length;
-    document.getElementById('kHighDept').textContent = highDepts.size;
-    document.getElementById('kUrgent').textContent = urgent;
-    document.getElementById('kCover').textContent = cover + '%';
+        return map;
+      }
+
+      function buildMergedRows() {
+        const biaRows = normalizeBiaRows(get(KEY_BIA, []));
+        const riskRows = normalizeRiskRows(get(KEY_RISK, []));
+        state.draftMap = bcpToDraftMap(get(KEY_BCP, []));
+
+        const biaFnMap = new Map();
+        biaRows.forEach((teamRow) => {
+          teamRow.functions.forEach((fn) => {
+            biaFnMap.set(`${teamRow.team}||${fn.function}`, { ...fn, team: teamRow.team });
+          });
+        });
+
+        const merged = [];
+        riskRows.forEach((teamRow) => {
+          teamRow.risks.forEach((risk) => {
+            const b = biaFnMap.get(`${teamRow.team}||${risk.function}`) || {};
+            const riskScore = toNum(risk.riskScore) ?? 0;
+            const critical = risk.critical === undefined ? (riskScore >= 13) : !!risk.critical;
+            const key = `${teamRow.team}||${risk.function}||${risk.risk}`;
+            const draft = state.draftMap.get(key) || {};
+
+            merged.push({
+              key,
+              team: teamRow.team,
+              function: risk.function,
+              risk: risk.risk,
+              riskScore,
+              critical,
+              importance: normalizeText(b.importance ?? draft.importance, '일반'),
+              grade: normalizeText(b.grade ?? draft.grade, '일반'),
+              mtpd: normalizeText(b.mtpd ?? draft.mtpd, '-'),
+              rto: normalizeText(b.rto ?? draft.rto, '-'),
+              impact: toNum(b.impact ?? draft.impact) ?? 3,
+              coreFinal: !!(b.coreFinal ?? draft.coreFinal),
+              strategyType: STRATEGY_TYPES.includes(draft.strategyType) ? draft.strategyType : '',
+              strategyText: normalizeText(draft.strategyText, ''),
+              requiredResources: Array.isArray(draft.requiredResources) ? draft.requiredResources : [],
+              status: STATUS_OPTIONS.includes(draft.status) ? draft.status : '초안'
+            });
+          });
+        });
+
+        state.rows = merged;
+      }
+
+      function setTeamFilterOptions() {
+        const teams = unique(state.rows.map((row) => row.team));
+        $('teamFilter').innerHTML = '<option value="">전체 팀</option>' + teams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('');
+      }
+
+      function filteredRows() {
+        const team = $('teamFilter').value;
+        const status = $('statusFilter').value;
+        const criticalOnly = $('criticalOnly').checked;
+
+        return state.rows.filter((row) => {
+          if (team && row.team !== team) return false;
+          if (status && row.status !== status) return false;
+          if (criticalOnly && !(row.critical || row.riskScore >= 13)) return false;
+          return true;
+        });
+      }
+
+      function renderTable() {
+        const rows = filteredRows();
+        state.viewRows = rows;
+
+        const html = rows.map((row) => {
+          const riskBadge = (row.critical || row.riskScore >= 13)
+            ? '<span class="badge high">중점관리</span>'
+            : '<span class="badge normal">일반관리</span>';
+
+          const resourceTags = RESOURCE_OPTIONS.map((res) => `
+            <label class="resourceChip">
+              <input type="checkbox" data-field="requiredResources" data-value="${esc(res)}" ${row.requiredResources.includes(res) ? 'checked' : ''}/>${esc(res)}
+            </label>
+          `).join('');
+
+          return `
+            <tr data-key="${esc(row.key)}">
+              <td>${esc(row.team)}</td>
+              <td>${esc(row.function)}</td>
+              <td>${esc(row.grade)}</td>
+              <td>${esc(row.mtpd)}</td>
+              <td>${esc(row.rto)}</td>
+              <td class="riskCell">${esc(row.risk)}<div class="riskMeta">${riskBadge}</div></td>
+              <td><b>${esc(row.riskScore)}</b></td>
+              <td>
+                중요도: ${esc(row.importance)}<br/>
+                영향도: ${esc(row.impact)}<br/>
+                Core Final: ${row.coreFinal ? 'Y' : 'N'}
+              </td>
+              <td>
+                <select data-field="strategyType">
+                  <option value="">선택</option>
+                  ${STRATEGY_TYPES.map((x) => `<option value="${esc(x)}" ${row.strategyType === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+                </select>
+              </td>
+              <td>
+                <textarea class="strategyText" data-field="strategyText" placeholder="해당 리스크를 경감하거나 업무를 지속하기 위한 전략을 입력하세요">${esc(row.strategyText)}</textarea>
+              </td>
+              <td><div class="resourceBox">${resourceTags}</div></td>
+              <td>
+                <select class="status" data-field="status">
+                  ${STATUS_OPTIONS.map((x) => `<option value="${esc(x)}" ${row.status === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+                </select>
+              </td>
+              <td>
+                <div class="rowActions"><button class="miniBtn primary" type="button" data-action="save">저장</button></div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        $('rows').innerHTML = html || '<tr><td colspan="13" class="empty">표시할 리스크가 없습니다. Risk Assessment 데이터를 확인해 주세요.</td></tr>';
+        renderKpi();
+      }
+
+      function renderKpi() {
+        const all = state.rows.filter((r) => r.critical || r.riskScore >= 13);
+        const written = all.filter((r) => (r.strategyText || '').trim().length > 0).length;
+        const finalCount = all.filter((r) => r.status === '확정').length;
+        const pending = Math.max(all.length - written, 0);
+
+        $('kCritical').textContent = String(all.length);
+        $('kWritten').textContent = String(written);
+        $('kFinal').textContent = String(finalCount);
+        $('kPending').textContent = String(pending);
+      }
+
+      function updateRowByKey(key, updater) {
+        const idx = state.rows.findIndex((row) => row.key === key);
+        if (idx < 0) return;
+        state.rows[idx] = updater({ ...state.rows[idx] });
+      }
+
+      function persistAll() {
+        const byTeam = new Map();
+        state.rows.forEach((row) => {
+          if (!byTeam.has(row.team)) byTeam.set(row.team, { team: row.team, strategies: [] });
+          byTeam.get(row.team).strategies.push({
+            function: row.function,
+            risk: row.risk,
+            riskScore: row.riskScore,
+            critical: row.critical,
+            importance: row.importance,
+            grade: row.grade,
+            mtpd: row.mtpd,
+            rto: row.rto,
+            impact: row.impact,
+            coreFinal: row.coreFinal,
+            strategyType: row.strategyType,
+            strategyText: row.strategyText,
+            strategy: row.strategyText,
+            requiredResources: row.requiredResources,
+            status: row.status
+          });
+        });
+
+        localStorage.setItem(KEY_BCP, JSON.stringify([...byTeam.values()]));
+      }
+
+      $('rows').addEventListener('input', (e) => {
+        const tr = e.target.closest('tr[data-key]');
+        if (!tr) return;
+        const key = tr.dataset.key;
+        const field = e.target.dataset.field;
+        if (!field) return;
+
+        updateRowByKey(key, (row) => {
+          row[field] = e.target.value;
+          return row;
+        });
+      });
+
+      $('rows').addEventListener('change', (e) => {
+        const tr = e.target.closest('tr[data-key]');
+        if (!tr) return;
+        const key = tr.dataset.key;
+
+        if (e.target.dataset.field === 'requiredResources') {
+          const selected = [...tr.querySelectorAll('input[data-field="requiredResources"]:checked')].map((el) => el.dataset.value);
+          updateRowByKey(key, (row) => {
+            row.requiredResources = selected;
+            return row;
+          });
+        }
+
+        if (['strategyType','status'].includes(e.target.dataset.field)) {
+          updateRowByKey(key, (row) => {
+            row[e.target.dataset.field] = e.target.value;
+            return row;
+          });
+        }
+
+        renderKpi();
+      });
+
+      $('rows').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action="save"]');
+        if (!btn) return;
+        const tr = btn.closest('tr[data-key]');
+        if (!tr) return;
+        persistAll();
+        btn.textContent = '저장됨';
+        setTimeout(() => { btn.textContent = '저장'; }, 800);
+      });
+
+      ['teamFilter','statusFilter','criticalOnly'].forEach((id) => {
+        $(id).addEventListener('change', () => renderTable());
+      });
+
+      $('saveAllBtn').addEventListener('click', () => {
+        persistAll();
+        $('saveAllBtn').textContent = '전체 저장됨';
+        setTimeout(() => { $('saveAllBtn').textContent = '전체 저장'; }, 900);
+      });
+
+      buildMergedRows();
+      setTeamFilterOptions();
+      renderTable();
+    })();
   </script>
 </body>
 </html>
