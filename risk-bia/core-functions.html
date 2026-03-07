@@ -118,8 +118,14 @@
 
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
+  <script src="../assets/demo-seed.js"></script>
   <script>
     (() => {
+      if (window.BCMSDemoSeed) {
+        window.BCMSDemoSeed.ensureDemoIfEmpty();
+        window.BCMSDemoSeed.mountBanner('.wrap');
+      }
+
       const CORE_KEY = 'bcmsCoreFunctions';
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
 
@@ -239,11 +245,15 @@
 
         cards.innerHTML = viewRows.map((row) => {
           const matched = orgTeams.includes(row.team);
+          const demoTeam = row.isDemo === true || row.demoLabel === '예시';
           return `
             <article class="teamCard" data-team="${row.team}">
               <div class="teamHead">
                 <h2 class="teamTitle">${row.team}</h2>
-                <span class="tag">${matched ? '조직 매칭 완료' : '조직 미매칭'}</span>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <span class="tag">${matched ? '조직 매칭 완료' : '조직 미매칭'}</span>
+                  ${demoTeam ? '<span class="tag">예시</span>' : ''}
+                </div>
               </div>
               <ul class="functionList">
                 ${row.functions.map((fn) => `<li>${fn}</li>`).join('')}

@@ -108,13 +108,13 @@
         <section class="card kpi">
           <p class="kTitle">핵심업무(Core) 연계</p>
           <div class="kValue" id="kpiCore">0</div>
-          <p class="kSub">bcp_core_processes(coreFinal=true) 기준</p>
+          <p class="kSub">bcmsBIAData(coreFinal=true) 기준</p>
         </section>
 
         <section class="card kpi">
           <p class="kTitle">리스크 데이터</p>
           <div class="kValue" id="kpiRisks">0</div>
-          <p class="kSub">risks 저장 건수</p>
+          <p class="kSub">bcmsRiskAssessment 리스크 건수</p>
         </section>
 
         <section class="card kpi">
@@ -141,30 +141,33 @@
   </main>
 
   <script src="../assets/sidebar.js"></script>
+  <script src="../assets/demo-seed.js"></script>
   <script>
+    if (window.BCMSDemoSeed) {
+      window.BCMSDemoSeed.ensureDemoIfEmpty();
+      window.BCMSDemoSeed.mountBanner('.wrap');
+    }
+
     function safeJSONParse(v, fallback){
       try{ return JSON.parse(v); }catch(e){ return fallback; }
     }
 
     function getRisksCount(){
-      const s = sessionStorage.getItem("risks");
-      const l = localStorage.getItem("risks");
-      const arr = safeJSONParse(s || l || "[]", []);
-      return Array.isArray(arr) ? arr.length : 0;
+      const arr = safeJSONParse(localStorage.getItem("bcmsRiskAssessment") || "[]", []);
+      const rows = Array.isArray(arr) ? arr : [];
+      return rows.reduce((acc, row)=> acc + ((row && Array.isArray(row.risks)) ? row.risks.length : 0), 0);
     }
 
     function getCoreFinalCount(){
-      const s = sessionStorage.getItem("bcp_core_processes");
-      const l = localStorage.getItem("bcp_core_processes");
-      const arr = safeJSONParse(s || l || "[]", []);
-      if(!Array.isArray(arr)) return 0;
-      return arr.filter(x => x && x.coreFinal === true).length;
+      const arr = safeJSONParse(localStorage.getItem("bcmsBIAData") || "[]", []);
+      const rows = Array.isArray(arr) ? arr : [];
+      return rows.reduce((acc, row)=> acc + ((row && Array.isArray(row.functions)) ? row.functions.filter((f)=> f && f.coreFinal === true).length : 0), 0);
     }
 
     function getProcessesCount(){
-      // risk-bia-data.js 없이도, BIA 저장이 이미 있으면 그걸로 추후 연동 가능
-      // 현재는 대시 성격이라 0 처리(필요 시 BIA 저장키에 맞춰 확장)
-      return 0;
+      const arr = safeJSONParse(localStorage.getItem("bcmsBIAData") || "[]", []);
+      const rows = Array.isArray(arr) ? arr : [];
+      return rows.reduce((acc, row)=> acc + ((row && Array.isArray(row.functions)) ? row.functions.length : 0), 0);
     }
 
     const risks = getRisksCount();

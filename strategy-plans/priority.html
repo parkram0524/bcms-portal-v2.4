@@ -131,7 +131,13 @@
   </main>
 
   <script src="../assets/sidebar.js"></script>
+  <script src="../assets/demo-seed.js"></script>
   <script>
+    if (window.BCMSDemoSeed) {
+      window.BCMSDemoSeed.ensureDemoIfEmpty();
+      window.BCMSDemoSeed.mountBanner('.wrap');
+    }
+
     const KEY_BIA = "bcmsBIAData";
     const KEY_RISK = "bcmsRiskAssessment";
 
