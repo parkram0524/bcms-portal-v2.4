@@ -3,50 +3,320 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>DRP 절차 | 전략·계획</title>
+  <title>DRP 실행 절차 관리 | 전략·계획</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    .wrap{ max-width:1200px; margin:0 auto; }
+    .wrap{ max-width:1400px; margin:0 auto; }
     .topbar{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
-    .topbar h1{ margin:0; font-size:26px; font-weight:950; }
-    .desc{ margin:8px 0 0; color:rgba(15,23,42,.64); font-size:14px; line-height:1.6; max-width:840px; }
-    .card{ border:1px solid rgba(15,23,42,.12); border-radius:18px; background:rgba(255,255,255,.94); padding:16px; }
-    .steps{ margin:0; padding-left:20px; color:rgba(15,23,42,.86); line-height:1.7; font-size:14px; }
-    .note{ margin-top:10px; font-size:13.5px; color:rgba(15,23,42,.62); }
+    .topbar h1{ margin:0; font-size:22px; font-weight:950; }
+    .desc{ margin:8px 0 0; color:rgba(15,23,42,.64); font-size:16px; line-height:1.6; max-width:960px; }
+
     .actions{ display:flex; gap:8px; flex-wrap:wrap; }
-    .btn{ text-decoration:none; padding:10px 13px; border:1px solid rgba(15,23,42,.14); border-radius:999px; background:rgba(255,255,255,.96); color:#0f172a; font-size:14px; font-weight:900; }
+    .btn{
+      text-decoration:none;
+      padding:10px 13px;
+      border:1px solid rgba(15,23,42,.14);
+      border-radius:999px;
+      background:rgba(255,255,255,.96);
+      color:#0f172a;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+    }
     .btn.primary{ background:rgba(96,165,250,.2); border-color:rgba(96,165,250,.48); }
+    .btn.danger{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
+
+    .card{ border:1px solid rgba(15,23,42,.12); border-radius:18px; background:rgba(255,255,255,.94); padding:16px; }
+    .note{ color:rgba(15,23,42,.62); line-height:1.6; font-size:16px; }
+
+    .tableWrap{ overflow:auto; margin-top:10px; }
+    table{ width:100%; min-width:1200px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.12); border-radius:14px; overflow:hidden; }
+    th,td{ border-bottom:1px solid rgba(15,23,42,.08); padding:12px 10px; vertical-align:top; font-size:16px; }
+    tr:last-child td{ border-bottom:none; }
+    th{ background:rgba(255,255,255,.97); color:rgba(15,23,42,.8); font-size:16px; text-align:left; }
+
+    .pill{ display:inline-flex; align-items:center; padding:6px 10px; border:1px solid rgba(15,23,42,.14); border-radius:999px; font-size:14px; font-weight:900; background:rgba(255,255,255,.96); }
+    .stepsBox{ display:flex; flex-direction:column; gap:8px; }
+    .stepRow{ display:flex; align-items:center; gap:8px; }
+    .stepNo{ min-width:58px; font-size:14px; color:rgba(15,23,42,.68); font-weight:800; }
+    .stepInput{
+      flex:1;
+      padding:9px 10px;
+      border:1px solid rgba(15,23,42,.14);
+      border-radius:10px;
+      background:#fff;
+      color:#0f172a;
+      font-size:16px;
+      outline:none;
+    }
+    .miniBtn{
+      padding:8px 10px;
+      border:1px solid rgba(15,23,42,.14);
+      border-radius:10px;
+      background:rgba(255,255,255,.96);
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .miniBtn.danger{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
+
+    .rowActions{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .hint{ margin-top:10px; font-size:14px; color:rgba(15,23,42,.62); }
+    .empty{ text-align:center; color:rgba(15,23,42,.62); font-size:16px; padding:16px; }
   </style>
 </head>
 <body>
   <aside id="sidebarMount"></aside>
+
   <main class="main">
     <div class="wrap">
       <div class="topbar">
         <div>
-          <h1>🧰 DRP 절차</h1>
-          <p class="desc">장애·재해 상황에서 IT 서비스를 복구하기 위한 표준 절차를 전략·계획 관점에서 확인합니다.</p>
+          <h1>🧰 DRP 실행 절차 관리</h1>
+          <p class="desc">
+            BCP 전략(<b>bcmsBCP</b>)을 기준으로 재해복구 실행 절차를 입력/수정/삭제합니다. 저장된 절차(<b>bcmsDRP</b>)는 Incident 대응, EOP, 훈련 연계에 활용됩니다.
+          </p>
         </div>
         <div class="actions">
           <a class="btn" href="./index.html">전략 대시보드</a>
           <a class="btn" href="./bcp.html">BCP 전략</a>
-          <a class="btn primary" href="../library/drp.html">절차 상세 보기</a>
+          <button class="btn primary" id="btnReload" type="button">BCP 다시 불러오기</button>
         </div>
       </div>
 
       <section class="card">
-        <h3 style="margin:0 0 10px;">복구 절차 흐름</h3>
-        <ol class="steps">
-          <li>장애 감지 및 상황 전파</li>
-          <li>복구 대상 시스템 우선순위 확인</li>
-          <li>대체 자원/백업 자원 가동</li>
-          <li>핵심 서비스 복구 및 검증</li>
-          <li>정상화 보고 및 사후 개선(CAPA) 연계</li>
-        </ol>
-        <p class="note">상세 DR 실행 절차와 체크리스트는 Procedure Library의 DRP 문서와 연계됩니다.</p>
+        <div class="note">구조: 팀 | 핵심업무 | 리스크 | BCP 전략 | DR 절차(단계별)</div>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">팀</th>
+                <th style="width:220px;">핵심업무</th>
+                <th style="width:170px;">리스크</th>
+                <th style="width:250px;">BCP 전략</th>
+                <th>DR 절차</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <p class="hint">예시: UPS 장애 대응 → 1) 발전기 가동 2) UPS Bypass 전환 3) 부하 재분배 4) 전력 안정화 확인</p>
       </section>
     </div>
   </main>
+
   <script src="../assets/sidebar.js"></script>
+  <script>
+    const KEY_BCP = "bcmsBCP";
+    const KEY_DRP = "bcmsDRP";
+
+    function parseJSON(raw, fallback){
+      try{ return JSON.parse(raw); }catch(e){ return fallback; }
+    }
+
+    function loadBCP(){
+      const raw = localStorage.getItem(KEY_BCP);
+      const parsed = parseJSON(raw || "[]", []);
+
+      // 지원 형식
+      // 1) [{team, strategies:[...]}]
+      // 2) {team, strategies:[...]}
+      // 3) [{team, function, risk, strategy, recovery}] (flat)
+      if (Array.isArray(parsed)){
+        if (parsed.length && parsed[0] && Array.isArray(parsed[0].strategies)) return parsed;
+        if (parsed.length && parsed[0] && (parsed[0].team || parsed[0].function || parsed[0].strategy)){
+          const byTeam = new Map();
+          for (const item of parsed){
+            const team = item.team || "미지정 팀";
+            if (!byTeam.has(team)) byTeam.set(team, { team, strategies: [] });
+            byTeam.get(team).strategies.push({
+              function: item.function || item.coreFunction || "",
+              risk: item.risk || "",
+              strategy: item.strategy || "",
+              recovery: item.recovery || ""
+            });
+          }
+          return [...byTeam.values()];
+        }
+        return [];
+      }
+
+      if (parsed && typeof parsed === "object" && Array.isArray(parsed.strategies)){
+        return [parsed];
+      }
+
+      return [];
+    }
+
+    function loadDRP(){
+      const raw = localStorage.getItem(KEY_DRP);
+      const parsed = parseJSON(raw || "[]", []);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+
+    function saveDRP(data){
+      localStorage.setItem(KEY_DRP, JSON.stringify(data));
+    }
+
+    function findSteps(drpData, team, fn, risk){
+      const t = drpData.find(x => x && x.team === team);
+      if (!t || !Array.isArray(t.procedures)) return [];
+      const p = t.procedures.find(x => x && x.function === fn && x.risk === risk);
+      return (p && Array.isArray(p.steps)) ? p.steps : [];
+    }
+
+    function upsertProcedure(team, fn, risk, steps){
+      const data = loadDRP();
+      let t = data.find(x => x && x.team === team);
+      if (!t){
+        t = { team, procedures: [] };
+        data.push(t);
+      }
+      if (!Array.isArray(t.procedures)) t.procedures = [];
+
+      let p = t.procedures.find(x => x && x.function === fn && x.risk === risk);
+      if (!p){
+        p = { function: fn, risk: risk, steps: [] };
+        t.procedures.push(p);
+      }
+      p.steps = steps;
+
+      saveDRP(data);
+    }
+
+    function deleteProcedure(team, fn, risk){
+      const data = loadDRP();
+      const t = data.find(x => x && x.team === team);
+      if (!t || !Array.isArray(t.procedures)) return;
+      t.procedures = t.procedures.filter(x => !(x && x.function === fn && x.risk === risk));
+      saveDRP(data);
+    }
+
+    function esc(s){
+      return String(s ?? "").replace(/[&<>"']/g, (m)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+    }
+
+    function buildStepRow(idx, value){
+      return `
+        <div class="stepRow">
+          <span class="stepNo">step ${idx+1}</span>
+          <input class="stepInput" data-step-input="1" value="${esc(value)}" placeholder="단계 절차를 입력하세요"/>
+          <button type="button" class="miniBtn danger" data-remove-step="1">삭제</button>
+        </div>
+      `;
+    }
+
+    function render(){
+      const bcp = loadBCP();
+      const drp = loadDRP();
+      const tbody = document.getElementById("tbody");
+
+      const rows = [];
+      for (const teamBlock of bcp){
+        const team = teamBlock.team || "미지정 팀";
+        const strategies = Array.isArray(teamBlock.strategies) ? teamBlock.strategies : [];
+        for (const s of strategies){
+          const fn = s.function || "-";
+          const risk = s.risk || "-";
+          const strategy = s.strategy || s.recovery || "-";
+          const steps = findSteps(drp, team, fn, risk);
+          const stepsHTML = (steps.length ? steps : [""]).map((v, i) => buildStepRow(i, v)).join("");
+
+          rows.push(`
+            <tr data-team="${esc(team)}" data-fn="${esc(fn)}" data-risk="${esc(risk)}">
+              <td><span class="pill">${esc(team)}</span></td>
+              <td>${esc(fn)}</td>
+              <td>${esc(risk)}</td>
+              <td>${esc(strategy)}</td>
+              <td>
+                <div class="stepsBox">${stepsHTML}</div>
+                <div class="rowActions">
+                  <button type="button" class="miniBtn" data-add-step="1">단계 추가</button>
+                  <button type="button" class="miniBtn" data-save="1">절차 저장</button>
+                  <button type="button" class="miniBtn danger" data-delete-proc="1">절차 삭제</button>
+                </div>
+              </td>
+            </tr>
+          `);
+        }
+      }
+
+      tbody.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="5" class="empty">bcmsBCP 데이터가 없습니다. BCP 전략을 먼저 저장해 주세요.</td></tr>`;
+      bindRowEvents();
+    }
+
+    function collectSteps(tr){
+      return [...tr.querySelectorAll('[data-step-input]')]
+        .map(i => (i.value || "").trim())
+        .filter(Boolean);
+    }
+
+    function bindRowEvents(){
+      document.querySelectorAll("#tbody tr").forEach((tr)=>{
+        const team = tr.getAttribute("data-team") || "";
+        const fn = tr.getAttribute("data-fn") || "";
+        const risk = tr.getAttribute("data-risk") || "";
+        const stepsBox = tr.querySelector(".stepsBox");
+
+        const addBtn = tr.querySelector('[data-add-step]');
+        if (addBtn){
+          addBtn.addEventListener("click", ()=>{
+            const idx = stepsBox.querySelectorAll(".stepRow").length;
+            stepsBox.insertAdjacentHTML("beforeend", buildStepRow(idx, ""));
+            reindexStepNumbers(stepsBox);
+            bindRemoveButtons(stepsBox);
+          });
+        }
+
+        const saveBtn = tr.querySelector('[data-save]');
+        if (saveBtn){
+          saveBtn.addEventListener("click", ()=>{
+            const steps = collectSteps(tr);
+            upsertProcedure(team, fn, risk, steps);
+            alert("DR 절차를 저장했습니다.");
+          });
+        }
+
+        const delBtn = tr.querySelector('[data-delete-proc]');
+        if (delBtn){
+          delBtn.addEventListener("click", ()=>{
+            deleteProcedure(team, fn, risk);
+            const inputs = tr.querySelectorAll('[data-step-input]');
+            inputs.forEach((i, idx)=>{ i.value = idx === 0 ? "" : i.value; });
+            tr.querySelectorAll(".stepRow").forEach((r, idx)=>{ if(idx>0) r.remove(); });
+            reindexStepNumbers(stepsBox);
+            alert("DR 절차를 삭제했습니다.");
+          });
+        }
+
+        bindRemoveButtons(stepsBox);
+      });
+    }
+
+    function bindRemoveButtons(stepsBox){
+      stepsBox.querySelectorAll('[data-remove-step]').forEach((btn)=>{
+        btn.onclick = ()=>{
+          const rows = stepsBox.querySelectorAll('.stepRow');
+          if (rows.length <= 1){
+            const input = rows[0].querySelector('[data-step-input]');
+            if (input) input.value = "";
+            return;
+          }
+          btn.closest('.stepRow').remove();
+          reindexStepNumbers(stepsBox);
+        };
+      });
+    }
+
+    function reindexStepNumbers(stepsBox){
+      [...stepsBox.querySelectorAll('.stepRow')].forEach((row, i)=>{
+        const no = row.querySelector('.stepNo');
+        if (no) no.textContent = `step ${i+1}`;
+      });
+    }
+
+    document.getElementById("btnReload").addEventListener("click", render);
+    render();
+  </script>
 </body>
 </html>
