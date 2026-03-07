@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>복구 우선순위 | 전략·계획</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .wrap{ max-width:1400px; margin:0 auto; }
+    .topbar{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .topbar h1{ margin:0; font-size:26px; font-weight:950; }
+    .desc{ margin:8px 0 0; color:rgba(15,23,42,.64); font-size:14px; line-height:1.6; max-width:940px; }
+
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .btn{ text-decoration:none; padding:10px 13px; border:1px solid rgba(15,23,42,.14); border-radius:999px; background:rgba(255,255,255,.96); color:#0f172a; font-size:14px; font-weight:900; }
+    .btn.primary{ background:rgba(96,165,250,.2); border-color:rgba(96,165,250,.48); }
+
+    .grid{ display:grid; grid-template-columns:repeat(12,1fr); gap:14px; }
+    .card{ border:1px solid rgba(15,23,42,.12); border-radius:18px; background:rgba(255,255,255,.94); padding:16px; }
+    .kpi{ grid-column:span 3; }
+    .panel{ grid-column:span 12; }
+    @media (max-width:1100px){ .kpi{ grid-column:span 6; } }
+    @media (max-width:680px){ .kpi{ grid-column:span 12; } }
+
+    .kTitle{ margin:0; font-size:14px; font-weight:900; color:rgba(15,23,42,.82); }
+    .kValue{ margin:10px 0 0; font-size:34px; font-weight:950; }
+    .kSub{ margin:8px 0 0; font-size:13px; color:rgba(15,23,42,.62); }
+
+    .tools{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+    .sel,.inp{
+      border:1px solid rgba(15,23,42,.14);
+      border-radius:10px;
+      padding:9px 10px;
+      background:#fff;
+      color:#0f172a;
+      font-size:14px;
+      min-height:38px;
+    }
+
+    .statusMsg{ margin:10px 0 0; font-size:14px; font-weight:800; color:rgba(15,23,42,.68); }
+    .statusMsg.warn{ color:#b45309; }
+
+    .tableWrap{ overflow:auto; margin-top:10px; }
+    table{ width:100%; min-width:1160px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.12); border-radius:12px; overflow:hidden; }
+    th,td{ padding:11px 9px; border-bottom:1px solid rgba(15,23,42,.08); text-align:left; font-size:14px; vertical-align:middle; }
+    th{ font-size:12.5px; color:rgba(15,23,42,.72); background:rgba(255,255,255,.98); }
+    tr:last-child td{ border-bottom:none; }
+
+    .score{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:56px; padding:5px 10px; border-radius:999px;
+      border:1px solid rgba(15,23,42,.14); font-weight:900;
+    }
+    .s-low{ color:#166534; background:rgba(34,197,94,.14); border-color:rgba(34,197,94,.35); }
+    .s-mid{ color:#9a3412; background:rgba(249,115,22,.14); border-color:rgba(249,115,22,.35); }
+    .s-high{ color:#991b1b; background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.36); }
+
+    .rank{ font-weight:950; font-size:15px; }
+    .empty{ text-align:center; color:rgba(15,23,42,.58); padding:14px; }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+
+  <main class="main">
+    <div class="wrap">
+      <div class="topbar">
+        <div>
+          <h1>📌 복구 우선순위</h1>
+          <p class="desc">BIA 핵심업무와 Risk Assessment를 결합해 복구 우선순위를 자동 계산합니다. 기본 정렬은 위험도 높은 순, 동일 위험도에서는 RTO 짧은 순입니다.</p>
+        </div>
+        <div class="actions">
+          <a class="btn" href="./index.html">전략 대시보드</a>
+          <a class="btn" href="./bcp.html">BCP 전략</a>
+          <button class="btn primary" id="btnReload" type="button">데이터 다시 불러오기</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <section class="card kpi">
+          <p class="kTitle">핵심업무(Core) 연계</p>
+          <div class="kValue" id="kCore">0</div>
+          <p class="kSub">BIA functions 총 개수</p>
+        </section>
+        <section class="card kpi">
+          <p class="kTitle">리스크 데이터</p>
+          <div class="kValue" id="kRisk">0</div>
+          <p class="kSub">RiskAssessment 항목 수</p>
+        </section>
+        <section class="card kpi">
+          <p class="kTitle">결합 건수</p>
+          <div class="kValue" id="kMerged">0</div>
+          <p class="kSub">팀+핵심업무 기준 매칭</p>
+        </section>
+        <section class="card kpi">
+          <p class="kTitle">표시 건수</p>
+          <div class="kValue" id="kShown">0</div>
+          <p class="kSub">필터/정렬 적용 결과</p>
+        </section>
+
+        <section class="card panel">
+          <div class="tools">
+            <select id="teamFilter" class="sel"></select>
+            <select id="sortMode" class="sel">
+              <option value="risk_desc">위험도 기준 정렬 (높은 순)</option>
+              <option value="rto_asc">RTO 기준 정렬 (짧은 순)</option>
+            </select>
+            <input id="searchInput" class="inp" placeholder="핵심업무/리스크 검색"/>
+          </div>
+
+          <div id="statusMsg" class="statusMsg"></div>
+
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:120px;">팀</th>
+                  <th style="width:260px;">핵심업무</th>
+                  <th style="width:90px;">RTO</th>
+                  <th style="width:220px;">리스크</th>
+                  <th style="width:100px;">위험도</th>
+                  <th style="width:120px;">복구 우선순위</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/demo-seed.js"></script>
+  <script>
+    if (window.BCMSDemoSeed) {
+      window.BCMSDemoSeed.ensureDemoIfEmpty();
+      window.BCMSDemoSeed.mountBanner('.wrap');
+    }
+
+    const KEY_BIA = "bcmsBIAData";
+    const KEY_RISK = "bcmsRiskAssessment";
+
+    const $ = (s)=>document.querySelector(s);
+
+    function parseJSON(raw, fb){ try{return JSON.parse(raw);}catch(e){return fb;} }
+    function toNum(v){
+      if(v === null || v === undefined) return null;
+      if(typeof v === 'number' && Number.isFinite(v)) return v;
+      const n = Number(String(v).replace(/[^0-9.]/g, ''));
+      return Number.isFinite(n) ? n : null;
+    }
+    function rtoToMin(v){
+      const s = String(v ?? '').trim();
+      if(!s) return null;
+      const n = toNum(s);
+      if(n === null) return null;
+      if(s.includes('시간')) return Math.round(n * 60);
+      return Math.round(n);
+    }
+    function rtoText(min){ return min === null ? '-' : (min >= 60 && min % 60 === 0 ? `${min/60}시간` : `${min}분`); }
+
+    function scoreClass(score){
+      if(score >= 13) return 's-high';
+      if(score >= 6) return 's-mid';
+      return 's-low';
+    }
+
+    function loadBIA(){
+      const raw = localStorage.getItem(KEY_BIA);
+      const parsed = parseJSON(raw || '[]', []);
+      const arr = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+      const out = [];
+      for(const teamBlock of arr){
+        const team = teamBlock.team || teamBlock.department || '미지정 팀';
+        const funcs = Array.isArray(teamBlock.functions) ? teamBlock.functions : [];
+        for(const f of funcs){
+          const name = f.name || f.function || f.work || '';
+          if(!name) continue;
+          out.push({ team, functionName: name, rtoMin: rtoToMin(f.rto), impact: toNum(f.impact) ?? 0 });
+        }
+      }
+      return out;
+    }
+
+    function loadRisk(){
+      const raw = localStorage.getItem(KEY_RISK);
+      const parsed = parseJSON(raw || '[]', []);
+      const arr = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+      const out = [];
+      for(const teamBlock of arr){
+        const team = teamBlock.team || teamBlock.department || '미지정 팀';
+        const risks = Array.isArray(teamBlock.risks) ? teamBlock.risks : [];
+        for(const r of risks){
+          const functionName = r.function || r.functionName || r.name || '';
+          if(!functionName) continue;
+          const impact = toNum(r.impact) ?? 0;
+          const likelihood = toNum(r.likelihood) ?? 0;
+          const riskScore = toNum(r.riskScore) ?? (impact * likelihood);
+          out.push({ team, functionName, risk: r.risk || '-', impact, likelihood, riskScore });
+        }
+      }
+      return out;
+    }
+
+    function mergeData(bia, risk){
+      const riskMap = new Map();
+      for(const r of risk){
+        const key = `${r.team}__${r.functionName}`;
+        if(!riskMap.has(key)) riskMap.set(key, []);
+        riskMap.get(key).push(r);
+      }
+
+      const merged = [];
+      for(const b of bia){
+        const key = `${b.team}__${b.functionName}`;
+        const candidates = riskMap.get(key) || [];
+        if(!candidates.length){
+          merged.push({
+            team: b.team,
+            functionName: b.functionName,
+            rtoMin: b.rtoMin,
+            risk: '-',
+            riskScore: 0,
+            priorityScore: 0
+          });
+          continue;
+        }
+
+        for(const c of candidates){
+          const priorityScore = c.riskScore;
+          merged.push({
+            team: b.team,
+            functionName: b.functionName,
+            rtoMin: b.rtoMin,
+            risk: c.risk,
+            riskScore: c.riskScore,
+            priorityScore
+          });
+        }
+      }
+      return merged;
+    }
+
+    function applySort(rows, mode){
+      const copy = [...rows];
+      if(mode === 'rto_asc'){
+        copy.sort((a,b)=>{
+          const ra = a.rtoMin ?? 999999;
+          const rb = b.rtoMin ?? 999999;
+          return ra - rb || b.riskScore - a.riskScore || a.team.localeCompare(b.team);
+        });
+      }else{
+        copy.sort((a,b)=>{
+          const ra = a.riskScore ?? 0;
+          const rb = b.riskScore ?? 0;
+          const rtoa = a.rtoMin ?? 999999;
+          const rtob = b.rtoMin ?? 999999;
+          return rb - ra || rtoa - rtob || a.team.localeCompare(b.team);
+        });
+      }
+      return copy;
+    }
+
+    function render(){
+      const bia = loadBIA();
+      const risk = loadRisk();
+      const merged = mergeData(bia, risk);
+
+      $('#kCore').textContent = bia.length;
+      $('#kRisk').textContent = risk.length;
+      $('#kMerged').textContent = merged.length;
+
+      const teamFilter = $('#teamFilter');
+      const sortMode = $('#sortMode').value;
+      const q = ($('#searchInput').value || '').trim().toLowerCase();
+
+      const teams = ['전체 팀', ...Array.from(new Set(merged.map(x=>x.team))).sort((a,b)=>a.localeCompare(b))];
+      const prevTeam = teamFilter.value;
+      teamFilter.innerHTML = teams.map(t=>`<option value="${t}">${t}</option>`).join('');
+      teamFilter.value = teams.includes(prevTeam) ? prevTeam : '전체 팀';
+
+      let rows = merged.filter(x => teamFilter.value === '전체 팀' ? true : x.team === teamFilter.value);
+      if(q){
+        rows = rows.filter(x => (`${x.functionName} ${x.risk} ${x.team}`).toLowerCase().includes(q));
+      }
+
+      rows = applySort(rows, sortMode).map((r, idx)=>({ ...r, rank: idx + 1 }));
+      $('#kShown').textContent = rows.length;
+
+      const msg = $('#statusMsg');
+      msg.className = 'statusMsg';
+      if(!bia.length){
+        msg.textContent = 'BIA 데이터가 없습니다';
+        msg.classList.add('warn');
+      }else if(!risk.length){
+        msg.textContent = 'Risk Assessment 수행 필요';
+        msg.classList.add('warn');
+      }else{
+        msg.textContent = `자동 계산 완료: ${rows.length}건 표시 중`;
+      }
+
+      const tbody = $('#tbody');
+      tbody.innerHTML = rows.length ? rows.map(r => `
+        <tr>
+          <td>${r.team}</td>
+          <td>${r.functionName}</td>
+          <td>${rtoText(r.rtoMin)}</td>
+          <td>${r.risk}</td>
+          <td><span class="score ${scoreClass(r.riskScore)}">${r.riskScore}</span></td>
+          <td class="rank">${r.rank}</td>
+        </tr>
+      `).join('') : '<tr><td colspan="6" class="empty">표시할 데이터가 없습니다.</td></tr>';
+    }
+
+    $('#teamFilter').addEventListener('change', render);
+    $('#sortMode').addEventListener('change', render);
+    $('#searchInput').addEventListener('input', render);
+    $('#btnReload').addEventListener('click', render);
+
+    render();
+  </script>
+</body>
+</html>
