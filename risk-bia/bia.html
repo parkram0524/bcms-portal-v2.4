@@ -434,7 +434,51 @@
         fn.coreFinal = fn.grade !== '일반';
       };
 
-      const updateFnField = (idx, field, value) => {
+      const renderSummaryOnly = () => {
+        const team = teamSelect.value;
+        if (!team) return;
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        renderSummary(team, row.functions || []);
+      };
+
+      const refreshRowCells = (idx) => {
+        const team = teamSelect.value;
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        const fn = row.functions[idx];
+        if (!fn) return;
+
+        const tr = tableMount.querySelector(`tr[data-idx="${idx}"]`);
+        if (!tr) return;
+
+        const mtpdTag = tr.children[3]?.querySelector('.tag');
+        const gradeTag = tr.children[5]?.querySelector('.tag');
+        if (mtpdTag) mtpdTag.textContent = fn.mtpd || '장기 허용';
+        if (gradeTag) {
+          gradeTag.textContent = fn.grade;
+          gradeTag.className = `tag g-${fn.grade}`;
+        }
+
+        const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
+        if (detail) {
+          const mtpdText = detail.querySelector('.muted b');
+          if (mtpdText) mtpdText.textContent = fn.mtpd || '장기 허용';
+
+          const warnText = getRtoWarnText(fn);
+          let warnEl = detail.querySelector('.warn');
+          if (warnText) {
+            if (!warnEl) {
+              warnEl = document.createElement('div');
+              warnEl.className = 'warn';
+              detail.querySelector('.detailCard')?.appendChild(warnEl);
+            }
+            warnEl.textContent = warnText;
+          } else if (warnEl) {
+            warnEl.remove();
+          }
+        }
+      };
+
+      const updateFnField = (idx, field, value, opts = {}) => {
         const team = teamSelect.value;
         const row = ensureTeamRecord(team, coreMap, biaRows);
         const fn = row.functions[idx];
@@ -447,7 +491,10 @@
         if (field === 'rtoReason') fn.rtoReason = String(value || '');
 
         recalcFunction(fn);
-        render();
+        if (!opts.skipUiUpdate) {
+          refreshRowCells(idx);
+          renderSummaryOnly();
+        }
       };
 
       teamSelect.addEventListener('change', () => render());
@@ -467,9 +514,10 @@
           const row = ensureTeamRecord(team, coreMap, biaRows);
           const fn = row.functions[idx];
           if (!fn) return;
-          fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
-          recalcFunction(fn);
-          render();
+            fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
+            recalcFunction(fn);
+            refreshRowCells(idx);
+            renderSummaryOnly();
           return;
         }
 
@@ -484,6 +532,15 @@
           else set.delete(res);
           fn.requiredResources = [...set];
         }
+      });
+
+      tableMount.addEventListener('input', (e) => {
+        const field = e.target.getAttribute('data-field');
+        if (field !== 'rtoValue' && field !== 'rtoReason') return;
+        const tr = e.target.closest('tr[data-idx]');
+        const idx = tr ? Number(tr.dataset.idx) : Number(e.target.getAttribute('data-idx'));
+        if (!Number.isFinite(idx)) return;
+        updateFnField(idx, field, e.target.value);
       });
 
 
