@@ -54,6 +54,14 @@
 
     .warn{ margin-top:10px; border:1px solid rgba(239,68,68,.35); border-radius:10px; background:rgba(239,68,68,.10); color:#991b1b; padding:9px 10px; font-size:13px; font-weight:800; }
 
+    .scoreGuide{ margin-top:12px; border:1px solid rgba(15,23,42,.1); border-radius:14px; background:#fff; padding:12px; }
+    .scoreGuide h3{ margin:0 0 8px; font-size:16px; font-weight:900; color:#0f172a; }
+    .scoreGuideGrid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+    .scoreItem{ border:1px solid rgba(15,23,42,.08); border-radius:10px; background:#fff; padding:8px; }
+    .scoreItem .n{ font-size:13px; font-weight:900; color:#0f172a; }
+    .scoreItem ul{ margin:6px 0 0; padding-left:16px; color:rgba(15,23,42,.72); font-size:12px; line-height:1.45; }
+    .miniHelp{ margin-top:8px; padding:8px 10px; border:1px solid rgba(15,23,42,.1); border-radius:10px; background:#f8fafc; color:rgba(15,23,42,.72); font-size:12.5px; line-height:1.5; }
+
     .empty{ margin-top:12px; border:1px dashed rgba(148,163,184,.42); border-radius:12px; background:#f8fafc; color:#64748b; padding:14px; font-size:15px; }
 
     @media (max-width:980px){
@@ -61,10 +69,12 @@
       .summaryGrid{ grid-template-columns:1fr 1fr; }
       .detailGrid{ grid-template-columns:1fr; }
       .timeGrid, .resourceGrid{ grid-template-columns:1fr 1fr; }
+      .scoreGuideGrid{ grid-template-columns:1fr 1fr; }
     }
     @media (max-width:640px){
       .summaryGrid{ grid-template-columns:1fr; }
       .timeGrid, .resourceGrid{ grid-template-columns:1fr; }
+      .scoreGuideGrid{ grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -75,6 +85,34 @@
       <section class="hero">
         <h1>BIA (업무영향분석)</h1>
         <p>핵심업무를 자동 불러와 중요업무 여부, 시간경과 영향평가, MTPD, RTO를 입력합니다. 저장 데이터는 Risk/복구 우선순위 화면과 호환됩니다.</p>
+      </section>
+
+
+
+      <section class="scoreGuide" aria-label="영향평가 점수 기준">
+        <h3>영향평가 점수 기준</h3>
+        <div class="scoreGuideGrid">
+          <article class="scoreItem">
+            <div class="n">1 경미함</div>
+            <ul><li>서비스 영향 거의 없음</li><li>내부 처리 가능</li><li>대외 영향 없음</li></ul>
+          </article>
+          <article class="scoreItem">
+            <div class="n">2 작음</div>
+            <ul><li>일부 영향 있으나 대부분 수용 가능</li><li>평판/재무 영향 거의 없음</li></ul>
+          </article>
+          <article class="scoreItem">
+            <div class="n">3 보통</div>
+            <ul><li>고객 불편 또는 민원 가능</li><li>제한적 평판 영향</li><li>감내 가능한 재무 영향</li></ul>
+          </article>
+          <article class="scoreItem">
+            <div class="n">4 큼</div>
+            <ul><li>서비스 중단 영향이 큼</li><li>계약/법규/평판 영향 우려</li><li>복구 지연 시 수용 어려움</li></ul>
+          </article>
+          <article class="scoreItem">
+            <div class="n">5 매우 큼</div>
+            <ul><li>핵심 서비스 지속 불가 수준</li><li>중대한 대외 영향</li><li>즉시 복구 필요 수준</li></ul>
+          </article>
+        </div>
       </section>
 
       <section class="panel">
@@ -394,6 +432,7 @@
                                   </div>
                                 `).join('')}
                               </div>
+                              <div class="miniHelp">각 시간 구간별로 업무중단 영향도를 1~5점으로 평가합니다. 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산하며, 목표복구시간(RTO)은 MTPD보다 짧아야 합니다.</div>
                               <div class="muted" style="margin-top:8px;">최대허용중단시간(MTPD): <b>${esc(fn.mtpd || '장기 허용')}</b></div>
                             </div>
                             <div>
