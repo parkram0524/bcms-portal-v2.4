@@ -202,6 +202,37 @@
         return n;
       };
 
+      const TIME_KEYS = TIME_IMPACT_META.map((t) => t.key);
+
+      const normalizeMonotonicTimeImpact = (timeImpact) => {
+        const out = {};
+        let prev = 1;
+        for (const key of TIME_KEYS) {
+          const now = clamp(Number(timeImpact?.[key] || 1), 1, 5);
+          const fixed = Math.max(prev, now);
+          out[key] = fixed;
+          prev = fixed;
+        }
+        return out;
+      };
+
+      const enforceMonotonicFrom = (timeImpact, startIdx = 0) => {
+        const out = { ...timeImpact };
+        const begin = Math.max(0, startIdx);
+        if (begin > 0) {
+          const prevKey = TIME_KEYS[begin - 1];
+          out[TIME_KEYS[begin]] = Math.max(clamp(Number(out[TIME_KEYS[begin]] || 1), 1, 5), clamp(Number(out[prevKey] || 1), 1, 5));
+        }
+        for (let i = begin + 1; i < TIME_KEYS.length; i++) {
+          const k = TIME_KEYS[i];
+          const pk = TIME_KEYS[i-1];
+          const cur = clamp(Number(out[k] || 1), 1, 5);
+          const prev = clamp(Number(out[pk] || 1), 1, 5);
+          out[k] = Math.max(cur, prev);
+        }
+        return out;
+      };
+
       const calcMtpd = (timeImpact) => {
         for (const t of TIME_IMPACT_META) {
           const score = Number(timeImpact?.[t.key] || 1);
@@ -235,10 +266,11 @@
         const parsedRto = rawFn.rtoValue !== undefined ? { value: rawFn.rtoValue, unit: rawFn.rtoUnit || '분' } : parseRtoString(rawFn.rto);
 
         const timeImpactRaw = rawFn.timeImpact || {};
-        const timeImpact = {};
+        const timeImpactSeed = {};
         for (const t of TIME_IMPACT_META) {
-          timeImpact[t.key] = clamp(Number(timeImpactRaw[t.key] || makeDefaultTimeImpact(impact)[t.key]), 1, 5);
+          timeImpactSeed[t.key] = clamp(Number(timeImpactRaw[t.key] || makeDefaultTimeImpact(impact)[t.key]), 1, 5);
         }
+        const timeImpact = normalizeMonotonicTimeImpact(timeImpactSeed);
 
         const mtpd = calcMtpd(timeImpact);
         const fn = {
@@ -423,16 +455,19 @@
                             <div>
                               <h4 class="subTitle">시간경과 영향평가</h4>
                               <div class="timeGrid">
-                                ${TIME_IMPACT_META.map((t) => `
+                                ${TIME_IMPACT_META.map((t, ti) => `
                                   <div class="timeItem">
                                     <label>${t.label}</label>
                                     <select class="smallSelect" data-time-impact="${t.key}" data-idx="${idx}">
-                                      ${[1,2,3,4,5].map((n)=>`<option value="${n}" ${Number(fn.timeImpact?.[t.key])===n?'selected':''}>${n} ${impactLabels[n]}</option>`).join('')}
+                                      ${[1,2,3,4,5].map((n)=>{
+                                        const minAllowed = ti===0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti-1]] || 1);
+                                        return `<option value="${n}" ${Number(fn.timeImpact?.[t.key])===n?'selected':''} ${n<minAllowed?'disabled':''}>${n} ${impactLabels[n]}</option>`;
+                                      }).join('')}
                                     </select>
                                   </div>
                                 `).join('')}
                               </div>
-                              <div class="miniHelp">각 시간 구간별로 업무중단 영향도를 1~5점으로 평가합니다. 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산하며, 목표복구시간(RTO)은 MTPD보다 짧아야 합니다.</div>
+                              <div class="miniHelp">- 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>- 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>- 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.</div>
                               <div class="muted" style="margin-top:8px;">최대허용중단시간(MTPD): <b>${esc(fn.mtpd || '장기 허용')}</b></div>
                             </div>
                             <div>
@@ -465,6 +500,7 @@
       const recalcFunction = (fn) => {
         fn.overallImpact = clamp(Number(fn.overallImpact || 3), 1, 5);
         fn.impact = fn.overallImpact; // Risk 호환 alias
+        fn.timeImpact = normalizeMonotonicTimeImpact(fn.timeImpact || {});
         const mtpd = calcMtpd(fn.timeImpact || {});
         fn.mtpd = mtpd.text;
         fn.mtpdMinutes = mtpd.minutes;
@@ -478,6 +514,28 @@
         if (!team) return;
         const row = ensureTeamRecord(team, coreMap, biaRows);
         renderSummary(team, row.functions || []);
+      };
+
+
+      const refreshTimeImpactControls = (idx) => {
+        const team = teamSelect.value;
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        const fn = row.functions[idx];
+        if (!fn) return;
+
+        const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
+        if (!detail) return;
+
+        const selects = detail.querySelectorAll('select[data-time-impact]');
+        selects.forEach((sel, i) => {
+          const key = sel.getAttribute('data-time-impact');
+          const minAllowed = i === 0 ? 1 : Number(fn.timeImpact[TIME_KEYS[i-1]] || 1);
+          sel.value = String(fn.timeImpact[key] || minAllowed);
+          [...sel.options].forEach((op) => {
+            const n = Number(op.value);
+            op.disabled = n < minAllowed;
+          });
+        });
       };
 
       const refreshRowCells = (idx) => {
@@ -536,6 +594,18 @@
         }
       };
 
+      let normalizedChanged = false;
+      biaRows.forEach((row) => {
+        row.functions = (row.functions || []).map((fn) => {
+          const before = JSON.stringify(fn.timeImpact || {});
+          recalcFunction(fn);
+          const after = JSON.stringify(fn.timeImpact || {});
+          if (before !== after) normalizedChanged = true;
+          return fn;
+        });
+      });
+      if (normalizedChanged) saveBiaData(biaRows);
+
       teamSelect.addEventListener('change', () => render());
 
       tableMount.addEventListener('change', (e) => {
@@ -553,10 +623,13 @@
           const row = ensureTeamRecord(team, coreMap, biaRows);
           const fn = row.functions[idx];
           if (!fn) return;
-            fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
-            recalcFunction(fn);
-            refreshRowCells(idx);
-            renderSummaryOnly();
+            const tIndex = TIME_KEYS.indexOf(tKey);
+          fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
+          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
+          recalcFunction(fn);
+          refreshTimeImpactControls(idx);
+          refreshRowCells(idx);
+          renderSummaryOnly();
           return;
         }
 
