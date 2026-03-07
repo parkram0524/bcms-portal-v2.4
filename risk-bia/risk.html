@@ -22,7 +22,7 @@
     .metric .v{ margin-top:6px; font-size:24px; font-weight:950; }
 
     .tableWrap{ margin-top:12px; overflow:auto; }
-    table{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
+    table{ width:100%; min-width:1060px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
     th, td{ padding:10px; font-size:16px; border-bottom:1px solid rgba(15,23,42,.08); vertical-align:middle; }
     th{ background:#f8fafc; font-size:14px; font-weight:900; color:#334155; text-align:left; }
     tr:last-child td{ border-bottom:none; }
@@ -31,7 +31,7 @@
     .fnName{ font-size:16px; font-weight:800; }
     .muted{ margin-top:4px; font-size:13px; color:rgba(15,23,42,.6); }
 
-    .threatInput{ width:100%; font-size:15px; }
+    .riskInput{ width:100%; font-size:15px; }
     .likelihood{ width:100%; font-size:15px; }
 
     .impactReadonly{
@@ -45,10 +45,12 @@
     .low{ color:#166534; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.35); }
     .mid{ color:#92400e; background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
     .high{ color:#991b1b; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
+    .focusBadge{ display:inline-flex; margin-top:6px; padding:4px 8px; border-radius:999px; border:1px solid rgba(239,68,68,.4); background:rgba(239,68,68,.12); color:#991b1b; font-size:12px; font-weight:900; }
 
     .btn{ border:1px solid rgba(15,23,42,.15); border-radius:10px; background:#fff; color:#0f172a; padding:9px 12px; font-size:14px; font-weight:900; cursor:pointer; }
     .btn:hover{ background:rgba(15,23,42,.04); }
     .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.08); color:#1d4ed8; }
+    .btn.add{ margin-top:8px; padding:7px 10px; font-size:13px; }
 
     .actions{ margin-top:12px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
     .empty{ margin-top:12px; border:1px dashed rgba(148,163,184,.4); border-radius:12px; background:#f8fafc; color:#64748b; padding:14px; font-size:15px; }
@@ -77,7 +79,7 @@
     <div class="wrap">
       <section class="hero">
         <h1>리스크 평가</h1>
-        <p>BIA에서 정의한 핵심업무를 자동 불러와 리스크를 평가합니다. 영향도는 BIA 값을 자동 적용하며, 발생가능성을 입력하면 위험도가 자동 계산됩니다.</p>
+        <p>BIA 핵심업무를 불러와 업무 중단 리스크를 다중 입력합니다. 영향도는 BIA 값을 자동 적용하며, 발생가능성 입력 시 위험도가 자동 계산되고 위험도 13 이상은 중점관리로 표시됩니다.</p>
       </section>
 
       <section class="panel">
@@ -87,19 +89,20 @@
             <select id="teamSelect"></select>
           </div>
           <div class="field">
-            <label for="quickThreat">공통 위협 빠른 입력(선택)</label>
-            <input id="quickThreat" type="text" placeholder="예: 정전, 사이버 공격"/>
+            <label for="quickRisk">공통 중단 리스크 빠른 입력(선택)</label>
+            <input id="quickRisk" type="text" placeholder="예: 정전, 사이버 공격"/>
           </div>
         </div>
 
         <div class="summaryGrid">
           <article class="metric"><div class="k">선택 팀</div><div id="teamMetric" class="v">-</div></article>
           <article class="metric"><div class="k">핵심업무 수</div><div id="fnMetric" class="v">0</div></article>
-          <article class="metric"><div class="k">고위험 항목</div><div id="highMetric" class="v">0</div></article>
+          <article class="metric"><div class="k">중점관리 리스크</div><div id="highMetric" class="v">0</div></article>
           <article class="metric"><div class="k">평균 위험도</div><div id="avgMetric" class="v">0.0</div></article>
         </div>
 
         <div id="tableMount" class="tableWrap"></div>
+
         <div class="actions">
           <button id="saveBtn" class="btn primary" type="button">저장</button>
           <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
@@ -129,7 +132,7 @@
       };
 
       const teamSelect = document.getElementById('teamSelect');
-      const quickThreat = document.getElementById('quickThreat');
+      const quickRisk = document.getElementById('quickRisk');
       const tableMount = document.getElementById('tableMount');
       const saveBtn = document.getElementById('saveBtn');
       const resetBtn = document.getElementById('resetBtn');
@@ -140,20 +143,8 @@
       const highMetric = document.getElementById('highMetric');
       const avgMetric = document.getElementById('avgMetric');
 
-      const impactLabels = {
-        1: '매우 낮음',
-        2: '낮음',
-        3: '보통',
-        4: '높음',
-        5: '매우 높음'
-      };
-      const likelihoodLabels = {
-        1: '매우 낮음',
-        2: '낮음',
-        3: '보통',
-        4: '높음',
-        5: '매우 높음'
-      };
+      const impactLabels = { 1:'매우 낮음', 2:'낮음', 3:'보통', 4:'높음', 5:'매우 높음' };
+      const likelihoodLabels = { 1:'매우 낮음', 2:'낮음', 3:'보통', 4:'높음', 5:'매우 높음' };
 
       const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
       const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -177,20 +168,26 @@
         return rows
           .map((row) => ({
             team: String(row.team || '').trim(),
-            risks: (row.risks || []).map((risk) => ({
-              function: String(risk.function || '').trim(),
-              threat: String(risk.threat || '').trim(),
-              likelihood: clamp(Number(risk.likelihood || 1), 1, 5),
-              impact: clamp(Number(risk.impact || 3), 1, 5),
-              riskScore: Number(risk.riskScore || (Number(risk.likelihood || 1) * Number(risk.impact || 3)))
-            })).filter((risk) => risk.function)
+            risks: (row.risks || []).map((risk) => {
+              const likelihood = clamp(Number(risk.likelihood || 1), 1, 5);
+              const impact = clamp(Number(risk.impact || 3), 1, 5);
+              const riskScore = likelihood * impact;
+              return {
+                function: String(risk.function || '').trim(),
+                risk: String(risk.risk || risk.threat || '').trim(),
+                likelihood,
+                impact,
+                riskScore,
+                critical: riskScore >= 13
+              };
+            }).filter((risk) => risk.function)
           }))
           .filter((row) => row.team);
       };
 
       const scoreBand = (score) => {
         if (score <= 5) return { text: '낮음', cls: 'low' };
-        if (score <= 12) return { text: '중간', cls: 'mid' };
+        if (score <= 12) return { text: '보통', cls: 'mid' };
         return { text: '높음', cls: 'high' };
       };
 
@@ -206,7 +203,7 @@
           <table class="matrix" aria-label="리스크 매트릭스">
             <thead>
               <tr>
-                <th>Impact ↑</th>
+                <th>영향도 ↑</th>
                 <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
               </tr>
             </thead>
@@ -218,7 +215,7 @@
                 </tr>
               `).join('')}
               <tr>
-                <th>Likelihood →</th>
+                <th>발생가능성 →</th>
                 <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
               </tr>
             </tbody>
@@ -236,40 +233,30 @@
         ? teams.map((team) => `<option value="${team}">${team}</option>`).join('')
         : '<option value="">BIA 데이터가 없습니다</option>';
 
+      const makeRisk = (fn, impact)=>({ function: fn, risk: '', likelihood: 1, impact, riskScore: impact, critical: false });
+
       const ensureTeamRisk = (team) => {
         if (!team) return { team: '', risks: [] };
         let row = riskRows.find((r) => r.team === team);
         const functions = biaTeamMap.get(team) || [];
 
         if (!row) {
-          row = {
-            team,
-            risks: functions.map((fn) => ({
-              function: fn.name,
-              threat: '',
-              likelihood: 1,
-              impact: fn.impact,
-              riskScore: 1 * fn.impact
-            }))
-          };
+          row = { team, risks: functions.map((fn) => makeRisk(fn.name, fn.impact)) };
           riskRows.push(row);
           return row;
         }
 
-        const byFunction = new Map((row.risks || []).map((risk) => [risk.function, risk]));
-        row.risks = functions.map((fn) => {
-          const existing = byFunction.get(fn.name);
-          if (existing) {
-            const likelihood = clamp(Number(existing.likelihood || 1), 1, 5);
-            return {
-              function: fn.name,
-              threat: String(existing.threat || ''),
-              likelihood,
-              impact: fn.impact,
-              riskScore: likelihood * fn.impact
-            };
-          }
-          return { function: fn.name, threat: '', likelihood: 1, impact: fn.impact, riskScore: fn.impact };
+        // 기존 다중 리스크는 유지하고, BIA에서 신규 핵심업무가 생긴 경우 기본 1건 추가
+        row.risks = (row.risks || []).map((risk) => {
+          const fn = functions.find((f) => f.name === risk.function);
+          const impact = fn ? fn.impact : clamp(Number(risk.impact || 3), 1, 5);
+          const likelihood = clamp(Number(risk.likelihood || 1), 1, 5);
+          const riskScore = likelihood * impact;
+          return { ...risk, impact, likelihood, riskScore, critical: riskScore >= 13 };
+        }).filter((risk) => functions.some((fn) => fn.name === risk.function));
+
+        functions.forEach((fn) => {
+          if (!row.risks.some((risk) => risk.function === fn.name)) row.risks.push(makeRisk(fn.name, fn.impact));
         });
         return row;
       };
@@ -281,7 +268,7 @@
         const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : '0.0';
 
         teamMetric.textContent = teamRow.team || '-';
-        fnMetric.textContent = String(risks.length);
+        fnMetric.textContent = String((biaTeamMap.get(teamRow.team) || []).length);
         highMetric.textContent = String(high);
         avgMetric.textContent = avg;
       };
@@ -310,24 +297,26 @@
             <thead>
               <tr>
                 <th style="width:30%;">핵심업무</th>
-                <th style="width:24%;">위협</th>
-                <th style="width:16%;">발생가능성</th>
-                <th style="width:12%;">영향도(자동)</th>
-                <th style="width:10%;">위험도</th>
-                <th style="width:8%;">관리</th>
+                <th style="width:24%;">중단 리스크</th>
+                <th style="width:12%;">발생가능성</th>
+                <th style="width:12%;">영향도</th>
+                <th style="width:12%;">위험도</th>
+                <th style="width:10%;">관리</th>
               </tr>
             </thead>
             <tbody>
               ${risks.map((risk, idx) => {
                 const band = scoreBand(risk.riskScore);
                 const focused = Number(activeCell.likelihood) === Number(risk.likelihood) && Number(activeCell.impact) === Number(risk.impact);
+                const rto = (biaTeamMap.get(team) || []).find((fn) => fn.name === risk.function)?.rto || '-';
                 return `
                   <tr data-idx="${idx}" class="${focused ? 'focusRow' : ''}">
                     <td>
                       <div class="fnName">${risk.function}</div>
-                      <div class="muted">BIA RTO: ${(biaTeamMap.get(team) || []).find((fn) => fn.name === risk.function)?.rto || '-'}</div>
+                      <div class="muted">BIA RTO: ${rto}</div>
+                      <button class="btn add" type="button" data-add-risk="${risk.function}">리스크 추가</button>
                     </td>
-                    <td><input class="threatInput" type="text" data-field="threat" value="${risk.threat || ''}" placeholder="예: 정전, UPS 장애"/></td>
+                    <td><input class="riskInput" type="text" data-field="risk" value="${risk.risk || ''}" placeholder="예: UPS 장애, 외부 전력 중단"/></td>
                     <td>
                       <select class="likelihood" data-field="likelihood">
                         ${[1,2,3,4,5].map((n) => `<option value="${n}" ${Number(risk.likelihood) === n ? 'selected' : ''}>${n} ${likelihoodLabels[n]}</option>`).join('')}
@@ -338,7 +327,10 @@
                       <div class="score">${risk.riskScore}</div>
                       <span class="badge ${band.cls}">${band.text}</span>
                     </td>
-                    <td><button class="btn" type="button" data-delete="${idx}">삭제</button></td>
+                    <td>
+                      ${risk.riskScore >= 13 ? '<span class="focusBadge">⚠ 중점관리</span>' : '-'}
+                      <div style="margin-top:6px;"><button class="btn" type="button" data-delete="${idx}">삭제</button></div>
+                    </td>
                   </tr>
                 `;
               }).join('')}
@@ -355,9 +347,11 @@
         const risk = row.risks[idx];
         if (!risk) return;
 
-        if (field === 'threat') risk.threat = String(value || '').trim();
+        if (field === 'risk') risk.risk = String(value || '').trim();
         if (field === 'likelihood') risk.likelihood = clamp(Number(value || 1), 1, 5);
+
         risk.riskScore = Number(risk.likelihood) * Number(risk.impact);
+        risk.critical = risk.riskScore >= 13;
         activeCell = { likelihood: risk.likelihood, impact: risk.impact };
         matrixHint.textContent = `선택 항목: 발생가능성 ${risk.likelihood}, 영향도 ${risk.impact}, 위험도 ${risk.riskScore}`;
         renderTable();
@@ -382,6 +376,16 @@
       });
 
       tableMount.addEventListener('click', (e) => {
+        const addFn = e.target.getAttribute('data-add-risk');
+        if (addFn) {
+          const team = teamSelect.value;
+          const row = ensureTeamRisk(team);
+          const fn = (biaTeamMap.get(team) || []).find((x) => x.name === addFn);
+          row.risks.push(makeRisk(addFn, fn ? fn.impact : 3));
+          renderTable();
+          return;
+        }
+
         const tr = e.target.closest('tr[data-idx]');
         if (tr && !e.target.getAttribute('data-delete')) {
           const idx = Number(tr.dataset.idx);
@@ -412,14 +416,14 @@
         renderTable();
       });
 
-      quickThreat.addEventListener('keydown', (e) => {
+      quickRisk.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
         const team = teamSelect.value;
-        const text = String(quickThreat.value || '').trim();
+        const text = String(quickRisk.value || '').trim();
         if (!team || !text) return;
         const row = ensureTeamRisk(team);
-        row.risks.forEach((risk) => { if (!risk.threat) risk.threat = text; });
-        quickThreat.value = '';
+        row.risks.forEach((risk) => { if (!risk.risk) risk.risk = text; });
+        quickRisk.value = '';
         renderTable();
       });
 
@@ -427,13 +431,19 @@
         riskRows = riskRows
           .map((row) => ({
             team: row.team,
-            risks: (row.risks || []).map((risk) => ({
-              function: risk.function,
-              threat: String(risk.threat || '').trim(),
-              likelihood: clamp(Number(risk.likelihood || 1), 1, 5),
-              impact: clamp(Number(risk.impact || 3), 1, 5),
-              riskScore: clamp(Number(risk.likelihood || 1), 1, 5) * clamp(Number(risk.impact || 3), 1, 5)
-            }))
+            risks: (row.risks || []).map((risk) => {
+              const likelihood = clamp(Number(risk.likelihood || 1), 1, 5);
+              const impact = clamp(Number(risk.impact || 3), 1, 5);
+              const riskScore = likelihood * impact;
+              return {
+                function: risk.function,
+                risk: String(risk.risk || '').trim(),
+                likelihood,
+                impact,
+                riskScore,
+                critical: riskScore >= 13
+              };
+            }).filter((risk) => risk.function)
           }))
           .filter((row) => row.team);
         store.set(RISK_KEY, riskRows);
@@ -444,13 +454,7 @@
         const team = teamSelect.value;
         if (!team) return;
         const row = ensureTeamRisk(team);
-        row.risks = (biaTeamMap.get(team) || []).map((fn) => ({
-          function: fn.name,
-          threat: '',
-          likelihood: 1,
-          impact: fn.impact,
-          riskScore: fn.impact
-        }));
+        row.risks = (biaTeamMap.get(team) || []).map((fn) => makeRisk(fn.name, fn.impact));
         activeCell = { likelihood: null, impact: null };
         matrixHint.textContent = '행을 클릭하면 매트릭스에서 위치가 강조됩니다.';
         renderTable();
