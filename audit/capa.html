@@ -85,9 +85,11 @@
   <script>
     (() => {
       const KEY = (window.DataStore && DataStore.KEY_CAPA) || 'bcms_capa_v1';
+      const ACTION_ITEMS_KEY = 'bcmsActionItems';
       const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
       const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
       const SELECTED_CAPA_KEY = 'bcms_selected_capa';
+      const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
       const store = (window.DataStore && DataStore.get && DataStore.set && DataStore.update) ? DataStore : {
         get: (k,f) => { try { const raw=localStorage.getItem(k); if(raw===null) return f; return JSON.parse(raw);} catch { return f; } },
         set: (k,v) => localStorage.setItem(k, JSON.stringify(v)),
@@ -127,7 +129,12 @@
         } catch {
           fromStorage = '';
         }
+        try {
+          const focus = JSON.parse(localStorage.getItem(FOCUS_TARGET_KEY) || 'null');
+          if (focus?.type === 'action' && focus?.id) fromStorage = String(focus.id).trim();
+        } catch {}
         localStorage.removeItem(SELECTED_CAPA_KEY);
+        localStorage.removeItem(FOCUS_TARGET_KEY);
         return fromQuery || fromStorage;
       };
       const selectedCapaId = readSelectedCapa();
@@ -151,11 +158,11 @@
         {id:uid(), createdAt:nowISO(), updatedAt:nowISO(), title:'대체 절차 문서 업데이트', cause:'기타', incident:'', service:'VPN', actionPlan:'비상시 수기 접수 및 우회 경로 문서 최신화', owner:'서문서', dueDate:'2026-03-22', status:'미착수', priority:'낮음'},
       ];
 
-      const seedIfEmpty=()=>{ const rows=store.get(KEY,null); if(!Array.isArray(rows)||!rows.length){ const s=sampleData(); store.set(KEY,s); return s; } return rows; };
+      const seedIfEmpty=()=>{ const modern=store.get(ACTION_ITEMS_KEY,null); const rows=Array.isArray(modern)?modern:store.get(KEY,null); if(!Array.isArray(rows)||!rows.length){ const s=sampleData(); store.set(KEY,s); store.set(ACTION_ITEMS_KEY,s); return s; } return rows; };
       let rows=seedIfEmpty();
 
       const prioClass=(v)=> v==='매우높음' ? 'prio-critical' : v==='높음' ? 'prio-high' : v==='낮음' ? 'prio-low' : 'prio-mid';
-      const persist=()=>store.set(KEY,rows);
+      const persist=()=>{ store.set(KEY,rows); store.set(ACTION_ITEMS_KEY,rows); };
       const clearForm=()=>{ capaForm.reset(); capaId.value=''; orgUnit.value=''; cause.value='프로세스'; status.value='미착수'; priority.value='보통'; dueDate.value=new Date(Date.now()+14*24*3600*1000).toISOString().slice(0,10); };
 
       const filtered=()=>{
@@ -180,7 +187,7 @@
           if (focused) tr.classList.add('focusRow');
           tr.innerHTML=`
             <td>${toDate(r.createdAt)}</td>
-            <td>${r.title}${focused ? '<span class="focusBadge">선택됨</span>' : ''}</td>
+            <td>${r.title}${focused ? '<span class="focusBadge">현재 선택 항목</span>' : ''}</td>
             <td><span class="tag ${prioClass(r.priority)}">${r.priority}</span></td>
             <td>
               <select data-status="${r.id}">
