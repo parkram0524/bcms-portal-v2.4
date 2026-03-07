@@ -11,7 +11,7 @@
     .hero p{ margin:8px 0 0; font-size:16px; color:rgba(15,23,42,.66); line-height:1.65; }
 
     .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.1); border-radius:14px; background:#fff; padding:14px; }
-    .row{ display:grid; grid-template-columns:1fr 220px auto; gap:10px; align-items:end; }
+    .row{ display:grid; grid-template-columns:1fr 260px auto; gap:10px; align-items:end; }
     .row label{ font-size:14px; font-weight:800; color:#334155; display:block; margin-bottom:6px; }
     .row select, .row input{ width:100%; padding:10px 12px; font-size:16px; }
 
@@ -19,32 +19,53 @@
     .btn:hover{ background:rgba(15,23,42,.04); }
     .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.08); color:#1d4ed8; }
 
-    .summaryGrid{ margin-top:12px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .summaryGrid{ margin-top:12px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
     .metric{ border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:11px; }
     .metric .k{ font-size:14px; color:rgba(15,23,42,.62); font-weight:800; }
     .metric .v{ margin-top:7px; font-size:24px; font-weight:950; }
 
     .tableWrap{ margin-top:12px; overflow:auto; }
-    table{ width:100%; min-width:900px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
+    table{ width:100%; min-width:1120px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
     th, td{ padding:10px 10px; font-size:16px; border-bottom:1px solid rgba(15,23,42,.08); vertical-align:middle; }
     th{ background:#f8fafc; font-size:14px; font-weight:900; text-align:left; color:#334155; }
     tr:last-child td{ border-bottom:none; }
 
     .functionName{ font-size:16px; font-weight:800; }
-    .muted{ font-size:14px; color:rgba(15,23,42,.62); }
+    .muted{ font-size:13px; color:rgba(15,23,42,.62); }
+    .smallSelect, .smallInput{ width:100%; padding:8px 10px; font-size:15px; }
+    .rtoWrap{ display:flex; gap:6px; }
+    .rtoWrap .smallInput{ width:90px; }
 
-    .rtoRow{ display:flex; gap:8px; }
-    .rtoRow input{ width:90px; }
+    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid rgba(15,23,42,.18); font-size:12px; font-weight:900; }
+    .g-핵심{ color:#991b1b; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
+    .g-주요{ color:#92400e; background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
+    .g-일반{ color:#166534; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.35); }
 
-    .impactSelect, .rtoUnit{ font-size:15px; }
-    .priorityBadge{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid; font-size:12px; font-weight:900; }
-    .p-상{ color:#991b1b; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
-    .p-중{ color:#92400e; background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
-    .p-하{ color:#166534; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.35); }
+    .detailRow td{ background:#fcfdff; }
+    .detailCard{ border:1px solid rgba(15,23,42,.08); border-radius:12px; padding:12px; background:#fff; }
+    .detailGrid{ display:grid; grid-template-columns:2fr 1.2fr; gap:12px; }
+    .subTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:#334155; }
+    .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .timeItem label{ display:block; margin-bottom:5px; font-size:13px; font-weight:800; color:#475569; }
+    .timeItem select{ width:100%; padding:8px 9px; font-size:14px; }
+    .reasonInput{ width:100%; min-height:90px; resize:vertical; padding:10px; font-size:14px; }
+    .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .resourceItem{ display:flex; align-items:center; gap:7px; font-size:14px; }
+
+    .warn{ margin-top:10px; border:1px solid rgba(239,68,68,.35); border-radius:10px; background:rgba(239,68,68,.10); color:#991b1b; padding:9px 10px; font-size:13px; font-weight:800; }
 
     .empty{ margin-top:12px; border:1px dashed rgba(148,163,184,.42); border-radius:12px; background:#f8fafc; color:#64748b; padding:14px; font-size:15px; }
 
-    @media (max-width:960px){ .row{ grid-template-columns:1fr; } .summaryGrid{ grid-template-columns:1fr; } }
+    @media (max-width:980px){
+      .row{ grid-template-columns:1fr; }
+      .summaryGrid{ grid-template-columns:1fr 1fr; }
+      .detailGrid{ grid-template-columns:1fr; }
+      .timeGrid, .resourceGrid{ grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:640px){
+      .summaryGrid{ grid-template-columns:1fr; }
+      .timeGrid, .resourceGrid{ grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
@@ -53,7 +74,7 @@
     <div class="wrap">
       <section class="hero">
         <h1>BIA (업무영향분석)</h1>
-        <p>팀을 선택하면 핵심업무 레지스트리의 업무가 자동 표시됩니다. 각 업무별 RTO와 영향도를 입력해 우선순위를 관리하세요.</p>
+        <p>핵심업무를 자동 불러와 중요업무 여부, 시간경과 영향평가, MTPD, RTO를 입력합니다. 저장 데이터는 Risk/복구 우선순위 화면과 호환됩니다.</p>
       </section>
 
       <section class="panel">
@@ -72,7 +93,8 @@
         <div class="summaryGrid">
           <article class="metric"><div class="k">선택 팀</div><div class="v" id="teamMetric">-</div></article>
           <article class="metric"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></article>
-          <article class="metric"><div class="k">MBCO(단순)</div><div class="v" id="mbcoMetric">-</div></article>
+          <article class="metric"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></article>
+          <article class="metric"><div class="k">최단 MTPD / 최단 RTO</div><div class="v" id="timeMetric">-</div></article>
         </div>
 
         <div id="tableMount" class="tableWrap"></div>
@@ -91,6 +113,16 @@
       const CORE_KEY = 'bcmsCoreFunctions';
       const BIA_KEY = 'bcmsBIAData';
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const RESOURCE_OPTIONS = ['인력','시스템','데이터','설비','유틸리티','협력업체'];
+
+      const TIME_IMPACT_META = [
+        { key:'immediate', label:'즉시', minutes:0, text:'즉시' },
+        { key:'min30', label:'30분', minutes:30, text:'30분' },
+        { key:'hour1', label:'1시간', minutes:60, text:'1시간' },
+        { key:'hour4', label:'4시간', minutes:240, text:'4시간' },
+        { key:'day1', label:'1일', minutes:1440, text:'1일' },
+        { key:'week1', label:'1주일', minutes:10080, text:'1주일' }
+      ];
 
       const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
         get: (k, f) => { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : f; } catch { return f; } },
@@ -105,125 +137,188 @@
       const resetBtn = document.getElementById('resetBtn');
       const teamMetric = document.getElementById('teamMetric');
       const countMetric = document.getElementById('countMetric');
-      const mbcoMetric = document.getElementById('mbcoMetric');
+      const importantMetric = document.getElementById('importantMetric');
+      const timeMetric = document.getElementById('timeMetric');
 
-      const impactLabels = {
-        1: '매우 낮음',
-        2: '낮음',
-        3: '보통',
-        4: '높음',
-        5: '매우 높음'
-      };
+      const impactLabels = { 1:'매우 낮음', 2:'낮음', 3:'보통', 4:'높음', 5:'매우 높음' };
+
       const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
+      const clamp = (v,min,max) => Math.min(max, Math.max(min, v));
+      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+      const parseRtoString = (rtoRaw) => {
+        const s = String(rtoRaw || '').trim();
+        if (!s) return { value:'', unit:'분' };
+        const n = Number((s.match(/[0-9]+(?:\.[0-9]+)?/) || [])[0] || '');
+        if (!Number.isFinite(n)) return { value:'', unit:'분' };
+        if (s.includes('일')) return { value:n, unit:'일' };
+        if (s.includes('시간')) return { value:n, unit:'시간' };
+        return { value:n, unit:'분' };
+      };
+
+      const rtoToMinutes = (val, unit) => {
+        const n = Number(val);
+        if (!Number.isFinite(n) || n <= 0) return null;
+        if (unit === '일') return n * 1440;
+        if (unit === '시간') return n * 60;
+        return n;
+      };
+
+      const calcMtpd = (timeImpact) => {
+        for (const t of TIME_IMPACT_META) {
+          const score = Number(timeImpact?.[t.key] || 1);
+          if (score >= 4) return { text: t.text, minutes: t.minutes };
+        }
+        return { text: '장기 허용', minutes: null };
+      };
+
+      const calcGrade = (fn) => {
+        const mtpd = calcMtpd(fn.timeImpact);
+        const impact = Number(fn.overallImpact || fn.impact || 3);
+        const important = fn.importance === '중요';
+
+        if (important && (impact >= 4 || (mtpd.minutes !== null && mtpd.minutes <= 240))) return '핵심';
+        if (important && (mtpd.minutes !== null && mtpd.minutes <= 1440)) return '주요';
+        return '일반';
+      };
+
+      const makeDefaultTimeImpact = (impact) => ({
+        immediate: Math.max(1, impact - 2),
+        min30: Math.max(1, impact - 1),
+        hour1: impact,
+        hour4: impact,
+        day1: Math.min(5, impact + 1),
+        week1: Math.min(5, impact + 1)
+      });
+
+      const normalizeFunction = (rawFn) => {
+        const name = String(rawFn.name || rawFn.function || '').trim();
+        const impact = clamp(Number(rawFn.impact || rawFn.overallImpact || 3), 1, 5);
+        const parsedRto = rawFn.rtoValue !== undefined ? { value: rawFn.rtoValue, unit: rawFn.rtoUnit || '분' } : parseRtoString(rawFn.rto);
+
+        const timeImpactRaw = rawFn.timeImpact || {};
+        const timeImpact = {};
+        for (const t of TIME_IMPACT_META) {
+          timeImpact[t.key] = clamp(Number(timeImpactRaw[t.key] || makeDefaultTimeImpact(impact)[t.key]), 1, 5);
+        }
+
+        const mtpd = calcMtpd(timeImpact);
+        const fn = {
+          name,
+          importance: rawFn.importance || (rawFn.coreFinal ? '중요' : '일반'),
+          overallImpact: impact,
+          impact,
+          timeImpact,
+          mtpd: mtpd.text,
+          mtpdMinutes: mtpd.minutes,
+          rtoValue: parsedRto.value === '' ? '' : Number(parsedRto.value),
+          rtoUnit: parsedRto.unit || '분',
+          rto: parsedRto.value === '' ? '' : `${parsedRto.value}${parsedRto.unit}`,
+          rtoReason: String(rawFn.rtoReason || rawFn.rtoBasis || ''),
+          grade: rawFn.grade || '일반',
+          coreFinal: !!rawFn.coreFinal,
+          requiredResources: Array.isArray(rawFn.requiredResources)
+            ? rawFn.requiredResources.filter((r) => RESOURCE_OPTIONS.includes(r))
+            : []
+        };
+
+        fn.grade = calcGrade(fn);
+        fn.coreFinal = fn.grade !== '일반';
+        return fn;
+      };
 
       const loadCoreFunctions = () => {
-        const rows = store.get(CORE_KEY, []);
-        return Array.isArray(rows)
-          ? rows.map((row) => ({ team: String(row.team || '').trim(), functions: uniq((row.functions || []).map((v) => String(v || '').trim()).filter(Boolean)) })).filter((row) => row.team)
-          : [];
+        const raw = store.get(CORE_KEY, []);
+        const rows = Array.isArray(raw) ? raw : [];
+        return rows
+          .map((row) => ({
+            team: String(row.team || '').trim(),
+            functions: uniq((row.functions || []).map((f) => typeof f === 'string' ? f : f?.name).filter(Boolean))
+          }))
+          .filter((row) => row.team);
       };
 
       const loadOrgTeams = () => {
         const org = store.get(ORG_KEY, { divisions: [] });
-        const names = (org.divisions || []).flatMap((division) => (division.teams || []).map((team) => team.name));
-        return uniq(names.map((v) => String(v || '').trim()).filter(Boolean));
+        return uniq((org.divisions || []).flatMap((d) => (d.teams || []).map((t) => t.name)).filter(Boolean));
       };
 
       const loadBiaData = () => {
         const raw = store.get(BIA_KEY, []);
-        if (Array.isArray(raw)) return raw;
-        if (raw && typeof raw === 'object' && raw.team) return [raw];
-        return [];
-      };
-      const saveBiaData = (rows) => store.set(BIA_KEY, rows);
-
-      const parseRtoMinutes = (rtoValue, rtoUnit) => {
-        const v = Number(rtoValue || 0);
-        if (!Number.isFinite(v) || v <= 0) return 0;
-        if (rtoUnit === '시간') return v * 60;
-        if (rtoUnit === '일') return v * 1440;
-        return v;
+        const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
+        return rows
+          .map((row) => ({
+            team: String(row.team || '').trim(),
+            functions: (row.functions || []).map(normalizeFunction).filter((f) => f.name)
+          }))
+          .filter((row) => row.team);
       };
 
-      const calcPriority = (impact, rtoValue, rtoUnit) => {
-        const score = Number(impact || 1) * 10 + Math.max(1, parseRtoMinutes(rtoValue, rtoUnit) / 30);
-        if (score >= 45) return '상';
-        if (score >= 25) return '중';
-        return '하';
+      const saveBiaData = (rows) => {
+        store.set(BIA_KEY, rows);
       };
 
-      const calcMBCO = (functions) => {
-        if (!functions.length) return '-';
-        const highest = functions.reduce((max, fn) => Math.max(max, Number(fn.impact || 0)), 0);
-        if (highest >= 5) return '즉시 복구 필요';
-        if (highest >= 4) return '우선 복구 대상';
-        if (highest >= 3) return '중요 복구 대상';
-        return '일반 복구 대상';
-      };
+      const ensureTeamRecord = (team, coreMap, rows) => {
+        let found = rows.find((r) => r.team === team);
+        const coreFns = coreMap.get(team) || [];
 
-      const ensureTeamRecord = (team, coreMap, biaRows) => {
-        const found = biaRows.find((row) => row.team === team);
-        const defaults = (coreMap.get(team) || []).map((name) => ({
-          name,
-          rtoValue: '',
-          rtoUnit: '시간',
-          rto: '',
-          impact: 3,
-          priority: '중'
-        }));
-
-        if (found) {
-          const existing = new Map((found.functions || []).map((f) => [f.name, f]));
-          found.functions = uniq([...(coreMap.get(team) || []), ...(found.functions || []).map((f) => f.name)])
-            .map((name) => {
-              const old = existing.get(name);
-              return old
-                ? {
-                    ...old,
-                    rtoValue: old.rtoValue || '',
-                    rtoUnit: old.rtoUnit || '시간',
-                    impact: Number(old.impact || 3),
-                    priority: calcPriority(old.impact || 3, old.rtoValue || '', old.rtoUnit || '시간'),
-                    rto: `${old.rtoValue || ''}${old.rtoUnit || ''}`
-                  }
-                : { name, rtoValue: '', rtoUnit: '시간', rto: '', impact: 3, priority: '중' };
-            });
+        if (!found) {
+          found = { team, functions: coreFns.map((name) => normalizeFunction({ name })) };
+          rows.push(found);
           return found;
         }
 
-        const row = { team, functions: defaults };
-        biaRows.push(row);
-        return row;
+        const byName = new Map((found.functions || []).map((fn) => [fn.name, normalizeFunction(fn)]));
+        found.functions = uniq([...(coreFns || []), ...(found.functions || []).map((f) => f.name)])
+          .map((name) => byName.get(name) || normalizeFunction({ name }));
+
+        return found;
+      };
+
+      const getRtoWarnText = (fn) => {
+        const rtoMin = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
+        if (rtoMin === null || fn.mtpdMinutes === null) return '';
+        if (rtoMin >= fn.mtpdMinutes) return 'RTO는 MTPD보다 짧아야 합니다. 복구목표시간이 최대허용중단시간을 초과합니다.';
+        return '';
       };
 
       const coreRows = loadCoreFunctions();
       const orgTeams = loadOrgTeams();
-      const allTeams = uniq([...coreRows.map((row) => row.team), ...orgTeams]);
-      const coreMap = new Map(coreRows.map((row) => [row.team, row.functions]));
+      const allTeams = uniq([...coreRows.map((r) => r.team), ...orgTeams]);
+      const coreMap = new Map(coreRows.map((r) => [r.team, r.functions]));
       let biaRows = loadBiaData();
+      const opened = new Set();
 
-      if (!allTeams.length) {
-        teamSelect.innerHTML = '<option value="">등록된 팀이 없습니다</option>';
-      } else {
-        teamSelect.innerHTML = allTeams.map((team) => `<option value="${team}">${team}</option>`).join('');
-      }
+      teamSelect.innerHTML = allTeams.length
+        ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
+        : '<option value="">등록된 팀이 없습니다</option>';
+
+      const renderSummary = (team, functions) => {
+        teamMetric.textContent = team || '-';
+        countMetric.textContent = String(functions.length);
+        importantMetric.textContent = String(functions.filter((f) => f.importance === '중요').length);
+
+        const mtpdMinutes = functions.map((f) => f.mtpdMinutes).filter((v) => v !== null);
+        const rtoMinutes = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => v !== null);
+        const minMtpd = mtpdMinutes.length ? Math.min(...mtpdMinutes) : null;
+        const minRto = rtoMinutes.length ? Math.min(...rtoMinutes) : null;
+
+        const mtpdText = minMtpd === null ? '-' : `${minMtpd >= 60 && minMtpd % 60 === 0 ? `${minMtpd/60}시간` : `${minMtpd}분`}`;
+        const rtoText = minRto === null ? '-' : `${minRto >= 60 && minRto % 60 === 0 ? `${minRto/60}시간` : `${minRto}분`}`;
+        timeMetric.textContent = `${mtpdText} / ${rtoText}`;
+      };
 
       const render = () => {
         const team = teamSelect.value;
         if (!team) {
           tableMount.innerHTML = '<div class="empty">선택 가능한 팀이 없습니다. 조직 관리 또는 핵심업무 레지스트리를 먼저 확인해 주세요.</div>';
-          teamMetric.textContent = '-';
-          countMetric.textContent = '0';
-          mbcoMetric.textContent = '-';
+          renderSummary('', []);
           return;
         }
 
         const row = ensureTeamRecord(team, coreMap, biaRows);
         const functions = row.functions || [];
-
-        teamMetric.textContent = team;
-        countMetric.textContent = String(functions.length);
-        mbcoMetric.textContent = calcMBCO(functions);
+        renderSummary(team, functions);
 
         if (!functions.length) {
           tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 상단에서 업무를 추가해 주세요.</div>';
@@ -234,85 +329,184 @@
           <table>
             <thead>
               <tr>
-                <th style="width:36%;">핵심업무</th>
-                <th style="width:24%;">RTO</th>
-                <th style="width:18%;">영향도</th>
-                <th style="width:12%;">우선순위</th>
-                <th style="width:10%;">관리</th>
+                <th style="width:24%;">핵심업무</th>
+                <th style="width:11%;">중요업무 여부</th>
+                <th style="width:11%;">종합 영향도</th>
+                <th style="width:11%;">MTPD</th>
+                <th style="width:16%;">RTO</th>
+                <th style="width:10%;">업무등급</th>
+                <th style="width:17%;">관리</th>
               </tr>
             </thead>
             <tbody>
-              ${functions.map((fn, idx) => `
-                <tr data-idx="${idx}">
-                  <td>
-                    <div class="functionName">${fn.name}</div>
-                    <div class="muted">팀 식별: ${team}</div>
-                  </td>
-                  <td>
-                    <div class="rtoRow">
-                      <input type="number" min="1" step="1" data-field="rtoValue" value="${fn.rtoValue || ''}" placeholder="수치"/>
-                      <select class="rtoUnit" data-field="rtoUnit">
-                        <option ${fn.rtoUnit === '분' ? 'selected' : ''}>분</option>
-                        <option ${fn.rtoUnit === '시간' ? 'selected' : ''}>시간</option>
-                        <option ${fn.rtoUnit === '일' ? 'selected' : ''}>일</option>
+              ${functions.map((fn, idx) => {
+                const key = `${team}__${fn.name}__${idx}`;
+                const open = opened.has(key);
+                const warn = getRtoWarnText(fn);
+                return `
+                  <tr data-idx="${idx}">
+                    <td>
+                      <div class="functionName">${esc(fn.name)}</div>
+                      <div class="muted">팀: ${esc(team)}</div>
+                    </td>
+                    <td>
+                      <select class="smallSelect" data-field="importance">
+                        <option value="중요" ${fn.importance === '중요' ? 'selected' : ''}>중요</option>
+                        <option value="일반" ${fn.importance === '일반' ? 'selected' : ''}>일반</option>
                       </select>
-                    </div>
-                  </td>
-                  <td>
-                    <select class="impactSelect" data-field="impact">
-                      ${[1,2,3,4,5].map((n) => `<option value="${n}" ${Number(fn.impact || 3) === n ? 'selected' : ''}>${n} ${impactLabels[n]}</option>`).join('')}
-                    </select>
-                  </td>
-                  <td><span class="priorityBadge p-${fn.priority || '중'}">${fn.priority || '중'}</span></td>
-                  <td><button class="btn" type="button" data-delete="${idx}">삭제</button></td>
-                </tr>
-              `).join('')}
+                    </td>
+                    <td>
+                      <select class="smallSelect" data-field="overallImpact">
+                        ${[1,2,3,4,5].map((n)=>`<option value="${n}" ${Number(fn.overallImpact)===n?'selected':''}>${n} ${impactLabels[n]}</option>`).join('')}
+                      </select>
+                    </td>
+                    <td><span class="tag">${esc(fn.mtpd || '장기 허용')}</span></td>
+                    <td>
+                      <div class="rtoWrap">
+                        <input class="smallInput" type="number" min="1" step="1" data-field="rtoValue" value="${fn.rtoValue ?? ''}" placeholder="수치"/>
+                        <select class="smallSelect" data-field="rtoUnit">
+                          <option value="분" ${fn.rtoUnit === '분' ? 'selected' : ''}>분</option>
+                          <option value="시간" ${fn.rtoUnit === '시간' ? 'selected' : ''}>시간</option>
+                          <option value="일" ${fn.rtoUnit === '일' ? 'selected' : ''}>일</option>
+                        </select>
+                      </div>
+                    </td>
+                    <td><span class="tag g-${fn.grade}">${fn.grade}</span></td>
+                    <td>
+                      <button class="btn" type="button" data-toggle="${idx}">${open ? '상세 닫기' : '상세 보기'}</button>
+                      <button class="btn" type="button" data-delete="${idx}" style="margin-left:6px;">삭제</button>
+                    </td>
+                  </tr>
+                  ${open ? `
+                    <tr class="detailRow" data-detail-for="${idx}">
+                      <td colspan="7">
+                        <div class="detailCard">
+                          <div class="detailGrid">
+                            <div>
+                              <h4 class="subTitle">시간경과 영향평가</h4>
+                              <div class="timeGrid">
+                                ${TIME_IMPACT_META.map((t) => `
+                                  <div class="timeItem">
+                                    <label>${t.label}</label>
+                                    <select class="smallSelect" data-time-impact="${t.key}" data-idx="${idx}">
+                                      ${[1,2,3,4,5].map((n)=>`<option value="${n}" ${Number(fn.timeImpact?.[t.key])===n?'selected':''}>${n} ${impactLabels[n]}</option>`).join('')}
+                                    </select>
+                                  </div>
+                                `).join('')}
+                              </div>
+                              <div class="muted" style="margin-top:8px;">최대허용중단시간(MTPD): <b>${esc(fn.mtpd || '장기 허용')}</b></div>
+                            </div>
+                            <div>
+                              <h4 class="subTitle">RTO 설정 근거</h4>
+                              <textarea class="reasonInput" data-field="rtoReason" data-idx="${idx}" placeholder="고객 영향과 서비스 중단 허용시간을 반영\n대체 운영 가능시간 기준\n규제/계약 요구사항 반영">${esc(fn.rtoReason || '')}</textarea>
+
+                              <h4 class="subTitle" style="margin-top:10px;">복구 필요자원(요약)</h4>
+                              <div class="resourceGrid">
+                                ${RESOURCE_OPTIONS.map((r) => `
+                                  <label class="resourceItem">
+                                    <input type="checkbox" data-resource="${r}" data-idx="${idx}" ${fn.requiredResources.includes(r) ? 'checked' : ''}/>
+                                    <span>${r}</span>
+                                  </label>
+                                `).join('')}
+                              </div>
+                            </div>
+                          </div>
+                          ${warn ? `<div class="warn">${warn}</div>` : ''}
+                        </div>
+                      </td>
+                    </tr>
+                  ` : ''}
+                `;
+              }).join('')}
             </tbody>
           </table>
         `;
       };
 
-      const updateFunction = (idx, field, value) => {
+      const recalcFunction = (fn) => {
+        fn.overallImpact = clamp(Number(fn.overallImpact || 3), 1, 5);
+        fn.impact = fn.overallImpact; // Risk 호환 alias
+        const mtpd = calcMtpd(fn.timeImpact || {});
+        fn.mtpd = mtpd.text;
+        fn.mtpdMinutes = mtpd.minutes;
+        fn.rto = (fn.rtoValue || fn.rtoValue === 0) && fn.rtoValue !== '' ? `${fn.rtoValue}${fn.rtoUnit || '분'}` : '';
+        fn.grade = calcGrade(fn);
+        fn.coreFinal = fn.grade !== '일반';
+      };
+
+      const updateFnField = (idx, field, value) => {
         const team = teamSelect.value;
         const row = ensureTeamRecord(team, coreMap, biaRows);
         const fn = row.functions[idx];
         if (!fn) return;
 
-        if (field === 'impact') fn.impact = Number(value || 3);
-        if (field === 'rtoValue') fn.rtoValue = String(value || '');
+        if (field === 'importance') fn.importance = value === '중요' ? '중요' : '일반';
+        if (field === 'overallImpact') fn.overallImpact = clamp(Number(value || 3), 1, 5);
+        if (field === 'rtoValue') fn.rtoValue = value === '' ? '' : Number(value);
         if (field === 'rtoUnit') fn.rtoUnit = value;
+        if (field === 'rtoReason') fn.rtoReason = String(value || '');
 
-        fn.rto = `${fn.rtoValue || ''}${fn.rtoUnit || ''}`;
-        fn.priority = calcPriority(fn.impact, fn.rtoValue, fn.rtoUnit);
+        recalcFunction(fn);
         render();
       };
 
-      teamSelect.addEventListener('change', render);
-
-      tableMount.addEventListener('input', (e) => {
-        const tr = e.target.closest('tr[data-idx]');
-        if (!tr) return;
-        const idx = Number(tr.dataset.idx);
-        const field = e.target.getAttribute('data-field');
-        if (!field) return;
-        updateFunction(idx, field, e.target.value);
-      });
+      teamSelect.addEventListener('change', () => render());
 
       tableMount.addEventListener('change', (e) => {
         const tr = e.target.closest('tr[data-idx]');
-        if (!tr) return;
-        const idx = Number(tr.dataset.idx);
-        const field = e.target.getAttribute('data-field');
-        if (!field) return;
-        updateFunction(idx, field, e.target.value);
+        const idx = tr ? Number(tr.dataset.idx) : Number(e.target.getAttribute('data-idx'));
+
+        if (e.target.hasAttribute('data-field')) {
+          updateFnField(idx, e.target.getAttribute('data-field'), e.target.value);
+          return;
+        }
+
+        const tKey = e.target.getAttribute('data-time-impact');
+        if (tKey) {
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[idx];
+          if (!fn) return;
+          fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
+          recalcFunction(fn);
+          render();
+          return;
+        }
+
+        const res = e.target.getAttribute('data-resource');
+        if (res) {
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[idx];
+          if (!fn) return;
+          const set = new Set(fn.requiredResources || []);
+          if (e.target.checked) set.add(res);
+          else set.delete(res);
+          fn.requiredResources = [...set];
+        }
       });
 
+
+
       tableMount.addEventListener('click', (e) => {
-        const deleteIdx = e.target.getAttribute('data-delete');
-        if (deleteIdx == null) return;
+        const toggleIdx = e.target.getAttribute('data-toggle');
+        if (toggleIdx != null) {
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[Number(toggleIdx)];
+          if (!fn) return;
+          const key = `${team}__${fn.name}__${toggleIdx}`;
+          if (opened.has(key)) opened.delete(key);
+          else opened.add(key);
+          render();
+          return;
+        }
+
+        const del = e.target.getAttribute('data-delete');
+        if (del == null) return;
         const team = teamSelect.value;
         const row = ensureTeamRecord(team, coreMap, biaRows);
-        row.functions.splice(Number(deleteIdx), 1);
+        row.functions.splice(Number(del), 1);
         render();
       });
 
@@ -326,23 +520,44 @@
           alert('이미 등록된 핵심업무입니다.');
           return;
         }
-        row.functions.push({ name, rtoValue: '', rtoUnit: '시간', rto: '', impact: 3, priority: '중' });
+        row.functions.push(normalizeFunction({ name }));
         newFunctionName.value = '';
         render();
       });
 
       saveBtn.addEventListener('click', () => {
-        biaRows = biaRows.map((row) => ({
-          team: row.team,
-          functions: (row.functions || []).map((fn) => ({
-            name: fn.name,
-            rtoValue: fn.rtoValue || '',
-            rtoUnit: fn.rtoUnit || '시간',
-            rto: `${fn.rtoValue || ''}${fn.rtoUnit || ''}`,
-            impact: Number(fn.impact || 3),
-            priority: calcPriority(Number(fn.impact || 3), fn.rtoValue || '', fn.rtoUnit || '시간')
+        biaRows = biaRows
+          .map((row) => ({
+            team: row.team,
+            functions: (row.functions || []).map((fn) => {
+              recalcFunction(fn);
+              return {
+                name: fn.name,
+                importance: fn.importance,
+                overallImpact: fn.overallImpact,
+                impact: fn.impact,
+                timeImpact: {
+                  immediate: Number(fn.timeImpact?.immediate || 1),
+                  min30: Number(fn.timeImpact?.min30 || 1),
+                  hour1: Number(fn.timeImpact?.hour1 || 1),
+                  hour4: Number(fn.timeImpact?.hour4 || 1),
+                  day1: Number(fn.timeImpact?.day1 || 1),
+                  week1: Number(fn.timeImpact?.week1 || 1)
+                },
+                mtpd: fn.mtpd,
+                mtpdMinutes: fn.mtpdMinutes,
+                rtoValue: fn.rtoValue === '' ? '' : Number(fn.rtoValue),
+                rtoUnit: fn.rtoUnit || '분',
+                rto: fn.rto || '',
+                rtoReason: String(fn.rtoReason || ''),
+                grade: fn.grade,
+                coreFinal: !!fn.coreFinal,
+                requiredResources: Array.isArray(fn.requiredResources) ? fn.requiredResources.filter((r)=>RESOURCE_OPTIONS.includes(r)) : []
+              };
+            }).filter((fn) => fn.name)
           }))
-        })).filter((row) => row.team);
+          .filter((row) => row.team);
+
         saveBiaData(biaRows);
         alert('BIA 데이터가 저장되었습니다.');
         render();
@@ -352,7 +567,7 @@
         const team = teamSelect.value;
         if (!team) return;
         const row = ensureTeamRecord(team, coreMap, biaRows);
-        row.functions = (coreMap.get(team) || []).map((name) => ({ name, rtoValue: '', rtoUnit: '시간', rto: '', impact: 3, priority: '중' }));
+        row.functions = (coreMap.get(team) || []).map((name) => normalizeFunction({ name }));
         render();
       });
 
