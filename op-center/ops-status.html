@@ -3,149 +3,85 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>상황판(운영 현황) | BCMS Portal v2</title>
+  <title>운영 현황 | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
     .wrap{ max-width:1320px; margin:0 auto; }
-    .hero{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .hero{ margin-bottom:14px; }
     .hero h1{ margin:0; font-size:28px; font-weight:950; }
     .hero p{ margin:8px 0 0; color:rgba(15,23,42,.62); }
 
-    .kpiGrid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:12px; }
-    .kpi{ grid-column: span 3; border:1px solid rgba(15,23,42,.10); border-radius:14px; background:#fff; padding:14px; }
-    .kLabel{ font-size:12px; font-weight:800; color:rgba(15,23,42,.58); }
-    .kValue{ margin-top:8px; font-size:28px; font-weight:950; }
-    .kHint{ margin-top:5px; font-size:12px; color:rgba(15,23,42,.56); }
-    @media (max-width: 1200px){ .kpi{ grid-column: span 6; } }
-    @media (max-width: 760px){ .kpi{ grid-column: span 12; } }
+    .summaryGrid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
+    .summaryCard{ grid-column:span 3; border:1px solid rgba(15,23,42,.1); border-radius:14px; background:#fff; padding:14px; box-shadow:0 2px 6px rgba(15,23,42,.04); }
+    .summaryCard .k{ font-size:12px; color:rgba(15,23,42,.58); font-weight:800; }
+    .summaryCard .v{ margin-top:8px; font-size:30px; font-weight:950; color:#0f172a; }
+    .summaryCard .h{ margin-top:6px; font-size:12px; color:rgba(15,23,42,.56); }
+    @media (max-width:1100px){ .summaryCard{ grid-column:span 6; } }
+    @media (max-width:760px){ .summaryCard{ grid-column:span 12; } }
 
-    .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
-    .panel h3{ margin:0 0 10px; font-size:18px; }
+    .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.1); border-radius:16px; background:#fff; padding:14px; }
+    .panelHead{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+    .panelHead h2{ margin:0; font-size:18px; }
+    .helper{ font-size:12px; color:rgba(15,23,42,.58); }
 
-    .tableWrap{ overflow:auto; }
-    table{ width:100%; min-width:900px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.10); border-radius:12px; overflow:hidden; }
-    th, td{ padding:10px 12px; font-size:14px; }
-    th{ background:rgba(15,23,42,.03); color:rgba(15,23,42,.72); text-align:left; font-weight:800; }
+    .empty{ border:1px dashed rgba(148,163,184,.45); border-radius:12px; background:#f8fafc; color:#64748b; padding:14px; font-size:13px; }
 
-    .actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
-    .quickBtn{ display:inline-flex; align-items:center; gap:8px; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:10px 14px; background:#fff; color:#0f172a; font-weight:900; }
+    .itemList{ display:grid; gap:10px; }
+    .itemRow{ border:1px solid #dbe3ef; border-radius:12px; background:#fff; padding:12px; display:grid; grid-template-columns:2fr 1.5fr 2fr 1fr 1fr; gap:10px; align-items:start; }
+    .itemRow:hover{ background:#fbfdff; }
+    .titleBtn{ border:none; background:transparent; padding:0; text-align:left; color:#1d4ed8; font-weight:900; cursor:pointer; font-size:14px; }
+    .titleBtn:hover{ text-decoration:underline; }
+    .meta{ font-size:12px; color:#475569; line-height:1.45; }
+    .label{ font-size:11px; color:#64748b; font-weight:800; margin-bottom:4px; }
+    .cell{ min-width:0; }
+
+    .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
+    .chip{ display:inline-flex; align-items:center; border:1px solid #cbd5e1; border-radius:999px; padding:4px 9px; font-size:12px; background:#fff; color:#1e293b; }
+
+    .badge{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:900; border:1px solid; }
+    .warn{ color:#92400e; background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.3); }
+    .progress{ color:#1d4ed8; background:rgba(37,99,235,.12); border-color:rgba(37,99,235,.3); }
+
+    .quickActions{ margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
+    .quickBtn{ display:inline-flex; align-items:center; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:8px 12px; color:#0f172a; background:#fff; font-size:12px; font-weight:900; }
     .quickBtn:hover{ background:rgba(15,23,42,.04); }
 
-    .pill{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px; border:1px solid rgba(15,23,42,.14); font-size:12px; font-weight:900; }
-    .normal{ color:#166534; border-color:rgba(22,163,74,.28); background:rgba(22,163,74,.10); }
-    .switch{ color:#991b1b; border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.10); }
-    .recover{ color:#92400e; border-color:rgba(217,119,6,.28); background:rgba(217,119,6,.10); }
-
-    .statusBoard{ margin-top:14px; display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:14px; }
-    .followPanel{ grid-column: span 6; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
-    .panelHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
-    .panelHead h3{ margin:0; font-size:18px; }
-    .miniBtn{ display:inline-flex; align-items:center; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; color:#0f172a; background:#fff; }
-    .miniBtn:hover{ background:rgba(15,23,42,.04); }
-    .noteEmpty{ font-size:13px; color:var(--muted); padding:10px 2px; }
-
-    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--lineStrong); font-size:12px; font-weight:800; }
-    .st-pending{ background:rgba(217,119,6,.12); color:#92400e; border-color:rgba(217,119,6,.32); }
-    .st-start{ background:rgba(148,163,184,.18); color:#334155; border-color:rgba(148,163,184,.38); }
-    .st-progress{ background:rgba(37,99,235,.12); color:#1d4ed8; border-color:rgba(37,99,235,.34); }
-    .st-done{ background:rgba(22,163,74,.12); color:#166534; border-color:rgba(22,163,74,.32); }
-    .dueSoon{ background:rgba(220,38,38,.12); color:#991b1b; border-color:rgba(220,38,38,.36); }
-
-    .orgSummary{ display:flex; flex-wrap:wrap; gap:6px; }
-    .orgChip{ display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:4px 9px; font-size:12px; background:#fff; color:#0f172a; }
-    .orgMore{ font-size:12px; color:var(--mutedStrong); font-weight:800; align-self:center; }
-    .jumpBtn{ display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.16); border-radius:999px; background:#fff; color:#0f172a; padding:4px 9px; font-size:12px; cursor:pointer; text-decoration:none; }
-    .jumpBtn:hover{ background:rgba(15,23,42,.05); }
-    .jumpInline{ border:none; padding:0; border-radius:0; background:transparent; color:#1d4ed8; font-size:13px; font-weight:800; }
-    .jumpInline:hover{ text-decoration:underline; background:transparent; }
-
-    .incidentNow{ margin-top:14px; border:1px solid rgba(15,23,42,.10); border-radius:16px; background:#fff; padding:14px; }
-    .incidentMeta{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; margin-top:8px; }
-    .metaItem{ border:1px solid rgba(15,23,42,.10); border-radius:12px; padding:10px; background:#f8fafc; }
-    .metaItem .k{ font-size:12px; color:var(--mutedStrong); font-weight:800; }
-    .metaItem .v{ margin-top:4px; font-size:13px; font-weight:800; }
-    .incidentAction{ margin-top:10px; }
-
-    @media (max-width: 980px){ .followPanel{ grid-column: span 12; } .incidentMeta{ grid-template-columns:1fr; } }
+    @media (max-width:1024px){ .itemRow{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <aside id="sidebarMount"></aside>
-
   <main class="main">
     <div class="wrap">
-      <div class="hero">
-        <div>
-          <h1>상황판(운영 현황)</h1>
-          <p>운영센터 핵심 지표와 최근 대응 로그를 실시간 확인합니다.</p>
-        </div>
-      </div>
-
-      <section class="kpiGrid">
-        <article class="kpi"><div class="kLabel">진행 중 사고 건수</div><div class="kValue" id="kOngoing">0</div><div class="kHint">현재 Incident 상태 기준</div></article>
-        <article class="kpi"><div class="kLabel">미확인 증적 건수</div><div class="kValue" id="kEvidencePending">0</div><div class="kHint">확인 대기 중인 증적</div></article>
-        <article class="kpi"><div class="kLabel">미완료 개선조치 건수</div><div class="kValue" id="kCapaOpen">0</div><div class="kHint">아직 완료되지 않은 개선조치</div></article>
-        <article class="kpi"><div class="kLabel">기한 임박 개선조치 건수</div><div class="kValue" id="kCapaDueSoon">0</div><div class="kHint">7일 이내 마감 예정</div></article>
-        <article class="kpi"><div class="kLabel">DR 전환 상태</div><div class="kValue" id="kDrState">정상</div><div class="kHint" id="kDrHint">-</div></article>
+      <section class="hero">
+        <h1>운영 현황</h1>
+        <p>현재 미처리 항목을 확인할 수 있습니다. 사고 종료 결과물이 증적/개선조치로 자동 연결됩니다.</p>
       </section>
 
-      <section class="incidentNow">
-        <h3>진행 중 사고 요약</h3>
-        <div class="incidentMeta">
-          <div class="metaItem"><div class="k">사고 상태</div><div class="v" id="incStatus">-</div></div>
-          <div class="metaItem"><div class="k">영향 서비스</div><div class="v" id="incServices">-</div></div>
-          <div class="metaItem"><div class="k">관련 조직</div><div class="v"><div id="incOrgSummary" class="orgSummary"></div></div></div>
-        </div>
-        <div id="incActionWrap" class="incidentAction"></div>
-      </section>
-
-      <section class="statusBoard">
-        <article class="followPanel">
-          <div class="panelHead">
-            <h3>미확인 증적</h3>
-            <a class="miniBtn" href="../audit/evidence.html">전체 보기</a>
-          </div>
-          <div class="tableWrap">
-            <table>
-              <thead>
-                <tr><th>등록일시</th><th>유형</th><th>관련 사고</th><th>관련 서비스</th><th>관련 조직</th><th>설명</th><th>상태</th></tr>
-              </thead>
-              <tbody id="evidencePendingBody"></tbody>
-            </table>
-          </div>
-        </article>
-
-        <article class="followPanel">
-          <div class="panelHead">
-            <h3>미완료 개선조치</h3>
-            <a class="miniBtn" href="../audit/capa.html">전체 보기</a>
-          </div>
-          <div class="tableWrap">
-            <table>
-              <thead>
-                <tr><th>제목</th><th>관련 사고</th><th>관련 서비스</th><th>관련 조직</th><th>담당자</th><th>완료 기한</th><th>상태</th><th>우선순위</th></tr>
-              </thead>
-              <tbody id="capaOpenBody"></tbody>
-            </table>
-          </div>
-        </article>
+      <section class="summaryGrid">
+        <article class="summaryCard"><div class="k">진행 중 사고</div><div class="v" id="kIncident">0</div><div class="h">원인 조사/영향 완화/안정화 모니터링</div></article>
+        <article class="summaryCard"><div class="k">미확인 증적</div><div class="v" id="kEvidence">0</div><div class="h">확인 필요 항목</div></article>
+        <article class="summaryCard"><div class="k">미완료 개선조치</div><div class="v" id="kAction">0</div><div class="h">미완료/미착수/진행중 항목</div></article>
+        <article class="summaryCard"><div class="k">최근 종료 사고</div><div class="v" id="kClosed">0</div><div class="h">복구 완료/종료/종결</div></article>
       </section>
 
       <section class="panel">
-        <h3>최근 10건 대응 로그</h3>
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr><th>시간</th><th>시스템</th><th>이벤트</th><th>조치</th><th>담당자</th></tr>
-            </thead>
-            <tbody id="logTbody"></tbody>
-          </table>
-        </div>
+        <div class="panelHead"><h2>미확인 증적</h2><span class="helper">항목 클릭 시 증적 관리 화면으로 이동합니다.</span></div>
+        <div id="evidenceList" class="itemList"></div>
+      </section>
 
-        <div class="actions">
-          <a class="quickBtn" href="./incident-dashboard.html">🧭 사고 대응 현황</a>
-          <a class="quickBtn" href="../library/drp.html">🛠️ DR 계획</a>
-          <a class="quickBtn" href="../library/eop.html">🚨 EOP</a>
+      <section class="panel">
+        <div class="panelHead"><h2>미완료 개선조치</h2><span class="helper">항목 클릭 시 개선조치 관리 화면으로 이동합니다.</span></div>
+        <div id="actionList" class="itemList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panelHead"><h2>빠른 이동</h2></div>
+        <div class="quickActions">
+          <a class="quickBtn" href="./incident-dashboard.html">사고 대응 대시보드</a>
+          <a class="quickBtn" href="../audit/evidence.html">증적 관리</a>
+          <a class="quickBtn" href="../audit/capa.html">개선조치 관리</a>
+          <a class="quickBtn" href="../governance/eop-org-chart.html">비상대응 조직도</a>
         </div>
       </section>
     </div>
@@ -155,336 +91,207 @@
   <script src="../assets/data-store.js"></script>
   <script>
     (() => {
-      const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
-      const CAPA_KEY = (window.DataStore && DataStore.KEY_CAPA) || 'bcms_capa_v1';
-      const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
-      const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
-      const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
-      const NAV_INCIDENT_KEY = 'bcms_selected_incident';
-      const NAV_SERVICE_KEY = 'bcms_selected_service';
-      const NAV_ORG_KEY = 'bcms_selected_org';
-      const NAV_EVIDENCE_KEY = 'bcms_selected_evidence';
-      const NAV_CAPA_KEY = 'bcms_selected_capa';
-      const store = (window.DataStore && DataStore.get) ? DataStore : {
-        get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
-      };
+      const INCIDENT_KEY = DataStore.KEY_INCIDENTS || 'bcms_incidents_v1';
+      const EVIDENCE_KEY = DataStore.KEY_EVIDENCE || 'bcms_audit_evidence_v1';
+      const CAPA_KEY = DataStore.KEY_CAPA || 'bcms_capa_v1';
 
-      const safeDate = (value) => {
-        const d = new Date(value || '');
-        return Number.isNaN(d.getTime()) ? null : d;
-      };
-      const toDateTime = (v) => {
-        const d = safeDate(v);
-        return d ? d.toLocaleString('ko-KR', { hour12:false }) : '-';
-      };
-      const toDate = (v) => {
-        const d = safeDate(v);
-        return d ? d.toISOString().slice(0,10) : '-';
-      };
-      const limitRows = (arr, n=5) => (Array.isArray(arr) ? arr.slice(0,n) : []);
+      const INCIDENTS_UNIFIED_KEY = 'bcmsIncidents';
+      const EVIDENCE_ITEMS_KEY = 'bcmsEvidenceItems';
+      const ACTION_ITEMS_KEY = 'bcmsActionItems';
+      const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
+      const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
 
-      const orgData = store.get(ORG_KEY, { divisions: [] });
-      const serviceRows = Array.isArray(store.get(SERVICE_KEY, [])) ? store.get(SERVICE_KEY, []) : [];
-      const orgTeamMap = new Map();
-      (Array.isArray(orgData?.divisions) ? orgData.divisions : []).forEach((division) => {
-        (Array.isArray(division?.teams) ? division.teams : []).forEach((team) => {
-          if (!team?.id) return;
-          orgTeamMap.set(team.id, {
-            divisionId: division.id,
-            divisionName: division.name || '미지정 본부',
-            teamId: team.id,
-            teamName: team.name || '미지정 팀',
-          });
-        });
-      });
-
-      const serviceMap = new Map(serviceRows.map((svc) => [svc.id, svc]));
-      const serviceNameMap = new Map(serviceRows.map((svc) => [svc.name, svc]));
-      const orgLabel = (u) => `${u.divisionName || '미지정'} / ${u.teamName || '미지정'}`;
-      const esc = (v) => String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-
-      const dedupOrgUnits = (units) => {
-        const m = new Map();
-        (units || []).forEach((u) => {
-          if (!u) return;
-          const key = u.teamId || `${u.divisionName}::${u.teamName}`;
-          if (!m.has(key)) m.set(key, { ...u });
-        });
-        return [...m.values()];
-      };
-
-      const resolveSvcOrg = (svc) => {
-        if (!svc) return null;
-        if (svc.teamId && orgTeamMap.has(svc.teamId)) return orgTeamMap.get(svc.teamId);
-        if (svc.teamId || svc.teamName || svc.divisionName) {
-          return {
-            divisionId: svc.divisionId || null,
-            divisionName: svc.divisionName || '미지정',
-            teamId: svc.teamId || null,
-            teamName: svc.teamName || '미지정',
-          };
-        }
-        return null;
-      };
-
-      const inferOrgUnits = ({ relatedOrgUnits = [], serviceNames = [], serviceIds = [], orgText = '' }) => {
-        let units = dedupOrgUnits(relatedOrgUnits);
-
-        if (!units.length && orgText) {
-          units = orgText.split(',').map((s) => s.trim()).filter(Boolean).map((label, idx) => {
-            const [divisionName, teamName] = label.split('/').map((x) => (x || '').trim());
-            return { divisionId: null, divisionName: divisionName || '미지정', teamId: `text-${idx}`, teamName: teamName || '미지정' };
-          });
-        }
-
-        if (!units.length) {
-          const svcHits = [
-            ...serviceIds.map((id) => serviceMap.get(id)).filter(Boolean),
-            ...serviceNames.map((nm) => serviceNameMap.get(nm)).filter(Boolean),
-          ];
-          units = dedupOrgUnits(svcHits.map(resolveSvcOrg).filter(Boolean));
-        }
-
-        return units;
-      };
-
-      const renderOrgSummary = (mountId, units, limit = 2) => {
-        const el = document.getElementById(mountId);
-        el.innerHTML = '';
-        if (!units.length) {
-          el.innerHTML = '<span class="noteEmpty">미지정</span>';
-          return;
-        }
-        units.slice(0, limit).forEach((u) => {
-          const chip = document.createElement('button');
-          chip.type = 'button';
-          chip.className = 'jumpBtn';
-          chip.dataset.navTarget = '../governance/eop-org-chart.html';
-          chip.dataset.navKind = 'org';
-          chip.dataset.navDivision = u.divisionName || '';
-          chip.dataset.navTeam = u.teamName || '';
-          chip.textContent = orgLabel(u);
-          el.appendChild(chip);
-        });
-        if (units.length > limit) {
-          const more = document.createElement('span');
-          more.className = 'orgMore';
-          more.textContent = `+${units.length - limit}`;
-          el.appendChild(more);
+      const readSafe = (key, fallback) => {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw == null) return fallback;
+          return JSON.parse(raw);
+        } catch {
+          return fallback;
         }
       };
-
-      const toServiceButtons = (services) => {
-        const list = (services || []).filter(Boolean);
-        if (!list.length) return '-';
-        return list.map((name) => `<button type="button" class="jumpBtn" data-nav-target="../governance/service-registry.html" data-nav-kind="service" data-nav-value="${esc(name)}">${esc(name)}</button>`).join(' ');
+      const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
+      const toDate = (iso) => {
+        if (!iso) return '-';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return '-';
+        return d.toLocaleString('ko-KR', { hour12:false });
+      };
+      const toTeamName = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value.trim();
+        if (typeof value === 'object') return String(value.teamName || value.name || '').trim();
+        return '';
+      };
+      const normalizeOrgUnits = (orgUnits, ownerTeam = '') => {
+        const names = uniq((orgUnits || []).map(toTeamName).filter(Boolean));
+        if (!names.length && ownerTeam) names.push(ownerTeam);
+        return uniq(names);
       };
 
-      const toOrgButtons = (units, limit = 2, target = '../governance/org.html') => {
-        if (!units.length) return '-';
-        const head = units.slice(0, limit).map((u) => `<button type="button" class="jumpBtn" data-nav-target="${target}" data-nav-kind="org" data-nav-division="${esc(u.divisionName)}" data-nav-team="${esc(u.teamName)}">${esc(orgLabel(u))}</button>`);
-        if (units.length > limit) head.push(`<span class="orgMore">+${units.length - limit}</span>`);
-        return head.join(' ');
+      const getIncidents = () => {
+        const modern = readSafe(INCIDENTS_UNIFIED_KEY, null);
+        if (modern && typeof modern === 'object') return modern;
+        return DataStore.get(INCIDENT_KEY, { currentIncident: {}, logs: [] }) || { currentIncident: {}, logs: [] };
+      };
+      const saveIncidents = (data) => {
+        DataStore.set(INCIDENT_KEY, data);
+        localStorage.setItem(INCIDENTS_UNIFIED_KEY, JSON.stringify(data));
+      };
+      const getEvidenceItems = () => {
+        const modern = readSafe(EVIDENCE_ITEMS_KEY, null);
+        if (Array.isArray(modern)) return modern;
+        const legacy = DataStore.get(EVIDENCE_KEY, []);
+        return Array.isArray(legacy) ? legacy : [];
+      };
+      const saveEvidenceItems = (rows) => {
+        const safe = Array.isArray(rows) ? rows : [];
+        DataStore.set(EVIDENCE_KEY, safe);
+        localStorage.setItem(EVIDENCE_ITEMS_KEY, JSON.stringify(safe));
+      };
+      const getActionItems = () => {
+        const modern = readSafe(ACTION_ITEMS_KEY, null);
+        if (Array.isArray(modern)) return modern;
+        const legacy = DataStore.get(CAPA_KEY, []);
+        return Array.isArray(legacy) ? legacy : [];
+      };
+      const saveActionItems = (rows) => {
+        const safe = Array.isArray(rows) ? rows : [];
+        DataStore.set(CAPA_KEY, safe);
+        localStorage.setItem(ACTION_ITEMS_KEY, JSON.stringify(safe));
       };
 
-      const renderIncidentAction = (incidentRef) => {
-        const wrap = document.getElementById('incActionWrap');
-        if (!incidentRef) {
-          wrap.innerHTML = '';
-          return;
-        }
-        wrap.innerHTML = `<button type="button" class="jumpBtn" data-nav-target="./incident-dashboard.html" data-nav-kind="incident" data-nav-value="${esc(incidentRef)}">사고 대응 화면에서 보기</button>`;
+      const createDefaultEvidenceForIncident = () => [];
+      const createDefaultActionsForIncident = () => [];
+      const syncIncidentOutputs = (incident) => incident;
+
+      const getOpenEvidenceItems = () => getEvidenceItems().filter((item) => ['미확인', '확인필요'].includes(String(item.status || '').trim()));
+      const getOpenActionItems = () => getActionItems().filter((item) => ['미완료', '미착수', '진행중', 'OPEN', 'IN_PROGRESS'].includes(String(item.status || '').trim()));
+
+      const setFocusTarget = (type, id) => {
+        localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type, id }));
+      };
+      const getFocusTarget = () => readSafe(FOCUS_TARGET_KEY, null);
+      const clearFocusTarget = () => localStorage.removeItem(FOCUS_TARGET_KEY);
+
+      const incidents = getIncidents();
+      saveIncidents(incidents);
+      saveEvidenceItems(getEvidenceItems());
+      saveActionItems(getActionItems());
+      clearFocusTarget();
+
+      const currentIncident = incidents.currentIncident || readSafe(CURRENT_INCIDENT_KEY, {}) || {};
+      const status = String(currentIncident.status || '');
+      const ongoingStatuses = ['원인 조사', '영향 완화', '안정화 모니터링'];
+      const closedStatuses = ['복구 완료', '종료', '종결'];
+
+      const openEvidence = getOpenEvidenceItems().sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      const openActions = getOpenActionItems().sort((a,b) => new Date(a.dueDate || '2999-12-31') - new Date(b.dueDate || '2999-12-31'));
+
+      document.getElementById('kIncident').textContent = ongoingStatuses.includes(status) ? '1' : '0';
+      document.getElementById('kEvidence').textContent = String(openEvidence.length);
+      document.getElementById('kAction').textContent = String(openActions.length);
+      document.getElementById('kClosed').textContent = closedStatuses.includes(status) ? '1' : '0';
+
+      const renderOrgChips = (orgUnits, ownerTeam = '') => {
+        const names = normalizeOrgUnits(orgUnits, ownerTeam);
+        if (!names.length) return '<span class="chip">관련 조직 확인 필요</span>';
+        return names.map((name) => `<span class="chip">${name}</span>`).join('');
       };
 
-      const routeWithContext = (target, kind, payload) => {
-        const param = new URLSearchParams();
-        if (kind === 'incident') {
-          localStorage.setItem(NAV_INCIDENT_KEY, JSON.stringify({ incidentRef: payload.incidentRef }));
-          param.set('incidentRef', payload.incidentRef || '');
-        }
-        if (kind === 'service') {
-          localStorage.setItem(NAV_SERVICE_KEY, JSON.stringify({ serviceName: payload.serviceName }));
-          param.set('q', payload.serviceName || '');
-        }
-        if (kind === 'org') {
-          localStorage.setItem(NAV_ORG_KEY, JSON.stringify({ divisionName: payload.divisionName, teamName: payload.teamName }));
-          if (payload.teamName) param.set('team', payload.teamName);
-        }
-        if (kind === 'evidence') {
-          localStorage.setItem(NAV_EVIDENCE_KEY, JSON.stringify({ evidenceId: payload.evidenceId }));
-          param.set('focus', payload.evidenceId || '');
-        }
-        if (kind === 'capa') {
-          localStorage.setItem(NAV_CAPA_KEY, JSON.stringify({ capaId: payload.capaId }));
-          param.set('focus', payload.capaId || '');
-        }
-        const qs = param.toString();
-        location.href = qs ? `${target}?${qs}` : target;
-      };
-
-      document.body.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-nav-target]');
-        if (!btn) return;
-        const target = btn.dataset.navTarget;
-        const kind = btn.dataset.navKind;
-        const payload = {
-          incidentRef: btn.dataset.navValue,
-          serviceName: btn.dataset.navValue,
-          divisionName: btn.dataset.navDivision,
-          teamName: btn.dataset.navTeam,
-          evidenceId: btn.dataset.navValue,
-          capaId: btn.dataset.navValue,
-        };
-        routeWithContext(target, kind, payload);
-      });
-
-      const incident = store.get(INCIDENT_KEY, {});
-      const evidenceRows = Array.isArray(store.get(EVIDENCE_KEY, [])) ? store.get(EVIDENCE_KEY, []) : [];
-      const capaRows = Array.isArray(store.get(CAPA_KEY, [])) ? store.get(CAPA_KEY, []) : [];
-
-      const status = String(incident?.currentIncident?.status || '안정화 모니터링');
-      const ongoing = ['원인 조사','영향 완화','안정화 모니터링'].includes(status) ? 1 : 0;
-
-      const currentIncident = incident?.currentIncident || {};
-      const currentOrgUnits = inferOrgUnits({
-        relatedOrgUnits: currentIncident.relatedOrgUnits || [],
-        serviceNames: currentIncident.impactedServiceNames || [],
-        serviceIds: currentIncident.impactedServiceIds || [],
-      });
-
-      const drState = String(incident?.drState || 'normal');
-      const drMap = {
-        normal: { text:'정상', cls:'normal' },
-        dr: { text:'전환', cls:'switch' },
-        recovering: { text:'복구중', cls:'recover' },
-      };
-      const drInfo = drMap[drState] || drMap.normal;
-
-      const evidencePending = evidenceRows
-        .filter((x) => x && x.status === '확인필요')
-        .sort((a,b) => (safeDate(b.createdAt)?.getTime()||0) - (safeDate(a.createdAt)?.getTime()||0))
-        .map((row) => ({
-          ...row,
-          resolvedOrgUnits: inferOrgUnits({
-            relatedOrgUnits: row.relatedOrgUnits || [],
-            serviceNames: row.services || [],
-            orgText: row.relatedOrgText || '',
-          })
-        }));
-
-      const capaOpenRows = capaRows
-        .filter((x) => x && ['미착수','진행중','OPEN','IN_PROGRESS'].includes(String(x.status || '')))
-        .sort((a,b) => {
-          const ad = safeDate(a.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
-          const bd = safeDate(b.dueDate)?.getTime() || Number.MAX_SAFE_INTEGER;
-          return ad - bd;
-        })
-        .map((row) => ({
-          ...row,
-          resolvedOrgUnits: inferOrgUnits({
-            relatedOrgUnits: row.relatedOrgUnits || [],
-            serviceNames: row.service ? row.service.split(',').map((v)=>v.trim()).filter(Boolean) : [],
-            orgText: row.orgUnit || '',
-          })
-        }));
-
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const in7 = new Date(today);
-      in7.setDate(in7.getDate() + 7);
-
-      const capaDueSoonCount = capaOpenRows.filter((x) => {
-        const d = safeDate(x.dueDate);
-        if (!d) return false;
-        d.setHours(0,0,0,0);
-        return d.getTime() <= in7.getTime();
-      }).length;
-
-      document.getElementById('kOngoing').textContent = String(ongoing);
-      document.getElementById('kEvidencePending').textContent = String(evidencePending.length);
-      document.getElementById('kCapaOpen').textContent = String(capaOpenRows.length);
-      document.getElementById('kCapaDueSoon').textContent = String(capaDueSoonCount);
-      document.getElementById('kDrState').innerHTML = `<span class="pill ${drInfo.cls}">${drInfo.text}</span>`;
-      document.getElementById('kDrHint').textContent = `현재 상태: ${drInfo.text}`;
-
-      document.getElementById('incStatus').textContent = currentIncident.status || '-';
-      const currentServices = (currentIncident.impactedServiceNames || []);
-      document.getElementById('incServices').innerHTML = toServiceButtons(currentServices);
-      renderOrgSummary('incOrgSummary', currentOrgUnits, 3);
-      renderIncidentAction(currentIncident.incidentId || currentIncident.id || 'INC-CURRENT');
-
-      const evidenceBody = document.getElementById('evidencePendingBody');
-      const evView = limitRows(evidencePending, 5);
-      if (!evView.length) {
-        evidenceBody.innerHTML = '<tr><td colspan="7" class="noteEmpty">미확인 증적이 없습니다.</td></tr>';
+      const evidenceList = document.getElementById('evidenceList');
+      if (!openEvidence.length) {
+        evidenceList.innerHTML = '<div class="empty">미확인 증적이 없습니다.</div>';
       } else {
-        evidenceBody.innerHTML = evView.map((r) => {
-          const labels = r.resolvedOrgUnits.map(orgLabel);
-          const orgText = labels.slice(0,2).join(', ') + (labels.length > 2 ? ` +${labels.length - 2}` : '');
-          return `
-            <tr>
-              <td>${toDateTime(r.createdAt)}</td>
-              <td>${r.type || '-'}</td>
-              <td><button type="button" class="jumpBtn jumpInline" data-nav-target="./incident-dashboard.html" data-nav-kind="incident" data-nav-value="${esc(r.incident || '')}">${r.incident || '-'}</button></td>
-              <td>${toServiceButtons(r.services || [])}</td>
-              <td>${toOrgButtons(r.resolvedOrgUnits || [], 2, '../governance/org.html')}</td>
-              <td>${r.description || '-'}</td>
-              <td><button type="button" class="tag st-pending" data-nav-target="../audit/evidence.html" data-nav-kind="evidence" data-nav-value="${esc(r.id || '')}">확인필요</button></td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      const capaBody = document.getElementById('capaOpenBody');
-      const capaView = limitRows(capaOpenRows, 5);
-      const statusTag = (v) => {
-        if (v === '진행중' || v === 'IN_PROGRESS') return '<span class="tag st-progress">진행중</span>';
-        if (v === '완료' || v === 'DONE') return '<span class="tag st-done">완료</span>';
-        return '<span class="tag st-start">미착수</span>';
-      };
-      const isDueSoon = (dueDate) => {
-        const d = safeDate(dueDate);
-        if (!d) return false;
-        d.setHours(0,0,0,0);
-        return d.getTime() <= in7.getTime();
-      };
-
-      if (!capaView.length) {
-        capaBody.innerHTML = '<tr><td colspan="8" class="noteEmpty">미완료 개선조치가 없습니다.</td></tr>';
-      } else {
-        capaBody.innerHTML = capaView.map((r) => {
-          const labels = r.resolvedOrgUnits.map(orgLabel);
-          const orgText = labels.slice(0,2).join(', ') + (labels.length > 2 ? ` +${labels.length - 2}` : '');
-          return `
-            <tr>
-              <td><button type="button" class="jumpBtn jumpInline" data-nav-target="../audit/capa.html" data-nav-kind="capa" data-nav-value="${esc(r.id || '')}">${r.title || '-'}</button></td>
-              <td><button type="button" class="jumpBtn jumpInline" data-nav-target="./incident-dashboard.html" data-nav-kind="incident" data-nav-value="${esc(r.incident || '')}">${r.incident || '-'}</button></td>
-              <td>${toServiceButtons((r.service || '').split(',').map((v)=>v.trim()).filter(Boolean))}</td>
-              <td>${toOrgButtons(r.resolvedOrgUnits || [], 2, '../governance/org.html')}</td>
-              <td>${r.owner || '-'}</td>
-              <td>${toDate(r.dueDate)} ${isDueSoon(r.dueDate) ? '<span class="tag dueSoon" style="margin-left:6px;">기한 임박</span>' : ''}</td>
-              <td>${statusTag(String(r.status || ''))}</td>
-              <td>${r.priority || '-'}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      const logs = Array.isArray(incident?.logs) ? incident.logs.slice(0,10) : [];
-      const tbody = document.getElementById('logTbody');
-      if (!logs.length) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:rgba(15,23,42,.6)">표시할 대응 로그가 없습니다.</td></tr>`;
-      } else {
-        tbody.innerHTML = logs.map((r) => `
-          <tr>
-            <td>${r.time || '-'}</td>
-            <td>${r.system || '-'}</td>
-            <td>${r.event || '-'}</td>
-            <td>${r.action || '-'}</td>
-            <td>${r.operator || '-'}</td>
-          </tr>
+        evidenceList.innerHTML = openEvidence.map((item) => `
+          <article class="itemRow">
+            <div class="cell">
+              <div class="label">증적명</div>
+              <button class="titleBtn" type="button" data-type="evidence" data-id="${item.id}">${item.title || item.description || '증적 항목'}</button>
+              <div class="meta">연계 사고: ${item.incidentTitle || item.incidentId || item.incident || '-'}</div>
+            </div>
+            <div class="cell">
+              <div class="label">영향 서비스</div>
+              <div class="meta">${item.serviceName || (item.services || []).join(', ') || '-'}</div>
+            </div>
+            <div class="cell">
+              <div class="label">관련 조직</div>
+              <div class="chipWrap">${renderOrgChips(item.relatedOrgUnits, item.ownerTeam)}</div>
+            </div>
+            <div class="cell">
+              <div class="label">생성일</div>
+              <div class="meta">${toDate(item.createdAt)}</div>
+            </div>
+            <div class="cell">
+              <div class="label">상태</div>
+              <span class="badge warn">확인 필요</span>
+            </div>
+          </article>
         `).join('');
       }
+
+      const actionList = document.getElementById('actionList');
+      if (!openActions.length) {
+        actionList.innerHTML = '<div class="empty">미완료 개선조치가 없습니다.</div>';
+      } else {
+        actionList.innerHTML = openActions.map((item) => `
+          <article class="itemRow">
+            <div class="cell">
+              <div class="label">조치명</div>
+              <button class="titleBtn" type="button" data-type="action" data-id="${item.id}">${item.title || '개선조치 항목'}</button>
+              <div class="meta">연계 사고: ${item.incidentTitle || item.incidentId || item.incident || '-'}</div>
+            </div>
+            <div class="cell">
+              <div class="label">영향 서비스</div>
+              <div class="meta">${item.serviceName || item.service || '-'}</div>
+            </div>
+            <div class="cell">
+              <div class="label">관련 조직</div>
+              <div class="chipWrap">${renderOrgChips(item.relatedOrgUnits, item.ownerTeam)}</div>
+            </div>
+            <div class="cell">
+              <div class="label">우선순위 / 기한</div>
+              <div class="meta">${item.priority || '-'} / ${item.dueDate || '-'}</div>
+            </div>
+            <div class="cell">
+              <div class="label">상태</div>
+              <span class="badge progress">조치 필요</span>
+            </div>
+          </article>
+        `).join('');
+      }
+
+      document.body.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-type][data-id]');
+        if (!btn) return;
+        const type = btn.dataset.type;
+        const id = btn.dataset.id;
+        if (!id) return;
+        if (type === 'evidence') {
+          setFocusTarget('evidence', id);
+          location.href = '../audit/evidence.html?focus=' + encodeURIComponent(id);
+          return;
+        }
+        if (type === 'action') {
+          setFocusTarget('action', id);
+          location.href = '../audit/capa.html?focus=' + encodeURIComponent(id);
+        }
+      });
+
+      window.getIncidents = getIncidents;
+      window.saveIncidents = saveIncidents;
+      window.getEvidenceItems = getEvidenceItems;
+      window.saveEvidenceItems = saveEvidenceItems;
+      window.getActionItems = getActionItems;
+      window.saveActionItems = saveActionItems;
+      window.createDefaultEvidenceForIncident = createDefaultEvidenceForIncident;
+      window.createDefaultActionsForIncident = createDefaultActionsForIncident;
+      window.syncIncidentOutputs = syncIncidentOutputs;
+      window.getOpenEvidenceItems = getOpenEvidenceItems;
+      window.getOpenActionItems = getOpenActionItems;
+      window.setFocusTarget = setFocusTarget;
+      window.getFocusTarget = getFocusTarget;
+      window.clearFocusTarget = clearFocusTarget;
     })();
   </script>
 </body>
