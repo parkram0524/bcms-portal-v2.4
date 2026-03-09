@@ -29,6 +29,7 @@
     .itemList{ display:grid; gap:10px; }
     .itemRow{ border:1px solid #dbe3ef; border-radius:12px; background:#fff; padding:12px; display:grid; grid-template-columns:2fr 1.5fr 2fr 1fr 1fr; gap:10px; align-items:start; }
     .itemRow:hover{ background:#fbfdff; }
+    .itemRow.clickable{ cursor:pointer; }
     .titleBtn{ border:none; background:transparent; padding:0; text-align:left; color:#1d4ed8; font-weight:900; cursor:pointer; font-size:14px; }
     .titleBtn:hover{ text-decoration:underline; }
     .meta{ font-size:12px; color:#475569; line-height:1.45; }
@@ -42,11 +43,21 @@
     .warn{ color:#92400e; background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.3); }
     .progress{ color:#1d4ed8; background:rgba(37,99,235,.12); border-color:rgba(37,99,235,.3); }
 
+    .twoCol{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:14px; }
     .quickActions{ margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
     .quickBtn{ display:inline-flex; align-items:center; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:8px 12px; color:#0f172a; background:#fff; font-size:12px; font-weight:900; }
     .quickBtn:hover{ background:rgba(15,23,42,.04); }
+    .sev{ font-weight:900; }
+    .sev.심각{ color:#b91c1c; }
+    .sev.높음{ color:#ea580c; }
+    .sev.중간{ color:#2563eb; }
+    .sev.낮음{ color:#475569; }
+    .pchip{ display:inline-flex; align-items:center; border-radius:999px; padding:3px 8px; font-size:11px; font-weight:900; border:1px solid; }
+    .p-high{ color:#b91c1c; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.3); }
+    .p-mid{ color:#b45309; background:rgba(245,158,11,.16); border-color:rgba(245,158,11,.3); }
+    .p-low{ color:#475569; background:rgba(148,163,184,.16); border-color:rgba(148,163,184,.3); }
 
-    @media (max-width:1024px){ .itemRow{ grid-template-columns:1fr; } }
+    @media (max-width:1024px){ .itemRow{ grid-template-columns:1fr; } .twoCol{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -54,25 +65,42 @@
   <main class="main">
     <div class="wrap">
       <section class="hero">
-        <h1>운영 현황</h1>
-        <p>현재 미처리 항목을 확인할 수 있습니다. 사고 종료 결과물이 증적/개선조치로 자동 연결됩니다.</p>
+        <h1>BCMS 운영 상황판</h1>
+        <p>인시던트·증적·개선조치·핵심업무·리스크 데이터를 한 화면에서 통합 모니터링합니다.</p>
       </section>
 
       <section class="summaryGrid">
-        <article class="summaryCard"><div class="k">진행 중 사고</div><div class="v" id="kIncident">0</div><div class="h">원인 조사/영향 완화/안정화 모니터링</div></article>
+        <article class="summaryCard"><div class="k">진행중 Incident</div><div class="v" id="kIncident">0</div><div class="h">종료/종결 제외</div></article>
         <article class="summaryCard"><div class="k">미확인 증적</div><div class="v" id="kEvidence">0</div><div class="h">확인 필요 항목</div></article>
-        <article class="summaryCard"><div class="k">미완료 개선조치</div><div class="v" id="kAction">0</div><div class="h">미완료/미착수/진행중 항목</div></article>
-        <article class="summaryCard"><div class="k">최근 종료 사고</div><div class="v" id="kClosed">0</div><div class="h">복구 완료/종료/종결</div></article>
+        <article class="summaryCard"><div class="k">미완료 개선조치</div><div class="v" id="kAction">0</div><div class="h">status = 미완료</div></article>
+        <article class="summaryCard"><div class="k">중점관리 리스크</div><div class="v" id="kRisk">0</div><div class="h">riskScore ≥ 13 또는 critical</div></article>
       </section>
 
       <section class="panel">
+        <div class="panelHead"><h2>인시던트 현황</h2><span class="helper">행 클릭 시 Incident Dashboard로 이동합니다.</span></div>
+        <div id="incidentList" class="itemList"></div>
+      </section>
+
+      <section class="twoCol">
+      <section class="panel" style="margin-top:0;">
         <div class="panelHead"><h2>미확인 증적</h2><span class="helper">항목 클릭 시 증적 관리 화면으로 이동합니다.</span></div>
         <div id="evidenceList" class="itemList"></div>
       </section>
 
-      <section class="panel">
+      <section class="panel" style="margin-top:0;">
         <div class="panelHead"><h2>미완료 개선조치</h2><span class="helper">항목 클릭 시 개선조치 관리 화면으로 이동합니다.</span></div>
         <div id="actionList" class="itemList"></div>
+      </section>
+      </section>
+
+      <section class="panel">
+        <div class="panelHead"><h2>핵심업무 영향 상태</h2><span class="helper">인시던트 영향 서비스와 연계된 팀 핵심업무</span></div>
+        <div id="biaList" class="itemList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panelHead"><h2>중점관리 리스크</h2><span class="helper">위험도 13점 이상 리스크</span></div>
+        <div id="riskList" class="itemList"></div>
       </section>
 
       <section class="panel">
@@ -97,8 +125,10 @@
 
       const INCIDENTS_UNIFIED_KEY = 'bcmsIncidents';
       const EVIDENCE_ITEMS_KEY = 'bcmsEvidenceItems';
-      const ACTION_ITEMS_KEY = 'bcmsActionItems';
-      const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
+      const ACTION_ITEMS_KEY = 'bcmsCapaItems';
+      const INCIDENT_EXECUTION_KEY = 'bcmsIncidentExecution';
+      const BIA_DATA_KEY = 'bcmsBIAData';
+      const RISK_ASSESSMENT_KEY = 'bcmsRiskAssessment';
       const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
 
       const readSafe = (key, fallback) => {
@@ -131,12 +161,24 @@
 
       const getIncidents = () => {
         const modern = readSafe(INCIDENTS_UNIFIED_KEY, null);
-        if (modern && typeof modern === 'object') return modern;
+        if (Array.isArray(modern)) return modern;
+        if (modern && typeof modern === 'object') {
+          const rows = [modern.currentIncident, ...(modern.logs || [])].filter(Boolean);
+          if (rows.length) return rows;
+        }
         return DataStore.get(INCIDENT_KEY, { currentIncident: {}, logs: [] }) || { currentIncident: {}, logs: [] };
       };
-      const saveIncidents = (data) => {
-        DataStore.set(INCIDENT_KEY, data);
-        localStorage.setItem(INCIDENTS_UNIFIED_KEY, JSON.stringify(data));
+      const getIncidentRows = () => {
+        const base = getIncidents();
+        const rows = Array.isArray(base) ? base : [base.currentIncident, ...(base.logs || [])].filter(Boolean);
+        const exec = readSafe(INCIDENT_EXECUTION_KEY, []);
+        const merged = [...rows, ...(Array.isArray(exec) ? exec : [])];
+        const map = new Map();
+        merged.forEach((row, idx) => {
+          const id = row && (row.id || row.incidentId || row.incidentCode || `incident-${idx}`);
+          map.set(String(id), { ...row, id: String(id) });
+        });
+        return [...map.values()];
       };
       const getEvidenceItems = () => {
         const modern = readSafe(EVIDENCE_ITEMS_KEY, null);
@@ -144,54 +186,61 @@
         const legacy = DataStore.get(EVIDENCE_KEY, []);
         return Array.isArray(legacy) ? legacy : [];
       };
-      const saveEvidenceItems = (rows) => {
-        const safe = Array.isArray(rows) ? rows : [];
-        DataStore.set(EVIDENCE_KEY, safe);
-        localStorage.setItem(EVIDENCE_ITEMS_KEY, JSON.stringify(safe));
-      };
       const getActionItems = () => {
         const modern = readSafe(ACTION_ITEMS_KEY, null);
         if (Array.isArray(modern)) return modern;
         const legacy = DataStore.get(CAPA_KEY, []);
         return Array.isArray(legacy) ? legacy : [];
       };
-      const saveActionItems = (rows) => {
-        const safe = Array.isArray(rows) ? rows : [];
-        DataStore.set(CAPA_KEY, safe);
-        localStorage.setItem(ACTION_ITEMS_KEY, JSON.stringify(safe));
+      const getBiaRows = () => {
+        const rows = readSafe(BIA_DATA_KEY, []);
+        return Array.isArray(rows) ? rows : [];
+      };
+      const getRiskRows = () => {
+        const rows = readSafe(RISK_ASSESSMENT_KEY, []);
+        return Array.isArray(rows) ? rows : [];
       };
 
-      const createDefaultEvidenceForIncident = () => [];
-      const createDefaultActionsForIncident = () => [];
-      const syncIncidentOutputs = (incident) => incident;
-
-      const getOpenEvidenceItems = () => getEvidenceItems().filter((item) => ['미확인', '확인필요'].includes(String(item.status || '').trim()));
-      const getOpenActionItems = () => getActionItems().filter((item) => ['미완료', '미착수', '진행중', 'OPEN', 'IN_PROGRESS'].includes(String(item.status || '').trim()));
+      const getOpenEvidenceItems = () => getEvidenceItems().filter((item) => String(item.status || '').trim() === '미확인');
+      const getOpenActionItems = () => getActionItems().filter((item) => String(item.status || '').trim() === '미완료');
+      const getPriorityClass = (priority) => {
+        const p = String(priority || '').trim();
+        if (p === '상') return 'pchip p-high';
+        if (p === '중') return 'pchip p-mid';
+        return 'pchip p-low';
+      };
+      const getKeyRiskItems = () => getRiskRows().filter((item) => Number(item.riskScore || 0) >= 13 || item.critical === true);
 
       const setFocusTarget = (type, id) => {
         localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type, id }));
       };
-      const getFocusTarget = () => readSafe(FOCUS_TARGET_KEY, null);
-      const clearFocusTarget = () => localStorage.removeItem(FOCUS_TARGET_KEY);
 
-      const incidents = getIncidents();
-      saveIncidents(incidents);
-      saveEvidenceItems(getEvidenceItems());
-      saveActionItems(getActionItems());
-      clearFocusTarget();
+      const render = () => {
+        const incidents = getIncidentRows();
+        const activeIncidents = incidents.filter((item) => !['종료', '종결'].includes(String(item.status || '').trim()));
+        const openEvidence = getOpenEvidenceItems().sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        const openActions = getOpenActionItems().sort((a,b) => new Date(a.dueDate || '2999-12-31') - new Date(b.dueDate || '2999-12-31'));
+        const keyRisks = getKeyRiskItems().sort((a,b) => Number(b.riskScore || 0) - Number(a.riskScore || 0));
 
-      const currentIncident = incidents.currentIncident || readSafe(CURRENT_INCIDENT_KEY, {}) || {};
-      const status = String(currentIncident.status || '');
-      const ongoingStatuses = ['원인 조사', '영향 완화', '안정화 모니터링'];
-      const closedStatuses = ['복구 완료', '종료', '종결'];
+        document.getElementById('kIncident').textContent = String(activeIncidents.length);
+        document.getElementById('kEvidence').textContent = String(openEvidence.length);
+        document.getElementById('kAction').textContent = String(openActions.length);
+        document.getElementById('kRisk').textContent = String(keyRisks.length);
 
-      const openEvidence = getOpenEvidenceItems().sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      const openActions = getOpenActionItems().sort((a,b) => new Date(a.dueDate || '2999-12-31') - new Date(b.dueDate || '2999-12-31'));
-
-      document.getElementById('kIncident').textContent = ongoingStatuses.includes(status) ? '1' : '0';
-      document.getElementById('kEvidence').textContent = String(openEvidence.length);
-      document.getElementById('kAction').textContent = String(openActions.length);
-      document.getElementById('kClosed').textContent = closedStatuses.includes(status) ? '1' : '0';
+        const incidentList = document.getElementById('incidentList');
+        if (!activeIncidents.length) {
+          incidentList.innerHTML = '<div class="empty">진행중 인시던트가 없습니다.</div>';
+        } else {
+          incidentList.innerHTML = activeIncidents.map((item) => `
+            <article class="itemRow clickable" data-type="incident" data-id="${item.id}">
+              <div class="cell"><div class="label">Incident ID</div><div class="meta"><strong>${item.id || '-'}</strong></div></div>
+              <div class="cell"><div class="label">상태 / 심각도</div><div class="meta">${item.status || '-'} / <span class="sev ${item.severity || ''}">${item.severity || '-'}</span></div></div>
+              <div class="cell"><div class="label">영향 서비스 / 관련 조직</div><div class="meta">${item.serviceName || item.service || (item.services || []).join(', ') || '-'}<br/>${normalizeOrgUnits(item.relatedOrgUnits, item.ownerTeam).join(', ') || '-'}</div></div>
+              <div class="cell"><div class="label">현재 대응 단계</div><div class="meta">${item.responseStage || item.phase || '-'}</div></div>
+              <div class="cell"><div class="label">시작 시각</div><div class="meta">${toDate(item.startedAt || item.startAt || item.createdAt)}</div></div>
+            </article>
+          `).join('');
+        }
 
       const renderOrgChips = (orgUnits, ownerTeam = '') => {
         const names = normalizeOrgUnits(orgUnits, ownerTeam);
@@ -199,11 +248,11 @@
         return names.map((name) => `<span class="chip">${name}</span>`).join('');
       };
 
-      const evidenceList = document.getElementById('evidenceList');
-      if (!openEvidence.length) {
-        evidenceList.innerHTML = '<div class="empty">미확인 증적이 없습니다.</div>';
-      } else {
-        evidenceList.innerHTML = openEvidence.map((item) => `
+        const evidenceList = document.getElementById('evidenceList');
+        if (!openEvidence.length) {
+          evidenceList.innerHTML = '<div class="empty">미확인 증적이 없습니다.</div>';
+        } else {
+          evidenceList.innerHTML = openEvidence.map((item) => `
           <article class="itemRow">
             <div class="cell">
               <div class="label">증적명</div>
@@ -227,14 +276,14 @@
               <span class="badge warn">확인 필요</span>
             </div>
           </article>
-        `).join('');
-      }
+          `).join('');
+        }
 
-      const actionList = document.getElementById('actionList');
-      if (!openActions.length) {
-        actionList.innerHTML = '<div class="empty">미완료 개선조치가 없습니다.</div>';
-      } else {
-        actionList.innerHTML = openActions.map((item) => `
+        const actionList = document.getElementById('actionList');
+        if (!openActions.length) {
+          actionList.innerHTML = '<div class="empty">미완료 개선조치가 없습니다.</div>';
+        } else {
+          actionList.innerHTML = openActions.map((item) => `
           <article class="itemRow">
             <div class="cell">
               <div class="label">조치명</div>
@@ -250,18 +299,67 @@
               <div class="chipWrap">${renderOrgChips(item.relatedOrgUnits, item.ownerTeam)}</div>
             </div>
             <div class="cell">
-              <div class="label">우선순위 / 기한</div>
-              <div class="meta">${item.priority || '-'} / ${item.dueDate || '-'}</div>
+              <div class="label">우선순위 / 기한 / 담당조직</div>
+              <div class="meta"><span class="${getPriorityClass(item.priority)}">${item.priority || '-'}</span> / ${item.dueDate || '-'}<br/>${item.ownerTeam || '-'}</div>
             </div>
             <div class="cell">
               <div class="label">상태</div>
               <span class="badge progress">조치 필요</span>
             </div>
           </article>
-        `).join('');
-      }
+          `).join('');
+        }
+
+        const incidentServices = uniq(activeIncidents.flatMap((item) => {
+          const services = Array.isArray(item.services) ? item.services : [];
+          return [item.serviceName, item.service, ...services].filter(Boolean);
+        }).map((x) => String(x).trim()));
+        const biaRows = getBiaRows().filter((item) => {
+          const names = [item.serviceName, item.service, ...(Array.isArray(item.services) ? item.services : [])].filter(Boolean).map((x) => String(x).trim());
+          return names.some((name) => incidentServices.includes(name));
+        });
+        const biaList = document.getElementById('biaList');
+        if (!biaRows.length) {
+          biaList.innerHTML = '<div class="empty">현재 영향 서비스와 연계된 핵심업무가 없습니다.</div>';
+        } else {
+          biaList.innerHTML = biaRows.map((item) => `
+            <article class="itemRow">
+              <div class="cell"><div class="label">팀</div><div class="meta">${item.team || item.ownerTeam || '-'}</div></div>
+              <div class="cell"><div class="label">핵심업무</div><div class="meta">${item.coreFunction || item.businessFunction || '-'}</div></div>
+              <div class="cell"><div class="label">영향 서비스</div><div class="meta">${item.serviceName || item.service || '-'}</div></div>
+              <div class="cell"><div class="label">RTO</div><div class="meta">${item.rto || item.targetRto || '-'}</div></div>
+              <div class="cell"><div class="label">상태</div><span class="badge warn">영향 확인</span></div>
+            </article>
+          `).join('');
+        }
+
+        const riskList = document.getElementById('riskList');
+        if (!keyRisks.length) {
+          riskList.innerHTML = '<div class="empty">중점관리 리스크가 없습니다.</div>';
+        } else {
+          riskList.innerHTML = keyRisks.map((item) => `
+            <article class="itemRow">
+              <div class="cell"><div class="label">팀</div><div class="meta">${item.team || item.ownerTeam || '-'}</div></div>
+              <div class="cell"><div class="label">핵심업무</div><div class="meta">${item.coreFunction || item.businessFunction || '-'}</div></div>
+              <div class="cell"><div class="label">리스크</div><div class="meta">${item.riskName || item.risk || item.title || '-'}</div></div>
+              <div class="cell"><div class="label">위험도</div><div class="meta">${item.riskScore || '-'}${item.critical === true ? ' (Critical)' : ''}</div></div>
+              <div class="cell"><div class="label">우선관리</div><span class="badge warn">중점관리</span></div>
+            </article>
+          `).join('');
+        }
+      };
+
+      render();
+      setInterval(render, 8000);
+      window.addEventListener('storage', render);
 
       document.body.addEventListener('click', (e) => {
+        const row = e.target.closest('[data-type="incident"][data-id]');
+        if (row) {
+          setFocusTarget('incident', row.dataset.id);
+          location.href = './incident-dashboard.html?focus=' + encodeURIComponent(row.dataset.id);
+          return;
+        }
         const btn = e.target.closest('button[data-type][data-id]');
         if (!btn) return;
         const type = btn.dataset.type;
@@ -278,20 +376,12 @@
         }
       });
 
-      window.getIncidents = getIncidents;
-      window.saveIncidents = saveIncidents;
       window.getEvidenceItems = getEvidenceItems;
-      window.saveEvidenceItems = saveEvidenceItems;
       window.getActionItems = getActionItems;
-      window.saveActionItems = saveActionItems;
-      window.createDefaultEvidenceForIncident = createDefaultEvidenceForIncident;
-      window.createDefaultActionsForIncident = createDefaultActionsForIncident;
-      window.syncIncidentOutputs = syncIncidentOutputs;
       window.getOpenEvidenceItems = getOpenEvidenceItems;
       window.getOpenActionItems = getOpenActionItems;
       window.setFocusTarget = setFocusTarget;
-      window.getFocusTarget = getFocusTarget;
-      window.clearFocusTarget = clearFocusTarget;
+      window.getIncidentRows = getIncidentRows;
     })();
   </script>
 </body>
