@@ -3,191 +3,173 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>전략·계획 | BCMS Portal v2</title>
+  <title>재난·중단 대응 흐름 | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
-
   <style>
-    .wrap{ max-width: 1400px; margin:0 auto; }
-    .topbar{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
-    .topbar h1{ margin:0; font-size:26px; font-weight:950; letter-spacing:.2px; }
-    .topbar p{ margin:8px 0 0; color: rgba(15,23,42,.62); line-height:1.6; font-size:14.5px; max-width: 980px; }
+    .wrap{ max-width:1400px; margin:0 auto; }
+    .hero{ margin-bottom:14px; }
+    .hero h1{ margin:0; font-size:28px; font-weight:950; }
+    .hero p{ margin:8px 0 0; color:rgba(15,23,42,.64); font-size:14px; line-height:1.6; }
 
-    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 12px; border-radius:999px;
-      border:1px solid rgba(15,23,42,.14);
-      background: rgba(255,255,255,.96);
-      color: rgba(15,23,42,.88);
-      font-size: 13.5px; font-weight: 800;
-      white-space:nowrap;
-    }
+    .card{ border:1px solid rgba(15,23,42,.12); border-radius:16px; background:#fff; padding:14px; }
+    .section{ margin-bottom:14px; }
+    .section h2{ margin:0 0 10px; font-size:18px; font-weight:900; }
 
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-    .btn{
-      padding: 11px 14px;
-      border-radius:999px;
-      border:1px solid rgba(15,23,42,.14);
-      background: rgba(255,255,255,.96);
-      color:#0f172a;
-      font-weight: 900;
-      font-size: 14px;
-      text-decoration:none;
-      display:inline-flex; align-items:center; gap:8px;
-      transition: transform .08s ease, background .12s ease, border-color .12s ease;
-      white-space:nowrap;
-    }
-    .btn:hover{ background: rgba(15,23,42,.06); border-color: rgba(255,255,255,.22); transform: translateY(-1px); }
-    .btn.primary{ background: rgba(96,165,250,.20); border-color: rgba(96,165,250,.45); }
-    .btn.primary:hover{ background: rgba(96,165,250,.28); border-color: rgba(96,165,250,.62); }
+    .flowWrap{ display:grid; gap:8px; }
+    .node{ border:1px solid rgba(15,23,42,.14); border-radius:12px; background:#fff; padding:10px 12px; font-size:14px; font-weight:800; text-align:center; }
+    .arrow{ text-align:center; color:rgba(15,23,42,.5); font-weight:900; }
 
-    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
-    .card{
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.94);
-      border-radius: 18px;
-      padding: 16px;
-    }
+    .sop{ background:rgba(96,165,250,.14); border-color:rgba(96,165,250,.35); }
+    .eop{ background:rgba(168,85,247,.12); border-color:rgba(168,85,247,.33); }
+    .drp{ background:rgba(56,189,248,.12); border-color:rgba(56,189,248,.35); }
+    .bcp{ background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.35); }
 
-    .kpi{ grid-column: span 4; }
-    @media (max-width: 1100px){ .kpi{ grid-column: span 6; } }
-    @media (max-width: 640px){ .kpi{ grid-column: span 12; } }
+    .split{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .merge{ display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:center; }
+    .mergeCenter{ text-align:center; color:rgba(15,23,42,.55); font-size:12px; font-weight:800; }
 
-    .kTitle{ margin:0; font-size:14.5px; font-weight:900; color: rgba(15,23,42,.86); }
-    .kValue{ margin:10px 0 0; font-size: 34px; font-weight: 950; }
-    .kSub{ margin:8px 0 0; color: rgba(15,23,42,.60); font-size: 13.5px; line-height:1.5; }
+    .roleGrid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .role{ border:1px solid rgba(15,23,42,.12); border-radius:12px; padding:12px; }
+    .role h3{ margin:0 0 8px; font-size:16px; font-weight:900; }
+    .role ul{ margin:0; padding-left:18px; color:rgba(15,23,42,.76); font-size:13px; line-height:1.6; min-height:90px; }
 
-    .panel{ grid-column: span 12; }
-    .note{ color: rgba(15,23,42,.62); font-size: 14px; line-height:1.65; }
+    .btn{ display:inline-flex; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:900; color:#0f172a; background:#fff; }
 
-    .pill{
-      display:inline-flex; align-items:center; gap:6px;
-      padding: 7px 11px;
-      border-radius: 999px;
-      border:1px solid rgba(15,23,42,.14);
-      background: rgba(255,255,255,.96);
-      font-size: 12.5px;
-      font-weight: 900;
-      white-space:nowrap;
-      color: rgba(15,23,42,.88);
-    }
-    .pill.ok{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
-    .pill.warn{ border-color: rgba(245,158,11,.42); background: rgba(245,158,11,.12); }
+    table{ width:100%; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.12); border-radius:12px; overflow:hidden; }
+    th,td{ border-bottom:1px solid rgba(15,23,42,.08); padding:10px; font-size:13.5px; text-align:left; }
+    th{ background:#f8fafc; font-size:12.5px; color:rgba(15,23,42,.78); }
+    tr:last-child td{ border-bottom:none; }
+
+    .hubGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .hub{ border:1px solid rgba(15,23,42,.12); border-radius:12px; padding:12px; background:#fff; }
+    .hub strong{ display:block; font-size:15px; margin-bottom:6px; }
+    .hub p{ margin:0 0 10px; color:rgba(15,23,42,.64); font-size:13px; }
+
+    .steps{ display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
+    .step{ border:1px solid rgba(15,23,42,.12); border-radius:12px; background:#fff; padding:10px; font-size:13px; }
+    .step b{ display:block; margin-bottom:5px; }
+
+    @media (max-width:1100px){ .roleGrid,.hubGrid,.steps{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:760px){ .split,.merge,.roleGrid,.hubGrid,.steps{ grid-template-columns:1fr; } }
   </style>
 </head>
-
 <body>
   <aside id="sidebarMount"></aside>
 
   <main class="main">
     <div class="wrap">
+      <section class="hero">
+        <h1>🧭 재난·중단 대응 흐름</h1>
+        <p>SOP, EOP, DRP, BCP의 역할과 발동 시점을 한눈에 확인하고 관련 페이지로 이동할 수 있습니다.</p>
+      </section>
 
-      <div class="topbar">
-        <div>
-          <h1>🧭 전략·계획</h1>
-          <p>
-            전략·계획은 <b>BIA로 핵심업무를 확정</b>하고, 그 결과를 기준으로 <b>Risk 평가</b>와 <b>우선순위</b>를 반영해
-            복구 전략/대안을 확정하는 단계입니다.
-          </p>
-          <div class="chips">
-            <span class="chip">🧠 BIA → Risk 평가 → 우선순위</span>
-            <span class="chip">🧭 핵심업무(Core) 중심</span>
-            <span class="chip">🧾 증적/훈련/개선(CAPA) 연계</span>
+      <section class="card section">
+        <h2>재난·중단 대응 흐름도</h2>
+        <div class="flowWrap">
+          <div class="node sop">SOP에 따라 평상시 운영</div>
+          <div class="arrow">↓</div>
+          <div class="node">인시던트 발생</div>
+          <div class="arrow">↓</div>
+          <div class="node">초동조치</div>
+          <div class="arrow">↓</div>
+          <div class="node">복구 가능?</div>
+
+          <div class="split">
+            <div>
+              <div class="arrow">예 ↓</div>
+              <div class="node sop">SOP로 복구 후 정상화</div>
+            </div>
+            <div>
+              <div class="arrow">아니오 / 복구 지연 / 중요 시스템 ↓</div>
+              <div class="node eop">EOP 개시 (상황지휘·의사결정·확산통제)</div>
+            </div>
           </div>
+
+          <div class="merge">
+            <div class="node drp">DRP 기술 복구 (전환·재기동·복구)</div>
+            <div class="node bcp">BCP 업무 연속 (대체인력·대체운영·수기처리)</div>
+          </div>
+          <div class="mergeCenter">DRP + BCP 병렬 대응</div>
+          <div class="arrow">↘  ↙</div>
+          <div class="node">서비스 복구 / 안정화</div>
+          <div class="arrow">↓</div>
+          <div class="node">사고 종료 / 증적 / 개선조치(CAPA)</div>
         </div>
+      </section>
 
-        <div class="actions">
-          <a class="btn" href="../risk-bia/bia.html">BIA로 이동</a>
-          <a class="btn" href="../risk-bia/risk.html">Risk 평가로 이동</a>
-          <a class="btn primary" href="../risk-bia/priority.html">우선순위 보기</a>
+      <section class="card section">
+        <h2>문서 역할 카드</h2>
+        <div class="roleGrid">
+          <article class="role sop">
+            <h3>SOP</h3>
+            <ul>
+              <li>평상시 운영</li><li>표준 장애조치</li><li>정상 운영 절차</li>
+            </ul>
+            <a class="btn" href="../library/sop.html">관련 페이지 이동</a>
+          </article>
+          <article class="role eop">
+            <h3>EOP</h3>
+            <ul>
+              <li>비상조직 가동</li><li>상황관리 / 보고 / 의사결정</li><li>사고 확산 통제</li>
+            </ul>
+            <a class="btn" href="../governance/eop-org-chart.html">관련 페이지 이동</a>
+          </article>
+          <article class="role drp">
+            <h3>DRP</h3>
+            <ul>
+              <li>기술 복구</li><li>전환 / 복구 / 재기동</li><li>시스템·설비 복구 절차</li>
+            </ul>
+            <a class="btn" href="./drp.html">DRP 페이지 이동</a>
+          </article>
+          <article class="role bcp">
+            <h3>BCP</h3>
+            <ul>
+              <li>업무 연속 유지</li><li>대체 인력 / 장소 / 수기 처리</li><li>자원 상실 시 대체 운영</li>
+            </ul>
+            <a class="btn" href="./bcp.html">BCP 페이지 이동</a>
+          </article>
         </div>
-      </div>
+      </section>
 
-      <div class="grid">
-        <section class="card kpi">
-          <p class="kTitle">핵심업무(Core) 연계</p>
-          <div class="kValue" id="kpiCore">0</div>
-          <p class="kSub">bcp_core_processes(coreFinal=true) 기준</p>
-        </section>
+      <section class="card section">
+        <h2>SOP / EOP / DRP / BCP 언제 쓰는가</h2>
+        <table>
+          <thead><tr><th>구분</th><th>언제 쓰는가</th><th>초점</th></tr></thead>
+          <tbody>
+            <tr><td>SOP</td><td>표준 절차로 복구 가능할 때</td><td>정상 운영·초동조치</td></tr>
+            <tr><td>EOP</td><td>다부서 대응과 상황통제가 필요할 때</td><td>비상지휘·보고·의사결정</td></tr>
+            <tr><td>DRP</td><td>기술 복구 경로 전환이 필요할 때</td><td>시스템·설비 복구</td></tr>
+            <tr><td>BCP</td><td>자원 상실로 업무 공백이 예상될 때</td><td>업무 연속 유지</td></tr>
+          </tbody>
+        </table>
+      </section>
 
-        <section class="card kpi">
-          <p class="kTitle">리스크 데이터</p>
-          <div class="kValue" id="kpiRisks">0</div>
-          <p class="kSub">risks 저장 건수</p>
-        </section>
+      <section class="card section">
+        <h2>현재 포털 연계 현황</h2>
+        <div class="hubGrid">
+          <div class="hub"><strong>핵심업무 관리</strong><p>핵심업무 등록/정비</p><a class="btn" href="../risk-bia/core-functions.html">바로 이동</a></div>
+          <div class="hub"><strong>업무영향분석(BIA)</strong><p>MTPD/RTO/업무등급 정의</p><a class="btn" href="../risk-bia/bia.html">바로 이동</a></div>
+          <div class="hub"><strong>리스크 평가</strong><p>핵심업무별 위험도 산정</p><a class="btn" href="../risk-bia/risk.html">바로 이동</a></div>
+          <div class="hub"><strong>복구 우선순위</strong><p>복구 순서와 우선순위 확인</p><a class="btn" href="./priority.html">바로 이동</a></div>
+          <div class="hub"><strong>BCP 전략</strong><p>중점관리 리스크 연속성 전략</p><a class="btn" href="./bcp.html">바로 이동</a></div>
+          <div class="hub"><strong>DRP 절차</strong><p>실행 단계/담당/검증 기준</p><a class="btn" href="./drp.html">바로 이동</a></div>
+        </div>
+      </section>
 
-        <section class="card kpi">
-          <p class="kTitle">상태</p>
-          <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-            <span class="pill" id="pBia">BIA</span>
-            <span class="pill" id="pRisk">Risk</span>
-            <span class="pill" id="pPri">우선순위</span>
-          </div>
-          <p class="kSub">데이터 유무 기반 표시</p>
-        </section>
-
-        <section class="card panel">
-          <p class="kTitle">전략 확정 방식(요약)</p>
-          <div class="note" style="margin-top:10px;">
-            1) BIA에서 RTO/MTPD로 <b>핵심업무</b>를 정합니다.<br/>
-            2) Risk 평가에서 핵심업무 기준으로 위험/완화/대응을 정리합니다.<br/>
-            3) 우선순위 점수로 “지금 먼저”를 확정하고, 복구 전략(대체/이중화/DR/SOP)을 선택합니다.
-          </div>
-        </section>
-      </div>
-
+      <section class="card section">
+        <h2>추천 사용 흐름</h2>
+        <div class="steps">
+          <div class="step"><b>1</b>핵심업무 확인</div>
+          <div class="step"><b>2</b>업무영향분석 수행</div>
+          <div class="step"><b>3</b>리스크 평가</div>
+          <div class="step"><b>4</b>복구 우선순위 확인</div>
+          <div class="step"><b>5</b>BCP 전략 수립</div>
+          <div class="step"><b>6</b>DRP 절차 작성</div>
+        </div>
+      </section>
     </div>
   </main>
 
   <script src="../assets/sidebar.js"></script>
-  <script>
-    function safeJSONParse(v, fallback){
-      try{ return JSON.parse(v); }catch(e){ return fallback; }
-    }
-
-    function getRisksCount(){
-      const s = sessionStorage.getItem("risks");
-      const l = localStorage.getItem("risks");
-      const arr = safeJSONParse(s || l || "[]", []);
-      return Array.isArray(arr) ? arr.length : 0;
-    }
-
-    function getCoreFinalCount(){
-      const s = sessionStorage.getItem("bcp_core_processes");
-      const l = localStorage.getItem("bcp_core_processes");
-      const arr = safeJSONParse(s || l || "[]", []);
-      if(!Array.isArray(arr)) return 0;
-      return arr.filter(x => x && x.coreFinal === true).length;
-    }
-
-    function getProcessesCount(){
-      // risk-bia-data.js 없이도, BIA 저장이 이미 있으면 그걸로 추후 연동 가능
-      // 현재는 대시 성격이라 0 처리(필요 시 BIA 저장키에 맞춰 확장)
-      return 0;
-    }
-
-    const risks = getRisksCount();
-    const core = getCoreFinalCount();
-    const procs = getProcessesCount();
-
-    document.getElementById("kpiRisks").textContent = risks;
-    document.getElementById("kpiCore").textContent = core;
-
-    const pBia = document.getElementById("pBia");
-    const pRisk = document.getElementById("pRisk");
-    const pPri = document.getElementById("pPri");
-
-    // BIA 여부는 일단 core/process 기준으로 판단 (향후 BIA 저장키 연결 시 더 정확히)
-    pBia.className = "pill " + ((core>0 || procs>0) ? "ok" : "warn");
-    pBia.textContent = (core>0 || procs>0) ? "BIA: 진행" : "BIA: 필요";
-
-    pRisk.className = "pill " + (risks>0 ? "ok" : "warn");
-    pRisk.textContent = risks>0 ? "Risk: 완료" : "Risk: 필요";
-
-    // 우선순위는 risk/bia 둘 다 있어야 의미 있음
-    const hasPri = (risks>0) && (core>0 || procs>0);
-    pPri.className = "pill " + (hasPri ? "ok" : "warn");
-    pPri.textContent = hasPri ? "우선순위: 가능" : "우선순위: 준비중";
-  </script>
 </body>
 </html>
