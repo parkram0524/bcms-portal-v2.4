@@ -44,12 +44,17 @@
     .countdownCard{ grid-column: span 3; text-align:center; }
     .drCard{ grid-column: span 3; }
     .scenarioCard{ grid-column: span 12; }
+    .hubFlowCard{ grid-column: span 12; }
+    .hubLeftCard{ grid-column: span 7; }
+    .hubRightCard{ grid-column: span 5; }
+    .hubTabsCard{ grid-column: span 12; }
     .impactCard{ grid-column: span 12; }
     .logCard{ grid-column: span 12; }
 
     @media (max-width: 1180px){
       .incidentCard{ grid-column: span 12; }
       .countdownCard, .drCard{ grid-column: span 6; }
+      .hubLeftCard,.hubRightCard{ grid-column: span 12; }
     }
     @media (max-width: 760px){ .countdownCard, .drCard{ grid-column: span 12; } }
 
@@ -67,6 +72,9 @@
 
     .scenarioGrid{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:12px; margin-top:10px; }
     @media (max-width: 980px){ .scenarioGrid{ grid-template-columns:1fr; } }
+    @media (max-width: 1100px){ .trackGrid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 900px){ .modeFlow,.hubGrid2,.modeCtl{ grid-template-columns:1fr; } }
+    @media (max-width: 700px){ .trackGrid{ grid-template-columns:1fr; } }
 
     .scenarioBox{ border:1px solid rgba(15,23,42,.10); border-radius:14px; padding:12px; background:rgba(255,255,255,.96); }
     .scenarioBox h4{ margin:0 0 8px; font-size:15px; }
@@ -83,7 +91,28 @@
 
     .chipRow{ margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
     .chip{ display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(15,23,42,.14); border-radius:999px; background:#fff; padding:4px 10px; font-size:12px; font-weight:700; }
+    .chip.reco{ border-color:rgba(37,99,235,.34); background:rgba(37,99,235,.10); color:#1d4ed8; }
+    .chip.warn{ border-color:rgba(217,119,6,.34); background:rgba(217,119,6,.10); color:#92400e; }
     .chip button{ border:none !important; background:transparent !important; padding:0 !important; font-size:14px; line-height:1; cursor:pointer; color:#475569 !important; }
+
+    .modeFlow{ margin-top:8px; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+    .modeNode{ border:1px solid rgba(15,23,42,.12); border-radius:12px; background:#fff; padding:10px; text-align:center; font-size:12px; font-weight:900; }
+    .modeNode.active{ border-color:rgba(37,99,235,.38); box-shadow:0 0 0 2px rgba(37,99,235,.14) inset; }
+    .modeNode.recommended{ border-color:rgba(217,119,6,.38); background:rgba(217,119,6,.08); }
+
+    .hubGrid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:8px; }
+    .hubBox{ border:1px solid rgba(15,23,42,.10); border-radius:12px; background:rgba(255,255,255,.96); padding:10px; }
+    .hubBox h4{ margin:0 0 8px; font-size:14px; }
+    .hubList{ margin:0; padding-left:16px; display:flex; flex-direction:column; gap:4px; font-size:13px; }
+    .muted{ color:rgba(15,23,42,.62); font-size:12.5px; }
+
+    .modeCtl{ margin-top:10px; display:grid; grid-template-columns:220px 1fr auto; gap:8px; align-items:end; }
+    .trackGrid{ margin-top:10px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .track{ border:1px solid rgba(15,23,42,.10); border-radius:12px; background:rgba(255,255,255,.96); padding:10px; }
+    .track h4{ margin:0 0 6px; font-size:14px; }
+    .track .mini{ margin:4px 0; font-size:12.5px; color:rgba(15,23,42,.65); }
+    .track details{ margin-top:6px; }
+    .track summary{ cursor:pointer; font-weight:800; font-size:12.5px; }
 
     .orgSummary{ margin-top:10px; border:1px solid rgba(15,23,42,.10); border-radius:12px; background:#fff; padding:10px; }
     .orgSummary h5{ margin:0 0 8px; font-size:12px; color:rgba(15,23,42,.62); }
@@ -215,6 +244,98 @@
           </div>
         </article>
 
+        <article class="card hubFlowCard">
+          <h3>사고 대응 허브</h3>
+          <div class="metaGrid">
+            <div class="metaItem"><div class="k">현재 대응 단계</div><div class="v" id="currentModeText">SOP</div></div>
+            <div class="metaItem"><div class="k">권장 대응 단계</div><div class="v" id="recommendedModeText">SOP</div></div>
+          </div>
+          <div id="modeFlow" class="modeFlow"></div>
+          <div id="modeReasonChips" class="chipRow"></div>
+          <div class="modeCtl">
+            <div>
+              <label for="modeSelect">현재 단계 변경</label>
+              <select id="modeSelect">
+                <option>SOP</option>
+                <option>EOP</option>
+                <option>DRP</option>
+                <option>BCP</option>
+                <option>종료</option>
+              </select>
+            </div>
+            <div>
+              <label for="modeReasonInput">변경 사유</label>
+              <input id="modeReasonInput" type="text" placeholder="예: 다수 팀 대응 필요, 기술 복구 절차 발동"/>
+            </div>
+            <button class="btn actionBtn" id="btnApplyMode" type="button">단계 적용</button>
+          </div>
+        </article>
+
+        <article class="card hubLeftCard">
+          <h3>관련 조직 / 핵심업무</h3>
+          <div class="hubGrid2">
+            <div class="hubBox">
+              <h4>관련 조직</h4>
+              <ul id="hubOrgList" class="hubList"></ul>
+            </div>
+            <div class="hubBox">
+              <h4>관련 핵심업무 (BIA)</h4>
+              <ul id="hubCoreFnList" class="hubList"></ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="card hubRightCard">
+          <h3>관련 리스크 / 권장 트랙</h3>
+          <div class="hubBox">
+            <h4>매칭 리스크</h4>
+            <ul id="hubRiskList" class="hubList"></ul>
+          </div>
+          <div class="hubBox" style="margin-top:8px;">
+            <h4>권장 이유</h4>
+            <ul id="hubRecoReasonList" class="hubList"></ul>
+          </div>
+        </article>
+
+        <article class="card hubTabsCard">
+          <h3>SOP / EOP / DRP / BCP 실행 영역</h3>
+          <div class="trackGrid">
+            <section class="track">
+              <h4>SOP 표준 대응</h4>
+              <div class="mini">초동조치 체크리스트</div>
+              <ul class="hubList">
+                <li>영향 범위 확인</li><li>초기 격리/우회 조치</li><li>담당팀 통보</li><li>기본 복구 절차 수행</li><li>복구 예상시간 확인</li>
+              </ul>
+              <a class="btn" href="../library/sop.html">SOP 절차 보기</a>
+            </section>
+            <section class="track">
+              <h4>EOP 상황지휘</h4>
+              <div class="mini" id="eopRecommendedText">EOP 권장 여부 계산 중...</div>
+              <div class="mini" id="eopReasonText">개시 사유를 분석합니다.</div>
+              <div class="mini">관련 대응 역할: <span id="eopRolesText">-</span></div>
+              <a class="btn" href="../governance/eop-org-chart.html">비상대응 조직도</a>
+            </section>
+            <section class="track">
+              <h4>DRP 기술 복구</h4>
+              <div class="mini" id="drpMatchSummary">DRP 절차 매칭 결과를 표시합니다.</div>
+              <details>
+                <summary>절차 요약 보기</summary>
+                <div id="drpDetailList" class="mini"></div>
+              </details>
+              <a class="btn" href="../strategy-plans/drp.html">DRP 절차 관리</a>
+            </section>
+            <section class="track">
+              <h4>BCP 업무 연속</h4>
+              <div class="mini" id="bcpNeedText">BCP 필요 여부를 표시합니다.</div>
+              <details>
+                <summary>전략 요약 보기</summary>
+                <div id="bcpDetailList" class="mini"></div>
+              </details>
+              <a class="btn" href="../strategy-plans/bcp.html">BCP 전략 관리</a>
+            </section>
+          </div>
+        </article>
+
         <article class="card impactCard">
           <h3>영향 서비스 현황</h3>
           <div id="impactStatusGrid" class="impactGrid"></div>
@@ -252,6 +373,17 @@
       const SELECTED_INCIDENT_KEY = 'bcms_selected_incident';
       const CURRENT_INCIDENT_ID_KEY = 'bcmsCurrentIncidentId';
       const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
+      const BIA_KEY = 'bcmsBIAData';
+      const RISK_KEY = 'bcmsRiskAssessment';
+      const BCP_KEY = 'bcmsBCP';
+      const DRP_KEY = 'bcmsDRP';
+      const RESPONSE_MODES = ['SOP', 'EOP', 'DRP', 'BCP', '종료'];
+      const store = (window.DataStore && DataStore.get && DataStore.set)
+        ? DataStore
+        : {
+            get: (k, f) => { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : f; } catch { return f; } },
+            set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+          };
 
       const TEAM_ROLE_MAP = {
         'DC운영(NOC/관제)팀': ['상황관리', '업무환경팀'],
@@ -295,6 +427,24 @@
       const impactStatusGrid = document.getElementById('impactStatusGrid');
       const incidentCard = document.getElementById('incidentCard');
       const incidentFocusTag = document.getElementById('incidentFocusTag');
+      const currentModeText = document.getElementById('currentModeText');
+      const recommendedModeText = document.getElementById('recommendedModeText');
+      const modeFlow = document.getElementById('modeFlow');
+      const modeReasonChips = document.getElementById('modeReasonChips');
+      const modeSelect = document.getElementById('modeSelect');
+      const modeReasonInput = document.getElementById('modeReasonInput');
+      const btnApplyMode = document.getElementById('btnApplyMode');
+      const hubOrgList = document.getElementById('hubOrgList');
+      const hubCoreFnList = document.getElementById('hubCoreFnList');
+      const hubRiskList = document.getElementById('hubRiskList');
+      const hubRecoReasonList = document.getElementById('hubRecoReasonList');
+      const eopRecommendedText = document.getElementById('eopRecommendedText');
+      const eopReasonText = document.getElementById('eopReasonText');
+      const eopRolesText = document.getElementById('eopRolesText');
+      const drpMatchSummary = document.getElementById('drpMatchSummary');
+      const bcpNeedText = document.getElementById('bcpNeedText');
+      const drpDetailList = document.getElementById('drpDetailList');
+      const bcpDetailList = document.getElementById('bcpDetailList');
 
       const query = new URLSearchParams(location.search);
       const readOnceSelection = () => {
@@ -351,6 +501,14 @@
           endTime: '-',
           finalSummary: '',
           preventionMemo: '',
+          relatedCoreFunctions: [],
+          matchedRisks: [],
+          matchedBCPStrategies: [],
+          matchedDRPProcedures: [],
+          currentResponseMode: 'SOP',
+          recommendedModes: ['SOP'],
+          modeHistory: [],
+          activationReason: '',
         },
         drState: 'normal',
         logs: [
@@ -426,6 +584,14 @@
         if (!merged.currentIncident.serviceName) {
           merged.currentIncident.serviceName = merged.currentIncident.impactedServiceNames[0] || '';
         }
+        if (!Array.isArray(merged.currentIncident.relatedCoreFunctions)) merged.currentIncident.relatedCoreFunctions = [];
+        if (!Array.isArray(merged.currentIncident.matchedRisks)) merged.currentIncident.matchedRisks = [];
+        if (!Array.isArray(merged.currentIncident.matchedBCPStrategies)) merged.currentIncident.matchedBCPStrategies = [];
+        if (!Array.isArray(merged.currentIncident.matchedDRPProcedures)) merged.currentIncident.matchedDRPProcedures = [];
+        if (!Array.isArray(merged.currentIncident.recommendedModes)) merged.currentIncident.recommendedModes = ['SOP'];
+        if (!Array.isArray(merged.currentIncident.modeHistory)) merged.currentIncident.modeHistory = [];
+        if (!RESPONSE_MODES.includes(merged.currentIncident.currentResponseMode)) merged.currentIncident.currentResponseMode = 'SOP';
+        merged.currentIncident.activationReason = String(merged.currentIncident.activationReason || '');
 
         return merged;
       };
@@ -647,6 +813,156 @@
           });
       };
 
+      const parseRows = (key) => {
+        const raw = store.get(key, []);
+        return Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
+      };
+      const toNum = (v) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+      const toMinutes = (v) => {
+        if (v === null || v === undefined || v === '') return null;
+        if (typeof v === 'number' && Number.isFinite(v)) return Math.round(v);
+        const s = String(v).trim();
+        const m = s.match(/[0-9]+(?:\.[0-9]+)?/);
+        const n = toNum(m ? m[0] : null);
+        if (n === null) return null;
+        if (s.includes('일')) return Math.round(n * 1440);
+        if (s.includes('시간')) return Math.round(n * 60);
+        return Math.round(n);
+      };
+
+      const keywordTeamRules = [
+        { re: /(전력|정전|ups|발전기)/i, team: '전기팀' },
+        { re: /(냉각|온도|냉동기|crah)/i, team: '기계(냉각)팀' },
+        { re: /(네트워크|회선|스위치)/i, team: '네트워크운영팀' },
+        { re: /(서버|호스트|가상화|배포)/i, team: 'SRE/플랫폼운영팀' },
+        { re: /(보안|랜섬웨어|계정|침해)/i, team: '정보보호팀' },
+        { re: /(관제|모니터링|알람)/i, team: 'DC운영(NOC/관제)팀' }
+      ];
+
+      const matchIncidentData = () => {
+        const incident = state.currentIncident;
+        const text = `${incident.status} ${incident.impacted} ${incident.serviceName} ${incident.finalSummary} ${incident.preventionMemo}`.toLowerCase();
+        const relatedTeams = new Set(normalizeOrgUnitNames(incident.relatedOrgUnits));
+        keywordTeamRules.forEach((rule) => { if (rule.re.test(text)) relatedTeams.add(rule.team); });
+
+        const biaRows = parseRows(BIA_KEY);
+        const riskRows = parseRows(RISK_KEY);
+        const bcpRows = parseRows(BCP_KEY);
+        const drpRows = parseRows(DRP_KEY);
+
+        const coreFns = [];
+        biaRows.forEach((teamRow) => {
+          const team = String(teamRow.team || '').trim();
+          if (!relatedTeams.has(team)) return;
+          (teamRow.functions || []).forEach((fn) => {
+            const isCore = !!fn.coreFinal || String(fn.grade || '') === '핵심' || String(fn.importance || '') === '중요';
+            if (!isCore) return;
+            coreFns.push({
+              team,
+              name: String(fn.name || fn.function || ''),
+              grade: String(fn.grade || '일반'),
+              mtpd: String(fn.mtpd || '-'),
+              rto: String(fn.rto || '-'),
+              rtoMinutes: toMinutes(fn.rto),
+              impact: toNum(fn.impact || fn.overallImpact) ?? 3,
+            });
+          });
+        });
+
+        const risks = [];
+        riskRows.forEach((teamRow) => {
+          const team = String(teamRow.team || '').trim();
+          if (!relatedTeams.has(team)) return;
+          (teamRow.risks || []).forEach((r) => {
+            const score = toNum(r.riskScore) ?? ((toNum(r.impact) ?? 3) * (toNum(r.likelihood) ?? 1));
+            risks.push({
+              team,
+              function: String(r.function || ''),
+              risk: String(r.risk || r.threat || ''),
+              riskScore: score,
+              critical: r.critical === undefined ? score >= 13 : !!r.critical,
+              likelihood: toNum(r.likelihood) ?? 1,
+              riskLevel: String(r.riskLevel || (score >= 13 ? '높음' : '보통')),
+            });
+          });
+        });
+
+        const criticalFallback = [];
+        if (!risks.length) {
+          riskRows.forEach((teamRow) => {
+            const team = String(teamRow.team || '').trim();
+            if (!relatedTeams.has(team)) return;
+            (teamRow.risks || []).forEach((r) => {
+              const score = toNum(r.riskScore) ?? ((toNum(r.impact) ?? 3) * (toNum(r.likelihood) ?? 1));
+              const isCritical = r.critical === undefined ? score >= 13 : !!r.critical;
+              if (!isCritical) return;
+              criticalFallback.push({
+                team,
+                function: String(r.function || ''),
+                risk: String(r.risk || r.threat || ''),
+                riskScore: score,
+                critical: true,
+                likelihood: toNum(r.likelihood) ?? 1,
+                riskLevel: String(r.riskLevel || '높음'),
+              });
+            });
+          });
+          risks.push(...criticalFallback);
+        }
+
+        const keys = new Set(risks.map((r) => `${r.team}||${r.function}||${r.risk}`));
+        const bcpMatched = [];
+        bcpRows.forEach((teamRow) => {
+          const team = String(teamRow.team || '').trim();
+          (teamRow.strategies || []).forEach((s) => {
+            const key = `${team}||${String(s.function || '')}||${String(s.risk || '')}`;
+            if (keys.has(key)) bcpMatched.push({ team, ...s });
+          });
+        });
+        const drpMatched = [];
+        drpRows.forEach((teamRow) => {
+          const team = String(teamRow.team || '').trim();
+          (teamRow.procedures || []).forEach((p) => {
+            const key = `${team}||${String(p.function || '')}||${String(p.risk || '')}`;
+            if (keys.has(key)) drpMatched.push({ team, ...p });
+          });
+        });
+
+        const recommended = new Set(['SOP']);
+        const reasons = [];
+        if (relatedTeams.size >= 2) { recommended.add('EOP'); reasons.push('다수 팀 대응 필요'); }
+        if (incident.severity === '심각' || incident.severity === '치명') { recommended.add('EOP'); reasons.push('중요 서비스 영향'); }
+        if (/안전|시설|보안|대외|커뮤니케이션/.test(text)) { recommended.add('EOP'); reasons.push('상황 통제/보고 필요'); }
+
+        const hasHigh = risks.some((r) => r.critical || r.riskScore >= 13);
+        const hasTechWord = /(전환|복구|재기동|failover|restore|전력|냉각|네트워크|호스트|보안|모니터링)/i.test(text);
+        if (drpMatched.length || hasTechWord || hasHigh) {
+          recommended.add('DRP');
+          reasons.push(drpMatched.length ? '매칭 DRP 절차 존재' : '기술 복구 절차 필요');
+        }
+
+        const hasBcpWord = /(자원|인력|공간|협력업체|유틸리티|공백|수기|우회|대체)/i.test(text);
+        if (bcpMatched.length || hasBcpWord || hasHigh) {
+          recommended.add('BCP');
+          reasons.push(bcpMatched.length ? '매칭 BCP 전략 존재' : '업무 연속 대체 운영 필요');
+        }
+
+        incident.relatedCoreFunctions = coreFns;
+        incident.matchedRisks = risks;
+        incident.matchedBCPStrategies = bcpMatched;
+        incident.matchedDRPProcedures = drpMatched;
+        incident.recommendedModes = [...recommended];
+        incident.relatedOrgUnits = [...relatedTeams];
+        incident.relatedResponseRoles = deriveResponseRolesFromOrgUnits(incident.relatedOrgUnits);
+        if (!incident.currentResponseMode) incident.currentResponseMode = 'SOP';
+        if (!incident.activationReason && reasons.length) incident.activationReason = reasons.join(' / ');
+
+        return { reasons };
+      };
+
       const getServices = () => loadServices();
       const getIncidents = () => DataStore.get(STORAGE_KEY, null);
       const getCurrentIncident = () => state.currentIncident || null;
@@ -824,6 +1140,68 @@
         });
       };
 
+      const renderHub = () => {
+        const matched = matchIncidentData();
+        const incident = state.currentIncident;
+
+        currentModeText.textContent = incident.currentResponseMode || 'SOP';
+        recommendedModeText.textContent = (incident.recommendedModes || ['SOP']).join(', ');
+        modeSelect.value = RESPONSE_MODES.includes(incident.currentResponseMode) ? incident.currentResponseMode : 'SOP';
+
+        modeFlow.innerHTML = RESPONSE_MODES.map((mode) => {
+          const active = incident.currentResponseMode === mode ? 'active' : '';
+          const reco = (incident.recommendedModes || []).includes(mode) ? 'recommended' : '';
+          return `<div class="modeNode ${active} ${reco}">${mode}</div>`;
+        }).join('');
+
+        const chips = [];
+        chips.push(`<span class="chip">현재 단계: ${incident.currentResponseMode || 'SOP'}</span>`);
+        (incident.recommendedModes || []).forEach((mode) => chips.push(`<span class="chip reco">권장: ${mode}</span>`));
+        if (incident.activationReason) chips.push(`<span class="chip warn">사유: ${incident.activationReason}</span>`);
+        modeReasonChips.innerHTML = chips.join('');
+
+        const orgs = normalizeOrgUnitNames(incident.relatedOrgUnits || []);
+        hubOrgList.innerHTML = orgs.length ? orgs.map((x) => `<li>${x}</li>`).join('') : '<li class="muted">관련 조직을 식별하지 못했습니다.</li>';
+
+        const coreFns = incident.relatedCoreFunctions || [];
+        hubCoreFnList.innerHTML = coreFns.length
+          ? coreFns.slice(0, 6).map((fn) => `<li>${fn.team} / ${fn.name} (${fn.grade}, MTPD ${fn.mtpd}, RTO ${fn.rto})</li>`).join('')
+          : '<li class="muted">관련 핵심업무가 없습니다.</li>';
+
+        const risks = incident.matchedRisks || [];
+        hubRiskList.innerHTML = risks.length
+          ? risks.slice(0, 8).map((r) => `<li>${r.team} / ${r.function} / ${r.risk} (위험도 ${r.riskScore}${(r.critical || r.riskScore >= 13) ? ', 중점관리' : ''})</li>`).join('')
+          : '<li class="muted">매칭된 리스크가 없습니다.</li>';
+
+        const reasons = matched.reasons || [];
+        hubRecoReasonList.innerHTML = reasons.length
+          ? reasons.map((reason) => `<li>${reason}</li>`).join('')
+          : '<li class="muted">현재는 SOP 기본 대응이 적합합니다.</li>';
+
+        const eopReco = (incident.recommendedModes || []).includes('EOP');
+        eopRecommendedText.textContent = `EOP 권장: ${eopReco ? '예' : '아니오'}`;
+        eopReasonText.textContent = reasons.length ? reasons.join(' / ') : '단일팀·단기 복구로 판단되어 SOP 우선 대응';
+        eopRolesText.textContent = (incident.relatedResponseRoles || []).join(', ') || '-';
+
+        const drpRows = incident.matchedDRPProcedures || [];
+        drpMatchSummary.textContent = drpRows.length
+          ? `관련 DRP 절차 ${drpRows.length}건이 매칭되었습니다.`
+          : '관련 DRP 절차가 아직 정의되지 않았습니다.';
+        drpDetailList.innerHTML = drpRows.length
+          ? drpRows.slice(0, 3).map((p) => {
+              const steps = Array.isArray(p.steps) ? p.steps.length : 0;
+              return `<div>• ${p.team} / ${p.function} / ${p.risk} / 발동: ${p.triggerCondition || '-'} / 단계 ${steps}개</div>`;
+            }).join('')
+          : '<div>DRP 페이지에서 절차를 등록해 주세요.</div>';
+
+        const bcpRows = incident.matchedBCPStrategies || [];
+        const bcpNeeded = (incident.recommendedModes || []).includes('BCP');
+        bcpNeedText.textContent = `BCP 필요 여부: ${bcpNeeded ? '필요' : '조건부/대기'}${bcpNeeded ? ' (업무 공백/자원 제약 대비)' : ''}`;
+        bcpDetailList.innerHTML = bcpRows.length
+          ? bcpRows.slice(0, 4).map((s) => `<div>• ${s.team} / ${s.function} / ${s.risk} / ${s.strategyType || '-'} / ${s.strategyText || '-'} / ${Array.isArray(s.requiredResources) ? s.requiredResources.join(', ') : '-'}</div>`).join('')
+          : '<div>BCP 전략이 아직 정의되지 않았습니다.</div>';
+      };
+
       const renderServiceChecks = () => {
         const query = (serviceSearchInput.value || '').trim().toLowerCase();
         const filtered = services.filter((svc) => !query || svc.name.toLowerCase().includes(query));
@@ -862,6 +1240,7 @@
         renderServiceChecks();
         renderSelectedServiceChips();
         renderRelatedOrgs();
+        renderHub();
         renderImpactStatus();
 
         if (!focusApplied || selectedIncidentRef) {
@@ -930,6 +1309,10 @@
           endTime: '-',
           finalSummary: '',
           preventionMemo: '',
+          currentResponseMode: 'SOP',
+          recommendedModes: ['SOP'],
+          activationReason: '초기 대응',
+          modeHistory: [{ mode: 'SOP', changedAt: nowText(), reason: '초기 대응' }],
         };
         addLog({
           system: '사고 대응 콘솔',
@@ -950,6 +1333,19 @@
         renderAll();
       });
 
+      btnApplyMode.addEventListener('click', () => {
+        const mode = modeSelect.value;
+        const reason = (modeReasonInput.value || '').trim() || '수동 단계 전환';
+        state.currentIncident.currentResponseMode = mode;
+        state.currentIncident.activationReason = reason;
+        if (!Array.isArray(state.currentIncident.modeHistory)) state.currentIncident.modeHistory = [];
+        state.currentIncident.modeHistory.push({ mode, changedAt: nowText(), reason });
+        if (state.currentIncident.modeHistory.length > 20) state.currentIncident.modeHistory = state.currentIncident.modeHistory.slice(-20);
+        addLog({ system: '대응 허브', event: `대응 단계 변경: ${mode}`, action: reason, operator: '사고 관리자' });
+        saveState();
+        renderAll();
+      });
+
       document.getElementById('btnEndIncident').addEventListener('click', () => {
         const summary = (finalSummary.value || '').trim();
         const prevention = (preventionMemo.value || '').trim();
@@ -960,6 +1356,10 @@
         state.currentIncident.endTime = nowText();
         state.currentIncident.finalSummary = summary;
         state.currentIncident.preventionMemo = prevention;
+        state.currentIncident.currentResponseMode = '종료';
+        state.currentIncident.activationReason = summary || '사고 종료 처리';
+        if (!Array.isArray(state.currentIncident.modeHistory)) state.currentIncident.modeHistory = [];
+        state.currentIncident.modeHistory.push({ mode: '종료', changedAt: nowText(), reason: state.currentIncident.activationReason });
 
         const followups = [];
         if (autoEvidenceToggle.checked) followups.push('증적 자동 생성');
