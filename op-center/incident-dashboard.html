@@ -114,6 +114,7 @@
     .track details{ margin-top:6px; }
     .track summary{ cursor:pointer; font-weight:800; font-size:12.5px; }
 
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
     .execCard{ grid-column: span 12; }
     .execGrid{ display:grid; grid-template-columns:300px 1fr; gap:12px; margin-top:8px; }
     .execPanel{ border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:10px; }
@@ -136,6 +137,8 @@
     .logForm input,.logForm select{ padding:7px 8px; }
     @media (max-width:1200px){ .execGrid{ grid-template-columns:1fr; } .checkModes{ grid-template-columns:1fr; } .logForm{ grid-template-columns:1fr; } .checkRow{ grid-template-columns:auto 1fr; } }
 
+=======
+>>>>>>> main
     .orgSummary{ margin-top:10px; border:1px solid rgba(15,23,42,.10); border-radius:12px; background:#fff; padding:10px; }
     .orgSummary h5{ margin:0 0 8px; font-size:12px; color:rgba(15,23,42,.62); }
     .orgList{ display:flex; flex-wrap:wrap; gap:6px; }
@@ -358,6 +361,7 @@
           </div>
         </article>
 
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
         <article class="card execCard">
           <h3>대응 실행 콘솔</h3>
           <div class="execGrid">
@@ -406,6 +410,8 @@
           </section>
         </article>
 
+=======
+>>>>>>> main
         <article class="card impactCard">
           <h3>영향 서비스 현황</h3>
           <div id="impactStatusGrid" class="impactGrid"></div>
@@ -448,7 +454,10 @@
       const BCP_KEY = 'bcmsBCP';
       const DRP_KEY = 'bcmsDRP';
       const RESPONSE_MODES = ['SOP', 'EOP', 'DRP', 'BCP', '종료'];
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
       const EXECUTION_KEY = 'bcmsIncidentExecution';
+=======
+>>>>>>> main
       const store = (window.DataStore && DataStore.get && DataStore.set)
         ? DataStore
         : {
@@ -516,6 +525,7 @@
       const bcpNeedText = document.getElementById('bcpNeedText');
       const drpDetailList = document.getElementById('drpDetailList');
       const bcpDetailList = document.getElementById('bcpDetailList');
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
       const progressSummary = document.getElementById('progressSummary');
       const checkModes = document.getElementById('checkModes');
       const execTimeline = document.getElementById('execTimeline');
@@ -526,6 +536,8 @@
       const execNoteInput = document.getElementById('execNoteInput');
       const btnAddExecLog = document.getElementById('btnAddExecLog');
       const lastModeChangeText = document.getElementById('lastModeChangeText');
+=======
+>>>>>>> main
 
       const query = new URLSearchParams(location.search);
       const readOnceSelection = () => {
@@ -1044,6 +1056,7 @@
         return { reasons };
       };
 
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
       const getExecStore = () => {
         const rows = store.get(EXECUTION_KEY, []);
         return Array.isArray(rows) ? rows : [];
@@ -1121,6 +1134,8 @@
         return out;
       };
 
+=======
+>>>>>>> main
       const getServices = () => loadServices();
       const getIncidents = () => DataStore.get(STORAGE_KEY, null);
       const getCurrentIncident = () => state.currentIncident || null;
@@ -1358,6 +1373,7 @@
         bcpDetailList.innerHTML = bcpRows.length
           ? bcpRows.slice(0, 4).map((s) => `<div>• ${s.team} / ${s.function} / ${s.risk} / ${s.strategyType || '-'} / ${s.strategyText || '-'} / ${Array.isArray(s.requiredResources) ? s.requiredResources.join(', ') : '-'}</div>`).join('')
           : '<div>BCP 전략이 아직 정의되지 않았습니다.</div>';
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
 
         renderExecutionConsole();
       };
@@ -1398,6 +1414,8 @@
             ${t.note ? `<div class="muted">${t.note}</div>` : ''}
           </div>
         `).join('') : '<div class="checkEmpty">실행 타임라인이 없습니다.</div>';
+=======
+>>>>>>> main
       };
 
       const renderServiceChecks = () => {
@@ -1549,6 +1567,7 @@
         if (!Array.isArray(state.currentIncident.modeHistory)) state.currentIncident.modeHistory = [];
         state.currentIncident.modeHistory.push({ mode, changedAt: nowText(), reason });
         if (state.currentIncident.modeHistory.length > 20) state.currentIncident.modeHistory = state.currentIncident.modeHistory.slice(-20);
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
         const rows = getExecStore();
         const target = rows.find((r) => r && r.incidentId === (state.currentIncident.incidentId || 'INC-DRAFT'));
         if (target) {
@@ -1556,11 +1575,14 @@
           target.logs.push({ timestamp: nowIso(), category: '단계변경', message: `${mode} 단계 적용`, actor: '사고 관리자', note: reason, source: 'mode' });
           saveExecStore(rows);
         }
+=======
+>>>>>>> main
         addLog({ system: '대응 허브', event: `대응 단계 변경: ${mode}`, action: reason, operator: '사고 관리자' });
         saveState();
         renderAll();
       });
 
+<<<<<<< codex/revise-governance/eop-org-chart.html-layout-nsn7hv
       checkModes.addEventListener('change', (e) => {
         const incidentId = state.currentIncident.incidentId || 'INC-DRAFT';
         const rows = getExecStore();
@@ -1620,6 +1642,8 @@
         renderExecutionConsole();
       });
 
+=======
+>>>>>>> main
       document.getElementById('btnEndIncident').addEventListener('click', () => {
         const summary = (finalSummary.value || '').trim();
         const prevention = (preventionMemo.value || '').trim();
