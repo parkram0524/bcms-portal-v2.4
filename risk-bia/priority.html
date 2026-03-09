@@ -190,12 +190,24 @@
 </div>
 
 <script src="../assets/sidebar.js"></script>
+<script src="../assets/demo-seed.js"></script>
 
 <script>
+  if (window.BCMSDemoSeed) {
+    window.BCMSDemoSeed.ensureDemoIfEmpty();
+    window.BCMSDemoSeed.mountBanner('.main');
+  }
+
   const $ = (s)=>document.querySelector(s);
   const esc = (s)=>String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
   const toNum = (v)=>{ if(v===null||v===undefined||v==="") return null; const x=Number(v); return Number.isFinite(x)?x:null; };
-  const loadJSON = (k, fb)=>{ try{ const raw=sessionStorage.getItem(k); if(!raw) return fb; return JSON.parse(raw);}catch(e){ return fb; } };
+  const loadJSON = (k, fb)=>{
+    try{
+      const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
+      if(!raw) return fb;
+      return JSON.parse(raw);
+    }catch(e){ return fb; }
+  };
   const uniq = (arr)=>[...new Set(arr.filter(Boolean))];
 
   function minText(min){
@@ -205,11 +217,40 @@
     return `${m}분`;
   }
 
+  function toMinutes(v){
+    if(v===null||v===undefined||v==='') return null;
+    if(typeof v==='number' && Number.isFinite(v)) return Math.round(v);
+    const s = String(v).trim();
+    const n = toNum(s);
+    if(n===null) return null;
+    if(s.includes('일')) return Math.round(n*1440);
+    if(s.includes('시간')) return Math.round(n*60);
+    return Math.round(n);
+  }
+
   /* ===== Risk map ===== */
   function getRisks(){
+    const modern = loadJSON("bcmsRiskAssessment", null);
+    if (Array.isArray(modern) && modern.length){
+      const out = [];
+      for(const teamBlock of modern){
+        const dept = teamBlock.team || teamBlock.department || teamBlock.dept || "";
+        const risks = Array.isArray(teamBlock.risks) ? teamBlock.risks : [];
+        for(const r of risks){
+          out.push({
+            dept,
+            impact: toNum(r.impact) ?? 1,
+            like: toNum(r.likelihood ?? r.like) ?? 1
+          });
+        }
+      }
+      return out;
+    }
+
     const arr = loadJSON("risks", []);
     return Array.isArray(arr) ? arr : [];
   }
+
   function riskScore(r){
     return (toNum(r.impact)||1) * (toNum(r.like)||1);
   }
@@ -255,6 +296,26 @@
   }
 
   function getAll(){
+    const bia = loadJSON("bcmsBIAData", null);
+    if (Array.isArray(bia) && bia.length){
+      const out = [];
+      for(const teamBlock of bia){
+        const dept = teamBlock.team || teamBlock.department || teamBlock.dept || "";
+        const funcs = Array.isArray(teamBlock.functions) ? teamBlock.functions : [];
+        for(const f of funcs){
+          const work = f.name || f.function || f.work || f.process || "";
+          if(!work) continue;
+          const mtpd = toMinutes(f.mtpdMinutes ?? f.mtpd);
+          const rto = toMinutes(f.rtoMinutes ?? f.rto);
+          const coreAuto = !!(f.coreAuto ?? f.core_auto);
+          const coreManual = !!(f.coreManual ?? f.core_manual);
+          const coreFinal = !!((f.coreFinal ?? f.core_final ?? (f.grade === '핵심')) || coreAuto || coreManual);
+          out.push({ dept, work, mtpd, rto, mtpdText:minText(mtpd), rtoText:minText(rto), coreAuto, coreManual, coreFinal });
+        }
+      }
+      return out;
+    }
+
     const bcp = loadJSON("bcp_core_processes", null);
     if (Array.isArray(bcp) && bcp.length) return bcp.map(normalizeItem);
 
