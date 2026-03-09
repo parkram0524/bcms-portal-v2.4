@@ -117,7 +117,9 @@
   <script>
     (() => {
       const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
+      const EVIDENCE_ITEMS_KEY = 'bcmsEvidenceItems';
       const SELECTED_EVIDENCE_KEY = 'bcms_selected_evidence';
+      const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
       const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
       const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
 
@@ -159,7 +161,12 @@
         } catch {
           fromStorage = '';
         }
+        try {
+          const focus = JSON.parse(localStorage.getItem(FOCUS_TARGET_KEY) || 'null');
+          if (focus?.type === 'evidence' && focus?.id) fromStorage = String(focus.id).trim();
+        } catch {}
         localStorage.removeItem(SELECTED_EVIDENCE_KEY);
+        localStorage.removeItem(FOCUS_TARGET_KEY);
         return fromQuery || fromStorage;
       };
       const selectedEvidenceId = readSelectedEvidence();
@@ -186,10 +193,12 @@
       ]);
 
       const seedIfEmpty = () => {
-        const rows = store.get(EVIDENCE_KEY, null);
+        const modernRows = store.get(EVIDENCE_ITEMS_KEY, null);
+        const rows = Array.isArray(modernRows) ? modernRows : store.get(EVIDENCE_KEY, null);
         if (!Array.isArray(rows) || !rows.length) {
           const seeds = sampleData();
           store.set(EVIDENCE_KEY, seeds);
+          store.set(EVIDENCE_ITEMS_KEY, seeds);
           return seeds;
         }
         return rows;
@@ -240,7 +249,7 @@
         return { name: file.name, size: file.size };
       };
 
-      const saveRows = () => { store.set(EVIDENCE_KEY, rows); };
+      const saveRows = () => { store.set(EVIDENCE_KEY, rows); store.set(EVIDENCE_ITEMS_KEY, rows); };
 
       const filteredRows = () => {
         const q = (searchInput.value || '').trim().toLowerCase();
@@ -266,13 +275,14 @@
           const stateClass = r.status === '확인완료' ? 'done' : 'pending';
           tr.dataset.evidenceId = r.id;
           if (focused) tr.classList.add('focusRow');
+          const orgUnits = Array.isArray(r.relatedOrgUnits) ? r.relatedOrgUnits.filter(Boolean).join(', ') : '';
           tr.innerHTML = `
             <td>${toText(r.createdAt)}</td>
             <td>${r.type}</td>
             <td>${(r.services || []).join(', ') || '-'}</td>
-            <td>${r.relatedOrgText || '-'}</td>
+            <td>${orgUnits || r.relatedOrgText || '-'}</td>
             <td>${r.incident || '-'}</td>
-            <td>${r.description || '-'}${focused ? '<span class="focusBadge">선택됨</span>' : ''}</td>
+            <td>${r.description || '-'}${focused ? '<span class="focusBadge">현재 선택 항목</span>' : ''}</td>
             <td>${r.attachment ? `${r.attachment.name} (${Math.round(r.attachment.size / 1024)}KB)` : '-'}</td>
             <td><button type="button" class="state ${stateClass}" data-toggle="${r.id}">${r.status}</button></td>
             <td><button type="button" class="btn" data-delete="${r.id}">삭제</button></td>
