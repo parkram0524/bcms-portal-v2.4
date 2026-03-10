@@ -448,37 +448,55 @@
       try{ return JSON.parse(v); }catch(e){ return fallback; }
     }
 
+    // 대시보드 데이터 연동 수정: 최신 localStorage 구조(bcmsCoreFunctions/bcmsBIAData/bcmsRiskAssessment) 기준
     function getPriorityLevel(score){
-      if(score >= 50) return { key:"Critical", label:"치명", pill:"c0" };
-      if(score >= 30) return { key:"High",     label:"높음", pill:"c1" };
-      if(score >= 15) return { key:"Medium",   label:"중간", pill:"c2" };
+      if(score >= 20) return { key:"Critical", label:"치명", pill:"c0" };
+      if(score >= 13) return { key:"High",     label:"높음", pill:"c1" };
+      if(score >= 8) return { key:"Medium",   label:"중간", pill:"c2" };
       return { key:"Low", label:"낮음", pill:"c3" };
     }
 
-    function fmtProcessName(p){
-      return (p && (p.name || p.processName || p.procName || p.title)) ? (p.name || p.processName || p.procName || p.title) : "업무명 미정";
+    function getStorageArray(key){
+      const raw = localStorage.getItem(key);
+      const rows = safeJSONParse(raw || '[]', []);
+      return Array.isArray(rows) ? rows : [];
     }
-    function fmtDept(p){
-      return (p && (p.department || p.dept || p.org)) ? (p.department || p.dept || p.org) : "부서 미정";
+
+    function getCoreFunctionsRows(){
+      return getStorageArray('bcmsCoreFunctions');
     }
-    function getRtoValue(p){
-      const v = (p && (p.rtoMin ?? p.rto ?? p.rto_hours ?? p.rtoH)) ?? 0;
+
+    function getBiaRows(){
+      return getStorageArray('bcmsBIAData');
+    }
+
+    function toNumber(v){
       const n = Number(v);
       return Number.isFinite(n) ? n : 0;
     }
 
-    function getRisksCount(){
-      const s = sessionStorage.getItem("risks");
-      const l = localStorage.getItem("risks");
-      const arr = safeJSONParse(s || l || "[]", []);
-      return Array.isArray(arr) ? arr.length : 0;
+    function getRiskRows(){
+      const rows = getStorageArray('bcmsRiskAssessment');
+      return rows.map((row) => {
+        const score = row && row.riskScore !== undefined
+          ? toNumber(row.riskScore)
+          : toNumber(row?.impact) * toNumber(row?.likelihood);
+        return {
+          ...row,
+          team: String(row?.team || '팀 미지정').trim() || '팀 미지정',
+          functionName: String(row?.functionName || row?.function || '핵심업무 미지정').trim() || '핵심업무 미지정',
+          threat: String(row?.threat || row?.risk || '위협 미지정').trim() || '위협 미지정',
+          riskScore: score
+        };
+      });
     }
 
-    function getCoreProcesses(){
-      const s = sessionStorage.getItem("bcp_core_processes");
-      const l = localStorage.getItem("bcp_core_processes");
-      const arr = safeJSONParse(s || l || "[]", []);
-      return Array.isArray(arr) ? arr : [];
+    function getCoreFinalCount(){
+      const teams = getCoreFunctionsRows();
+      return teams.reduce((acc, teamRow) => {
+        const functions = Array.isArray(teamRow?.functions) ? teamRow.functions : [];
+        return acc + functions.filter((f) => f && f.coreFinal === true).length;
+      }, 0);
     }
 
     function getTrainingRecords(){
@@ -541,16 +559,13 @@
     }
 
     function renderHome(){
-      let processes = [];
-      try{
-        processes = (typeof getProcesses === "function") ? (getProcesses() || []) : [];
-      }catch(e){ processes = []; }
+      const riskRows = getRiskRows();
+      const biaRows = getBiaRows();
+      const coreFinalCount = getCoreFinalCount();
 
-      const risksCount = getRisksCount();
-      const procsCount = processes.length;
+      const risksCount = riskRows.length;
+      const procsCount = biaRows.length;
 
-      const coreArr = getCoreProcesses();
-      const coreFinalCount = coreArr.filter(x => x && x.coreFinal === true).length;
       const trainings = getTrainingRecords();
       const bcpTrainingCount = trainings.filter((x) => /bcp/i.test(`${x?.type || ''} ${x?.title || ''}`)).length;
       const drTestCount = trainings.filter((x) => /dr\s*테스트|dr\s*test|\bdr\b/i.test(`${x?.type || ''} ${x?.title || ''}`)).length;
@@ -572,11 +587,11 @@
 
       const procBadge = document.getElementById("procBadge");
       procBadge.className = "badge " + (procsCount > 0 ? "ok" : "warn");
-      procBadge.textContent = (procsCount > 0 ? "계산 가능" : "업무 없음");
+      procBadge.textContent = (procsCount > 0 ? "등록됨" : "데이터 없음");
 
       const coreBadge = document.getElementById("coreBadge");
       coreBadge.className = "badge " + (coreFinalCount > 0 ? "ok" : "warn");
-      coreBadge.textContent = (coreFinalCount > 0 ? "표시됨" : "0건(연계 필요)");
+      coreBadge.textContent = (coreFinalCount > 0 ? "확정" : "0건");
 
       const bcpTrainBadge = document.getElementById("bcpTrainBadge");
       bcpTrainBadge.className = "badge " + (bcpTrainingCount > 0 ? "ok" : "warn");
@@ -590,41 +605,24 @@
       capaBadge.className = "badge " + (capaOpenCount > 0 ? "warn" : "ok");
       capaBadge.textContent = (capaOpenCount > 0 ? "조치 필요" : "양호");
 
-      let scored = [];
-      let top = null;
-
-      processes.forEach((p, i) => {
-        let riskScore = 0;
-        try{
-          riskScore = (typeof getProcessRiskScore === "function") ? (getProcessRiskScore(i) || 0) : 0;
-        }catch(e){ riskScore = 0; }
-
-        const rto = getRtoValue(p);
-        const rtoUrgency = rto > 0 ? (100 / rto) : 0;
-        const priorityScore = (riskScore * 0.6) + (rtoUrgency * 0.4);
-        const level = getPriorityLevel(priorityScore);
-
-        const item = { name: fmtProcessName(p), dept: fmtDept(p), score: priorityScore, level };
-        scored.push(item);
-        if(!top || item.score > top.score) top = item;
-      });
-
-      scored.sort((a,b)=> b.score - a.score);
+      const scored = [...riskRows].sort((a,b)=> b.riskScore - a.riskScore);
       const top3 = scored.slice(0,3);
 
       const topList = document.getElementById("topList");
       if(top3.length === 0){
-        topList.innerHTML = `<div class="muted">등록된 업무가 없습니다. <b>Risk & BIA</b>에서 업무를 먼저 추가하세요.</div>`;
+        topList.innerHTML = `<div class="muted">등록된 리스크가 없습니다. <b>Risk & BIA</b>에서 리스크를 먼저 등록하세요.</div>`;
       }else{
-        topList.innerHTML = top3.map((x, idx)=>`
+        topList.innerHTML = top3.map((x, idx)=>{
+          const level = getPriorityLevel(x.riskScore);
+          return `
           <div class="rowItem">
             <div class="rowLeft">
-              <div class="rowTitle">${idx+1}. ${x.name}</div>
-              <div class="rowSub">${x.dept}</div>
+              <div class="rowTitle">${idx+1}. ${x.team} / ${x.functionName}</div>
+              <div class="rowSub">${x.threat} · 위험도 ${formatCount(x.riskScore)}</div>
             </div>
-            <div class="pill ${x.level.pill}">${x.level.label}</div>
-          </div>
-        `).join("");
+            <div class="pill ${level.pill}">${level.label}</div>
+          </div>`;
+        }).join("");
       }
 
       const stRisk = document.getElementById("stRisk");
@@ -633,31 +631,28 @@
 
       const stBia = document.getElementById("stBia");
       stBia.className = "badge " + (procsCount > 0 ? "ok" : "warn");
-      stBia.textContent = (procsCount > 0 ? "진행" : "필요");
+      stBia.textContent = (procsCount > 0 ? "완료" : "필요");
 
       const stPriority = document.getElementById("stPriority");
-      stPriority.className = "badge " + (top3.length > 0 ? "ok" : "warn");
-      stPriority.textContent = (top3.length > 0 ? "산정" : "미산정");
+      const canPriority = risksCount > 0 && procsCount > 0;
+      stPriority.className = "badge " + (canPriority ? "ok" : "warn");
+      stPriority.textContent = (canPriority ? "산정 가능" : "미산정");
 
       const stStrategy = document.getElementById("stStrategy");
       stStrategy.className = "badge " + (coreFinalCount > 0 ? "ok" : "warn");
-      stStrategy.textContent = (coreFinalCount > 0 ? "연계" : "연계 필요");
+      stStrategy.textContent = (coreFinalCount > 0 ? "연계 가능" : "연계 필요");
 
       const todayHint = document.getElementById("todayHint");
       const todaySummary = document.getElementById("todaySummary");
 
       if(procsCount === 0){
-        todayHint.textContent = "다음: 업무 등록";
-        todaySummary.innerHTML = `현재 <b>업무 데이터가 없어</b> 우선순위를 계산할 수 없습니다.<br/>
-        <a href="risk-bia/bia.html" style="color:var(--accent); text-decoration:none; font-weight:900;">BIA에서 업무를 추가</a>한 뒤 다시 확인하세요.`;
-      }else if(coreFinalCount === 0){
-        todayHint.textContent = "다음: Core 연계";
-        todaySummary.innerHTML = `업무(${procsCount}개)는 있으나 <b>핵심업무(Core)가 0건</b>입니다.<br/>
-        👉 다음 작업: <b>BIA 저장 키/형식</b>과 <b>Strategy 로딩 키(bcp_core_processes)</b>를 통일합니다.`;
+        todayHint.textContent = "다음: BIA 등록";
+        todaySummary.innerHTML = `현재 <b>BIA 등록 업무가 없어</b> 우선순위를 계산할 수 없습니다.<br/>
+        <a href="risk-bia/bia.html" style="color:var(--accent); text-decoration:none; font-weight:900;">BIA에서 업무를 먼저 등록하세요</a>.`;
       }else{
-        todayHint.textContent = "정상: 전략 확정 진행";
-        todaySummary.innerHTML = `핵심업무가 <b>${coreFinalCount}개</b> 연계되었습니다.<br/>
-        TOP 업무부터 복구 전략/DR/SOP를 확정하면 됩니다.`;
+        todayHint.textContent = "운영 지표 요약";
+        todaySummary.innerHTML = `핵심업무 <b>${formatCount(coreFinalCount)}건</b> 확정 · BIA 등록 <b>${formatCount(procsCount)}건</b> · 중점 리스크 <b>${formatCount(risksCount)}건</b>입니다.<br/>
+        리스크 상위 항목부터 대응 전략/훈련 계획을 연계해 주세요.`;
       }
     }
 
