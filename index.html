@@ -132,7 +132,7 @@
 
     /* KPI tiles */
     .tile{
-      grid-column: span 3;
+      grid-column: span 2;
       border:1px solid var(--bd);
       background: var(--panel);
       border-radius: var(--radius);
@@ -148,7 +148,8 @@
     .tileValue{ font-size: 38px; font-weight: 950; letter-spacing: -.02em; line-height: 1; color: var(--ink); }
     .tileMeta{ color: var(--muted2); font-size: 13.5px; line-height: 1.35; }
 
-    @media (max-width: 1100px){ .tile{ grid-column: span 6; } }
+    @media (max-width: 1280px){ .tile{ grid-column: span 3; } }
+    @media (max-width: 900px){ .tile{ grid-column: span 6; } }
     @media (max-width: 620px){ .tile{ grid-column: span 12; } }
 
     /* Panels */
@@ -295,19 +296,19 @@
       <div class="grid" style="margin-bottom:16px;">
         <div class="tile">
           <div class="tileTop">
-            <div class="tileLabel">등록된 리스크</div>
+            <div class="tileLabel">등록된 리스크 수</div>
             <div class="badge" id="riskBadge">-</div>
           </div>
-          <div class="tileValue" id="kpiRisks">0</div>
+          <div class="tileValue" id="kpiRisks" data-countup="0">0</div>
           <div class="tileMeta">리스크 평가 데이터 기준</div>
         </div>
 
         <div class="tile">
           <div class="tileTop">
-            <div class="tileLabel">업무(프로세스)</div>
+            <div class="tileLabel">등록된 업무(프로세스)</div>
             <div class="badge" id="procBadge">-</div>
           </div>
-          <div class="tileValue" id="kpiProcs">0</div>
+          <div class="tileValue" id="kpiProcs" data-countup="0">0</div>
           <div class="tileMeta">BIA/우선순위 산정 대상</div>
         </div>
 
@@ -316,17 +317,35 @@
             <div class="tileLabel">핵심업무(Core)</div>
             <div class="badge" id="coreBadge">-</div>
           </div>
-          <div class="tileValue" id="kpiCore">0</div>
-          
+          <div class="tileValue" id="kpiCore" data-countup="0">0</div>
+          <div class="tileMeta">coreFinal=true 기준</div>
         </div>
 
         <div class="tile">
           <div class="tileTop">
-            <div class="tileLabel">최고 우선순위</div>
-            <div class="badge" id="topLevel">-</div>
+            <div class="tileLabel">BCP 훈련 횟수</div>
+            <div class="badge" id="bcpTrainBadge">-</div>
           </div>
-          <div id="kpiTopName" style="font-size:22px; font-weight:950; line-height:1.2; color:var(--ink);">-</div>
-          <div class="tileMeta" id="kpiTopMeta">-</div>
+          <div class="tileValue" id="kpiBcpTrain" data-countup="0">0</div>
+          <div class="tileMeta">훈련 기록 중 BCP 유형</div>
+        </div>
+
+        <div class="tile">
+          <div class="tileTop">
+            <div class="tileLabel">DR 테스트 횟수</div>
+            <div class="badge" id="drTestBadge">-</div>
+          </div>
+          <div class="tileValue" id="kpiDrTest" data-countup="0">0</div>
+          <div class="tileMeta">훈련 기록 중 DR 테스트</div>
+        </div>
+
+        <div class="tile">
+          <div class="tileTop">
+            <div class="tileLabel">미완료 개선조치(CAPA)</div>
+            <div class="badge" id="capaBadge">-</div>
+          </div>
+          <div class="tileValue" id="kpiCapaOpen" data-countup="0">0</div>
+          <div class="tileMeta">미완료/미착수/진행중 상태</div>
         </div>
       </div>
 
@@ -462,6 +481,65 @@
       return Array.isArray(arr) ? arr : [];
     }
 
+    function getTrainingRecords(){
+      const rows = safeJSONParse(localStorage.getItem("bcms_training_records_v2") || "[]", []);
+      return Array.isArray(rows) ? rows : [];
+    }
+
+    function getIncompleteCapaCount(){
+      const modern = safeJSONParse(localStorage.getItem("bcmsCapaItems") || "null", null);
+      const legacy = safeJSONParse(localStorage.getItem("bcms_capa_v1") || "[]", []);
+      const rows = Array.isArray(modern) ? modern : (Array.isArray(legacy) ? legacy : []);
+      const doneStatuses = new Set(['완료','종료','종결','closed','done']);
+      return rows.filter((item) => !doneStatuses.has(String(item?.status || '').trim().toLowerCase())).length;
+    }
+
+    function formatCount(value){
+      return Number(value || 0).toLocaleString('ko-KR');
+    }
+
+    function animateCount(el, target){
+      const duration = 900;
+      const startAt = performance.now();
+      const safeTarget = Math.max(0, Math.round(Number(target) || 0));
+
+      const step = (now) => {
+        const progress = Math.min((now - startAt) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(safeTarget * eased);
+        el.textContent = formatCount(current);
+        if(progress < 1) requestAnimationFrame(step);
+      };
+
+      requestAnimationFrame(step);
+    }
+
+    function runCountUpWhenVisible(items){
+      if(!('IntersectionObserver' in window)){
+        items.forEach(({el, value}) => animateCount(el, value));
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if(!entry.isIntersecting) return;
+          const el = entry.target;
+          const value = Number(el.dataset.countup || 0);
+          if(el.dataset.animated === '1') return;
+          el.dataset.animated = '1';
+          animateCount(el, value);
+          obs.unobserve(el);
+        });
+      }, { threshold: 0.2 });
+
+      items.forEach(({el, value}) => {
+        el.dataset.countup = String(value || 0);
+        el.dataset.animated = '0';
+        el.textContent = '0';
+        observer.observe(el);
+      });
+    }
+
     function renderHome(){
       let processes = [];
       try{
@@ -473,10 +551,20 @@
 
       const coreArr = getCoreProcesses();
       const coreFinalCount = coreArr.filter(x => x && x.coreFinal === true).length;
+      const trainings = getTrainingRecords();
+      const bcpTrainingCount = trainings.filter((x) => /bcp/i.test(`${x?.type || ''} ${x?.title || ''}`)).length;
+      const drTestCount = trainings.filter((x) => /dr\s*테스트|dr\s*test|\bdr\b/i.test(`${x?.type || ''} ${x?.title || ''}`)).length;
+      const capaOpenCount = getIncompleteCapaCount();
 
-      document.getElementById("kpiRisks").textContent = risksCount;
-      document.getElementById("kpiProcs").textContent = procsCount;
-      document.getElementById("kpiCore").textContent  = coreFinalCount;
+      const kpiItems = [
+        { el: document.getElementById("kpiRisks"), value: risksCount },
+        { el: document.getElementById("kpiProcs"), value: procsCount },
+        { el: document.getElementById("kpiCore"), value: coreFinalCount },
+        { el: document.getElementById("kpiBcpTrain"), value: bcpTrainingCount },
+        { el: document.getElementById("kpiDrTest"), value: drTestCount },
+        { el: document.getElementById("kpiCapaOpen"), value: capaOpenCount }
+      ];
+      runCountUpWhenVisible(kpiItems);
 
       const riskBadge = document.getElementById("riskBadge");
       riskBadge.className = "badge " + (risksCount > 0 ? "ok" : "warn");
@@ -489,6 +577,18 @@
       const coreBadge = document.getElementById("coreBadge");
       coreBadge.className = "badge " + (coreFinalCount > 0 ? "ok" : "warn");
       coreBadge.textContent = (coreFinalCount > 0 ? "표시됨" : "0건(연계 필요)");
+
+      const bcpTrainBadge = document.getElementById("bcpTrainBadge");
+      bcpTrainBadge.className = "badge " + (bcpTrainingCount > 0 ? "ok" : "warn");
+      bcpTrainBadge.textContent = (bcpTrainingCount > 0 ? "훈련 기록" : "기록 없음");
+
+      const drTestBadge = document.getElementById("drTestBadge");
+      drTestBadge.className = "badge " + (drTestCount > 0 ? "ok" : "warn");
+      drTestBadge.textContent = (drTestCount > 0 ? "테스트 기록" : "기록 없음");
+
+      const capaBadge = document.getElementById("capaBadge");
+      capaBadge.className = "badge " + (capaOpenCount > 0 ? "warn" : "ok");
+      capaBadge.textContent = (capaOpenCount > 0 ? "조치 필요" : "양호");
 
       let scored = [];
       let top = null;
@@ -508,22 +608,6 @@
         scored.push(item);
         if(!top || item.score > top.score) top = item;
       });
-
-      const topLevelEl = document.getElementById("topLevel");
-      const topNameEl = document.getElementById("kpiTopName");
-      const topMetaEl = document.getElementById("kpiTopMeta");
-
-      if(top){
-        topLevelEl.className = "badge " + (top.level.key === "Critical" ? "warn" : "ok");
-        topLevelEl.textContent = top.level.label;
-        topNameEl.textContent = top.name;
-        topMetaEl.textContent = `${top.dept} · 점수 ${top.score.toFixed(1)}`;
-      }else{
-        topLevelEl.className = "badge warn";
-        topLevelEl.textContent = "미산정";
-        topNameEl.textContent = "-";
-        topMetaEl.textContent = "-";
-      }
 
       scored.sort((a,b)=> b.score - a.score);
       const top3 = scored.slice(0,3);
