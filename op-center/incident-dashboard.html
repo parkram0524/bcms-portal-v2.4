@@ -125,10 +125,21 @@
     }
 
     .modeFlow{ margin-top:8px; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
-    .modeNode{ border:1px solid rgba(15,23,42,.12); border-radius:12px; background:#fff; padding:10px; text-align:center; font-size:12px; font-weight:900; }
-    .modeNode.active{ border-color:rgba(37,99,235,.38); box-shadow:0 0 0 2px rgba(37,99,235,.14) inset; }
-    .modeNode.recommended{ border-color:rgba(217,119,6,.38); background:rgba(217,119,6,.08); }
+    .modeNode{ border:1px solid rgba(15,23,42,.12); border-radius:12px; background:#fff; padding:10px; text-align:center; font-size:12px; font-weight:900; position:relative; }
+    .modeNode.active{ border-color:rgba(37,99,235,.48); box-shadow:0 0 0 2px rgba(37,99,235,.14) inset; background:rgba(37,99,235,.08); }
+    .modeNode.recommended{ border-color:rgba(217,119,6,.45); }
+    .modeNode.parallel{ border-style:dashed; }
+    .modeNode .tag{ position:absolute; top:6px; right:8px; font-size:10px; font-weight:900; color:#9a3412; }
     @media (max-width:900px){ .modeFlow{ grid-template-columns:1fr; } }
+
+    .modeLegend{ margin-top:8px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+    .legendItem{ border:1px solid rgba(15,23,42,.1); border-radius:10px; padding:8px; font-size:12px; background:#fff; }
+    .decisionBox{ margin-top:10px; border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:10px; }
+    .decisionTitle{ margin:0 0 8px; font-size:13px; font-weight:900; }
+    .decisionWarn{ margin-top:8px; border:1px solid rgba(217,119,6,.34); background:rgba(217,119,6,.08); color:#92400e; border-radius:10px; padding:8px; font-size:12px; font-weight:700; }
+    .evidenceGrid{ margin-top:8px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .evidenceItem{ border:1px solid rgba(15,23,42,.1); border-radius:10px; background:#fff; padding:8px; font-size:12px; }
+    @media (max-width:900px){ .modeLegend,.evidenceGrid{ grid-template-columns:1fr; } }
 
     .hubGrid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:8px; }
     .hubBox{ border:1px solid rgba(15,23,42,.10); border-radius:12px; background:rgba(255,255,255,.96); padding:10px; }
@@ -334,12 +345,21 @@
 
         <article class="card hubFlowCard">
           <h3>사고 대응 허브</h3>
+          <div class="modeLegend">
+            <div class="legendItem"><b>SOP</b>: 표준 절차 기반 복구</div>
+            <div class="legendItem"><b>EOP</b>: 비상대응 조직 / 상황통제 / 보고</div>
+            <div class="legendItem"><b>DRP</b>: 기술 복구 / 전환 / 재기동</div>
+            <div class="legendItem"><b>BCP</b>: 대체 자원 기반 업무 연속</div>
+          </div>
           <div class="metaGrid">
             <div class="metaItem"><div class="k">현재 대응 단계</div><div class="v" id="currentModeText">SOP</div></div>
-            <div class="metaItem"><div class="k">권장 대응 단계</div><div class="v" id="recommendedModeText">SOP</div></div>
+            <div class="metaItem"><div class="k">자동 권장 단계</div><div class="v" id="recommendedModeText">SOP</div></div>
+            <div class="metaItem"><div class="k">발동 사유</div><div class="v" id="activationReasonText">-</div></div>
+            <div class="metaItem"><div class="k">판단 근거 요약</div><div class="v" id="decisionSummaryText">-</div></div>
           </div>
           <div id="modeFlow" class="modeFlow"></div>
           <div id="modeReasonChips" class="chipRow"></div>
+          <div id="modeMismatchWarn" class="decisionWarn" style="display:none;"></div>
           <div class="modeCtl">
             <div>
               <label for="modeSelect">현재 단계 변경</label>
@@ -382,6 +402,10 @@
           <div class="hubBox" style="margin-top:8px;">
             <h4>권장 이유</h4>
             <ul id="hubRecoReasonList" class="hubList"></ul>
+          </div>
+          <div class="decisionBox">
+            <h4 class="decisionTitle">왜 이 단계가 권장되는가</h4>
+            <div id="decisionEvidenceGrid" class="evidenceGrid"></div>
           </div>
         </article>
 
@@ -589,6 +613,10 @@
       const recommendedModeText = document.getElementById('recommendedModeText');
       const modeFlow = document.getElementById('modeFlow');
       const modeReasonChips = document.getElementById('modeReasonChips');
+      const activationReasonText = document.getElementById('activationReasonText');
+      const decisionSummaryText = document.getElementById('decisionSummaryText');
+      const modeMismatchWarn = document.getElementById('modeMismatchWarn');
+      const decisionEvidenceGrid = document.getElementById('decisionEvidenceGrid');
       const modeSelect = document.getElementById('modeSelect');
       const modeReasonInput = document.getElementById('modeReasonInput');
       const btnApplyMode = document.getElementById('btnApplyMode');
@@ -691,6 +719,9 @@
           matchedDRPProcedures: [],
           currentResponseMode: 'SOP',
           recommendedModes: ['SOP'],
+          recommendationReasons: [],
+          responseDecision: null,
+          responseDecisionUpdatedAt: '',
           modeHistory: [],
           activationReason: ''
         },
@@ -805,6 +836,7 @@
         if (!Array.isArray(merged.currentIncident.matchedBCPStrategies)) merged.currentIncident.matchedBCPStrategies = [];
         if (!Array.isArray(merged.currentIncident.matchedDRPProcedures)) merged.currentIncident.matchedDRPProcedures = [];
         if (!Array.isArray(merged.currentIncident.recommendedModes)) merged.currentIncident.recommendedModes = ['SOP'];
+        if (!Array.isArray(merged.currentIncident.recommendationReasons)) merged.currentIncident.recommendationReasons = [];
         if (!Array.isArray(merged.currentIncident.modeHistory)) merged.currentIncident.modeHistory = [];
         if (!RESPONSE_MODES.includes(merged.currentIncident.currentResponseMode)) merged.currentIncident.currentResponseMode = 'SOP';
         merged.currentIncident.activationReason = String(merged.currentIncident.activationReason || '');
@@ -1132,6 +1164,13 @@
         { re: /(보안|랜섬웨어|계정|침해)/i, team:'정보보호팀' },
         { re: /(관제|모니터링|알람)/i, team:'DC운영(NOC/관제)팀' }
       ];
+      const EOP_KEYWORDS = ['상황 전파','비상 대응','경영진 보고','고객 공지','다수 팀','보안 사고','화재','침수','안전'];
+      const DRP_KEYWORDS = ['정전','ups','발전기','냉각','온도','네트워크','회선','스위치','호스트','가상화','재기동','복구 지연','전환'];
+      const BCP_KEYWORDS = ['수기 처리','대체 인력','대체 장소','협력업체','공급업체','업무 공백','자원 부족','출입 불가','우회 운영'];
+      const RESOURCE_LOSS_WORDS = /(인력 부족|장소 사용 불가|유틸리티 상실|자원 상실|출입 불가|자원 부족|업무 공백)/i;
+      const TECH_PATTERN = /(전환|복구|재기동|failover|restore|전력|냉각|네트워크|서버|호스트|가상화|보안 플랫폼|관제시스템)/i;
+      const hasKeyword = (text, words) => words.some((word) => text.includes(word.toLowerCase()));
+      const sameList = (a, b) => JSON.stringify([...(a || [])].sort()) === JSON.stringify([...(b || [])].sort());
 
       const matchIncidentData = () => {
         const incident = state.currentIncident;
@@ -1227,46 +1266,109 @@
           });
         });
 
+        const incidentText = [incident.title, incident.description, incident.memo, incident.finalSummary, incident.preventionMemo, incident.impacted, incident.serviceName, incident.status]
+          .map((x) => String(x || '').trim().toLowerCase()).join(' ');
+        const highestRiskScore = risks.reduce((max, r) => Math.max(max, Number(r.riskScore || 0)), 0);
+        const criticalRiskCount = risks.filter((r) => r.critical === true || Number(r.riskScore || 0) >= 13).length;
+        const coreImpact = coreFns.some((fn) => ['핵심', '주요'].includes(String(fn.grade || '').trim()) || fn.coreFinal === true);
+        const rtoBreach = coreFns.some((fn) => {
+          const rtoM = toMinutes(fn.rto);
+          return rtoM !== null && rtoM <= 120 && (incident.status === '복구 완료' ? false : true);
+        }) && /복구 지연|장기|불확실|지연/.test(incidentText);
+        const hasResourceLoss = RESOURCE_LOSS_WORDS.test(incidentText);
+        const hasEopKey = hasKeyword(incidentText, EOP_KEYWORDS);
+        const hasDrpKey = hasKeyword(incidentText, DRP_KEYWORDS);
+        const hasBcpKey = hasKeyword(incidentText, BCP_KEYWORDS);
+
+        const reasonsByMode = { SOP: [], EOP: [], DRP: [], BCP: [] };
         const recommended = new Set(['SOP']);
-        const reasons = [];
 
-        if (relatedTeams.size >= 2) {
-          recommended.add('EOP');
-          reasons.push('다수 팀 대응 필요');
-        }
-        if (incident.severity === '심각' || incident.severity === '치명') {
-          recommended.add('EOP');
-          reasons.push('중요 서비스 영향');
-        }
-        if (/안전|시설|보안|대외|커뮤니케이션/.test(text)) {
-          recommended.add('EOP');
-          reasons.push('상황 통제/보고 필요');
-        }
+        if (relatedTeams.size >= 2) reasonsByMode.EOP.push(`관련 조직 ${relatedTeams.size}개로 다수 팀 대응 필요`);
+        if (incident.severity === '심각' || incident.severity === '치명') reasonsByMode.EOP.push(`심각도 ${incident.severity}로 상황 통제/보고 필요`);
+        if (coreImpact) reasonsByMode.EOP.push('핵심/주요 업무 영향이 확인됨');
+        if (hasEopKey || /시설|안전|보안|대외|커뮤니케이션/.test(incidentText)) reasonsByMode.EOP.push('상황 전파·의사결정·대외 커뮤니케이션 필요 정황');
+        if (/불확실|장기|지연/.test(incidentText)) reasonsByMode.EOP.push('복구시간 불확실/장기화 가능성');
 
-        const hasHigh = risks.some((r) => r.critical || r.riskScore >= 13);
-        const hasTechWord = /(전환|복구|재기동|failover|restore|전력|냉각|네트워크|호스트|보안|모니터링)/i.test(text);
-        if (drpMatched.length || hasTechWord || hasHigh) {
-          recommended.add('DRP');
-          reasons.push(drpMatched.length ? '매칭 DRP 절차 존재' : '기술 복구 절차 필요');
-        }
+        if (drpMatched.length) reasonsByMode.DRP.push(`매칭 DRP 절차 ${drpMatched.length}건 존재`);
+        if (criticalRiskCount > 0) reasonsByMode.DRP.push(`중점관리 리스크 ${criticalRiskCount}건(최고 ${highestRiskScore})`);
+        if (rtoBreach) reasonsByMode.DRP.push('RTO 초과 가능성으로 기술 복구 가속 필요');
+        if (TECH_PATTERN.test(incidentText) || hasDrpKey) reasonsByMode.DRP.push('전환/복구/재기동 성격의 기술 이슈');
 
-        const hasBcpWord = /(자원|인력|공간|협력업체|유틸리티|공백|수기|우회|대체)/i.test(text);
-        if (bcpMatched.length || hasBcpWord || hasHigh) {
-          recommended.add('BCP');
-          reasons.push(bcpMatched.length ? '매칭 BCP 전략 존재' : '업무 연속 대체 운영 필요');
-        }
+        if (bcpMatched.length) reasonsByMode.BCP.push(`매칭 BCP 전략 ${bcpMatched.length}건 존재`);
+        if (hasResourceLoss) reasonsByMode.BCP.push('정상 자원 사용이 어려운 정황(인력/장소/유틸리티)');
+        if (hasBcpKey) reasonsByMode.BCP.push('수기 처리/대체 인력/대체 장소/우회 운영 키워드 감지');
+        if (rtoBreach || /업무 공백|고객 응대|승인|보고|우회/.test(incidentText)) reasonsByMode.BCP.push('기술 복구와 별개로 업무 공백 대응 필요');
+
+        if (reasonsByMode.EOP.length) recommended.add('EOP');
+        if (reasonsByMode.DRP.length) recommended.add('DRP');
+        if (reasonsByMode.BCP.length) recommended.add('BCP');
+
+        const sopReasons = [];
+        if (relatedTeams.size <= 1) sopReasons.push('단일 조직 중심 대응 가능');
+        if (!criticalRiskCount) sopReasons.push('중점관리 리스크 미확인');
+        if (!hasResourceLoss) sopReasons.push('자원 상실 정황 없음');
+        if (!reasonsByMode.EOP.length && !reasonsByMode.DRP.length && !reasonsByMode.BCP.length) sopReasons.push('표준 절차 기반 복구 가능');
+        reasonsByMode.SOP = sopReasons;
+
+        const recommendationReasons = uniq([
+          ...reasonsByMode.EOP,
+          ...reasonsByMode.DRP,
+          ...reasonsByMode.BCP,
+          ...(recommended.size === 1 ? reasonsByMode.SOP : [])
+        ]);
+
+        const evidence = {
+          relatedOrgCount: relatedTeams.size,
+          coreImpact,
+          highestRiskScore,
+          criticalRiskCount,
+          hasDRP: drpMatched.length > 0,
+          hasBCP: bcpMatched.length > 0,
+          hasResourceLoss,
+          likelyRtoBreach: rtoBreach
+        };
+
+        const nextModes = [...recommended];
+        const prevModes = toArray(incident.recommendedModes);
+        const prevReasons = toArray(incident.recommendationReasons);
 
         incident.relatedCoreFunctions = coreFns;
         incident.matchedRisks = risks;
         incident.matchedBCPStrategies = bcpMatched;
         incident.matchedDRPProcedures = drpMatched;
-        incident.recommendedModes = [...recommended];
+        incident.recommendedModes = nextModes;
+        incident.recommendationReasons = recommendationReasons;
         incident.relatedOrgUnits = [...relatedTeams];
         incident.relatedResponseRoles = deriveResponseRolesFromOrgUnits(incident.relatedOrgUnits);
+        incident.responseDecision = {
+          currentMode: incident.currentResponseMode || 'SOP',
+          recommendedModes: nextModes,
+          reasons: recommendationReasons,
+          evidence
+        };
         if (!incident.currentResponseMode) incident.currentResponseMode = 'SOP';
-        if (!incident.activationReason && reasons.length) incident.activationReason = reasons.join(' / ');
+        if (!incident.activationReason && recommendationReasons.length) incident.activationReason = recommendationReasons[0];
 
-        return { reasons };
+        const changed = !sameList(prevModes, nextModes) || !sameList(prevReasons, recommendationReasons);
+        if (changed) {
+          incident.responseDecisionUpdatedAt = nowIso();
+          const rows = getExecStore();
+          const incidentId = incident.incidentId || 'INC-DRAFT';
+          const execRow = rows.find((r) => r && r.incidentId === incidentId);
+          if (execRow) {
+            if (!Array.isArray(execRow.logs)) execRow.logs = [];
+            const msg = `자동 권장: ${nextModes.join(', ')}`;
+            const note = `권장 사유: ${recommendationReasons.slice(0, 3).join(' / ')}`;
+            const last = execRow.logs[execRow.logs.length - 1];
+            const duplicated = last && last.category === '자동권장' && last.message === msg && last.note === note;
+            if (!duplicated) {
+              execRow.logs.push({ timestamp: nowIso(), category:'자동권장', message: msg, actor:'시스템', note, source:'auto-recommendation' });
+              saveExecStore(rows);
+            }
+          }
+        }
+
+        return { reasons: recommendationReasons, reasonsByMode, evidence };
       };
 
       const checklistTemplateByMode = (mode, incident) => {
@@ -1591,19 +1693,32 @@
 
         currentModeText.textContent = incident.currentResponseMode || 'SOP';
         recommendedModeText.textContent = (incident.recommendedModes || ['SOP']).join(', ');
+        activationReasonText.textContent = incident.activationReason || '-';
+        decisionSummaryText.textContent = (matched.reasons || []).slice(0, 2).join(' / ') || 'SOP 기본 대응';
         modeSelect.value = RESPONSE_MODES.includes(incident.currentResponseMode) ? incident.currentResponseMode : 'SOP';
 
+        const currentMode = incident.currentResponseMode || 'SOP';
+        const recoModes = toArray(incident.recommendedModes);
         modeFlow.innerHTML = RESPONSE_MODES.map((mode) => {
-          const active = incident.currentResponseMode === mode ? 'active' : '';
-          const reco = (incident.recommendedModes || []).includes(mode) ? 'recommended' : '';
-          return `<div class="modeNode ${active} ${reco}">${mode}</div>`;
+          const active = currentMode === mode ? 'active' : '';
+          const reco = recoModes.includes(mode) ? 'recommended' : '';
+          const parallel = recoModes.includes(mode) && currentMode !== mode ? 'parallel' : '';
+          const tag = active ? '<span class="tag">현재</span>' : (reco ? '<span class="tag">권장</span>' : '');
+          return `<div class="modeNode ${active} ${reco} ${parallel}">${mode}${tag}</div>`;
         }).join('');
 
         const chips = [];
-        chips.push(`<span class="chip">현재 단계: ${incident.currentResponseMode || 'SOP'}</span>`);
-        toArray(incident.recommendedModes).forEach((mode) => chips.push(`<span class="chip reco">권장: ${mode}</span>`));
-        if (incident.activationReason) chips.push(`<span class="chip warn">사유: ${incident.activationReason}</span>`);
+        chips.push(`<span class="chip">현재 단계: ${currentMode}</span>`);
+        recoModes.forEach((mode) => chips.push(`<span class="chip reco">자동 권장: ${mode}</span>`));
+        if (incident.activationReason) chips.push(`<span class="chip warn">운영자 결정 사유: ${incident.activationReason}</span>`);
         modeReasonChips.innerHTML = chips.join('');
+
+        if (!recoModes.includes(currentMode) && currentMode !== '종료') {
+          modeMismatchWarn.style.display = 'block';
+          modeMismatchWarn.textContent = `현재는 ${currentMode} 단계이지만, ${recoModes.join('/')} 검토가 권장됩니다.`;
+        } else {
+          modeMismatchWarn.style.display = 'none';
+        }
 
         const orgs = normalizeOrgUnitNames(incident.relatedOrgUnits || []);
         hubOrgList.innerHTML = orgs.length
@@ -1626,8 +1741,9 @@
           : '<li class="muted">현재는 SOP 기본 대응이 적합합니다.</li>';
 
         const eopReco = toArray(incident.recommendedModes).includes('EOP');
+        const eopReasons = (matched.reasonsByMode && matched.reasonsByMode.EOP) ? matched.reasonsByMode.EOP : [];
         eopRecommendedText.textContent = `EOP 권장: ${eopReco ? '예' : '아니오'}`;
-        eopReasonText.textContent = reasons.length ? reasons.join(' / ') : '단일팀·단기 복구로 판단되어 SOP 우선 대응';
+        eopReasonText.textContent = eopReasons.length ? eopReasons.join(' / ') : '단일팀·단기 복구로 판단되어 SOP 우선 대응';
         eopRolesText.textContent = toArray(incident.relatedResponseRoles).join(', ') || '-';
 
         const drpRows = incident.matchedDRPProcedures || [];
@@ -1643,10 +1759,23 @@
 
         const bcpRows = incident.matchedBCPStrategies || [];
         const bcpNeeded = toArray(incident.recommendedModes).includes('BCP');
-        bcpNeedText.textContent = `BCP 필요 여부: ${bcpNeeded ? '필요' : '조건부/대기'}${bcpNeeded ? ' (업무 공백/자원 제약 대비)' : ''}`;
+        bcpNeedText.textContent = bcpNeeded
+          ? 'BCP 필요: 기술 복구와 별개로 업무 공백이 예상됩니다. 대체 인력/장소/수기 처리/우회 운영 검토가 필요합니다.'
+          : 'BCP 필요 여부: 조건부/대기';
         bcpDetailList.innerHTML = bcpRows.length
           ? bcpRows.slice(0, 4).map((s) => `<div>• ${s.team} / ${s.function} / ${s.risk} / ${s.strategyType || '-'} / ${s.strategyText || '-'} / ${Array.isArray(s.requiredResources) ? s.requiredResources.join(', ') : '-'}</div>`).join('')
-          : '<div>BCP 전략이 아직 정의되지 않았습니다.</div>';
+          : '<div>정상 자원 사용이 어렵거나 업무 공백이 예상되면 BCP 전략을 등록해 주세요.</div>';
+
+        const evidence = matched.evidence || {};
+        decisionEvidenceGrid.innerHTML = [
+          `핵심업무 영향: ${evidence.coreImpact ? '있음' : '없음'}`,
+          `관련 조직 수: ${evidence.relatedOrgCount ?? 0}개`,
+          `최고 위험도: ${evidence.highestRiskScore ?? 0}`,
+          `DRP 절차 존재: ${evidence.hasDRP ? '예' : '아니오'}`,
+          `BCP 전략 존재: ${evidence.hasBCP ? '예' : '아니오'}`,
+          `자원 상실 정황: ${evidence.hasResourceLoss ? '예' : '아니오'}`,
+          `RTO 초과 가능성: ${evidence.likelyRtoBreach ? '예' : '아니오'}`
+        ].map((line) => `<div class="evidenceItem">${line}</div>`).join('');
 
         renderExecutionConsole();
       };
@@ -1770,6 +1899,9 @@
           preventionMemo: '',
           currentResponseMode: 'SOP',
           recommendedModes: ['SOP'],
+          recommendationReasons: [],
+          responseDecision: null,
+          responseDecisionUpdatedAt: '',
           activationReason: '초기 대응',
           modeHistory: [{ mode:'SOP', changedAt: nowText(), reason:'초기 대응' }]
         };
