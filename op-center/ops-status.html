@@ -409,6 +409,7 @@
         location.href = `./incident-dashboard.html?incidentRef=${encodeURIComponent(id)}&incidentId=${encodeURIComponent(id)}`;
       };
 
+      // merge-safe: incident row click + item button click 단일 핸들러
       document.body.addEventListener('click', (e) => {
         const row = e.target.closest('[data-type="incident"][data-id]');
         if (row) {
