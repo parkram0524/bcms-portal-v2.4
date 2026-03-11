@@ -647,21 +647,35 @@
       const autoGenNotice = document.getElementById('autoGenNotice');
       const autoGenSummaryText = document.getElementById('autoGenSummaryText');
 
-      const query = new URLSearchParams(location.search);
-      const readOnceSelection = () => {
-        const fromQuery = query.get('incidentRef') || '';
-        let fromStorage = '';
+      const safeParse = (raw, fallback = null) => {
         try {
-          const parsed = JSON.parse(localStorage.getItem(SELECTED_INCIDENT_KEY) || 'null');
-          fromStorage = parsed?.incidentRef || '';
+          return raw ? JSON.parse(raw) : fallback;
         } catch {
-          fromStorage = '';
+          return fallback;
         }
-        localStorage.removeItem(SELECTED_INCIDENT_KEY);
-        return (fromQuery || fromStorage || '').trim();
       };
 
-      const selectedIncidentRef = readOnceSelection();
+      const resolveSelectedIncidentKey = () => {
+        const params = new URLSearchParams(location.search);
+        const fromQueryId = String(params.get('incidentId') || '').trim();
+        const fromQueryRef = String(params.get('incidentRef') || '').trim();
+        const fromCurrent = String(localStorage.getItem(CURRENT_INCIDENT_ID_KEY) || '').trim();
+        const fromSelected = safeParse(localStorage.getItem(SELECTED_INCIDENT_KEY), {});
+        const fromFocus = safeParse(localStorage.getItem(FOCUS_TARGET_KEY), {});
+
+        const candidates = [
+          fromQueryId,
+          fromQueryRef,
+          fromCurrent,
+          String(fromSelected?.incidentId || '').trim(),
+          String(fromSelected?.incidentRef || '').trim(),
+          fromFocus?.type === 'incident' ? String(fromFocus?.id || '').trim() : ''
+        ];
+
+        return candidates.find((v) => v) || '';
+      };
+
+      let selectedIncidentRef = '';
       let focusApplied = false;
 
       const drStateMap = {
@@ -842,6 +856,196 @@
         merged.currentIncident.activationReason = String(merged.currentIncident.activationReason || '');
 
         return merged;
+      };
+
+      const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
+      const toMillis = (value) => {
+        if (!hasValue(value)) return 0;
+        const ts = new Date(value).getTime();
+        return Number.isFinite(ts) ? ts : 0;
+      };
+
+      const pickFirst = (obj, keys, fallback = '') => {
+        for (const key of keys) {
+          if (hasValue(obj?.[key])) return obj[key];
+        }
+        return fallback;
+      };
+
+      const normalizeStringList = (value) => {
+        if (Array.isArray(value)) {
+          return uniq(value.map((x) => String(x?.teamName || x?.name || x || '').trim()).filter(Boolean));
+        }
+        if (typeof value === 'string') {
+          return uniq(value.split(',').map((x) => x.trim()).filter(Boolean));
+        }
+        return [];
+      };
+
+      const normalizeIncidentRecord = (row = {}, idx = 0) => {
+        const incidentId = String(pickFirst(row, ['incidentId', 'id', 'incidentID', 'incidentRef', 'incidentCode'], `INC-${idx + 1}`) || '').trim();
+        const status = String(pickFirst(row, ['status', 'currentStatus', 'state'], '-')).trim();
+        const severity = String(pickFirst(row, ['severity', 'level'], '-')).trim();
+        const title = String(pickFirst(row, ['title', 'incidentTitle', 'name'], '')).trim();
+        const currentStage = String(pickFirst(row, ['currentStage', 'responseStage', 'phase', 'step'], status || '-')).trim();
+        const startedAt = pickFirst(row, ['startedAt', 'startTime', 'createdAt', 'incidentStartTime', 'openedAt'], null);
+        const endedAt = pickFirst(row, ['endedAt', 'endTime', 'closedAt', 'resolvedAt'], null);
+
+        const affectedRaw = row.affectedServices ?? row.services ?? row.impactedServices ?? row.selectedServices ?? row.serviceNames;
+        const relatedRaw = row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const affectedServices = normalizeStringList(Array.isArray(affectedRaw) ? affectedRaw : (hasValue(affectedRaw) ? [affectedRaw] : [row.serviceName, row.impacted]));
+        const relatedTeams = normalizeStringList(Array.isArray(relatedRaw) ? relatedRaw : (hasValue(relatedRaw) ? [relatedRaw] : [row.ownerTeam]));
+
+        const lowered = status.toLowerCase();
+        const isClosed = hasValue(endedAt) || ['종료', '종료됨', 'closed', 'resolved', '종결', '복구 완료'].includes(lowered);
+
+        return {
+          incidentId,
+          incidentRef: String(row.incidentRef || row.incidentId || row.id || '').trim(),
+          id: String(row.id || row.incidentId || '').trim(),
+          status: status || '-',
+          severity: severity || '-',
+          title,
+          affectedServices,
+          relatedTeams,
+          currentStage: currentStage || '-',
+          startedAt,
+          endedAt,
+          isClosed,
+          raw: row
+        };
+      };
+
+      const collectIncidentRecords = () => {
+        let rows = [];
+
+        const unified = safeParse(localStorage.getItem(INCIDENTS_UNIFIED_KEY), null);
+        if (Array.isArray(unified)) rows = rows.concat(unified);
+        if (unified && typeof unified === 'object') {
+          if (unified.currentIncident && typeof unified.currentIncident === 'object') rows.push(unified.currentIncident);
+          if (Array.isArray(unified.logs)) rows = rows.concat(unified.logs);
+        }
+
+        const legacy = store.get(STORAGE_KEY, null);
+        if (legacy && typeof legacy === 'object') {
+          if (legacy.currentIncident && typeof legacy.currentIncident === 'object') rows.push(legacy.currentIncident);
+          if (Array.isArray(legacy.logs)) rows = rows.concat(legacy.logs);
+        }
+
+        const execution = store.get(EXECUTION_KEY, []);
+        if (Array.isArray(execution)) {
+          execution.forEach((row) => {
+            if (!row || typeof row !== 'object') return;
+            rows.push({
+              incidentId: row.incidentId || row.id || '',
+              status: row.status || row.currentStatus || '',
+              severity: row.severity || row.level || '',
+              startedAt: row.startedAt || row.createdAt || '',
+              endedAt: row.endedAt || '',
+              currentStage: row.currentStage || row.phase || ''
+            });
+          });
+        }
+
+        const normalized = rows.map(normalizeIncidentRecord).filter((x) => x.incidentId);
+        const byId = new Map();
+        normalized.forEach((item) => {
+          const key = item.incidentId;
+          const prev = byId.get(key);
+          if (!prev) {
+            byId.set(key, item);
+            return;
+          }
+          byId.set(key, {
+            ...prev,
+            ...item,
+            status: item.status !== '-' ? item.status : prev.status,
+            severity: item.severity !== '-' ? item.severity : prev.severity,
+            currentStage: item.currentStage !== '-' ? item.currentStage : prev.currentStage,
+            affectedServices: item.affectedServices.length ? item.affectedServices : prev.affectedServices,
+            relatedTeams: item.relatedTeams.length ? item.relatedTeams : prev.relatedTeams,
+            startedAt: hasValue(item.startedAt) ? item.startedAt : prev.startedAt,
+            endedAt: hasValue(item.endedAt) ? item.endedAt : prev.endedAt,
+            isClosed: item.isClosed || prev.isClosed
+          });
+        });
+
+        return [...byId.values()];
+      };
+
+      const selectIncidentRecord = (records, selectedKey) => {
+        const key = String(selectedKey || '').trim();
+        const lowered = key.toLowerCase();
+
+        if (key) {
+          const exact = records.find((x) => x.incidentId === key)
+            || records.find((x) => x.incidentRef === key)
+            || records.find((x) => x.id === key)
+            || records.find((x) => String(x.incidentId || '').toLowerCase() === lowered)
+            || records.find((x) => String(x.incidentRef || '').toLowerCase() === lowered)
+            || records.find((x) => String(x.id || '').toLowerCase() === lowered);
+          if (exact) return exact;
+        }
+
+        const active = records
+          .filter((x) => !x.isClosed)
+          .sort((a, b) => toMillis(b.startedAt) - toMillis(a.startedAt));
+        if (active.length) return active[0];
+
+        const latest = [...records].sort((a, b) => {
+          const bt = toMillis(b.startedAt) || toMillis(b.endedAt);
+          const at = toMillis(a.startedAt) || toMillis(a.endedAt);
+          return bt - at;
+        });
+        return latest[0] || null;
+      };
+
+      const applySelectedIncident = (record) => {
+        if (!record) return false;
+        const raw = record.raw || {};
+        state.currentIncident = {
+          ...state.currentIncident,
+          ...raw,
+          incidentId: record.incidentId,
+          status: record.status,
+          severity: record.severity,
+          startTime: record.startedAt || state.currentIncident.startTime || '-',
+          endTime: record.endedAt || state.currentIncident.endTime || '-',
+          impactedServiceNames: record.affectedServices,
+          impacted: record.affectedServices.join(', '),
+          relatedOrgUnits: record.relatedTeams,
+          currentResponseMode: RESPONSE_MODES.includes(String(raw.currentResponseMode || '')) ? raw.currentResponseMode : (state.currentIncident.currentResponseMode || 'SOP')
+        };
+        if (!Array.isArray(state.currentIncident.recommendedModes)) state.currentIncident.recommendedModes = ['SOP'];
+        if (!Array.isArray(state.currentIncident.recommendationReasons)) state.currentIncident.recommendationReasons = [];
+        if (!Array.isArray(state.currentIncident.modeHistory)) state.currentIncident.modeHistory = [];
+        return true;
+      };
+
+      const syncSelectedIncidentBinding = (incidentId) => {
+        const id = String(incidentId || '').trim();
+        if (!id) return;
+        selectedIncidentRef = id;
+
+        localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId: id, incidentRef: id }));
+        localStorage.setItem(CURRENT_INCIDENT_ID_KEY, id);
+        localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type: 'incident', id }));
+
+        const params = new URLSearchParams(location.search);
+        params.set('incidentId', id);
+        if (params.get('incidentRef')) params.set('incidentRef', id);
+        const next = `${location.pathname}?${params.toString()}${location.hash || ''}`;
+        history.replaceState(null, '', next);
+      };
+
+      const resolveAndApplySelectedIncident = () => {
+        const selectedKey = resolveSelectedIncidentKey();
+        const records = collectIncidentRecords();
+        const target = selectIncidentRecord(records, selectedKey);
+        if (!target) return false;
+        const applied = applySelectedIncident(target);
+        if (applied) syncSelectedIncidentBinding(target.incidentId);
+        return applied;
       };
 
       const addLog = ({ system, event, action, operator = '운영자' }) => {
@@ -1449,7 +1653,7 @@
       };
 
       const getServices = () => loadServices();
-      const getIncidents = () => store.get(STORAGE_KEY, null);
+      const getIncidents = () => collectIncidentRecords();
       const getCurrentIncident = () => state.currentIncident || null;
 
       let services = loadServices();
@@ -1879,7 +2083,28 @@
       };
 
       window.addEventListener('storage', (e) => {
-        if ([SERVICE_REGISTRY_KEY, ORG_REGISTRY_KEY].includes(e.key)) refreshServicesFromRegistry();
+        if ([SERVICE_REGISTRY_KEY, ORG_REGISTRY_KEY].includes(e.key)) {
+          refreshServicesFromRegistry();
+          return;
+        }
+
+        if ([INCIDENTS_UNIFIED_KEY, EXECUTION_KEY, STORAGE_KEY, SELECTED_INCIDENT_KEY, CURRENT_INCIDENT_ID_KEY, FOCUS_TARGET_KEY].includes(e.key)) {
+          const applied = resolveAndApplySelectedIncident();
+          if (applied) {
+            syncImpactedCache();
+            refreshImpactStatusMap();
+          }
+          renderAll();
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        const applied = resolveAndApplySelectedIncident();
+        if (applied) {
+          syncImpactedCache();
+          refreshImpactStatusMap();
+        }
+        renderAll();
       });
 
       document.getElementById('btnStartIncident').addEventListener('click', () => {
@@ -2201,6 +2426,7 @@
       }, 1000);
 
       services = loadServices();
+      resolveAndApplySelectedIncident();
       if (services.length && !state.currentIncident.impactedServiceIds.length) {
         state.currentIncident.impactedServiceIds = services.slice(0, 2).map((svc) => svc.id);
       }
@@ -2215,6 +2441,16 @@
 
       saveState();
       renderAll();
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const applied = resolveAndApplySelectedIncident();
+        if (applied) {
+          syncImpactedCache();
+          refreshImpactStatusMap();
+          saveState();
+        }
+        renderAll();
+      }, { once:true });
 
       window.BCMSIncidentDashboard = {
         getServices,
