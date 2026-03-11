@@ -85,6 +85,9 @@
       const INCIDENT_UNIFIED_KEY = 'bcmsIncidents';
       const INCIDENT_EXEC_KEY = 'bcmsIncidentExecution';
       const SELECTED_SERVICE_KEY = 'bcms_selected_service';
+      const SELECTED_INCIDENT_KEY = 'bcms_selected_incident';
+      const SELECTED_INCIDENT_ID_KEY = 'bcmsSelectedIncidentId';
+      const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
 
       const safeParseArray = (raw) => {
         if (raw == null || raw === '') return [];
@@ -129,7 +132,7 @@
       });
 
       const normalizeIncident = (row = {}, idx = 0) => {
-        const incidentId = asText(pickFirst(row, ['incidentId', 'id', 'incidentID'], `INC-${idx + 1}`));
+        const incidentId = asText(pickFirst(row, ['incidentId', 'id', 'incidentID', 'incidentRef', 'incidentCode'], `INC-${idx + 1}`));
         const status = asText(pickFirst(row, ['status', 'currentStatus', 'state'], '-'));
         const severity = asText(pickFirst(row, ['severity', 'level'], '-'));
         const currentStage = asText(pickFirst(row, ['currentStage', 'responseStage', 'phase', 'step'], status || '-'));
@@ -177,7 +180,9 @@
 
       const getServiceRows = () => {
         const fromStore = (window.DataStore && DataStore.get) ? DataStore.get(SERVICE_KEY, []) : [];
-        const rows = Array.isArray(fromStore) ? fromStore : safeParseArray(localStorage.getItem(SERVICE_KEY));
+        const rows = Array.isArray(fromStore)
+          ? fromStore
+          : safeParseArray(localStorage.getItem(SERVICE_KEY)).concat(safeParseArray(localStorage.getItem('bcmsServiceRegistry')));
         return rows.map(normalizeService).filter((x) => x.serviceName);
       };
 
@@ -194,6 +199,7 @@
         }
 
         const legacy = (window.DataStore && DataStore.get) ? DataStore.get(INCIDENT_STORE_KEY, null) : null;
+        if (Array.isArray(legacy)) raw = raw.concat(legacy);
         if (legacy && typeof legacy === 'object') {
           if (legacy.currentIncident && typeof legacy.currentIncident === 'object') raw.push(legacy.currentIncident);
           if (Array.isArray(legacy.logs)) raw = raw.concat(legacy.logs);
@@ -230,10 +236,33 @@
         return [...byId.values()];
       };
 
+      const resolveSelectedIncidentId = () => {
+        const query = new URLSearchParams(location.search);
+        const fromQueryId = asText(query.get('incidentId'));
+        const fromQueryRef = asText(query.get('incidentRef'));
+        const fromSelectedId = asText(localStorage.getItem(SELECTED_INCIDENT_ID_KEY));
+        let fromSelectedObjId = '';
+        let fromSelectedObjRef = '';
+        let fromFocusId = '';
+        try {
+          const selected = JSON.parse(localStorage.getItem(SELECTED_INCIDENT_KEY) || 'null');
+          fromSelectedObjId = asText(selected?.incidentId);
+          fromSelectedObjRef = asText(selected?.incidentRef);
+        } catch {}
+        try {
+          const focus = JSON.parse(localStorage.getItem(FOCUS_TARGET_KEY) || 'null');
+          fromFocusId = focus?.type === 'incident' ? asText(focus?.id) : '';
+        } catch {}
+        return [fromQueryId, fromQueryRef, fromSelectedId, fromSelectedObjId, fromSelectedObjRef, fromFocusId].find(Boolean) || '';
+      };
+
       const buildServiceHealth = () => {
         const services = getServiceRows();
         const incidents = getIncidentRows();
         const activeIncidents = incidents.filter((x) => !x.isClosed);
+        const selectedIncidentId = resolveSelectedIncidentId();
+        const selectedIncident = activeIncidents.find((x) => norm(x.incidentId) === norm(selectedIncidentId)) || null;
+        const selectedServiceSet = new Set((selectedIncident?.affectedServices || []).map((x) => norm(x)));
 
         const impactMap = new Map();
         activeIncidents.forEach((incident) => {
@@ -276,6 +305,7 @@
             baseStatus: base,
             finalStatus,
             impacted: incidentCount > 0,
+            selectedImpacted: selectedServiceSet.has(key),
             incidentCount,
             updatedAt: impact?.latestTime || service.updatedAt,
             incidentId: impact?.incidentId || null
@@ -341,12 +371,13 @@
         grid.innerHTML = filtered.map((item) => {
           const st = statusMeta[item.finalStatus] || statusMeta.HEALTHY;
           return `
-            <article class="serviceCard ${item.impacted ? 'isImpacted' : ''}" data-service-name="${item.serviceName}" data-incident-id="${item.incidentId || ''}" data-impacted="${item.impacted ? '1' : '0'}">
+            <article class="serviceCard ${item.impacted ? 'isImpacted' : ''} ${item.selectedImpacted ? 'isImpacted' : ''}" data-service-name="${item.serviceName}" data-incident-id="${item.incidentId || ''}" data-impacted="${item.impacted ? '1' : '0'}">
               <div class="serviceTop">
                 <div class="name">${item.serviceName}</div>
                 <div>
                   <span class="badge ${st.cls}">${st.label}</span>
                   ${item.impacted ? '<span class="badge impactTag">영향 서비스</span>' : ''}
+                  ${item.selectedImpacted ? '<span class="badge impactTag">선택 Incident</span>' : ''}
                 </div>
               </div>
               <div class="meta">담당 조직: ${item.ownerTeam || '담당조직 미지정'}</div>
@@ -375,10 +406,18 @@
         if (!card) return;
 
         const serviceName = card.getAttribute('data-service-name') || '';
+        const incidentId = card.getAttribute('data-incident-id') || '';
         const impacted = card.getAttribute('data-impacted') === '1';
         if (!serviceName || !impacted) return;
 
         localStorage.setItem(SELECTED_SERVICE_KEY, JSON.stringify({ serviceName }));
+        localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type:'service', id:serviceName }));
+        if (incidentId) {
+          localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId, incidentRef: incidentId }));
+          localStorage.setItem(SELECTED_INCIDENT_ID_KEY, incidentId);
+          location.href = `./incident-dashboard.html?incidentId=${encodeURIComponent(incidentId)}&service=${encodeURIComponent(serviceName)}`;
+          return;
+        }
         location.href = `./incident-dashboard.html?service=${encodeURIComponent(serviceName)}`;
       });
 
