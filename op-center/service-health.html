@@ -67,7 +67,7 @@
         <button class="toolBtn" data-filter="HEALTHY">정상</button>
         <button class="toolBtn" data-filter="DEGRADED">주의</button>
         <button class="toolBtn" data-filter="DOWN">장애</button>
-        <input id="searchInput" class="search" type="text" placeholder="서비스명 검색 (예: 결제API, 웹포털)"/>
+        <input id="searchInput" class="search" type="text" placeholder="서비스명 검색"/>
       </section>
 
       <section id="serviceGrid" class="serviceGrid"></section>
@@ -76,115 +76,287 @@
   </main>
 
   <script src="../assets/sidebar.js"></script>
+  <script src="../assets/data-store.js"></script>
   <script>
     (() => {
-      // ===== Storage keys =====
-      const HEALTH_KEY = 'bcms_service_health_v1';
-      const INCIDENT_KEY = 'bcms_incidents_v1';
+      // 서비스 상태 맵 실데이터 연동 수정
+      const SERVICE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
+      const INCIDENT_STORE_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
+      const INCIDENT_UNIFIED_KEY = 'bcmsIncidents';
+      const INCIDENT_EXEC_KEY = 'bcmsIncidentExecution';
+      const SELECTED_SERVICE_KEY = 'bcms_selected_service';
 
-      // ===== Utilities =====
-      const safeParse = (raw, fb) => { try { return JSON.parse(raw); } catch { return fb; } };
-      const nowText = () => new Date().toLocaleString('ko-KR', { hour12:false });
-      const norm = (s) => String(s || '').trim().toLowerCase();
-
-      // ===== Demo data bootstrap (12+) =====
-      const createSampleHealth = () => {
-        const names = [
-          ['결제API','HEALTHY'], ['인증API','DEGRADED'], ['웹포털','HEALTHY'], ['배치잡','HEALTHY'],
-          ['CRM','DOWN'], ['정산시스템','HEALTHY'], ['메시지큐','DEGRADED'], ['알림서비스','HEALTHY'],
-          ['주문관리','HEALTHY'], ['재고시스템','DEGRADED'], ['데이터레이크','HEALTHY'], ['모니터링대시보드','DOWN']
-        ];
-        return names.map(([name, status], idx) => ({
-          id: `svc-${idx+1}`,
-          name,
-          status,
-          updatedAt: nowText(),
-        }));
+      const safeParseArray = (raw) => {
+        if (raw == null || raw === '') return [];
+        try {
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
       };
 
-      const ensureHealth = () => {
-        const arr = safeParse(localStorage.getItem(HEALTH_KEY), null);
-        if (Array.isArray(arr) && arr.length >= 12) return arr;
-        const sample = createSampleHealth();
-        localStorage.setItem(HEALTH_KEY, JSON.stringify(sample));
-        return sample;
+      const asText = (v) => String(v || '').trim();
+      const hasValue = (v) => v !== null && v !== undefined && String(v).trim() !== '';
+      const norm = (v) => asText(v).toLowerCase();
+      const uniq = (arr) => [...new Set((Array.isArray(arr) ? arr : []).filter(Boolean))];
+
+      const toDateText = (value) => {
+        if (!hasValue(value)) return '업데이트 정보 없음';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return '업데이트 정보 없음';
+        return d.toLocaleString('ko-KR', { hour12:false });
       };
 
-      // ===== Incident impacted services integration =====
-      const getImpactedSet = () => {
-        const inc = safeParse(localStorage.getItem(INCIDENT_KEY), {});
-        const raw = String(inc?.currentIncident?.impacted || '');
-        const list = raw.split(',').map((v) => v.trim()).filter(Boolean);
-        return new Set(list.map(norm));
+      const pickFirst = (obj, keys, fallback = '') => {
+        for (const key of keys) {
+          if (hasValue(obj?.[key])) return obj[key];
+        }
+        return fallback;
       };
 
-      // ===== Rendering =====
-      const grid = document.getElementById('serviceGrid');
-      const emptyBox = document.getElementById('emptyBox');
-      const searchInput = document.getElementById('searchInput');
+      const normalizeStringList = (value) => {
+        if (Array.isArray(value)) return uniq(value.map((x) => asText(x?.teamName || x?.name || x)).filter(Boolean));
+        if (typeof value === 'string') return uniq(value.split(',').map((x) => x.trim()).filter(Boolean));
+        return [];
+      };
 
-      let state = {
-        items: ensureHealth(),
-        impacted: getImpactedSet(),
-        filter: 'ALL',
-        query: '',
+      const normalizeService = (row = {}) => ({
+        serviceName: asText(pickFirst(row, ['serviceName', 'name', 'service', 'title'], '')),
+        ownerTeam: asText(pickFirst(row, ['ownerTeam', 'team', 'department', 'ownerOrg', 'teamName'], '담당조직 미지정')),
+        baseStatus: asText(pickFirst(row, ['status', 'healthStatus', 'state'], '정상')),
+        updatedAt: pickFirst(row, ['updatedAt', 'lastUpdated', 'modifiedAt', 'createdAt'], null)
+      });
+
+      const normalizeIncident = (row = {}, idx = 0) => {
+        const incidentId = asText(pickFirst(row, ['incidentId', 'id', 'incidentID'], `INC-${idx + 1}`));
+        const status = asText(pickFirst(row, ['status', 'currentStatus', 'state'], '-'));
+        const severity = asText(pickFirst(row, ['severity', 'level'], '-'));
+        const currentStage = asText(pickFirst(row, ['currentStage', 'responseStage', 'phase', 'step'], status || '-'));
+
+        const affectedRaw = row.affectedServices ?? row.services ?? row.impactedServices ?? row.selectedServices ?? row.serviceNames ?? row.impactedServiceNames;
+        const affectedSeed = Array.isArray(affectedRaw)
+          ? affectedRaw
+          : hasValue(affectedRaw)
+            ? [affectedRaw]
+            : [row.serviceName, row.service, row.impacted];
+        const affectedServices = normalizeStringList(affectedSeed);
+
+        const relatedRaw = row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const relatedSeed = Array.isArray(relatedRaw)
+          ? relatedRaw
+          : hasValue(relatedRaw)
+            ? [relatedRaw]
+            : [row.ownerTeam];
+        const relatedTeams = normalizeStringList(relatedSeed);
+
+        const startedAt = pickFirst(row, ['startedAt', 'startTime', 'createdAt', 'incidentStartTime', 'openedAt'], null);
+        const endedAt = pickFirst(row, ['endedAt', 'endTime', 'closedAt', 'resolvedAt'], null);
+        const lowered = status.toLowerCase();
+        const isClosed = hasValue(endedAt) || ['종료', '종료됨', 'closed', 'resolved', '종결', '복구 완료'].includes(lowered);
+
+        return { incidentId, status, severity, affectedServices, relatedTeams, currentStage, startedAt, endedAt, isClosed };
+      };
+
+      const mapBaseStatus = (value) => {
+        const v = norm(value);
+        if (['down', 'critical', 'failed', '장애'].includes(v)) return 'DOWN';
+        if (['degraded', 'warning', '주의'].includes(v)) return 'DEGRADED';
+        if (['healthy', 'normal', '정상'].includes(v)) return 'HEALTHY';
+        return 'HEALTHY';
+      };
+
+      const mapSeverityToStatus = (severity) => {
+        const v = norm(severity);
+        if (['높음', '심각', 'high', 'critical', '치명'].includes(v)) return 'DOWN';
+        if (['경미', '보통', 'low', 'medium'].includes(v)) return 'DEGRADED';
+        return 'DEGRADED';
+      };
+
+      const statusPriority = { DOWN: 3, DEGRADED: 2, HEALTHY: 1 };
+
+      const getServiceRows = () => {
+        const fromStore = (window.DataStore && DataStore.get) ? DataStore.get(SERVICE_KEY, []) : [];
+        const rows = Array.isArray(fromStore) ? fromStore : safeParseArray(localStorage.getItem(SERVICE_KEY));
+        return rows.map(normalizeService).filter((x) => x.serviceName);
+      };
+
+      const getIncidentRows = () => {
+        let raw = [];
+
+        const unifiedRaw = localStorage.getItem(INCIDENT_UNIFIED_KEY);
+        let unified = null;
+        try { unified = JSON.parse(unifiedRaw || 'null'); } catch { unified = null; }
+        if (Array.isArray(unified)) raw = raw.concat(unified);
+        if (unified && typeof unified === 'object') {
+          if (unified.currentIncident && typeof unified.currentIncident === 'object') raw.push(unified.currentIncident);
+          if (Array.isArray(unified.logs)) raw = raw.concat(unified.logs);
+        }
+
+        const legacy = (window.DataStore && DataStore.get) ? DataStore.get(INCIDENT_STORE_KEY, null) : null;
+        if (legacy && typeof legacy === 'object') {
+          if (legacy.currentIncident && typeof legacy.currentIncident === 'object') raw.push(legacy.currentIncident);
+          if (Array.isArray(legacy.logs)) raw = raw.concat(legacy.logs);
+        }
+
+        const execRows = safeParseArray(localStorage.getItem(INCIDENT_EXEC_KEY));
+        execRows.forEach((row) => {
+          const id = asText(row?.incidentId);
+          if (!id) return;
+          raw.push({ incidentId:id, status: row.status || '', severity: row.severity || '', startedAt: row.startedAt || row.createdAt || '', endedAt: row.endedAt || '', currentStage: row.currentStage || row.phase || '' });
+        });
+
+        const normalized = raw.map(normalizeIncident).filter((x) => x.incidentId);
+        const byId = new Map();
+        normalized.forEach((item) => {
+          const prev = byId.get(item.incidentId);
+          if (!prev) {
+            byId.set(item.incidentId, item);
+            return;
+          }
+          byId.set(item.incidentId, {
+            ...prev,
+            ...item,
+            status: hasValue(item.status) ? item.status : prev.status,
+            severity: hasValue(item.severity) ? item.severity : prev.severity,
+            currentStage: hasValue(item.currentStage) ? item.currentStage : prev.currentStage,
+            affectedServices: item.affectedServices.length ? item.affectedServices : prev.affectedServices,
+            relatedTeams: item.relatedTeams.length ? item.relatedTeams : prev.relatedTeams,
+            startedAt: hasValue(item.startedAt) ? item.startedAt : prev.startedAt,
+            endedAt: hasValue(item.endedAt) ? item.endedAt : prev.endedAt,
+            isClosed: item.isClosed || prev.isClosed
+          });
+        });
+        return [...byId.values()];
+      };
+
+      const buildServiceHealth = () => {
+        const services = getServiceRows();
+        const incidents = getIncidentRows();
+        const activeIncidents = incidents.filter((x) => !x.isClosed);
+
+        const impactMap = new Map();
+        activeIncidents.forEach((incident) => {
+          const impactStatus = mapSeverityToStatus(incident.severity);
+          incident.affectedServices.forEach((serviceName) => {
+            const key = norm(serviceName);
+            if (!key) return;
+            const prev = impactMap.get(key);
+            if (!prev) {
+              impactMap.set(key, { status: impactStatus, incidentCount: 1, latestTime: incident.startedAt, incidentId: incident.incidentId });
+              return;
+            }
+            impactMap.set(key, {
+              status: statusPriority[impactStatus] > statusPriority[prev.status] ? impactStatus : prev.status,
+              incidentCount: prev.incidentCount + 1,
+              latestTime: incident.startedAt || prev.latestTime,
+              incidentId: prev.incidentId
+            });
+          });
+        });
+
+        let normalizedServices = services;
+        if (!normalizedServices.length && impactMap.size) {
+          normalizedServices = [...impactMap.keys()].map((name) => ({
+            serviceName: name,
+            ownerTeam: '담당조직 미지정',
+            baseStatus: '정상',
+            updatedAt: null
+          }));
+        }
+
+        return normalizedServices.map((service) => {
+          const key = norm(service.serviceName);
+          const impact = impactMap.get(key);
+          const base = mapBaseStatus(service.baseStatus);
+          const finalStatus = impact ? impact.status : base;
+          const incidentCount = impact ? impact.incidentCount : 0;
+          return {
+            ...service,
+            baseStatus: base,
+            finalStatus,
+            impacted: incidentCount > 0,
+            incidentCount,
+            updatedAt: impact?.latestTime || service.updatedAt,
+            incidentId: impact?.incidentId || null
+          };
+        }).sort((a, b) => {
+          const p = statusPriority[b.finalStatus] - statusPriority[a.finalStatus];
+          if (p !== 0) return p;
+          return a.serviceName.localeCompare(b.serviceName, 'ko');
+        });
       };
 
       const statusMeta = {
         HEALTHY: { cls: 'healthy', label: '정상' },
         DEGRADED: { cls: 'degraded', label: '주의' },
-        DOWN: { cls: 'down', label: '장애' },
+        DOWN: { cls: 'down', label: '장애' }
+      };
+
+      const grid = document.getElementById('serviceGrid');
+      const emptyBox = document.getElementById('emptyBox');
+      const searchInput = document.getElementById('searchInput');
+
+      const state = {
+        filter: 'ALL',
+        query: '',
+        items: []
       };
 
       const updateSummary = (items) => {
         const total = items.length;
-        const healthy = items.filter(x => x.status === 'HEALTHY').length;
-        const degraded = items.filter(x => x.status === 'DEGRADED').length;
-        const down = items.filter(x => x.status === 'DOWN').length;
+        const healthy = items.filter((x) => x.finalStatus === 'HEALTHY').length;
+        const degraded = items.filter((x) => x.finalStatus === 'DEGRADED').length;
+        const down = items.filter((x) => x.finalStatus === 'DOWN').length;
         document.getElementById('sumTotal').textContent = String(total);
         document.getElementById('sumHealthy').textContent = String(healthy);
         document.getElementById('sumDegraded').textContent = String(degraded);
         document.getElementById('sumDown').textContent = String(down);
       };
 
-      const getFiltered = () => {
+      const getFilteredItems = () => {
         const q = norm(state.query);
-        return state.items.filter((it) => {
-          const byStatus = state.filter === 'ALL' ? true : it.status === state.filter;
-          const byQuery = q ? norm(it.name).includes(q) : true;
-          return byStatus && byQuery;
+        return state.items.filter((item) => {
+          const byStatus = state.filter === 'ALL' ? true : item.finalStatus === state.filter;
+          const bySearch = q ? norm(item.serviceName).includes(q) : true;
+          return byStatus && bySearch;
         });
       };
 
       const render = () => {
+        state.items = buildServiceHealth();
         updateSummary(state.items);
-        const filtered = getFiltered();
+
+        const filtered = getFilteredItems();
         if (!filtered.length) {
           grid.innerHTML = '';
-          emptyBox.style.display = 'block';
+          emptyBox.style.display = '';
+          emptyBox.textContent = state.items.length
+            ? '조건에 맞는 서비스가 없습니다.'
+            : '등록된 서비스가 없습니다. Service Registry에서 서비스를 먼저 등록하세요.';
           return;
         }
-        emptyBox.style.display = 'none';
 
-        grid.innerHTML = filtered.map((it) => {
-          const st = statusMeta[it.status] || statusMeta.HEALTHY;
-          const impacted = state.impacted.has(norm(it.name));
+        emptyBox.style.display = 'none';
+        grid.innerHTML = filtered.map((item) => {
+          const st = statusMeta[item.finalStatus] || statusMeta.HEALTHY;
           return `
-            <article class="serviceCard ${impacted ? 'isImpacted' : ''}">
+            <article class="serviceCard ${item.impacted ? 'isImpacted' : ''}" data-service-name="${item.serviceName}" data-incident-id="${item.incidentId || ''}" data-impacted="${item.impacted ? '1' : '0'}">
               <div class="serviceTop">
-                <div class="name">${it.name}</div>
+                <div class="name">${item.serviceName}</div>
                 <div>
                   <span class="badge ${st.cls}">${st.label}</span>
-                  ${impacted ? '<span class="badge impactTag">영향</span>' : ''}
+                  ${item.impacted ? '<span class="badge impactTag">영향 서비스</span>' : ''}
                 </div>
               </div>
-              <div class="meta">마지막 업데이트: ${it.updatedAt || '-'}</div>
+              <div class="meta">담당 조직: ${item.ownerTeam || '담당조직 미지정'}</div>
+              <div class="meta">마지막 업데이트: ${toDateText(item.updatedAt)}</div>
+              ${item.impacted ? `<div class="meta">관련 활성 Incident ${item.incidentCount}건</div>` : ''}
             </article>
           `;
         }).join('');
       };
 
-      // ===== Filter events =====
       document.querySelectorAll('.toolBtn[data-filter]').forEach((btn) => {
         btn.addEventListener('click', () => {
           state.filter = btn.dataset.filter;
@@ -194,16 +366,25 @@
       });
 
       searchInput.addEventListener('input', () => {
-        state.query = searchInput.value;
+        state.query = searchInput.value || '';
         render();
       });
 
-      // Keep impact highlights current on tab return
-      window.addEventListener('focus', () => {
-        state.impacted = getImpactedSet();
-        render();
+      grid.addEventListener('click', (e) => {
+        const card = e.target.closest('.serviceCard[data-service-name]');
+        if (!card) return;
+
+        const serviceName = card.getAttribute('data-service-name') || '';
+        const impacted = card.getAttribute('data-impacted') === '1';
+        if (!serviceName || !impacted) return;
+
+        localStorage.setItem(SELECTED_SERVICE_KEY, JSON.stringify({ serviceName }));
+        location.href = `./incident-dashboard.html?service=${encodeURIComponent(serviceName)}`;
       });
 
+      document.addEventListener('DOMContentLoaded', render);
+      window.addEventListener('focus', render);
+      window.addEventListener('storage', render);
       render();
     })();
   </script>
