@@ -541,6 +541,7 @@
       const INCIDENTS_UNIFIED_KEY = 'bcmsIncidents';
       const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
       const SELECTED_INCIDENT_KEY = 'bcms_selected_incident';
+      const SELECTED_INCIDENT_ID_KEY = 'bcmsSelectedIncidentId';
       const CURRENT_INCIDENT_ID_KEY = 'bcmsCurrentIncidentId';
       const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
       const BIA_KEY = 'bcmsBIAData';
@@ -655,10 +656,11 @@
         }
       };
 
-      const resolveSelectedIncidentKey = () => {
+      const resolveSelectedIncidentId = () => {
         const params = new URLSearchParams(location.search);
         const fromQueryId = String(params.get('incidentId') || '').trim();
         const fromQueryRef = String(params.get('incidentRef') || '').trim();
+        const fromSelectedId = String(localStorage.getItem(SELECTED_INCIDENT_ID_KEY) || '').trim();
         const fromCurrent = String(localStorage.getItem(CURRENT_INCIDENT_ID_KEY) || '').trim();
         const fromSelected = safeParse(localStorage.getItem(SELECTED_INCIDENT_KEY), {});
         const fromFocus = safeParse(localStorage.getItem(FOCUS_TARGET_KEY), {});
@@ -666,13 +668,14 @@
         const candidates = [
           fromQueryId,
           fromQueryRef,
+          fromSelectedId,
           fromCurrent,
           String(fromSelected?.incidentId || '').trim(),
           String(fromSelected?.incidentRef || '').trim(),
           fromFocus?.type === 'incident' ? String(fromFocus?.id || '').trim() : ''
         ];
 
-        return candidates.find((v) => v) || '';
+        return candidates.find((v) => v) || null;
       };
 
       let selectedIncidentRef = '';
@@ -973,7 +976,7 @@
         return [...byId.values()];
       };
 
-      const selectIncidentRecord = (records, selectedKey) => {
+      const findSelectedIncident = (records, selectedKey) => {
         const key = String(selectedKey || '').trim();
         const lowered = key.toLowerCase();
 
@@ -1028,6 +1031,7 @@
         selectedIncidentRef = id;
 
         localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId: id, incidentRef: id }));
+        localStorage.setItem(SELECTED_INCIDENT_ID_KEY, id);
         localStorage.setItem(CURRENT_INCIDENT_ID_KEY, id);
         localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type: 'incident', id }));
 
@@ -1039,9 +1043,9 @@
       };
 
       const resolveAndApplySelectedIncident = () => {
-        const selectedKey = resolveSelectedIncidentKey();
+        const selectedKey = resolveSelectedIncidentId();
         const records = collectIncidentRecords();
-        const target = selectIncidentRecord(records, selectedKey);
+        const target = findSelectedIncident(records, selectedKey);
         if (!target) return false;
         const applied = applySelectedIncident(target);
         if (applied) syncSelectedIncidentBinding(target.incidentId);
@@ -2088,7 +2092,7 @@
           return;
         }
 
-        if ([INCIDENTS_UNIFIED_KEY, EXECUTION_KEY, STORAGE_KEY, SELECTED_INCIDENT_KEY, CURRENT_INCIDENT_ID_KEY, FOCUS_TARGET_KEY].includes(e.key)) {
+        if ([INCIDENTS_UNIFIED_KEY, EXECUTION_KEY, STORAGE_KEY, SELECTED_INCIDENT_KEY, SELECTED_INCIDENT_ID_KEY, CURRENT_INCIDENT_ID_KEY, FOCUS_TARGET_KEY].includes(e.key)) {
           const applied = resolveAndApplySelectedIncident();
           if (applied) {
             syncImpactedCache();
