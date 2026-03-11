@@ -409,27 +409,27 @@
         location.href = `./incident-dashboard.html?incidentRef=${encodeURIComponent(id)}&incidentId=${encodeURIComponent(id)}`;
       };
 
-      // merge-safe: incident row click + item button click 단일 핸들러
+      // merge-safe: 단일 delegated click handler (button 우선 처리 후 row 처리)
       document.body.addEventListener('click', (e) => {
-        const row = e.target.closest('[data-type="incident"][data-id]');
-        if (row) {
-          navigateIncident(row.dataset.id);
-          return;
-        }
-
         const btn = e.target.closest('button[data-type][data-id]');
-        if (!btn) return;
-        const type = btn.dataset.type;
-        const id = btn.dataset.id;
-        if (!id) return;
+        if (btn) {
+          const type = btn.dataset.type;
+          const id = btn.dataset.id;
+          if (!id) return;
 
-        if (type === 'evidence') {
-          location.href = `../audit/evidence.html?focus=${encodeURIComponent(id)}`;
-          return;
+          if (type === 'evidence') {
+            location.href = `../audit/evidence.html?focus=${encodeURIComponent(id)}`;
+            return;
+          }
+          if (type === 'action') {
+            location.href = `../audit/capa.html?focus=${encodeURIComponent(id)}`;
+            return;
+          }
         }
-        if (type === 'action') {
-          location.href = `../audit/capa.html?focus=${encodeURIComponent(id)}`;
-        }
+
+        const row = e.target.closest('[data-type="incident"][data-id]');
+        if (!row) return;
+        navigateIncident(row.dataset.id);
       });
 
       document.addEventListener('DOMContentLoaded', render);
