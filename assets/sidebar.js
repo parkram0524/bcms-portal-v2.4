@@ -5,7 +5,7 @@
   // - GitHub Pages repo: /BCMS-PORTAL-V2/governance/index.html
   // =========================================================
   const path = window.location.pathname || "/";
-  const m = path.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin)\/)/);
+  const m = path.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports)\/)/);
   const BASE = m ? m[1] : ""; // e.g. "/BCMS-PORTAL-V2" or ""
   const H = (p) => `${BASE}${p}`;
 
@@ -88,8 +88,15 @@
       </div>
     </div>
 
+    <div class="sidebar-section" data-section="reports">
+      <a href="${H("/reports/executive-summary.html")}" class="sidebar-section-title">🗂 8. Reports (경영진/감사 요약)</a>
+      <div class="sub-menu">
+        <a href="${H("/reports/executive-summary.html")}">Executive Summary</a>
+      </div>
+    </div>
+
     <div class="sidebar-section" data-section="admin">
-      <a href="${H("/admin/index.html")}" class="sidebar-section-title">⚙️ 8. Admin (관리)</a>
+      <a href="${H("/admin/index.html")}" class="sidebar-section-title">⚙️ 9. Admin (관리)</a>
       <div class="sub-menu">
         <a href="${H("/admin/capa.html")}">CAPA 관리 (개선항목)</a>
       </div>
@@ -121,6 +128,7 @@
     { key: "library", match: "/library/" },
     { key: "training", match: "/training/" },
     { key: "audit", match: "/audit/" },
+    { key: "reports", match: "/reports/" },
     { key: "admin", match: "/admin/" },
   ];
 
