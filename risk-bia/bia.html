@@ -21,13 +21,15 @@
     .overviewHead{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; justify-content:space-between; margin-bottom:10px; }
     .overviewFilters{ display:flex; gap:8px; flex-wrap:wrap; }
     .overviewFilters select{ min-width:200px; padding:8px 10px; font-size:14px; }
-    .overviewTableWrap{ overflow:auto; }
+    .overviewTableWrap{ overflow:auto; border-radius:12px; }
     .overviewTable{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
-    .overviewTable th,.overviewTable td{ padding:10px; font-size:14px; border-bottom:1px solid rgba(15,23,42,.08); }
-    .overviewTable th{ background:#f8fafc; color:#334155; font-weight:900; }
+    .overviewTable th,.overviewTable td{ padding:11px 10px; font-size:14px; border-bottom:1px solid rgba(15,23,42,.08); }
+    .overviewTable th{ position:sticky; top:0; z-index:1; background:#f8fafc; color:#334155; font-weight:900; }
     .overviewTable tr:last-child td{ border-bottom:none; }
     .clickRow{ cursor:pointer; }
-    .clickRow:hover td{ background:rgba(15,23,42,.03); }
+    .clickRow:hover td{ background:rgba(37,99,235,.06); }
+    .clickRow.active td{ background:rgba(37,99,235,.09); }
+    .chip{ display:inline-flex; align-items:center; border-radius:999px; padding:3px 8px; border:1px solid rgba(15,23,42,.12); background:#fff; font-size:12px; font-weight:800; color:#334155; }
     .editSection{ scroll-margin-top:20px; }
     .row{ display:grid; grid-template-columns:1fr 260px auto; gap:10px; align-items:end; }
     .row label{ font-size:14px; font-weight:800; color:#334155; display:block; margin-bottom:6px; }
@@ -35,6 +37,7 @@
 
     .btn{ border:1px solid rgba(15,23,42,.15); border-radius:10px; background:#fff; color:#0f172a; padding:9px 12px; font-size:14px; font-weight:900; cursor:pointer; }
     .btn:hover{ background:rgba(15,23,42,.04); }
+    .btn:focus-visible{ outline:2px solid rgba(37,99,235,.45); outline-offset:2px; }
     .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.08); color:#1d4ed8; }
 
     .summaryGrid{ margin-top:12px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
@@ -60,12 +63,13 @@
     .g-일반{ color:#166534; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.35); }
 
     .detailRow td{ background:#fcfdff; }
-    .detailCard{ border:1px solid rgba(15,23,42,.08); border-radius:12px; padding:12px; background:#fff; }
+    .detailCard{ border:1px solid rgba(15,23,42,.10); border-radius:14px; padding:14px; background:#fff; box-shadow:0 1px 0 rgba(15,23,42,.02); }
     .detailGrid{ display:grid; grid-template-columns:2fr 1.2fr; gap:12px; }
-    .subTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:#334155; }
-    .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .subTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:#1e293b; }
+    .subHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+    .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
     .timeItem label{ display:block; margin-bottom:5px; font-size:13px; font-weight:800; color:#475569; }
-    .timeItem select{ width:100%; padding:8px 9px; font-size:14px; }
+    .timeItem select{ width:100%; padding:8px 9px; font-size:14px; border-radius:9px; }
     .reasonInput{ width:100%; min-height:90px; resize:vertical; padding:10px; font-size:14px; }
     .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
     .resourceItem{ display:flex; align-items:center; gap:7px; font-size:14px; }
@@ -105,7 +109,7 @@
     <div class="wrap">
       <section class="hero">
         <h1>BIA (업무영향분석)</h1>
-        <p>핵심업무를 자동 불러와 중요업무 여부, 시간경과 영향평가, MTPD, RTO를 입력합니다. 저장 데이터는 Risk/복구 우선순위 화면과 호환됩니다.</p>
+        <p>핵심업무별 영향도, MTPD, RTO를 통합 관리합니다. 전체 현황을 분석한 뒤 팀별 상세를 편집하세요.</p>
       </section>
 
       <section class="kpiGrid" id="globalKpi"></section>
@@ -421,7 +425,10 @@
       const animateCount = (el, target) => {
         const next = Number(target || 0);
         const prev = animatedCounts.get(el.id);
-        if (prev === next) return;
+        if (prev === next) {
+          el.textContent = next.toLocaleString('ko-KR');
+          return;
+        }
         animatedCounts.set(el.id, next);
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           el.textContent = String(next.toLocaleString('ko-KR'));
@@ -443,10 +450,10 @@
 
       const computeGlobalMetrics = () => {
         const teamCount = allTeams.length;
-        const allFunctions = biaRows.flatMap((r) => r.functions || []);
-        const coreCount = allFunctions.length;
-        const importantCount = allFunctions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length;
-        const biaCount = coreCount;
+        const coreCount = coreRows.reduce((acc, row) => acc + (Array.isArray(row.functions) ? row.functions.length : 0), 0);
+        const biaFunctions = biaRows.flatMap((r) => r.functions || []);
+        const importantCount = biaFunctions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length;
+        const biaCount = biaFunctions.length;
         return { teamCount, coreCount, importantCount, biaCount };
       };
 
@@ -499,8 +506,8 @@
             <thead><tr><th>부서명</th><th>핵심업무 수</th><th>중요업무 수</th><th>최단 MTPD</th><th>최단 RTO</th><th>고영향 업무 수(4↑)</th><th>관리</th></tr></thead>
             <tbody>
               ${rows.map((r) => `
-                <tr class="clickRow" data-jump-team="${esc(r.team)}">
-                  <td>${esc(r.team)}</td><td>${r.coreCount}</td><td>${r.importantCount}</td><td>${toDurationText(r.minMtpd)}</td><td>${toDurationText(r.minRto)}</td><td>${r.highImpact}</td>
+                <tr class="clickRow ${teamSelect.value === r.team ? "active" : ""}" data-jump-team="${esc(r.team)}">
+                  <td>${esc(r.team)}</td><td>${r.coreCount}</td><td>${r.importantCount}</td><td><span class="chip">${toDurationText(r.minMtpd)}</span></td><td><span class="chip">${toDurationText(r.minRto)}</span></td><td>${r.highImpact}</td>
                   <td><button class="btn" type="button" data-jump-team="${esc(r.team)}">상세 편집 보기</button></td>
                 </tr>`).join('')}
             </tbody>
@@ -607,7 +614,10 @@
                         <div class="detailCard">
                           <div class="detailGrid">
                             <div>
-                              <h4 class="subTitle">시간경과 영향평가</h4>
+                              <div class="subHead">
+                                <h4 class="subTitle">시간경과 영향평가</h4>
+                                <button class="btn" type="button" data-guide-toggle="${idx}">${scoreGuideOpened.has(key) ? '영향도 기준 닫기' : '영향도 기준 보기'}</button>
+                              </div>
                               <div class="timeGrid">
                                 ${TIME_IMPACT_META.map((t, ti) => `
                                   <div class="timeItem">
@@ -621,8 +631,7 @@
                                   </div>
                                 `).join('')}
                               </div>
-                              <button class="btn" type="button" data-guide-toggle="${idx}" style="margin-top:8px;">${scoreGuideOpened.has(key) ? '영향도 기준 닫기' : '영향도 기준 보기'}</button>
-                              ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
+                                                            ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
                               <div class="miniHelp">- 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>- 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>- 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.</div>
                               <div class="muted" style="margin-top:8px;">최대허용중단시간(MTPD): <b>${esc(fn.mtpd || '장기 허용')}</b></div>
                             </div>
