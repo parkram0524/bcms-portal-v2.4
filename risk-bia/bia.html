@@ -869,6 +869,7 @@
                                 <span class="chip">최고 영향 수준: ${Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))} ${impactLabels[Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))]}</span>
                                 <span class="chip">최대허용중단시간(MTPD): <b style="margin-left:4px;">${esc(fn.mtpd || '장기 허용')}</b></span>
                               </div>
+                                                            ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
                               <div class="miniHelp">- 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>- 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>- 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.</div>
                             </div>
                             <div>
