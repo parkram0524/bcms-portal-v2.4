@@ -6,87 +6,148 @@
   <title>BIA (업무영향분석) | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --text-2:#1e293b;
+      --muted:#5b6b82;
+      --line:#dbe4ef;
+      --line-strong:#c9d5e3;
+      --blue:#2563eb;
+      --blue-soft:#eff5ff;
+      --red:#b42318;
+      --red-soft:#fef2f2;
+      --amber:#92400e;
+      --amber-soft:#fffbeb;
+      --green:#166534;
+      --green-soft:#f0fdf4;
+      --shadow:0 1px 2px rgba(15,23,42,.04);
+      --radius:14px;
+    }
+    .main{ background:var(--bg); }
     .wrap{ max-width:1320px; margin:0 auto; }
-    .hero h1{ margin:0; font-size:24px; font-weight:950; }
-    .hero p{ margin:8px 0 0; font-size:16px; color:rgba(15,23,42,.66); line-height:1.65; }
 
-    .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.1); border-radius:14px; background:#fff; padding:14px; }
-    .hero{ border:1px solid rgba(15,23,42,.1); border-radius:16px; background:#fff; padding:16px; }
-    .sectionTitle{ margin:0; font-size:18px; font-weight:900; color:#0f172a; }
-    .sectionDesc{ margin:6px 0 0; font-size:13px; color:#64748b; }
-    .kpiGrid{ margin-top:14px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
-    .kpiCard{ border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:12px; }
-    .kpiCard .k{ font-size:13px; color:#64748b; font-weight:800; }
-    .kpiCard .v{ margin-top:7px; font-size:32px; font-weight:950; color:#0f172a; }
-    .overviewHead{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; justify-content:space-between; margin-bottom:10px; }
-    .overviewFilters{ display:flex; gap:8px; flex-wrap:wrap; }
-    .overviewFilters select{ min-width:200px; padding:8px 10px; font-size:14px; }
-    .overviewTableWrap{ overflow:auto; border-radius:12px; }
-    .overviewTable{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
-    .overviewTable th,.overviewTable td{ padding:11px 10px; font-size:14px; border-bottom:1px solid rgba(15,23,42,.08); }
-    .overviewTable th{ position:sticky; top:0; z-index:1; background:#f8fafc; color:#334155; font-weight:900; }
+    .hero{ border:1px solid var(--line); border-radius:16px; background:var(--card); padding:18px 20px; box-shadow:var(--shadow); }
+    .hero h1{ margin:0; font-size:30px; font-weight:900; letter-spacing:-.02em; color:var(--text); }
+    .hero p{ margin:10px 0 0; font-size:15px; color:var(--muted); line-height:1.62; }
+
+    .panel{ margin-top:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); padding:18px; box-shadow:var(--shadow); }
+    .sectionTitle{ margin:0; font-size:19px; font-weight:900; color:var(--text); letter-spacing:-.01em; }
+    .sectionDesc{ margin:7px 0 0; font-size:13px; color:var(--muted); }
+
+    .kpiGrid{ margin-top:18px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .kpiCard{ border:1px solid var(--line); border-radius:13px; background:var(--card); padding:16px; box-shadow:var(--shadow); transition:background-color .18s ease,border-color .18s ease,transform .18s ease; }
+    .kpiCard:hover{ background:#fbfdff; border-color:var(--line-strong); transform:translateY(-1px); }
+    .kpiCard .k{ font-size:13px; color:var(--muted); font-weight:800; }
+    .kpiCard .v{ margin-top:10px; font-size:37px; line-height:1.05; font-weight:900; color:var(--text); letter-spacing:-.02em; }
+
+    .overviewHead{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; justify-content:space-between; margin-bottom:12px; }
+    .overviewFilters{ display:flex; gap:10px; flex-wrap:wrap; }
+    .overviewFilters select{ min-width:200px; }
+
+    .overviewTableWrap{ overflow:auto; border-radius:12px; border:1px solid var(--line); }
+    .overviewTable{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; background:var(--card); }
+    .overviewTable th,.overviewTable td{ padding:12px 11px; font-size:14px; border-bottom:1px solid #e7edf5; color:var(--text-2); }
+    .overviewTable th{ position:sticky; top:0; z-index:1; background:#f8fbff; color:#334155; font-weight:900; font-size:13px; letter-spacing:.01em; }
     .overviewTable tr:last-child td{ border-bottom:none; }
-    .clickRow{ cursor:pointer; }
+    .clickRow{ cursor:pointer; transition:background-color .18s ease; }
     .clickRow:hover td{ background:rgba(37,99,235,.06); }
-    .clickRow.active td{ background:rgba(37,99,235,.09); }
-    .chip{ display:inline-flex; align-items:center; border-radius:999px; padding:3px 8px; border:1px solid rgba(15,23,42,.12); background:#fff; font-size:12px; font-weight:800; color:#334155; }
+    .clickRow.active td{ background:rgba(37,99,235,.10); }
+    .overviewTable td:first-child{ font-weight:800; color:var(--text); }
+
+    .chip{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid var(--line-strong); background:#f8fbff; font-size:12px; font-weight:800; color:#334155; }
     .editSection{ scroll-margin-top:20px; }
-    .row{ display:grid; grid-template-columns:1fr 260px auto; gap:10px; align-items:end; }
-    .row label{ font-size:14px; font-weight:800; color:#334155; display:block; margin-bottom:6px; }
-    .row select, .row input{ width:100%; padding:10px 12px; font-size:16px; }
+    .editWorkspace{ display:grid; grid-template-columns:minmax(0,2fr) minmax(300px,1fr); gap:14px; align-items:start; }
+    .editorMain{ min-width:0; }
+    .summaryAside{ position:sticky; top:18px; }
+    .stickyPanel{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:12px; box-shadow:var(--shadow); }
+    .stickyPanel + .stickyPanel{ margin-top:10px; }
+    .stickyTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:var(--text); }
+    .kv{ display:grid; grid-template-columns:1fr auto; gap:6px 10px; font-size:12.5px; color:var(--text-2); }
+    .kv .k{ color:var(--muted); }
+    .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
+    .statusPill{ display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:900; border:1px solid var(--line-strong); }
+    .status-dirty{ color:#8a4b12; background:#fffbeb; border-color:#f1c07a; }
+    .status-saved{ color:#166534; background:#f0fdf4; border-color:#b8e5c8; }
+    .compactActions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 
-    .btn{ border:1px solid rgba(15,23,42,.15); border-radius:10px; background:#fff; color:#0f172a; padding:9px 12px; font-size:14px; font-weight:900; cursor:pointer; }
-    .btn:hover{ background:rgba(15,23,42,.04); }
+
+    .row{ display:grid; grid-template-columns:1fr 260px auto; gap:12px; align-items:end; }
+    .row label{ font-size:13px; font-weight:800; color:#42526a; display:block; margin-bottom:6px; }
+    .row select, .row input{ width:100%; }
+
+    .btn{ border:1px solid var(--line-strong); border-radius:10px; background:#fff; color:var(--text-2); padding:9px 12px; font-size:14px; font-weight:800; cursor:pointer; transition:background-color .18s ease,border-color .18s ease,color .18s ease; }
+    .btn:hover{ background:#f8fbff; border-color:#b8c8da; }
     .btn:focus-visible{ outline:2px solid rgba(37,99,235,.45); outline-offset:2px; }
-    .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.08); color:#1d4ed8; }
+    .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.10); color:#1d4ed8; }
+    .btn.primary:hover{ background:rgba(37,99,235,.16); }
 
-    .summaryGrid{ margin-top:12px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
-    .metric{ border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:11px; }
-    .metric .k{ font-size:14px; color:rgba(15,23,42,.62); font-weight:800; }
-    .metric .v{ margin-top:7px; font-size:24px; font-weight:950; }
+    .summaryGrid{ margin-top:14px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; }
+    .metric{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:12px; }
+    .metric .k{ font-size:13px; color:var(--muted); font-weight:800; }
+    .metric .v{ margin-top:8px; font-size:25px; line-height:1.2; font-weight:900; color:var(--text); }
 
-    .tableWrap{ margin-top:12px; overflow:auto; }
-    table{ width:100%; min-width:1120px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
-    th, td{ padding:10px 10px; font-size:16px; border-bottom:1px solid rgba(15,23,42,.08); vertical-align:middle; }
-    th{ background:#f8fafc; font-size:14px; font-weight:900; text-align:left; color:#334155; }
+    .tableWrap{ margin-top:14px; overflow:auto; }
+    table{ width:100%; min-width:1120px; border-collapse:separate; border-spacing:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; }
+    th, td{ padding:12px 11px; font-size:14px; border-bottom:1px solid #e7edf5; vertical-align:middle; color:var(--text-2); }
+    th{ background:#f8fbff; font-size:13px; font-weight:900; text-align:left; color:#334155; letter-spacing:.01em; }
     tr:last-child td{ border-bottom:none; }
 
-    .functionName{ font-size:16px; font-weight:800; }
-    .muted{ font-size:13px; color:rgba(15,23,42,.62); }
-    .smallSelect, .smallInput{ width:100%; padding:8px 10px; font-size:15px; }
-    .rtoWrap{ display:flex; gap:6px; }
+    .functionName{ font-size:15px; font-weight:900; color:var(--text); letter-spacing:-.01em; }
+    .muted{ font-size:12.5px; color:var(--muted); }
+
+    .smallSelect, .smallInput, .reasonInput, .row select, .row input{
+      border:1px solid var(--line-strong);
+      border-radius:10px;
+      background:#fff;
+      color:var(--text-2);
+      padding:9px 10px;
+      font-size:14px;
+      line-height:1.35;
+    }
+    .smallSelect:focus-visible, .smallInput:focus-visible, .reasonInput:focus-visible, .row select:focus-visible, .row input:focus-visible{
+      outline:2px solid rgba(37,99,235,.20);
+      border-color:rgba(37,99,235,.55);
+    }
+    .smallInput::placeholder, .reasonInput::placeholder, .row input::placeholder{ color:#7a8ca5; }
+
+    .rtoWrap{ display:flex; gap:7px; }
     .rtoWrap .smallInput{ width:90px; }
 
-    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid rgba(15,23,42,.18); font-size:12px; font-weight:900; }
-    .g-핵심{ color:#991b1b; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
-    .g-주요{ color:#92400e; background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
-    .g-일반{ color:#166534; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.35); }
+    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--line-strong); font-size:12px; font-weight:900; }
+    .g-핵심{ color:var(--red); background:var(--red-soft); border-color:#f2b8b5; }
+    .g-주요{ color:var(--amber); background:var(--amber-soft); border-color:#f4d09a; }
+    .g-일반{ color:var(--green); background:var(--green-soft); border-color:#b8e5c8; }
 
     .detailRow td{ background:#fcfdff; }
-    .detailCard{ border:1px solid rgba(15,23,42,.10); border-radius:14px; padding:14px; background:#fff; box-shadow:0 1px 0 rgba(15,23,42,.02); }
-    .detailGrid{ display:grid; grid-template-columns:2fr 1.2fr; gap:12px; }
-    .subTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:#1e293b; }
-    .subHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+    .detailCard{ border:1px solid var(--line); border-radius:14px; padding:16px; background:#fff; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+    .detailGrid{ display:grid; grid-template-columns:2fr 1.2fr; gap:14px; }
+    .subTitle{ margin:0; font-size:14px; font-weight:900; color:var(--text-2); }
+    .subHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
     .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-    .timeItem label{ display:block; margin-bottom:5px; font-size:13px; font-weight:800; color:#475569; }
-    .timeItem select{ width:100%; padding:8px 9px; font-size:14px; border-radius:9px; }
-    .reasonInput{ width:100%; min-height:90px; resize:vertical; padding:10px; font-size:14px; }
-    .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-    .resourceItem{ display:flex; align-items:center; gap:7px; font-size:14px; }
+    .timeItem label{ display:block; margin-bottom:6px; font-size:12.5px; font-weight:800; color:#4d5d75; }
+    .timeItem select{ width:100%; }
+    .reasonInput{ width:100%; min-height:94px; resize:vertical; }
+    .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:2px; }
+    .resourceItem{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-2); }
+    .resourceItem input[type="checkbox"]{ accent-color:var(--blue); width:15px; height:15px; }
 
-    .warn{ margin-top:10px; border:1px solid rgba(239,68,68,.35); border-radius:10px; background:rgba(239,68,68,.10); color:#991b1b; padding:9px 10px; font-size:13px; font-weight:800; }
+    .warn{ margin-top:12px; border:1px solid #f1c07a; border-radius:10px; background:#fffbeb; color:#8a4b12; padding:9px 10px; font-size:12.5px; font-weight:800; }
 
-    .scoreGuideInline{ margin-top:10px; border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#f8fafc; padding:10px; }
-    .scoreGuideInline h3{ margin:0 0 8px; font-size:14px; font-weight:900; color:#0f172a; }
+    .scoreGuideInline{ margin-top:10px; border:1px solid var(--line); border-radius:12px; background:#f8fbff; padding:10px; max-height:520px; transition:max-height .2s ease,opacity .2s ease; opacity:1; }
+    .scoreGuideInline h3{ margin:0 0 8px; font-size:13px; font-weight:900; color:#0f172a; }
     .scoreGuideGrid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
-    .scoreItem{ border:1px solid rgba(15,23,42,.08); border-radius:10px; background:#fff; padding:8px; }
-    .scoreItem .n{ font-size:13px; font-weight:900; color:#0f172a; }
-    .scoreItem ul{ margin:6px 0 0; padding-left:16px; color:rgba(15,23,42,.72); font-size:12px; line-height:1.45; }
-    .miniHelp{ margin-top:8px; padding:8px 10px; border:1px solid rgba(15,23,42,.1); border-radius:10px; background:#f8fafc; color:rgba(15,23,42,.72); font-size:12.5px; line-height:1.5; }
+    .scoreItem{ border:1px solid var(--line); border-radius:10px; background:#fff; padding:8px; }
+    .scoreItem .n{ font-size:12px; font-weight:900; color:#0f172a; }
+    .scoreItem ul{ margin:6px 0 0; padding-left:16px; color:#55657c; font-size:11.5px; line-height:1.45; }
+    .miniHelp{ margin-top:10px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:#f8fbff; color:#5a6b82; font-size:12px; line-height:1.52; }
 
-    .empty{ margin-top:12px; border:1px dashed rgba(148,163,184,.42); border-radius:12px; background:#f8fafc; color:#64748b; padding:14px; font-size:15px; }
+    .empty{ margin-top:12px; border:1px dashed #c8d5e5; border-radius:12px; background:#f8fbff; color:#60758f; padding:14px; font-size:14px; }
 
     @media (max-width:980px){
+      .editWorkspace{ grid-template-columns:1fr; }
+      .summaryAside{ position:static; }
       .row{ grid-template-columns:1fr; }
       .kpiGrid{ grid-template-columns:1fr 1fr; }
       .summaryGrid{ grid-template-columns:1fr 1fr; }
@@ -96,10 +157,12 @@
       .overviewFilters select{ min-width:150px; }
     }
     @media (max-width:640px){
+      .hero h1{ font-size:27px; }
       .kpiGrid{ grid-template-columns:1fr; }
       .summaryGrid{ grid-template-columns:1fr; }
       .timeGrid, .resourceGrid{ grid-template-columns:1fr; }
       .scoreGuideGrid{ grid-template-columns:1fr; }
+      .panel{ padding:14px; }
     }
   </style>
 </head>
@@ -114,7 +177,7 @@
 
       <section class="kpiGrid" id="globalKpi"></section>
 
-      <section class="panel">
+      <section class="panel" id="overviewSection">
         <div class="overviewHead">
           <div>
             <h2 class="sectionTitle">전체 팀 총괄표</h2>
@@ -142,29 +205,36 @@
       <section class="panel editSection" id="detailEditor">
         <h2 class="sectionTitle">팀별 BIA 상세 편집</h2>
         <p class="sectionDesc">총괄표에서 팀을 선택하면 아래 편집 영역과 동기화됩니다.</p>
-        <div class="row">
-          <div>
-            <label for="teamSelect">팀 선택</label>
-            <select id="teamSelect"></select>
-          </div>
-          <div>
-            <label for="newFunctionName">핵심업무 추가</label>
-            <input id="newFunctionName" type="text" placeholder="예: 전력 장애 원인 분석"/>
-          </div>
-          <button id="addFunctionBtn" class="btn" type="button">업무 추가</button>
-        </div>
+        <div class="editWorkspace">
+          <div class="editorMain">
+            <div class="row">
+              <div>
+                <label for="teamSelect">팀 선택</label>
+                <select id="teamSelect"></select>
+              </div>
+              <div>
+                <label for="newFunctionName">핵심업무 추가</label>
+                <input id="newFunctionName" type="text" placeholder="예: 전력 장애 원인 분석"/>
+              </div>
+              <button id="addFunctionBtn" class="btn" type="button">업무 추가</button>
+            </div>
 
-        <div class="summaryGrid">
-          <article class="metric"><div class="k">선택 팀</div><div class="v" id="teamMetric">-</div></article>
-          <article class="metric"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></article>
-          <article class="metric"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></article>
-          <article class="metric"><div class="k">최단 MTPD / 최단 RTO</div><div class="v" id="timeMetric">-</div></article>
-        </div>
+            <div class="summaryGrid">
+              <article class="metric"><div class="k">선택 팀</div><div class="v" id="teamMetric">-</div></article>
+              <article class="metric"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></article>
+              <article class="metric"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></article>
+              <article class="metric"><div class="k">최단 MTPD / 최단 RTO</div><div class="v" id="timeMetric">-</div></article>
+            </div>
 
-        <div id="tableMount" class="tableWrap"></div>
-        <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
-          <button id="saveBtn" class="btn primary" type="button">저장</button>
-          <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
+            <div id="tableMount" class="tableWrap"></div>
+            <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+              <button id="saveBtn" class="btn primary" type="button">저장</button>
+              <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
+            </div>
+          </div>
+          <aside class="summaryAside">
+            <div id="stickySummaryMount"></div>
+          </aside>
         </div>
       </section>
     </div>
@@ -210,6 +280,8 @@
       const tableMount = document.getElementById('tableMount');
       const saveBtn = document.getElementById('saveBtn');
       const resetBtn = document.getElementById('resetBtn');
+      const stickySummaryMount = document.getElementById('stickySummaryMount');
+      const overviewSection = document.getElementById('overviewSection');
       const teamMetric = document.getElementById('teamMetric');
       const countMetric = document.getElementById('countMetric');
       const importantMetric = document.getElementById('importantMetric');
@@ -397,6 +469,9 @@
       const opened = new Set();
       const scoreGuideOpened = new Set();
       const animatedCounts = new Map();
+      const activeByTeam = new Map();
+      let dirtyState = false;
+      let lastSavedAt = null;
 
       teamSelect.innerHTML = allTeams.length
         ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
@@ -520,6 +595,86 @@
         overviewTeamFilter.innerHTML = teamOpts.map((t) => `<option value="${esc(t)}" ${prev===t?'selected':''}>${esc(t)}</option>`).join('');
       };
 
+      const markDirty = () => { dirtyState = true; };
+      const markSaved = () => { dirtyState = false; lastSavedAt = new Date(); };
+
+      const resolveActiveFunction = (team, functions) => {
+        if (!functions.length) return { fn:null, idx:-1 };
+        const remembered = activeByTeam.get(team);
+        if (Number.isInteger(remembered) && remembered >= 0 && remembered < functions.length) return { fn:functions[remembered], idx:remembered };
+        const recentOpened = [...opened].reverse().find((k) => k.startsWith(`${team}__`));
+        if (recentOpened) {
+          const idx = Number(recentOpened.split('__').pop());
+          if (Number.isInteger(idx) && idx >= 0 && idx < functions.length) {
+            activeByTeam.set(team, idx);
+            return { fn:functions[idx], idx };
+          }
+        }
+        activeByTeam.set(team, 0);
+        return { fn:functions[0], idx:0 };
+      };
+
+      const renderStickySummary = (team, functions) => {
+        if (!stickySummaryMount) return;
+        const highImpact = functions.filter((f) => Number(f.overallImpact || 0) >= 4).length;
+        const minMtpd = functions.map((f) => f.mtpdMinutes).filter((v) => Number.isFinite(v));
+        const minRto = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => Number.isFinite(v));
+        const active = resolveActiveFunction(team, functions);
+        const fn = active.fn;
+        const firstCritical = fn ? TIME_IMPACT_META.find((t) => Number(fn.timeImpact?.[t.key] || 1) >= 4) : null;
+        const maxImpact = fn ? Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1))) : null;
+        const warn = fn ? getRtoWarnText(fn) : '';
+        const saveStatus = dirtyState ? '<span class="statusPill status-dirty">저장 필요</span>' : '<span class="statusPill status-saved">저장 완료</span>';
+        stickySummaryMount.innerHTML = `
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">선택 팀 요약</h3>
+            <div class="kv">
+              <div class="k">팀</div><div><b>${esc(team || '-')}</b></div>
+              <div class="k">핵심업무 수</div><div>${functions.length}</div>
+              <div class="k">중요업무 수</div><div>${functions.filter((f)=>f.importance==='중요').length}</div>
+              <div class="k">고영향 업무 수</div><div>${highImpact}</div>
+              <div class="k">최단 MTPD</div><div>${toDurationText(minMtpd.length ? Math.min(...minMtpd) : null)}</div>
+              <div class="k">최단 RTO</div><div>${toDurationText(minRto.length ? Math.min(...minRto) : null)}</div>
+            </div>
+          </article>
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">현재 선택 업무</h3>
+            ${fn ? `
+              <div class="kv">
+                <div class="k">업무명</div><div><b>${esc(fn.name)}</b></div>
+                <div class="k">중요업무</div><div>${fn.importance}</div>
+                <div class="k">종합 영향도</div><div>${fn.overallImpact} ${impactLabels[Number(fn.overallImpact)] || ''}</div>
+                <div class="k">업무등급</div><div><span class="tag g-${fn.grade}">${fn.grade}</span></div>
+                <div class="k">MTPD / RTO</div><div>${esc(fn.mtpd || '-')} / ${esc(fn.rto || '-')}</div>
+                <div class="k">최고 시간경과 영향</div><div>${maxImpact || '-'} ${maxImpact ? impactLabels[maxImpact] : ''}</div>
+                <div class="k">영향도 4+ 최초 시점</div><div>${firstCritical ? firstCritical.label : '없음'}</div>
+                <div class="k">RTO 경고</div><div>${warn ? '있음' : '없음'}</div>
+              </div>
+              ${warn ? `<div class="warn" style="margin-top:8px;">${warn}</div>` : ''}
+              <div class="chipWrap" style="margin-top:9px;">
+                ${(fn.requiredResources || []).length ? fn.requiredResources.map((r)=>`<span class="chip">${esc(r)}</span>`).join('') : '<span class="muted">복구 필요자원 없음</span>'}
+              </div>
+            ` : '<div class="muted">선택된 업무가 없습니다.</div>'}
+          </article>
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">저장 상태</h3>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${saveStatus}<span class="muted">${lastSavedAt ? `마지막 저장: ${lastSavedAt.toLocaleString('ko-KR', { hour12:false })}` : '아직 저장 이력이 없습니다.'}</span></div>
+            <div class="compactActions">
+              <button class="btn primary" type="button" id="quickSaveBtn">저장</button>
+              <button class="btn" type="button" id="goOverviewBtn">총괄표로 이동</button>
+            </div>
+          </article>`;
+        stickySummaryMount.querySelector('#quickSaveBtn')?.addEventListener('click', () => saveBtn.click());
+        stickySummaryMount.querySelector('#goOverviewBtn')?.addEventListener('click', () => overviewSection?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start' }));
+      };
+
+      const renderStickySummaryOnly = () => {
+        const team = teamSelect.value;
+        if (!team) { renderStickySummary('', []); return; }
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        renderStickySummary(team, row.functions || []);
+      };
+
       const renderSummary = (team, functions) => {
         teamMetric.textContent = team || '-';
         countMetric.textContent = String(functions.length);
@@ -544,12 +699,14 @@
         if (!team) {
           tableMount.innerHTML = '<div class="empty">선택 가능한 팀이 없습니다. 조직 관리 또는 핵심업무 레지스트리를 먼저 확인해 주세요.</div>';
           renderSummary('', []);
+          renderStickySummary('', []);
           return;
         }
 
         const row = ensureTeamRecord(team, coreMap, biaRows);
         const functions = row.functions || [];
         renderSummary(team, functions);
+        renderStickySummary(team, functions);
 
         if (!functions.length) {
           tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 아래에서 업무를 추가해 주세요.</div>';
@@ -753,9 +910,11 @@
         if (field === 'rtoReason') fn.rtoReason = String(value || '');
 
         recalcFunction(fn);
+        markDirty();
         if (!opts.skipUiUpdate) {
           refreshRowCells(idx);
           renderSummaryOnly();
+          renderStickySummaryOnly();
         }
       };
 
@@ -802,9 +961,11 @@
           fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
           fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
           recalcFunction(fn);
+          markDirty();
           refreshTimeImpactControls(idx);
           refreshRowCells(idx);
           renderSummaryOnly();
+          renderStickySummaryOnly();
           return;
         }
 
@@ -818,6 +979,8 @@
           if (e.target.checked) set.add(res);
           else set.delete(res);
           fn.requiredResources = [...set];
+          markDirty();
+          renderStickySummaryOnly();
         }
       });
 
@@ -854,7 +1017,7 @@
           if (!fn) return;
           const key = `${team}__${fn.name}__${toggleIdx}`;
           if (opened.has(key)) opened.delete(key);
-          else opened.add(key);
+          else { opened.add(key); activeByTeam.set(team, Number(toggleIdx)); }
           render();
           return;
         }
@@ -863,7 +1026,14 @@
         if (del == null) return;
         const team = teamSelect.value;
         const row = ensureTeamRecord(team, coreMap, biaRows);
-        row.functions.splice(Number(del), 1);
+        const delIdx = Number(del);
+        row.functions.splice(delIdx, 1);
+        markDirty();
+        const currentActive = activeByTeam.get(team);
+        if (Number.isInteger(currentActive)) {
+          if (currentActive === delIdx) activeByTeam.delete(team);
+          else if (currentActive > delIdx) activeByTeam.set(team, currentActive - 1);
+        }
         render();
       });
 
@@ -878,6 +1048,7 @@
           return;
         }
         row.functions.push(normalizeFunction({ name }));
+        markDirty();
         newFunctionName.value = '';
         render();
       });
@@ -916,6 +1087,7 @@
           .filter((row) => row.team);
 
         saveBiaData(biaRows);
+        markSaved();
         alert('BIA 데이터가 저장되었습니다.');
         render();
       });
@@ -925,6 +1097,7 @@
         if (!team) return;
         const row = ensureTeamRecord(team, coreMap, biaRows);
         row.functions = (coreMap.get(team) || []).map((name) => normalizeFunction({ name }));
+        markDirty();
         render();
       });
 
