@@ -42,19 +42,34 @@
     .kpiCard .k{ font-size:13px; color:var(--muted); font-weight:800; }
     .kpiCard .v{ margin-top:10px; font-size:37px; line-height:1.05; font-weight:900; color:var(--text); letter-spacing:-.02em; }
 
-    .overviewHead{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; justify-content:space-between; margin-bottom:12px; }
-    .overviewFilters{ display:flex; gap:10px; flex-wrap:wrap; }
-    .overviewFilters select{ min-width:200px; }
+    .overviewHead{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .overviewFilters{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px; border:1px solid var(--line); border-radius:10px; background:#f8fbff; }
+    .overviewFilters select, .overviewFilters input{ min-width:180px; height:36px; }
+    .quickFilters{ display:flex; gap:6px; flex-wrap:wrap; }
+    .quickChip{ border:1px solid var(--line-strong); background:#fff; color:#334155; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:800; cursor:pointer; }
+    .quickChip.active{ border-color:#5b8cf2; background:#eff5ff; color:#1d4ed8; }
 
     .overviewTableWrap{ overflow:auto; border-radius:12px; border:1px solid var(--line); }
     .overviewTable{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; background:var(--card); }
     .overviewTable th,.overviewTable td{ padding:12px 11px; font-size:14px; border-bottom:1px solid #e7edf5; color:var(--text-2); }
+    .overviewTable td{ vertical-align:middle; }
     .overviewTable th{ position:sticky; top:0; z-index:1; background:#f8fbff; color:#334155; font-weight:900; font-size:13px; letter-spacing:.01em; }
     .overviewTable tr:last-child td{ border-bottom:none; }
     .clickRow{ cursor:pointer; transition:background-color .18s ease; }
     .clickRow:hover td{ background:rgba(37,99,235,.06); }
     .clickRow.active td{ background:rgba(37,99,235,.10); }
     .overviewTable td:first-child{ font-weight:800; color:var(--text); }
+    .teamCell{ display:grid; gap:3px; }
+    .teamName{ font-size:14px; font-weight:900; color:var(--text); }
+    .teamMeta{ font-size:11.5px; color:var(--muted); }
+    .numStrong{ font-weight:900; color:#0f172a; }
+    .density{ margin-top:4px; height:5px; border-radius:999px; background:#edf2f8; overflow:hidden; }
+    .density > i{ display:block; height:100%; background:#8bb1f7; }
+    .density.warn > i{ background:#f0b96a; }
+    .rowFlag{ display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid var(--line-strong); background:#fff; color:#475569; }
+    .rowFlag.warn{ border-color:#f1c07a; background:#fffbeb; color:#8a4b12; }
+    .rowFlag.danger{ border-color:#f0b9b3; background:#fff1f1; color:#9f1239; }
+    .overviewTable tr.risk-focus td{ background:linear-gradient(0deg, rgba(255,251,235,.75), rgba(255,251,235,.75)); }
 
     .chip{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid var(--line-strong); background:#f8fbff; font-size:12px; font-weight:800; color:#334155; }
     .editSection{ scroll-margin-top:20px; }
@@ -166,7 +181,7 @@
       .detailGrid{ grid-template-columns:1fr; }
       .timeGrid, .resourceGrid{ grid-template-columns:1fr 1fr; }
       .scoreGuideGrid{ grid-template-columns:1fr 1fr; }
-      .overviewFilters select{ min-width:150px; }
+      .overviewFilters select, .overviewFilters input{ min-width:140px; }
     }
     @media (max-width:640px){
       .hero h1{ font-size:27px; }
@@ -207,8 +222,18 @@
                 <option value="name">가나다순</option>
                 <option value="coreDesc">핵심업무 많은 순</option>
                 <option value="importantDesc">중요업무 많은 순</option>
+                <option value="highImpactDesc">고영향 업무 많은 순</option>
                 <option value="rtoAsc">최단 RTO 짧은 순</option>
               </select>
+            </div>
+            <div>
+              <label for="overviewSearch" class="muted">검색</label>
+              <input id="overviewSearch" class="smallInput" type="text" placeholder="팀명 검색"/>
+            </div>
+            <div class="quickFilters" id="overviewQuickFilters">
+              <button class="quickChip active" type="button" data-quick="all">전체</button>
+              <button class="quickChip" type="button" data-quick="important">중요업무 있는 팀</button>
+              <button class="quickChip" type="button" data-quick="high">고영향 팀</button>
             </div>
           </div>
         </div>
@@ -285,6 +310,8 @@
       const teamSelect = document.getElementById('teamSelect');
       const overviewTeamFilter = document.getElementById('overviewTeamFilter');
       const overviewSort = document.getElementById('overviewSort');
+      const overviewSearch = document.getElementById('overviewSearch');
+      const overviewQuickFilters = document.getElementById('overviewQuickFilters');
       const overviewTableMount = document.getElementById('overviewTableMount');
       const globalKpi = document.getElementById('globalKpi');
       const detailEditor = document.getElementById('detailEditor');
@@ -485,6 +512,7 @@
       const activeByTeam = new Map();
       let dirtyState = false;
       let lastSavedAt = null;
+      let overviewQuickMode = 'all';
 
       teamSelect.innerHTML = allTeams.length
         ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
@@ -577,11 +605,17 @@
       const renderOverviewTable = () => {
         const selectedFilter = overviewTeamFilter.value || '전체';
         const sortBy = overviewSort.value || 'name';
+        const q = String(overviewSearch?.value || '').trim().toLowerCase();
         let rows = computeOverviewRows();
         if (selectedFilter !== '전체') rows = rows.filter((r) => r.team === selectedFilter);
+        if (overviewQuickMode === 'important') rows = rows.filter((r) => r.importantCount > 0);
+        if (overviewQuickMode === 'high') rows = rows.filter((r) => r.highImpact > 0);
+        if (q) rows = rows.filter((r) => r.team.toLowerCase().includes(q));
+
         rows.sort((a,b) => {
           if (sortBy === 'coreDesc') return b.coreCount - a.coreCount || a.team.localeCompare(b.team, 'ko');
           if (sortBy === 'importantDesc') return b.importantCount - a.importantCount || a.team.localeCompare(b.team, 'ko');
+          if (sortBy === 'highImpactDesc') return b.highImpact - a.highImpact || a.team.localeCompare(b.team, 'ko');
           if (sortBy === 'rtoAsc') {
             const ar = a.minRto ?? Number.MAX_SAFE_INTEGER;
             const br = b.minRto ?? Number.MAX_SAFE_INTEGER;
@@ -589,17 +623,38 @@
           }
           return a.team.localeCompare(b.team, 'ko');
         });
+
+        const maxCore = Math.max(1, ...rows.map((r)=>r.coreCount));
+        const maxImportant = Math.max(1, ...rows.map((r)=>r.importantCount));
+        const maxHigh = Math.max(1, ...rows.map((r)=>r.highImpact));
+
+        const bar = (v, max, warn=false) => `<span class="density ${warn?'warn':''}"><i style="width:${Math.round((v/max)*100)}%"></i></span>`;
+
         overviewTableMount.innerHTML = rows.length ? `
           <table class="overviewTable">
             <thead><tr><th>부서명</th><th>핵심업무 수</th><th>중요업무 수</th><th>최단 MTPD</th><th>최단 RTO</th><th>고영향 업무 수(4↑)</th><th>관리</th></tr></thead>
             <tbody>
-              ${rows.map((r) => `
-                <tr class="clickRow ${teamSelect.value === r.team ? "active" : ""}" data-jump-team="${esc(r.team)}">
-                  <td>${esc(r.team)}</td><td>${r.coreCount}</td><td>${r.importantCount}</td><td><span class="chip">${toDurationText(r.minMtpd)}</span></td><td><span class="chip">${toDurationText(r.minRto)}</span></td><td>${r.highImpact}</td>
-                  <td><button class="btn" type="button" data-jump-team="${esc(r.team)}">상세 편집 보기</button></td>
-                </tr>`).join('')}
+              ${rows.map((r) => {
+                const selected = teamSelect.value === r.team;
+                const highRisk = r.highImpact >= 3 || (r.minRto !== null && r.minRto <= 240);
+                return `
+                <tr class="clickRow ${selected ? 'active' : ''} ${highRisk ? 'risk-focus' : ''}" data-jump-team="${esc(r.team)}">
+                  <td>
+                    <div class="teamCell">
+                      <div class="teamName">${esc(r.team)} ${selected ? '<span class="rowFlag">선택됨</span>' : ''}</div>
+                      <div class="teamMeta">등록 ${r.coreCount}건 · 중요 ${r.importantCount}건</div>
+                    </div>
+                  </td>
+                  <td><div class="numStrong">${r.coreCount}</div>${bar(r.coreCount,maxCore)}</td>
+                  <td><div class="numStrong">${r.importantCount}</div>${bar(r.importantCount,maxImportant)}</td>
+                  <td><span class="chip">${toDurationText(r.minMtpd)}</span></td>
+                  <td><span class="chip ${r.minRto!==null && r.minRto<=240 ? 'rowFlag warn' : ''}">${toDurationText(r.minRto)}</span></td>
+                  <td><div class="numStrong">${r.highImpact}</div>${bar(r.highImpact,maxHigh,true)}</td>
+                  <td><button class="btn" type="button" data-jump-team="${esc(r.team)}">상세 편집</button></td>
+                </tr>`;
+              }).join('')}
             </tbody>
-          </table>` : '<div class="empty">표시할 팀 데이터가 없습니다.</div>';
+          </table>` : '<div class="empty">조건에 맞는 팀이 없습니다.</div>';
       };
 
       const renderOverviewFilters = () => {
@@ -956,6 +1011,14 @@
       teamSelect.addEventListener('change', () => render());
       overviewTeamFilter.addEventListener('change', () => renderOverviewTable());
       overviewSort.addEventListener('change', () => renderOverviewTable());
+      overviewSearch?.addEventListener('input', () => renderOverviewTable());
+      overviewQuickFilters?.addEventListener('click', (e) => {
+        const mode = e.target.getAttribute('data-quick');
+        if (!mode) return;
+        overviewQuickMode = mode;
+        overviewQuickFilters.querySelectorAll('.quickChip').forEach((x)=>x.classList.toggle('active', x.getAttribute('data-quick')===mode));
+        renderOverviewTable();
+      });
 
       overviewTableMount.addEventListener('click', (e) => {
         const team = e.target.closest('[data-jump-team]')?.getAttribute('data-jump-team');
