@@ -6,75 +6,195 @@
   <title>BIA (업무영향분석) | BCMS Portal v2</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --text-2:#1e293b;
+      --muted:#5b6b82;
+      --line:#dbe4ef;
+      --line-strong:#c9d5e3;
+      --blue:#2563eb;
+      --blue-soft:#eff5ff;
+      --red:#b42318;
+      --red-soft:#fef2f2;
+      --amber:#92400e;
+      --amber-soft:#fffbeb;
+      --green:#166534;
+      --green-soft:#f0fdf4;
+      --shadow:0 1px 2px rgba(15,23,42,.04);
+      --radius:14px;
+    }
+    .main{ background:var(--bg); }
     .wrap{ max-width:1320px; margin:0 auto; }
-    .hero h1{ margin:0; font-size:24px; font-weight:950; }
-    .hero p{ margin:8px 0 0; font-size:16px; color:rgba(15,23,42,.66); line-height:1.65; }
 
-    .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.1); border-radius:14px; background:#fff; padding:14px; }
-    .row{ display:grid; grid-template-columns:1fr 260px auto; gap:10px; align-items:end; }
-    .row label{ font-size:14px; font-weight:800; color:#334155; display:block; margin-bottom:6px; }
-    .row select, .row input{ width:100%; padding:10px 12px; font-size:16px; }
+    .hero{ border:1px solid var(--line); border-radius:16px; background:var(--card); padding:18px 20px; box-shadow:var(--shadow); }
+    .hero h1{ margin:0; font-size:30px; font-weight:900; letter-spacing:-.02em; color:var(--text); }
+    .hero p{ margin:10px 0 0; font-size:15px; color:var(--muted); line-height:1.62; }
 
-    .btn{ border:1px solid rgba(15,23,42,.15); border-radius:10px; background:#fff; color:#0f172a; padding:9px 12px; font-size:14px; font-weight:900; cursor:pointer; }
-    .btn:hover{ background:rgba(15,23,42,.04); }
-    .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.08); color:#1d4ed8; }
+    .panel{ margin-top:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); padding:18px; box-shadow:var(--shadow); }
+    .sectionTitle{ margin:0; font-size:19px; font-weight:900; color:var(--text); letter-spacing:-.01em; }
+    .sectionDesc{ margin:7px 0 0; font-size:13px; color:var(--muted); }
 
-    .summaryGrid{ margin-top:12px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
-    .metric{ border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:11px; }
-    .metric .k{ font-size:14px; color:rgba(15,23,42,.62); font-weight:800; }
-    .metric .v{ margin-top:7px; font-size:24px; font-weight:950; }
+    .kpiGrid{ margin-top:18px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .kpiCard{ border:1px solid var(--line); border-radius:13px; background:var(--card); padding:16px; box-shadow:var(--shadow); transition:background-color .18s ease,border-color .18s ease,transform .18s ease; }
+    .kpiCard:hover{ background:#fbfdff; border-color:var(--line-strong); transform:translateY(-1px); }
+    .kpiCard .k{ font-size:13px; color:var(--muted); font-weight:800; }
+    .kpiCard .v{ margin-top:10px; font-size:37px; line-height:1.05; font-weight:900; color:var(--text); letter-spacing:-.02em; }
 
-    .tableWrap{ margin-top:12px; overflow:auto; }
-    table{ width:100%; min-width:1120px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.1); border-radius:12px; overflow:hidden; }
-    th, td{ padding:10px 10px; font-size:16px; border-bottom:1px solid rgba(15,23,42,.08); vertical-align:middle; }
-    th{ background:#f8fafc; font-size:14px; font-weight:900; text-align:left; color:#334155; }
+    .overviewHead{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .overviewFilters{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px; border:1px solid var(--line); border-radius:10px; background:#f8fbff; }
+    .overviewFilters select, .overviewFilters input{ min-width:180px; height:36px; }
+    .quickFilters{ display:flex; gap:6px; flex-wrap:wrap; }
+    .quickChip{ border:1px solid var(--line-strong); background:#fff; color:#334155; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:800; cursor:pointer; }
+    .quickChip.active{ border-color:#5b8cf2; background:#eff5ff; color:#1d4ed8; }
+
+    .overviewTableWrap{ overflow:auto; border-radius:12px; border:1px solid var(--line); }
+    .overviewTable{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; background:var(--card); }
+    .overviewTable th,.overviewTable td{ padding:12px 11px; font-size:14px; border-bottom:1px solid #e7edf5; color:var(--text-2); }
+    .overviewTable td{ vertical-align:middle; }
+    .overviewTable th{ position:sticky; top:0; z-index:1; background:#f8fbff; color:#334155; font-weight:900; font-size:13px; letter-spacing:.01em; }
+    .overviewTable tr:last-child td{ border-bottom:none; }
+    .clickRow{ cursor:pointer; transition:background-color .18s ease; }
+    .clickRow:hover td{ background:rgba(37,99,235,.06); }
+    .clickRow.active td{ background:rgba(37,99,235,.10); }
+    .overviewTable td:first-child{ font-weight:800; color:var(--text); }
+    .teamCell{ display:grid; gap:3px; }
+    .teamName{ font-size:14px; font-weight:900; color:var(--text); }
+    .teamMeta{ font-size:11.5px; color:var(--muted); }
+    .numStrong{ font-weight:900; color:#0f172a; }
+    .density{ margin-top:4px; height:5px; border-radius:999px; background:#edf2f8; overflow:hidden; }
+    .density > i{ display:block; height:100%; background:#8bb1f7; }
+    .density.warn > i{ background:#f0b96a; }
+    .highImpactCell{ display:grid; gap:5px; justify-items:start; }
+    .hiBadge{ display:inline-flex; align-items:center; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:900; border:1px solid var(--line-strong); background:#fff; color:#64748b; }
+    .hiBadge.low{ border-color:#f5dfb5; background:#fffbeb; color:#8a4b12; }
+    .hiBadge.high{ border-color:#f1c07a; background:#fff7e6; color:#7c2d12; }
+    .rowFlag{ display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid var(--line-strong); background:#fff; color:#475569; }
+    .rowFlag.warn{ border-color:#f1c07a; background:#fffbeb; color:#8a4b12; }
+    .rowFlag.danger{ border-color:#f0b9b3; background:#fff1f1; color:#9f1239; }
+    .overviewTable tr.risk-focus td{ background:linear-gradient(0deg, rgba(255,251,235,.75), rgba(255,251,235,.75)); }
+
+    .chip{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid var(--line-strong); background:#f8fbff; font-size:12px; font-weight:800; color:#334155; }
+    .editSection{ scroll-margin-top:20px; }
+    .editWorkspace{ display:grid; grid-template-columns:minmax(0,2fr) minmax(300px,1fr); gap:14px; align-items:start; }
+    .editorMain{ min-width:0; }
+    .summaryAside{ position:sticky; top:18px; }
+    .stickyPanel{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:12px; box-shadow:var(--shadow); }
+    .stickyPanel + .stickyPanel{ margin-top:10px; }
+    .stickyTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:var(--text); }
+    .kv{ display:grid; grid-template-columns:1fr auto; gap:6px 10px; font-size:12.5px; color:var(--text-2); }
+    .kv .k{ color:var(--muted); }
+    .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
+    .statusPill{ display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:900; border:1px solid var(--line-strong); }
+    .status-dirty{ color:#8a4b12; background:#fffbeb; border-color:#f1c07a; }
+    .status-saved{ color:#166534; background:#f0fdf4; border-color:#b8e5c8; }
+    .compactActions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+
+
+    .row{ display:grid; grid-template-columns:1fr 260px auto; gap:12px; align-items:end; }
+    .row label{ font-size:13px; font-weight:800; color:#42526a; display:block; margin-bottom:6px; }
+    .row select, .row input{ width:100%; }
+
+    .btn{ border:1px solid var(--line-strong); border-radius:10px; background:#fff; color:var(--text-2); padding:9px 12px; font-size:14px; font-weight:800; cursor:pointer; transition:background-color .18s ease,border-color .18s ease,color .18s ease; }
+    .btn:hover{ background:#f8fbff; border-color:#b8c8da; }
+    .btn:focus-visible{ outline:2px solid rgba(37,99,235,.45); outline-offset:2px; }
+    .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.10); color:#1d4ed8; }
+    .btn.primary:hover{ background:rgba(37,99,235,.16); }
+
+    .summaryGrid{ margin-top:14px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; }
+    .metric{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:12px; }
+    .metric .k{ font-size:13px; color:var(--muted); font-weight:800; }
+    .metric .v{ margin-top:8px; font-size:25px; line-height:1.2; font-weight:900; color:var(--text); }
+
+    .tableWrap{ margin-top:14px; overflow:auto; }
+    table{ width:100%; min-width:1120px; border-collapse:separate; border-spacing:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; }
+    th, td{ padding:12px 11px; font-size:14px; border-bottom:1px solid #e7edf5; vertical-align:middle; color:var(--text-2); }
+    th{ background:#f8fbff; font-size:13px; font-weight:900; text-align:left; color:#334155; letter-spacing:.01em; }
     tr:last-child td{ border-bottom:none; }
 
-    .functionName{ font-size:16px; font-weight:800; }
-    .muted{ font-size:13px; color:rgba(15,23,42,.62); }
-    .smallSelect, .smallInput{ width:100%; padding:8px 10px; font-size:15px; }
-    .rtoWrap{ display:flex; gap:6px; }
+    .functionName{ font-size:15px; font-weight:900; color:var(--text); letter-spacing:-.01em; }
+    .muted{ font-size:12.5px; color:var(--muted); }
+
+    .smallSelect, .smallInput, .reasonInput, .row select, .row input{
+      border:1px solid var(--line-strong);
+      border-radius:10px;
+      background:#fff;
+      color:var(--text-2);
+      padding:9px 10px;
+      font-size:14px;
+      line-height:1.35;
+    }
+    .smallSelect:focus-visible, .smallInput:focus-visible, .reasonInput:focus-visible, .row select:focus-visible, .row input:focus-visible{
+      outline:2px solid rgba(37,99,235,.20);
+      border-color:rgba(37,99,235,.55);
+    }
+    .smallInput::placeholder, .reasonInput::placeholder, .row input::placeholder{ color:#7a8ca5; }
+
+    .rtoWrap{ display:flex; gap:7px; }
     .rtoWrap .smallInput{ width:90px; }
 
-    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid rgba(15,23,42,.18); font-size:12px; font-weight:900; }
-    .g-핵심{ color:#991b1b; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
-    .g-주요{ color:#92400e; background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
-    .g-일반{ color:#166534; background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.35); }
+    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--line-strong); font-size:12px; font-weight:900; }
+    .g-핵심{ color:var(--red); background:var(--red-soft); border-color:#f2b8b5; }
+    .g-주요{ color:var(--amber); background:var(--amber-soft); border-color:#f4d09a; }
+    .g-일반{ color:var(--green); background:var(--green-soft); border-color:#b8e5c8; }
 
     .detailRow td{ background:#fcfdff; }
-    .detailCard{ border:1px solid rgba(15,23,42,.08); border-radius:12px; padding:12px; background:#fff; }
-    .detailGrid{ display:grid; grid-template-columns:2fr 1.2fr; gap:12px; }
-    .subTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:#334155; }
-    .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-    .timeItem label{ display:block; margin-bottom:5px; font-size:13px; font-weight:800; color:#475569; }
-    .timeItem select{ width:100%; padding:8px 9px; font-size:14px; }
-    .reasonInput{ width:100%; min-height:90px; resize:vertical; padding:10px; font-size:14px; }
-    .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-    .resourceItem{ display:flex; align-items:center; gap:7px; font-size:14px; }
+    .detailCard{ border:1px solid var(--line); border-radius:14px; padding:16px; background:#fff; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+    .detailGrid{ display:grid; grid-template-columns:2fr 1.2fr; gap:14px; }
+    .subTitle{ margin:0; font-size:14px; font-weight:900; color:var(--text-2); }
+    .subHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+    .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .timeStep{ border:1px solid var(--line); border-radius:12px; padding:10px; background:#fff; }
+    .timeStepTop{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:8px; }
+    .timeStepLabel{ font-size:12px; font-weight:900; color:#334155; }
+    .timeStepValue{ font-size:12px; font-weight:900; color:#0f172a; }
+    .mtpdBadge{ display:inline-flex; align-items:center; border:1px solid #f1c07a; background:#fffbeb; color:#8a4b12; border-radius:999px; padding:2px 7px; font-size:11px; font-weight:900; }
+    .scoreBtns{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+    .scoreBtn{ border:1px solid var(--line-strong); background:#fff; color:#334155; border-radius:9px; padding:7px 4px; font-size:12px; font-weight:800; cursor:pointer; }
+    .scoreBtn:hover{ background:#f8fbff; }
+    .scoreBtn[aria-pressed="true"]{ border-color:#5b8cf2; background:#eff5ff; color:#1d4ed8; }
+    .scoreBtn[data-score="4"][aria-pressed="true"], .scoreBtn[data-score="5"][aria-pressed="true"]{ border-color:#f1c07a; background:#fffbeb; color:#8a4b12; }
+    .scoreBtn:disabled{ opacity:.45; cursor:not-allowed; background:#f8fafc; }
+    .timeHint{ margin-top:6px; font-size:11.5px; color:#64748b; }
+    .timeSummaryLine{ margin-top:9px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .timeSummaryLine .chip{ background:#fff; }
+    .reasonInput{ width:100%; min-height:94px; resize:vertical; }
+    .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:2px; }
+    .resourceItem{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-2); }
+    .resourceItem input[type="checkbox"]{ accent-color:var(--blue); width:15px; height:15px; }
 
-    .warn{ margin-top:10px; border:1px solid rgba(239,68,68,.35); border-radius:10px; background:rgba(239,68,68,.10); color:#991b1b; padding:9px 10px; font-size:13px; font-weight:800; }
+    .warn{ margin-top:12px; border:1px solid #f1c07a; border-radius:10px; background:#fffbeb; color:#8a4b12; padding:9px 10px; font-size:12.5px; font-weight:800; }
 
-    .scoreGuide{ margin-top:12px; border:1px solid rgba(15,23,42,.1); border-radius:14px; background:#fff; padding:12px; }
-    .scoreGuide h3{ margin:0 0 8px; font-size:16px; font-weight:900; color:#0f172a; }
+    .scoreGuideInline{ margin-top:10px; border:1px solid var(--line); border-radius:12px; background:#f8fbff; padding:10px; max-height:520px; transition:max-height .2s ease,opacity .2s ease; opacity:1; }
+    .scoreGuideInline h3{ margin:0 0 8px; font-size:13px; font-weight:900; color:#0f172a; }
     .scoreGuideGrid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
-    .scoreItem{ border:1px solid rgba(15,23,42,.08); border-radius:10px; background:#fff; padding:8px; }
-    .scoreItem .n{ font-size:13px; font-weight:900; color:#0f172a; }
-    .scoreItem ul{ margin:6px 0 0; padding-left:16px; color:rgba(15,23,42,.72); font-size:12px; line-height:1.45; }
-    .miniHelp{ margin-top:8px; padding:8px 10px; border:1px solid rgba(15,23,42,.1); border-radius:10px; background:#f8fafc; color:rgba(15,23,42,.72); font-size:12.5px; line-height:1.5; }
+    .scoreItem{ border:1px solid var(--line); border-radius:10px; background:#fff; padding:8px; }
+    .scoreItem .n{ font-size:12px; font-weight:900; color:#0f172a; }
+    .scoreItem ul{ margin:6px 0 0; padding-left:16px; color:#55657c; font-size:11.5px; line-height:1.45; }
+    .miniHelp{ margin-top:10px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:#f8fbff; color:#5a6b82; font-size:12px; line-height:1.52; }
 
-    .empty{ margin-top:12px; border:1px dashed rgba(148,163,184,.42); border-radius:12px; background:#f8fafc; color:#64748b; padding:14px; font-size:15px; }
+    .empty{ margin-top:12px; border:1px dashed #c8d5e5; border-radius:12px; background:#f8fbff; color:#60758f; padding:14px; font-size:14px; }
 
     @media (max-width:980px){
+      .editWorkspace{ grid-template-columns:1fr; }
+      .summaryAside{ position:static; }
       .row{ grid-template-columns:1fr; }
+      .kpiGrid{ grid-template-columns:1fr 1fr; }
       .summaryGrid{ grid-template-columns:1fr 1fr; }
       .detailGrid{ grid-template-columns:1fr; }
       .timeGrid, .resourceGrid{ grid-template-columns:1fr 1fr; }
       .scoreGuideGrid{ grid-template-columns:1fr 1fr; }
+      .overviewFilters select, .overviewFilters input{ min-width:140px; }
     }
     @media (max-width:640px){
+      .hero h1{ font-size:27px; }
+      .kpiGrid{ grid-template-columns:1fr; }
       .summaryGrid{ grid-template-columns:1fr; }
       .timeGrid, .resourceGrid{ grid-template-columns:1fr; }
+      .scoreBtns{ grid-template-columns:repeat(3,minmax(0,1fr)); }
       .scoreGuideGrid{ grid-template-columns:1fr; }
+      .panel{ padding:14px; }
     }
   </style>
 </head>
@@ -84,61 +204,79 @@
     <div class="wrap">
       <section class="hero">
         <h1>BIA (업무영향분석)</h1>
-        <p>핵심업무를 자동 불러와 중요업무 여부, 시간경과 영향평가, MTPD, RTO를 입력합니다. 저장 데이터는 Risk/복구 우선순위 화면과 호환됩니다.</p>
+        <p>핵심업무별 영향도, MTPD, RTO를 통합 관리합니다. 전체 현황을 분석한 뒤 팀별 상세를 편집하세요.</p>
       </section>
 
+      <section class="kpiGrid" id="globalKpi"></section>
 
-
-      <section class="scoreGuide" aria-label="영향평가 점수 기준">
-        <h3>영향평가 점수 기준</h3>
-        <div class="scoreGuideGrid">
-          <article class="scoreItem">
-            <div class="n">1 경미함</div>
-            <ul><li>서비스 영향 거의 없음</li><li>내부 처리 가능</li><li>대외 영향 없음</li></ul>
-          </article>
-          <article class="scoreItem">
-            <div class="n">2 작음</div>
-            <ul><li>일부 영향 있으나 대부분 수용 가능</li><li>평판/재무 영향 거의 없음</li></ul>
-          </article>
-          <article class="scoreItem">
-            <div class="n">3 보통</div>
-            <ul><li>고객 불편 또는 민원 가능</li><li>제한적 평판 영향</li><li>감내 가능한 재무 영향</li></ul>
-          </article>
-          <article class="scoreItem">
-            <div class="n">4 큼</div>
-            <ul><li>서비스 중단 영향이 큼</li><li>계약/법규/평판 영향 우려</li><li>복구 지연 시 수용 어려움</li></ul>
-          </article>
-          <article class="scoreItem">
-            <div class="n">5 매우 큼</div>
-            <ul><li>핵심 서비스 지속 불가 수준</li><li>중대한 대외 영향</li><li>즉시 복구 필요 수준</li></ul>
-          </article>
+      <section class="panel" id="overviewSection">
+        <div class="overviewHead">
+          <div>
+            <h2 class="sectionTitle">전체 팀 총괄표</h2>
+            <p class="sectionDesc">전체 현황을 먼저 확인한 후 팀별 상세 편집으로 이동하세요.</p>
+          </div>
+          <div class="overviewFilters">
+            <div>
+              <label for="overviewTeamFilter" class="muted">부서 필터</label>
+              <select id="overviewTeamFilter"></select>
+            </div>
+            <div>
+              <label for="overviewSort" class="muted">정렬</label>
+              <select id="overviewSort">
+                <option value="name">가나다순</option>
+                <option value="coreDesc">핵심업무 많은 순</option>
+                <option value="importantDesc">중요업무 많은 순</option>
+                <option value="highImpactDesc">고영향 업무 많은 순</option>
+                <option value="rtoAsc">최단 RTO 짧은 순</option>
+              </select>
+            </div>
+            <div>
+              <label for="overviewSearch" class="muted">검색</label>
+              <input id="overviewSearch" class="smallInput" type="text" placeholder="팀명 검색"/>
+            </div>
+            <div class="quickFilters" id="overviewQuickFilters">
+              <button class="quickChip active" type="button" data-quick="all">전체</button>
+              <button class="quickChip" type="button" data-quick="important">중요업무 있는 팀</button>
+              <button class="quickChip" type="button" data-quick="high">고영향 팀</button>
+            </div>
+          </div>
         </div>
+        <div id="overviewTableMount" class="overviewTableWrap"></div>
       </section>
 
-      <section class="panel">
-        <div class="row">
-          <div>
-            <label for="teamSelect">팀 선택</label>
-            <select id="teamSelect"></select>
-          </div>
-          <div>
-            <label for="newFunctionName">핵심업무 추가</label>
-            <input id="newFunctionName" type="text" placeholder="예: 전력 장애 원인 분석"/>
-          </div>
-          <button id="addFunctionBtn" class="btn" type="button">업무 추가</button>
-        </div>
+      <section class="panel editSection" id="detailEditor">
+        <h2 class="sectionTitle">팀별 BIA 상세 편집</h2>
+        <p class="sectionDesc">총괄표에서 팀을 선택하면 아래 편집 영역과 동기화됩니다.</p>
+        <div class="editWorkspace">
+          <div class="editorMain">
+            <div class="row">
+              <div>
+                <label for="teamSelect">팀 선택</label>
+                <select id="teamSelect"></select>
+              </div>
+              <div>
+                <label for="newFunctionName">핵심업무 추가</label>
+                <input id="newFunctionName" type="text" placeholder="예: 전력 장애 원인 분석"/>
+              </div>
+              <button id="addFunctionBtn" class="btn" type="button">업무 추가</button>
+            </div>
 
-        <div class="summaryGrid">
-          <article class="metric"><div class="k">선택 팀</div><div class="v" id="teamMetric">-</div></article>
-          <article class="metric"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></article>
-          <article class="metric"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></article>
-          <article class="metric"><div class="k">최단 MTPD / 최단 RTO</div><div class="v" id="timeMetric">-</div></article>
-        </div>
+            <div class="summaryGrid">
+              <article class="metric"><div class="k">선택 팀</div><div class="v" id="teamMetric">-</div></article>
+              <article class="metric"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></article>
+              <article class="metric"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></article>
+              <article class="metric"><div class="k">최단 MTPD / 최단 RTO</div><div class="v" id="timeMetric">-</div></article>
+            </div>
 
-        <div id="tableMount" class="tableWrap"></div>
-        <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
-          <button id="saveBtn" class="btn primary" type="button">저장</button>
-          <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
+            <div id="tableMount" class="tableWrap"></div>
+            <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+              <button id="saveBtn" class="btn primary" type="button">저장</button>
+              <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
+            </div>
+          </div>
+          <aside class="summaryAside">
+            <div id="stickySummaryMount"></div>
+          </aside>
         </div>
       </section>
     </div>
@@ -174,11 +312,20 @@
       };
 
       const teamSelect = document.getElementById('teamSelect');
+      const overviewTeamFilter = document.getElementById('overviewTeamFilter');
+      const overviewSort = document.getElementById('overviewSort');
+      const overviewSearch = document.getElementById('overviewSearch');
+      const overviewQuickFilters = document.getElementById('overviewQuickFilters');
+      const overviewTableMount = document.getElementById('overviewTableMount');
+      const globalKpi = document.getElementById('globalKpi');
+      const detailEditor = document.getElementById('detailEditor');
       const newFunctionName = document.getElementById('newFunctionName');
       const addFunctionBtn = document.getElementById('addFunctionBtn');
       const tableMount = document.getElementById('tableMount');
       const saveBtn = document.getElementById('saveBtn');
       const resetBtn = document.getElementById('resetBtn');
+      const stickySummaryMount = document.getElementById('stickySummaryMount');
+      const overviewSection = document.getElementById('overviewSection');
       const teamMetric = document.getElementById('teamMetric');
       const countMetric = document.getElementById('countMetric');
       const importantMetric = document.getElementById('importantMetric');
@@ -364,10 +511,241 @@
       const coreMap = new Map(coreRows.map((r) => [r.team, r.functions]));
       let biaRows = loadBiaData();
       const opened = new Set();
+      const scoreGuideOpened = new Set();
+      const animatedCounts = new Map();
+      const activeByTeam = new Map();
+      let dirtyState = false;
+      let lastSavedAt = null;
+      let overviewQuickMode = 'all';
 
       teamSelect.innerHTML = allTeams.length
         ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
         : '<option value="">등록된 팀이 없습니다</option>';
+
+
+      const toDurationText = (mins) => {
+        if (mins === null || mins === undefined) return '-';
+        if (mins >= 1440 && mins % 1440 === 0) return `${mins/1440}일`;
+        if (mins >= 60 && mins % 60 === 0) return `${mins/60}시간`;
+        return `${mins}분`;
+      };
+
+      const scoreGuideTemplate = () => `
+        <div class="scoreGuideInline" aria-label="영향평가 점수 기준">
+          <h3>영향평가 점수 기준</h3>
+          <div class="scoreGuideGrid">
+            <article class="scoreItem"><div class="n">1 경미함</div><ul><li>서비스 영향 거의 없음</li><li>내부 처리 가능</li><li>대외 영향 없음</li></ul></article>
+            <article class="scoreItem"><div class="n">2 작음</div><ul><li>일부 영향 있으나 대부분 수용 가능</li><li>평판/재무 영향 거의 없음</li></ul></article>
+            <article class="scoreItem"><div class="n">3 보통</div><ul><li>고객 불편 또는 민원 가능</li><li>제한적 평판 영향</li><li>감내 가능한 재무 영향</li></ul></article>
+            <article class="scoreItem"><div class="n">4 큼</div><ul><li>서비스 중단 영향이 큼</li><li>계약/법규/평판 영향 우려</li><li>복구 지연 시 수용 어려움</li></ul></article>
+            <article class="scoreItem"><div class="n">5 매우 큼</div><ul><li>핵심 서비스 지속 불가 수준</li><li>중대한 대외 영향</li><li>즉시 복구 필요 수준</li></ul></article>
+          </div>
+        </div>`;
+
+      const animateCount = (el, target) => {
+        const next = Number(target || 0);
+        const prev = animatedCounts.get(el.id);
+        if (prev === next) {
+          el.textContent = next.toLocaleString('ko-KR');
+          return;
+        }
+        animatedCounts.set(el.id, next);
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          el.textContent = String(next.toLocaleString('ko-KR'));
+          return;
+        }
+        const duration = 450;
+        const start = performance.now();
+        const from = Number(el.dataset.last || 0);
+        const step = (now) => {
+          const progress = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = Math.round(from + (next - from) * eased);
+          el.textContent = value.toLocaleString('ko-KR');
+          if (progress < 1) requestAnimationFrame(step);
+          else el.dataset.last = String(next);
+        };
+        requestAnimationFrame(step);
+      };
+
+      const computeGlobalMetrics = () => {
+        const teamCount = allTeams.length;
+        const coreCount = coreRows.reduce((acc, row) => acc + (Array.isArray(row.functions) ? row.functions.length : 0), 0);
+        const biaFunctions = biaRows.flatMap((r) => r.functions || []);
+        const importantCount = biaFunctions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length;
+        const biaCount = biaFunctions.length;
+        return { teamCount, coreCount, importantCount, biaCount };
+      };
+
+      const computeOverviewRows = () => allTeams.map((team) => {
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        const functions = row.functions || [];
+        const impacts = functions.filter((fn) => Number(fn.overallImpact || 0) >= 4).length;
+        const mtpd = functions.map((fn) => fn.mtpdMinutes).filter((n) => Number.isFinite(n));
+        const rto = functions.map((fn) => rtoToMinutes(fn.rtoValue, fn.rtoUnit)).filter((n) => Number.isFinite(n));
+        return {
+          team,
+          coreCount: functions.length,
+          importantCount: functions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length,
+          minMtpd: mtpd.length ? Math.min(...mtpd) : null,
+          minRto: rto.length ? Math.min(...rto) : null,
+          highImpact: impacts
+        };
+      });
+
+      const renderGlobalMetrics = () => {
+        const m = computeGlobalMetrics();
+        globalKpi.innerHTML = `
+          <article class="kpiCard"><div class="k">전체 부서 수</div><div class="v" id="kpiTeamCount">0</div></article>
+          <article class="kpiCard"><div class="k">전체 핵심업무 수</div><div class="v" id="kpiCoreCount">0</div></article>
+          <article class="kpiCard"><div class="k">전체 중요업무 수</div><div class="v" id="kpiImportantCount">0</div></article>
+          <article class="kpiCard"><div class="k">전체 BIA 등록 업무 수</div><div class="v" id="kpiBiaCount">0</div></article>`;
+        animateCount(document.getElementById('kpiTeamCount'), m.teamCount);
+        animateCount(document.getElementById('kpiCoreCount'), m.coreCount);
+        animateCount(document.getElementById('kpiImportantCount'), m.importantCount);
+        animateCount(document.getElementById('kpiBiaCount'), m.biaCount);
+      };
+
+      const renderOverviewTable = () => {
+        const selectedFilter = overviewTeamFilter.value || '전체';
+        const sortBy = overviewSort.value || 'name';
+        const q = String(overviewSearch?.value || '').trim().toLowerCase();
+        let rows = computeOverviewRows();
+        if (selectedFilter !== '전체') rows = rows.filter((r) => r.team === selectedFilter);
+        if (overviewQuickMode === 'important') rows = rows.filter((r) => r.importantCount > 0);
+        if (overviewQuickMode === 'high') rows = rows.filter((r) => r.highImpact > 0);
+        if (q) rows = rows.filter((r) => r.team.toLowerCase().includes(q));
+
+        rows.sort((a,b) => {
+          if (sortBy === 'coreDesc') return b.coreCount - a.coreCount || a.team.localeCompare(b.team, 'ko');
+          if (sortBy === 'importantDesc') return b.importantCount - a.importantCount || a.team.localeCompare(b.team, 'ko');
+          if (sortBy === 'highImpactDesc') return b.highImpact - a.highImpact || a.team.localeCompare(b.team, 'ko');
+          if (sortBy === 'rtoAsc') {
+            const ar = a.minRto ?? Number.MAX_SAFE_INTEGER;
+            const br = b.minRto ?? Number.MAX_SAFE_INTEGER;
+            return ar - br || a.team.localeCompare(b.team, 'ko');
+          }
+          return a.team.localeCompare(b.team, 'ko');
+        });
+
+        const maxCore = Math.max(1, ...rows.map((r)=>r.coreCount));
+        const maxImportant = Math.max(1, ...rows.map((r)=>r.importantCount));
+        const maxHigh = Math.max(1, ...rows.map((r)=>r.highImpact));
+
+        const bar = (v, max, warn=false) => `<span class="density ${warn?'warn':''}"><i style="width:${Math.round((v/max)*100)}%"></i></span>`;
+
+        overviewTableMount.innerHTML = rows.length ? `
+          <table class="overviewTable">
+            <thead><tr><th>부서명</th><th>핵심업무 수</th><th>중요업무 수</th><th>최단 MTPD</th><th>최단 RTO</th><th>고영향 업무 수(4↑)</th><th>관리</th></tr></thead>
+            <tbody>
+              ${rows.map((r) => {
+                const selected = teamSelect.value === r.team;
+                const highRisk = r.highImpact >= 3 || (r.minRto !== null && r.minRto <= 240);
+                return `
+                <tr class="clickRow ${selected ? 'active' : ''} ${highRisk ? 'risk-focus' : ''}" data-jump-team="${esc(r.team)}">
+                  <td>
+                    <div class="teamCell">
+                      <div class="teamName">${esc(r.team)} ${selected ? '<span class="rowFlag">선택됨</span>' : ''}</div>
+                      <div class="teamMeta">등록 ${r.coreCount}건 · 중요 ${r.importantCount}건</div>
+                    </div>
+                  </td>
+                  <td><div class="numStrong">${r.coreCount}</div>${bar(r.coreCount,maxCore)}</td>
+                  <td><div class="numStrong">${r.importantCount}</div>${bar(r.importantCount,maxImportant)}</td>
+                  <td><span class="chip">${toDurationText(r.minMtpd)}</span></td>
+                  <td><span class="chip ${r.minRto!==null && r.minRto<=240 ? 'rowFlag warn' : ''}">${toDurationText(r.minRto)}</span></td>
+                  <td><div class="highImpactCell"><div class="numStrong">${r.highImpact}</div><span class="hiBadge ${r.highImpact >= 2 ? 'high' : (r.highImpact === 1 ? 'low' : '')}">${r.highImpact === 0 ? '없음' : (r.highImpact === 1 ? '주의' : '집중')}</span>${r.highImpact > 0 ? bar(r.highImpact,maxHigh,true) : ''}</div></td>
+                  <td><button class="btn" type="button" data-jump-team="${esc(r.team)}">상세 편집</button></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>` : '<div class="empty">조건에 맞는 팀이 없습니다.</div>';
+      };
+
+      const renderOverviewFilters = () => {
+        const teamOpts = ['전체', ...allTeams];
+        const prev = overviewTeamFilter.value || '전체';
+        overviewTeamFilter.innerHTML = teamOpts.map((t) => `<option value="${esc(t)}" ${prev===t?'selected':''}>${esc(t)}</option>`).join('');
+      };
+
+      const markDirty = () => { dirtyState = true; };
+      const markSaved = () => { dirtyState = false; lastSavedAt = new Date(); };
+
+      const resolveActiveFunction = (team, functions) => {
+        if (!functions.length) return { fn:null, idx:-1 };
+        const remembered = activeByTeam.get(team);
+        if (Number.isInteger(remembered) && remembered >= 0 && remembered < functions.length) return { fn:functions[remembered], idx:remembered };
+        const recentOpened = [...opened].reverse().find((k) => k.startsWith(`${team}__`));
+        if (recentOpened) {
+          const idx = Number(recentOpened.split('__').pop());
+          if (Number.isInteger(idx) && idx >= 0 && idx < functions.length) {
+            activeByTeam.set(team, idx);
+            return { fn:functions[idx], idx };
+          }
+        }
+        activeByTeam.set(team, 0);
+        return { fn:functions[0], idx:0 };
+      };
+
+      const renderStickySummary = (team, functions) => {
+        if (!stickySummaryMount) return;
+        const highImpact = functions.filter((f) => Number(f.overallImpact || 0) >= 4).length;
+        const minMtpd = functions.map((f) => f.mtpdMinutes).filter((v) => Number.isFinite(v));
+        const minRto = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => Number.isFinite(v));
+        const active = resolveActiveFunction(team, functions);
+        const fn = active.fn;
+        const firstCritical = fn ? TIME_IMPACT_META.find((t) => Number(fn.timeImpact?.[t.key] || 1) >= 4) : null;
+        const maxImpact = fn ? Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1))) : null;
+        const warn = fn ? getRtoWarnText(fn) : '';
+        const saveStatus = dirtyState ? '<span class="statusPill status-dirty">저장 필요</span>' : '<span class="statusPill status-saved">저장 완료</span>';
+        stickySummaryMount.innerHTML = `
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">선택 팀 요약</h3>
+            <div class="kv">
+              <div class="k">팀</div><div><b>${esc(team || '-')}</b></div>
+              <div class="k">핵심업무 수</div><div>${functions.length}</div>
+              <div class="k">중요업무 수</div><div>${functions.filter((f)=>f.importance==='중요').length}</div>
+              <div class="k">고영향 업무 수</div><div>${highImpact}</div>
+              <div class="k">최단 MTPD</div><div>${toDurationText(minMtpd.length ? Math.min(...minMtpd) : null)}</div>
+              <div class="k">최단 RTO</div><div>${toDurationText(minRto.length ? Math.min(...minRto) : null)}</div>
+            </div>
+          </article>
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">현재 선택 업무</h3>
+            ${fn ? `
+              <div class="kv">
+                <div class="k">업무명</div><div><b>${esc(fn.name)}</b></div>
+                <div class="k">중요업무</div><div>${fn.importance}</div>
+                <div class="k">종합 영향도</div><div>${fn.overallImpact} ${impactLabels[Number(fn.overallImpact)] || ''}</div>
+                <div class="k">업무등급</div><div><span class="tag g-${fn.grade}">${fn.grade}</span></div>
+                <div class="k">MTPD / RTO</div><div>${esc(fn.mtpd || '-')} / ${esc(fn.rto || '-')}</div>
+                <div class="k">최고 시간경과 영향</div><div>${maxImpact || '-'} ${maxImpact ? impactLabels[maxImpact] : ''}</div>
+                <div class="k">영향도 4+ 최초 시점</div><div>${firstCritical ? firstCritical.label : '없음'}</div>
+                <div class="k">RTO 경고</div><div>${warn ? '있음' : '없음'}</div>
+              </div>
+              ${warn ? `<div class="warn" style="margin-top:8px;">${warn}</div>` : ''}
+              <div class="chipWrap" style="margin-top:9px;">
+                ${(fn.requiredResources || []).length ? fn.requiredResources.map((r)=>`<span class="chip">${esc(r)}</span>`).join('') : '<span class="muted">복구 필요자원 없음</span>'}
+              </div>
+            ` : '<div class="muted">선택된 업무가 없습니다.</div>'}
+          </article>
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">저장 상태</h3>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${saveStatus}<span class="muted">${lastSavedAt ? `마지막 저장: ${lastSavedAt.toLocaleString('ko-KR', { hour12:false })}` : '아직 저장 이력이 없습니다.'}</span></div>
+            <div class="compactActions">
+              <button class="btn primary" type="button" id="quickSaveBtn">저장</button>
+              <button class="btn" type="button" id="goOverviewBtn">총괄표로 이동</button>
+            </div>
+          </article>`;
+        stickySummaryMount.querySelector('#quickSaveBtn')?.addEventListener('click', () => saveBtn.click());
+        stickySummaryMount.querySelector('#goOverviewBtn')?.addEventListener('click', () => overviewSection?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start' }));
+      };
+
+      const renderStickySummaryOnly = () => {
+        const team = teamSelect.value;
+        if (!team) { renderStickySummary('', []); return; }
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        renderStickySummary(team, row.functions || []);
+      };
 
       const renderSummary = (team, functions) => {
         teamMetric.textContent = team || '-';
@@ -385,19 +763,25 @@
       };
 
       const render = () => {
+        renderGlobalMetrics();
+        renderOverviewFilters();
+        renderOverviewTable();
+
         const team = teamSelect.value;
         if (!team) {
           tableMount.innerHTML = '<div class="empty">선택 가능한 팀이 없습니다. 조직 관리 또는 핵심업무 레지스트리를 먼저 확인해 주세요.</div>';
           renderSummary('', []);
+          renderStickySummary('', []);
           return;
         }
 
         const row = ensureTeamRecord(team, coreMap, biaRows);
         const functions = row.functions || [];
         renderSummary(team, functions);
+        renderStickySummary(team, functions);
 
         if (!functions.length) {
-          tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 상단에서 업무를 추가해 주세요.</div>';
+          tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 아래에서 업무를 추가해 주세요.</div>';
           return;
         }
 
@@ -459,22 +843,37 @@
                         <div class="detailCard">
                           <div class="detailGrid">
                             <div>
-                              <h4 class="subTitle">시간경과 영향평가</h4>
+                              <div class="subHead">
+                                <h4 class="subTitle">시간경과 영향평가</h4>
+                                <button class="btn" type="button" data-guide-toggle="${idx}">${scoreGuideOpened.has(key) ? '영향도 기준 닫기' : '영향도 기준 보기'}</button>
+                              </div>
                               <div class="timeGrid">
-                                ${TIME_IMPACT_META.map((t, ti) => `
-                                  <div class="timeItem">
-                                    <label>${t.label}</label>
-                                    <select class="smallSelect" data-time-impact="${t.key}" data-idx="${idx}">
-                                      ${[1,2,3,4,5].map((n)=>{
-                                        const minAllowed = ti===0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti-1]] || 1);
-                                        return `<option value="${n}" ${Number(fn.timeImpact?.[t.key])===n?'selected':''} ${n<minAllowed?'disabled':''}>${n} ${impactLabels[n]}</option>`;
-                                      }).join('')}
-                                    </select>
-                                  </div>
-                                `).join('')}
+                                ${TIME_IMPACT_META.map((t, ti) => {
+                                  const minAllowed = ti===0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti-1]] || 1);
+                                  const currentScore = Number(fn.timeImpact?.[t.key] || 1);
+                                  const firstMtpd = TIME_IMPACT_META.find((x)=>Number(fn.timeImpact?.[x.key]||1)>=4);
+                                  const isMtpdPoint = firstMtpd && firstMtpd.key === t.key;
+                                  return `
+                                    <article class="timeStep">
+                                      <div class="timeStepTop">
+                                        <div class="timeStepLabel">${t.label}</div>
+                                        ${isMtpdPoint ? '<span class="mtpdBadge">MTPD</span>' : ''}
+                                      </div>
+                                      <div class="timeStepValue">현재: ${currentScore} ${impactLabels[currentScore]}</div>
+                                      <div class="scoreBtns" role="group" aria-label="${t.label} 영향도 선택">
+                                        ${[1,2,3,4,5].map((n)=>`<button type="button" class="scoreBtn" data-time-impact-btn="${t.key}" data-idx="${idx}" data-score="${n}" aria-pressed="${currentScore===n?'true':'false'}" ${n<minAllowed?'disabled':''}>${n}</button>`).join('')}
+                                      </div>
+                                      ${minAllowed > 1 ? `<div class="timeHint">이전 시점보다 낮게 설정할 수 없습니다. (최소 ${minAllowed})</div>` : ''}
+                                    </article>
+                                  `;
+                                }).join('')}
+                              </div>
+                              ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
+                              <div class="timeSummaryLine">
+                                <span class="chip">최고 영향 수준: ${Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))} ${impactLabels[Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))]}</span>
+                                <span class="chip">최대허용중단시간(MTPD): <b style="margin-left:4px;">${esc(fn.mtpd || '장기 허용')}</b></span>
                               </div>
                               <div class="miniHelp">- 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>- 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>- 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.</div>
-                              <div class="muted" style="margin-top:8px;">최대허용중단시간(MTPD): <b>${esc(fn.mtpd || '장기 허용')}</b></div>
                             </div>
                             <div>
                               <h4 class="subTitle">RTO 설정 근거</h4>
@@ -532,14 +931,12 @@
         const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
         if (!detail) return;
 
-        const selects = detail.querySelectorAll('select[data-time-impact]');
-        selects.forEach((sel, i) => {
-          const key = sel.getAttribute('data-time-impact');
+        TIME_KEYS.forEach((key, i) => {
           const minAllowed = i === 0 ? 1 : Number(fn.timeImpact[TIME_KEYS[i-1]] || 1);
-          sel.value = String(fn.timeImpact[key] || minAllowed);
-          [...sel.options].forEach((op) => {
-            const n = Number(op.value);
-            op.disabled = n < minAllowed;
+          detail.querySelectorAll(`button[data-time-impact-btn="${key}"]`).forEach((btn) => {
+            const n = Number(btn.getAttribute('data-score'));
+            btn.disabled = n < minAllowed;
+            btn.setAttribute('aria-pressed', String(Number(fn.timeImpact[key] || 1) === n));
           });
         });
       };
@@ -594,9 +991,11 @@
         if (field === 'rtoReason') fn.rtoReason = String(value || '');
 
         recalcFunction(fn);
+        markDirty();
         if (!opts.skipUiUpdate) {
           refreshRowCells(idx);
           renderSummaryOnly();
+          renderStickySummaryOnly();
         }
       };
 
@@ -613,6 +1012,24 @@
       if (normalizedChanged) saveBiaData(biaRows);
 
       teamSelect.addEventListener('change', () => render());
+      overviewTeamFilter.addEventListener('change', () => renderOverviewTable());
+      overviewSort.addEventListener('change', () => renderOverviewTable());
+      overviewSearch?.addEventListener('input', () => renderOverviewTable());
+      overviewQuickFilters?.addEventListener('click', (e) => {
+        const mode = e.target.getAttribute('data-quick');
+        if (!mode) return;
+        overviewQuickMode = mode;
+        overviewQuickFilters.querySelectorAll('.quickChip').forEach((x)=>x.classList.toggle('active', x.getAttribute('data-quick')===mode));
+        renderOverviewTable();
+      });
+
+      overviewTableMount.addEventListener('click', (e) => {
+        const team = e.target.closest('[data-jump-team]')?.getAttribute('data-jump-team');
+        if (!team) return;
+        teamSelect.value = team;
+        render();
+        detailEditor.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      });
 
       tableMount.addEventListener('change', (e) => {
         const tr = e.target.closest('tr[data-idx]');
@@ -620,22 +1037,6 @@
 
         if (e.target.hasAttribute('data-field')) {
           updateFnField(idx, e.target.getAttribute('data-field'), e.target.value);
-          return;
-        }
-
-        const tKey = e.target.getAttribute('data-time-impact');
-        if (tKey) {
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[idx];
-          if (!fn) return;
-            const tIndex = TIME_KEYS.indexOf(tKey);
-          fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
-          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
-          recalcFunction(fn);
-          refreshTimeImpactControls(idx);
-          refreshRowCells(idx);
-          renderSummaryOnly();
           return;
         }
 
@@ -649,6 +1050,8 @@
           if (e.target.checked) set.add(res);
           else set.delete(res);
           fn.requiredResources = [...set];
+          markDirty();
+          renderStickySummaryOnly();
         }
       });
 
@@ -664,6 +1067,37 @@
 
 
       tableMount.addEventListener('click', (e) => {
+        const tKeyBtn = e.target.getAttribute('data-time-impact-btn');
+        if (tKeyBtn) {
+          const idx = Number(e.target.getAttribute('data-idx'));
+          if (!Number.isFinite(idx)) return;
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[idx];
+          if (!fn) return;
+          const tIndex = TIME_KEYS.indexOf(tKeyBtn);
+          const score = clamp(Number(e.target.getAttribute('data-score') || 1), 1, 5);
+          fn.timeImpact[tKeyBtn] = score;
+          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
+          recalcFunction(fn);
+          markDirty();
+          render();
+          return;
+        }
+
+        const guideIdx = e.target.getAttribute('data-guide-toggle');
+        if (guideIdx != null) {
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[Number(guideIdx)];
+          if (!fn) return;
+          const key = `${team}__${fn.name}__${guideIdx}`;
+          if (scoreGuideOpened.has(key)) scoreGuideOpened.delete(key);
+          else scoreGuideOpened.add(key);
+          render();
+          return;
+        }
+
         const toggleIdx = e.target.getAttribute('data-toggle');
         if (toggleIdx != null) {
           const team = teamSelect.value;
@@ -672,7 +1106,7 @@
           if (!fn) return;
           const key = `${team}__${fn.name}__${toggleIdx}`;
           if (opened.has(key)) opened.delete(key);
-          else opened.add(key);
+          else { opened.add(key); activeByTeam.set(team, Number(toggleIdx)); }
           render();
           return;
         }
@@ -681,7 +1115,14 @@
         if (del == null) return;
         const team = teamSelect.value;
         const row = ensureTeamRecord(team, coreMap, biaRows);
-        row.functions.splice(Number(del), 1);
+        const delIdx = Number(del);
+        row.functions.splice(delIdx, 1);
+        markDirty();
+        const currentActive = activeByTeam.get(team);
+        if (Number.isInteger(currentActive)) {
+          if (currentActive === delIdx) activeByTeam.delete(team);
+          else if (currentActive > delIdx) activeByTeam.set(team, currentActive - 1);
+        }
         render();
       });
 
@@ -696,6 +1137,7 @@
           return;
         }
         row.functions.push(normalizeFunction({ name }));
+        markDirty();
         newFunctionName.value = '';
         render();
       });
@@ -734,6 +1176,7 @@
           .filter((row) => row.team);
 
         saveBiaData(biaRows);
+        markSaved();
         alert('BIA 데이터가 저장되었습니다.');
         render();
       });
@@ -743,6 +1186,7 @@
         if (!team) return;
         const row = ensureTeamRecord(team, coreMap, biaRows);
         row.functions = (coreMap.get(team) || []).map((name) => normalizeFunction({ name }));
+        markDirty();
         render();
       });
 
