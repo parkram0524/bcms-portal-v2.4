@@ -267,6 +267,13 @@
     .pill.c3{ border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.10); }
 
     .muted{ color: var(--muted); }
+
+    .barList{ display:flex; flex-direction:column; gap:8px; }
+    .barRow{ display:grid; grid-template-columns: 140px 1fr 46px; gap:8px; align-items:center; }
+    .barName{ font-size:13px; color:var(--muted); font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .barTrack{ height:9px; background:rgba(15,23,42,.08); border-radius:999px; overflow:hidden; }
+    .barFill{ height:100%; background:rgba(37,99,235,.55); border-radius:999px; }
+    .barVal{ font-size:12px; color:var(--muted2); text-align:right; font-weight:900; }
   </style>
 </head>
 
@@ -347,6 +354,24 @@
           <div class="tileValue" id="kpiCapaOpen" data-countup="0">0</div>
           <div class="tileMeta">미완료/미착수/진행중 상태</div>
         </div>
+
+        <div class="tile">
+          <div class="tileTop">
+            <div class="tileLabel">진행중 Incident</div>
+            <div class="badge" id="incidentBadge">-</div>
+          </div>
+          <div class="tileValue" id="kpiIncidentOpen" data-countup="0">0</div>
+          <div class="tileMeta">종료/Resolved 제외</div>
+        </div>
+
+        <div class="tile">
+          <div class="tileTop">
+            <div class="tileLabel">BCP 가동 중</div>
+            <div class="badge" id="bcpActiveBadge">-</div>
+          </div>
+          <div class="tileValue" id="kpiBcpActivated" data-countup="0">0</div>
+          <div class="tileMeta">incident 기반 BCP 활성 상태</div>
+        </div>
       </div>
 
       <div class="grid">
@@ -415,11 +440,55 @@
 
         <div class="panel" style="grid-column: span 4;">
           <div class="panelTitle">
-            <h3>🔥 우선순위 TOP 3</h3>
+            <h3>🔥 우선순위 TOP 5</h3>
             <div class="panelHint">“지금 먼저”</div>
           </div>
           <div class="list" id="topList">
             <div class="muted">데이터를 불러오는 중…</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:16px;"></div>
+
+      <div class="grid">
+        <div class="panel" style="grid-column: span 6;">
+          <div class="panelTitle">
+            <h3>🚨 Incident 요약</h3>
+            <div class="panelHint" id="incidentHint">-</div>
+          </div>
+          <div class="list" id="incidentListHome"><div class="muted">데이터를 불러오는 중…</div></div>
+        </div>
+        <div class="panel" style="grid-column: span 6;">
+          <div class="panelTitle">
+            <h3>🗂 Evidence / CAPA 요약</h3>
+            <div class="panelHint" id="opsHint">-</div>
+          </div>
+          <div class="list" id="opsListHome"><div class="muted">데이터를 불러오는 중…</div></div>
+        </div>
+      </div>
+
+      <div style="height:16px;"></div>
+
+      <div class="grid">
+        <div class="panel" style="grid-column: span 12;">
+          <div class="panelTitle">
+            <h3>📊 운영 인사이트 (팀별)</h3>
+            <div class="panelHint">핵심업무 · BIA · Incident 영향 빈도</div>
+          </div>
+          <div class="grid" style="gap:12px;">
+            <div class="panel" style="grid-column: span 4; padding:12px;">
+              <div class="panelHint" style="margin-bottom:8px; font-weight:900; color:var(--ink);">팀별 핵심업무</div>
+              <div id="teamCoreBars" class="barList"><div class="muted">데이터 없음</div></div>
+            </div>
+            <div class="panel" style="grid-column: span 4; padding:12px;">
+              <div class="panelHint" style="margin-bottom:8px; font-weight:900; color:var(--ink);">팀별 BIA 등록</div>
+              <div id="teamBiaBars" class="barList"><div class="muted">데이터 없음</div></div>
+            </div>
+            <div class="panel" style="grid-column: span 4; padding:12px;">
+              <div class="panelHint" style="margin-bottom:8px; font-weight:900; color:var(--ink);">팀별 Incident 연계</div>
+              <div id="teamIncidentBars" class="barList"><div class="muted">데이터 없음</div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -512,6 +581,156 @@
       return rows.filter((item) => !doneStatuses.has(String(item?.status || '').trim().toLowerCase())).length;
     }
 
+    function hasValue(v){
+      return v !== null && v !== undefined && String(v).trim() !== '';
+    }
+
+    function asText(v){
+      return String(v || '').trim();
+    }
+
+    function pickFirst(obj, keys, fallback = null){
+      for(const k of keys){
+        if(hasValue(obj?.[k])) return obj[k];
+      }
+      return fallback;
+    }
+
+    function normalizeStringList(value){
+      if(Array.isArray(value)) return [...new Set(value.map((x)=> asText(x?.teamName || x?.name || x)).filter(Boolean))];
+      if(typeof value === 'string') return [...new Set(value.split(',').map((x)=>x.trim()).filter(Boolean))];
+      return [];
+    }
+
+    function parseHours(value){
+      if(value === null || value === undefined || value === '') return null;
+      if(typeof value === 'number' && Number.isFinite(value)) return value;
+      const s = String(value).trim().toLowerCase();
+      const m = s.match(/[0-9]+(?:\.[0-9]+)?/);
+      const n = m ? Number(m[0]) : NaN;
+      if(!Number.isFinite(n)) return null;
+      if(s.includes('일') || /\bd\b/.test(s)) return n * 24;
+      if(s.includes('시간') || s.includes('hour') || /\bh\b/.test(s)) return n;
+      if(s.includes('분') || s.includes('min')) return n / 60;
+      return n;
+    }
+
+    function toTime(v){
+      if(!hasValue(v)) return 0;
+      const t = new Date(v).getTime();
+      return Number.isFinite(t) ? t : 0;
+    }
+
+    function readArrayByKeys(keys, fallback = []){
+      for(const key of keys){
+        const raw = localStorage.getItem(key);
+        const parsed = safeJSONParse(raw || 'null', null);
+        if(Array.isArray(parsed)) return parsed;
+      }
+      return fallback;
+    }
+
+    function collectIncidentRows(){
+      let rows = [];
+      const unified = safeJSONParse(localStorage.getItem('bcmsIncidents') || 'null', null);
+      if(Array.isArray(unified)) rows = rows.concat(unified);
+      if(unified && typeof unified === 'object'){
+        if(unified.currentIncident && typeof unified.currentIncident === 'object') rows.push(unified.currentIncident);
+        if(Array.isArray(unified.logs)) rows = rows.concat(unified.logs);
+      }
+
+      const legacy = safeJSONParse(localStorage.getItem('bcms_incidents_v1') || 'null', null);
+      if(Array.isArray(legacy)) rows = rows.concat(legacy);
+      if(legacy && typeof legacy === 'object'){
+        if(legacy.currentIncident && typeof legacy.currentIncident === 'object') rows.push(legacy.currentIncident);
+        if(Array.isArray(legacy.logs)) rows = rows.concat(legacy.logs);
+      }
+
+      const execRows = readArrayByKeys(['bcmsIncidentExecution'], []);
+      execRows.forEach((row)=>{
+        const incidentId = asText(row?.incidentId || row?.id);
+        if(!incidentId) return;
+        rows.push({
+          incidentId,
+          status: row?.status || row?.currentStatus || '',
+          severity: row?.severity || row?.level || '',
+          affectedServices: row?.affectedServices || row?.services || row?.serviceNames || [],
+          relatedTeams: row?.relatedTeams || row?.relatedOrgs || row?.relatedOrgUnits || [],
+          currentStage: row?.currentStage || row?.phase || '',
+          startedAt: row?.startedAt || row?.createdAt || '',
+          endedAt: row?.endedAt || ''
+        });
+      });
+
+      const normalized = rows.map((row, idx)=>{
+        const incidentId = asText(pickFirst(row, ['incidentId','id','incidentID','incidentRef','incidentCode'], `INC-${idx+1}`));
+        const status = asText(pickFirst(row, ['status','currentStatus','state'], '-'));
+        const severity = asText(pickFirst(row, ['severity','level'], '-'));
+        const affectedServices = normalizeStringList(row.affectedServices ?? row.services ?? row.impactedServices ?? row.selectedServices ?? row.serviceNames);
+        const relatedTeams = normalizeStringList(row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits);
+        const startedAt = pickFirst(row, ['startedAt','startTime','createdAt','incidentStartTime','openedAt'], null);
+        const endedAt = pickFirst(row, ['endedAt','endTime','closedAt','resolvedAt'], null);
+        const lowered = status.toLowerCase();
+        const isClosed = hasValue(endedAt) || ['종료','종료됨','closed','resolved','종결','복구 완료'].includes(lowered);
+        return { incidentId, status, severity, affectedServices, relatedTeams, currentStage: asText(pickFirst(row, ['currentStage','responseStage','phase','step'], '-')), startedAt, endedAt, isClosed };
+      }).filter((x)=>x.incidentId);
+
+      const byId = new Map();
+      normalized.forEach((item)=>{
+        const prev = byId.get(item.incidentId);
+        if(!prev) { byId.set(item.incidentId, item); return; }
+        byId.set(item.incidentId, {
+          ...prev,
+          ...item,
+          affectedServices: item.affectedServices.length ? item.affectedServices : prev.affectedServices,
+          relatedTeams: item.relatedTeams.length ? item.relatedTeams : prev.relatedTeams,
+          startedAt: hasValue(item.startedAt) ? item.startedAt : prev.startedAt,
+          endedAt: hasValue(item.endedAt) ? item.endedAt : prev.endedAt,
+          isClosed: item.isClosed || prev.isClosed
+        });
+      });
+      return [...byId.values()];
+    }
+
+    function getEvidenceRows(){
+      const rows = readArrayByKeys(['bcmsEvidenceItems','bcms_audit_evidence_v1'], []);
+      return rows.filter((x)=>x && typeof x === 'object');
+    }
+
+    function getActionRows(){
+      const rows = readArrayByKeys(['bcmsActionItems','bcmsCapaItems','bcms_capa_v1'], []);
+      return rows.filter((x)=>x && typeof x === 'object');
+    }
+
+    function getBcpAssessRows(){
+      const rows = readArrayByKeys(['bcmsBcpAssessments'], []);
+      return rows.filter((x)=>x && typeof x === 'object');
+    }
+
+    function countBy(rows, keyFn){
+      const map = new Map();
+      rows.forEach((r)=>{
+        const k = asText(keyFn(r));
+        if(!k) return;
+        map.set(k, (map.get(k) || 0) + 1);
+      });
+      return [...map.entries()].map(([name, value])=>({name, value})).sort((a,b)=>b.value-a.value).slice(0,5);
+    }
+
+    function renderBarList(elId, items){
+      const el = document.getElementById(elId);
+      if(!el) return;
+      if(!items.length){ el.innerHTML = '<div class="muted">데이터 없음</div>'; return; }
+      const max = Math.max(...items.map((x)=>x.value), 1);
+      el.innerHTML = items.map((x)=>`
+        <div class="barRow">
+          <div class="barName">${x.name}</div>
+          <div class="barTrack"><div class="barFill" style="width:${Math.round((x.value/max)*100)}%"></div></div>
+          <div class="barVal">${formatCount(x.value)}</div>
+        </div>
+      `).join('');
+    }
+
     function formatCount(value){
       return Number(value || 0).toLocaleString('ko-KR');
     }
@@ -561,10 +780,46 @@
     function renderHome(){
       const riskRows = getRiskRows();
       const biaRows = getBiaRows();
+      const coreRows = getCoreFunctionsRows();
       const coreFinalCount = getCoreFinalCount();
+      const incidents = collectIncidentRows();
+      const activeIncidents = incidents.filter((x)=>!x.isClosed);
+      const closedWithDuration = incidents.filter((x)=>x.isClosed && toTime(x.startedAt) && toTime(x.endedAt));
 
       const risksCount = riskRows.length;
       const procsCount = biaRows.length;
+      const criticalRisks = riskRows.filter((r)=> Number(r.riskScore || 0) >= 13 || r.critical === true || r.isPriority === true);
+      const highestRisk = riskRows.length ? Math.max(...riskRows.map((r)=> Number(r.riskScore || 0) || 0)) : 0;
+
+      const impactVals = biaRows.map((r)=> Number(r?.impactScore ?? r?.impact ?? r?.overallImpact ?? 0)).filter((n)=>Number.isFinite(n) && n>0);
+      const avgImpact = impactVals.length ? (impactVals.reduce((a,b)=>a+b,0) / impactVals.length) : 0;
+      const rtoWithin4h = biaRows.filter((r)=> {
+        const h = parseHours(r?.rto || r?.rtoHours || r?.rtoTarget);
+        return h !== null && h <= 4;
+      }).length;
+
+      const recent30Incidents = incidents.filter((x)=> toTime(x.startedAt) >= (Date.now() - (30*24*60*60*1000)));
+      const severeIncidents = incidents.filter((x)=> /심각|높음|critical|high/i.test(String(x.severity || '')));
+      const mttr = closedWithDuration.length
+        ? (closedWithDuration.reduce((acc, r)=> acc + ((toTime(r.endedAt)-toTime(r.startedAt))/3600000), 0) / closedWithDuration.length)
+        : null;
+
+      const evidenceRows = getEvidenceRows();
+      const pendingEvidence = evidenceRows.filter((x)=> /미확인|pending/i.test(String(x?.status || ''))).length;
+      const recentEvidence = [...evidenceRows].sort((a,b)=> toTime(b.createdAt || b.updatedAt) - toTime(a.createdAt || a.updatedAt)).slice(0,5);
+
+      const actionRows = getActionRows();
+      const openActions = actionRows.filter((x)=> !/완료|종료|종결|closed|done|resolved/i.test(String(x?.status || '')));
+      const urgentActions = openActions.filter((x)=> {
+        const due = toTime(x?.dueDate || x?.deadline || x?.targetDate);
+        return due > 0 && due <= (Date.now() + 7*24*60*60*1000);
+      });
+      const recentActions = [...actionRows].sort((a,b)=> toTime(b.updatedAt || b.createdAt) - toTime(a.updatedAt || a.createdAt)).slice(0,5);
+
+      const bcpAssess = getBcpAssessRows();
+      const bcpReview = bcpAssess.filter((x)=> String(x.status || '').toLowerCase() === 'review').length;
+      const bcpRecommended = bcpAssess.filter((x)=> String(x.status || '').toLowerCase() === 'recommended').length;
+      const bcpActivated = bcpAssess.filter((x)=> String(x.status || '').toLowerCase() === 'activated').length;
 
       const trainings = getTrainingRecords();
       const bcpTrainingCount = trainings.filter((x) => /bcp/i.test(`${x?.type || ''} ${x?.title || ''}`)).length;
@@ -577,7 +832,9 @@
         { el: document.getElementById("kpiCore"), value: coreFinalCount },
         { el: document.getElementById("kpiBcpTrain"), value: bcpTrainingCount },
         { el: document.getElementById("kpiDrTest"), value: drTestCount },
-        { el: document.getElementById("kpiCapaOpen"), value: capaOpenCount }
+        { el: document.getElementById("kpiCapaOpen"), value: capaOpenCount },
+        { el: document.getElementById("kpiIncidentOpen"), value: activeIncidents.length },
+        { el: document.getElementById("kpiBcpActivated"), value: bcpActivated }
       ];
       runCountUpWhenVisible(kpiItems);
 
@@ -605,8 +862,16 @@
       capaBadge.className = "badge " + (capaOpenCount > 0 ? "warn" : "ok");
       capaBadge.textContent = (capaOpenCount > 0 ? "조치 필요" : "양호");
 
+      const incidentBadge = document.getElementById("incidentBadge");
+      incidentBadge.className = "badge " + (activeIncidents.length > 0 ? "warn" : "ok");
+      incidentBadge.textContent = activeIncidents.length > 0 ? "대응중" : "안정";
+
+      const bcpActiveBadge = document.getElementById("bcpActiveBadge");
+      bcpActiveBadge.className = "badge " + (bcpActivated > 0 ? "warn" : "ok");
+      bcpActiveBadge.textContent = bcpActivated > 0 ? "가동" : "미가동";
+
       const scored = [...riskRows].sort((a,b)=> b.riskScore - a.riskScore);
-      const top3 = scored.slice(0,3);
+      const top3 = scored.slice(0,5);
 
       const topList = document.getElementById("topList");
       if(top3.length === 0){
@@ -645,17 +910,50 @@
       const todayHint = document.getElementById("todayHint");
       const todaySummary = document.getElementById("todaySummary");
 
+      const incidentHint = document.getElementById("incidentHint");
+      const incidentListHome = document.getElementById("incidentListHome");
+      incidentHint.textContent = `진행중 ${formatCount(activeIncidents.length)} · 최근30일 ${formatCount(recent30Incidents.length)} · 심각 ${formatCount(severeIncidents.length)} · MTTR ${mttr === null ? '-' : `${mttr.toFixed(1)}h`}`;
+      incidentListHome.innerHTML = activeIncidents.length
+        ? activeIncidents.slice(0,5).map((x)=>`
+          <div class="rowItem">
+            <div class="rowLeft">
+              <div class="rowTitle">${x.incidentId}</div>
+              <div class="rowSub">${x.status} / ${x.severity} / ${x.currentStage || '-'}</div>
+            </div>
+            <div class="pill c1">${formatCount((x.affectedServices||[]).length)} 서비스</div>
+          </div>`).join('')
+        : '<div class="muted">진행중 Incident가 없습니다.</div>';
+
+      const opsHint = document.getElementById("opsHint");
+      const opsListHome = document.getElementById("opsListHome");
+      opsHint.textContent = `미확인 증적 ${formatCount(pendingEvidence)} · 미완료 조치 ${formatCount(openActions.length)} · 기한임박 ${formatCount(urgentActions.length)}`;
+      opsListHome.innerHTML = `
+        <div class="rowItem"><div class="rowLeft"><div class="rowTitle">최근 증적</div><div class="rowSub">${recentEvidence.length ? recentEvidence.map((x)=>x.title || x.name || '증적').slice(0,2).join(' · ') : '데이터 없음'}</div></div><div class="pill c2">${formatCount(recentEvidence.length)}건</div></div>
+        <div class="rowItem"><div class="rowLeft"><div class="rowTitle">최근 개선조치</div><div class="rowSub">${recentActions.length ? recentActions.map((x)=>x.title || x.actionName || '개선조치').slice(0,2).join(' · ') : '데이터 없음'}</div></div><div class="pill c1">${formatCount(recentActions.length)}건</div></div>
+        <div class="rowItem"><div class="rowLeft"><div class="rowTitle">BCP 판단</div><div class="rowSub">검토 ${formatCount(bcpReview)} · 권고 ${formatCount(bcpRecommended)} · 가동 ${formatCount(bcpActivated)}</div></div><div class="pill c0">연속성</div></div>
+      `;
+
+      const coreTeamTop = countBy(coreRows.flatMap((r)=> (Array.isArray(r?.functions) ? r.functions.map(()=>({team: r.team || '팀 미지정'})) : [])), (x)=>x.team || '팀 미지정');
+      const biaTeamTop = countBy(biaRows, (x)=>x.team || x.ownerTeam || '팀 미지정');
+      const incidentTeamTop = countBy(incidents.flatMap((x)=> (x.relatedTeams || []).map((t)=>({team:t}))), (x)=>x.team || '팀 미지정');
+      renderBarList('teamCoreBars', coreTeamTop);
+      renderBarList('teamBiaBars', biaTeamTop);
+      renderBarList('teamIncidentBars', incidentTeamTop);
+
       if(procsCount === 0){
         todayHint.textContent = "다음: BIA 등록";
         todaySummary.innerHTML = `현재 <b>BIA 등록 업무가 없어</b> 우선순위를 계산할 수 없습니다.<br/>
         <a href="risk-bia/bia.html" style="color:var(--accent); text-decoration:none; font-weight:900;">BIA에서 업무를 먼저 등록하세요</a>.`;
       }else{
         todayHint.textContent = "운영 지표 요약";
-        todaySummary.innerHTML = `핵심업무 <b>${formatCount(coreFinalCount)}건</b> 확정 · BIA 등록 <b>${formatCount(procsCount)}건</b> · 중점 리스크 <b>${formatCount(risksCount)}건</b>입니다.<br/>
-        리스크 상위 항목부터 대응 전략/훈련 계획을 연계해 주세요.`;
+        todaySummary.innerHTML = `핵심업무(확정) <b>${formatCount(coreFinalCount)}건</b> · BIA <b>${formatCount(procsCount)}건</b> · 평균 영향도 <b>${avgImpact.toFixed(1)}</b> · RTO 4시간 이내 <b>${formatCount(rtoWithin4h)}건</b>입니다.<br/>
+        중점관리 리스크 <b>${formatCount(criticalRisks.length)}건</b>(최고 ${formatCount(highestRisk)}점), 진행중 Incident <b>${formatCount(activeIncidents.length)}건</b>, 미확인 증적 <b>${formatCount(pendingEvidence)}건</b>, 미완료 조치 <b>${formatCount(openActions.length)}건</b>, BCP 권고 <b>${formatCount(bcpRecommended)}건</b>입니다.`;
       }
     }
 
+    document.addEventListener('DOMContentLoaded', renderHome);
+    window.addEventListener('focus', renderHome);
+    window.addEventListener('storage', renderHome);
     renderHome();
   </script>
 </body>
