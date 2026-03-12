@@ -447,6 +447,7 @@
                 <summary>전략 요약 보기</summary>
                 <div id="bcpDetailList" class="mini"></div>
               </details>
+              <button class="btn" id="btnActivateBcp" type="button">BCP 가동</button>
               <a class="btn" href="../strategy-plans/bcp.html">BCP 전략 관리</a>
             </section>
           </div>
@@ -549,6 +550,7 @@
       const BCP_KEY = 'bcmsBCP';
       const DRP_KEY = 'bcmsDRP';
       const EXECUTION_KEY = 'bcmsIncidentExecution';
+      const BCP_ASSESS_KEY = 'bcmsBcpAssessments';
 
       const RESPONSE_MODES = ['SOP', 'EOP', 'DRP', 'BCP', '종료'];
       const TERMINAL_STATUSES = ['종료', '복구 완료', '종결'];
@@ -633,6 +635,7 @@
       const bcpNeedText = document.getElementById('bcpNeedText');
       const drpDetailList = document.getElementById('drpDetailList');
       const bcpDetailList = document.getElementById('bcpDetailList');
+      const btnActivateBcp = document.getElementById('btnActivateBcp');
 
       const progressSummary = document.getElementById('progressSummary');
       const checkModes = document.getElementById('checkModes');
@@ -1364,6 +1367,105 @@
         return Math.round(n);
       };
 
+      const parseRtoHours = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        const s = String(value).trim().toLowerCase();
+        const m = s.match(/[0-9]+(?:\.[0-9]+)?/);
+        const n = toNum(m ? m[0] : null);
+        if (n === null) return null;
+        if (s.includes('일') || /\bdd?\b/.test(s)) return n * 24;
+        if (s.includes('시간') || s.includes('hour') || /\bh\b/.test(s)) return n;
+        if (s.includes('분') || s.includes('min')) return Math.round((n / 60) * 10) / 10;
+        return n;
+      };
+
+      const parseEstimatedRecoveryHours = (incident = {}) => {
+        const raw = pickFirst(incident, [
+          'estimatedRecoveryTime', 'expectedRecoveryTime', 'recoveryEtaHours', 'recoveryHours',
+          'downtimeEstimate', 'estimatedDowntime', 'expectedDowntime', 'recoveryTarget'
+        ], null);
+        return parseRtoHours(raw);
+      };
+
+      const getBcpAssessments = () => {
+        const rows = store.get(BCP_ASSESS_KEY, []);
+        return Array.isArray(rows) ? rows : [];
+      };
+
+      const saveBcpAssessment = (assessment) => {
+        if (!assessment || !assessment.incidentId) return;
+        const rows = getBcpAssessments();
+        const idx = rows.findIndex((r) => String(r?.incidentId || '') === String(assessment.incidentId));
+        if (idx >= 0) rows[idx] = { ...rows[idx], ...assessment };
+        else rows.push(assessment);
+        localStorage.setItem(BCP_ASSESS_KEY, JSON.stringify(rows));
+      };
+
+      const assessBcpForIncident = (incident, matched) => {
+        const manualActivated = ['activated', '가동', '가동중'].includes(String(incident?.bcpStatus || '').toLowerCase())
+          || incident?.bcpActivated === true
+          || incident?.continuityStatus === 'activated'
+          || incident?.currentResponseMode === 'BCP';
+
+        const coreFns = toArray(incident?.relatedCoreFunctions);
+        const rtoCandidates = coreFns.map((fn) => parseRtoHours(fn?.rto)).filter((v) => Number.isFinite(v));
+        const linkedRtoHours = rtoCandidates.length ? Math.min(...rtoCandidates) : null;
+        const estimatedRecoveryHours = parseEstimatedRecoveryHours(incident);
+
+        const reasons = [];
+        const reasonCodes = [];
+        const addReason = (code, text) => {
+          if (reasonCodes.includes(code)) return;
+          reasonCodes.push(code);
+          reasons.push(text);
+        };
+
+        if (linkedRtoHours !== null && estimatedRecoveryHours !== null && estimatedRecoveryHours > linkedRtoHours) {
+          addReason('RTO_EXCEEDED', `복구예상시간(${estimatedRecoveryHours}h)이 최소 RTO(${linkedRtoHours}h)를 초과합니다.`);
+        }
+
+        const incidentText = `${incident?.status || ''} ${incident?.severity || ''} ${incident?.currentStage || ''} ${incident?.finalSummary || ''} ${incident?.preventionMemo || ''} ${(incident?.impactedServiceNames || []).join(' ')}`.toLowerCase();
+        if (/(전원|정전|ups|발전기|냉각|공조|온도|화재|연기|방재|출입 불가|접근 불가|건물|센터|idc|시설|대체 근무|재택 전환|인력 부족)/.test(incidentText)) {
+          addReason('FACILITY_OR_WORKPLACE_DISRUPTION', '시설/업무환경/인력 접근 제약 정황이 있어 BCP 검토가 필요합니다.');
+        }
+
+        const highestImpact = Math.max(0, ...coreFns.map((fn) => Number(fn?.impact || 0) || 0));
+        if ((['high', 'critical', '높음', '심각'].includes(String(incident?.severity || '').toLowerCase())) && highestImpact >= 4) {
+          addReason('CRITICAL_BUSINESS_IMPACT', '핵심업무 영향도가 높고 심각도도 높아 연속성 대응 검토가 필요합니다.');
+        }
+
+        const matchedRisks = toArray(incident?.matchedRisks);
+        if (matchedRisks.some((r) => Number(r?.riskScore || 0) >= 13) && /(중단|장기|격리|자원 상실|업무 공백)/.test(incidentText)) {
+          addReason('PRIORITY_RISK_LINKED', '중점관리 리스크와 연계되어 BCP 대응 검토가 필요합니다.');
+        }
+
+        if ((toArray(incident?.impactedServiceNames).length >= 2 || toArray(incident?.relatedOrgUnits).length >= 2) && estimatedRecoveryHours === null) {
+          addReason('MULTI_SERVICE_ORG_DISRUPTION', '다수 서비스/조직 영향이 있으나 복구시간이 불명확하여 BCP 검토가 필요합니다.');
+        }
+
+        let status = 'none';
+        if (manualActivated) status = 'activated';
+        else if (reasonCodes.includes('RTO_EXCEEDED') || reasonCodes.includes('FACILITY_OR_WORKPLACE_DISRUPTION')) status = 'recommended';
+        else if (reasonCodes.length) status = 'review';
+
+        const recommended = status === 'recommended' || status === 'activated';
+        if (!reasons.length) reasons.push('현재는 BCP 미대상으로 판단됩니다.');
+
+        return {
+          incidentId: incident?.incidentId || 'INC-DRAFT',
+          status,
+          recommended,
+          linkedRtoHours,
+          estimatedRecoveryHours,
+          reasonCodes,
+          reasons,
+          evaluatedAt: nowIso(),
+          activatedAt: manualActivated ? (incident?.bcpActivatedAt || nowIso()) : null,
+          evidence: matched?.evidence || {}
+        };
+      };
+
       const keywordTeamRules = [
         { re: /(전력|정전|ups|발전기)/i, team:'전기팀' },
         { re: /(냉각|온도|냉동기|crah)/i, team:'기계(냉각)팀' },
@@ -1898,6 +2000,25 @@
       const renderHub = () => {
         const matched = matchIncidentData();
         const incident = state.currentIncident;
+        const bcpAssess = assessBcpForIncident(incident, matched);
+        incident.bcpStatus = bcpAssess.status;
+        incident.bcpRecommended = bcpAssess.recommended;
+        incident.bcpReasonCodes = bcpAssess.reasonCodes;
+        incident.bcpReasons = bcpAssess.reasons;
+        incident.bcpLinkedRtoHours = bcpAssess.linkedRtoHours;
+        incident.bcpEstimatedRecoveryHours = bcpAssess.estimatedRecoveryHours;
+        if (bcpAssess.status === 'activated' && !incident.bcpActivatedAt) incident.bcpActivatedAt = bcpAssess.activatedAt || nowIso();
+        saveBcpAssessment({
+          incidentId: incident.incidentId || 'INC-DRAFT',
+          status: incident.bcpStatus,
+          recommended: incident.bcpRecommended,
+          linkedRtoHours: incident.bcpLinkedRtoHours ?? null,
+          estimatedRecoveryHours: incident.bcpEstimatedRecoveryHours ?? null,
+          reasonCodes: toArray(incident.bcpReasonCodes),
+          reasons: toArray(incident.bcpReasons),
+          evaluatedAt: nowIso(),
+          activatedAt: incident.bcpActivatedAt || null
+        });
 
         currentModeText.textContent = incident.currentResponseMode || 'SOP';
         recommendedModeText.textContent = (incident.recommendedModes || ['SOP']).join(', ');
@@ -1966,13 +2087,23 @@
           : '<div>DRP 페이지에서 절차를 등록해 주세요.</div>';
 
         const bcpRows = incident.matchedBCPStrategies || [];
-        const bcpNeeded = toArray(incident.recommendedModes).includes('BCP');
-        bcpNeedText.textContent = bcpNeeded
-          ? 'BCP 필요: 기술 복구와 별개로 업무 공백이 예상됩니다. 대체 인력/장소/수기 처리/우회 운영 검토가 필요합니다.'
-          : 'BCP 필요 여부: 조건부/대기';
-        bcpDetailList.innerHTML = bcpRows.length
-          ? bcpRows.slice(0, 4).map((s) => `<div>• ${s.team} / ${s.function} / ${s.risk} / ${s.strategyType || '-'} / ${s.strategyText || '-'} / ${Array.isArray(s.requiredResources) ? s.requiredResources.join(', ') : '-'}</div>`).join('')
-          : '<div>정상 자원 사용이 어렵거나 업무 공백이 예상되면 BCP 전략을 등록해 주세요.</div>';
+        const bcpStatusLabel = {
+          none: 'BCP 미대상',
+          review: 'BCP 검토 필요',
+          recommended: 'BCP 가동 권고',
+          activated: 'BCP 가동 중'
+        };
+        bcpNeedText.textContent = `BCP 상태: ${bcpStatusLabel[bcpAssess.status] || 'BCP 미대상'}`;
+        btnActivateBcp.textContent = bcpAssess.status === 'activated' ? 'BCP 가동 중' : 'BCP 가동';
+        btnActivateBcp.disabled = bcpAssess.status === 'activated';
+        bcpDetailList.innerHTML = [
+          `<div>• 최소 RTO: ${bcpAssess.linkedRtoHours === null ? '-' : `${bcpAssess.linkedRtoHours}h`}</div>`,
+          `<div>• 복구예상시간: ${bcpAssess.estimatedRecoveryHours === null ? '-' : `${bcpAssess.estimatedRecoveryHours}h`}</div>`,
+          ...toArray(bcpAssess.reasons).slice(0, 5).map((r) => `<div>• ${r}</div>`),
+          ...(bcpRows.length
+            ? bcpRows.slice(0, 3).map((s) => `<div>• 전략: ${s.team} / ${s.function} / ${s.strategyType || '-'} / ${s.strategyText || '-'}</div>`)
+            : ['<div>• 매칭된 BCP 전략 없음 (필요 시 BCP 전략 관리에서 등록)</div>'])
+        ].join('');
 
         const evidence = matched.evidence || {};
         decisionEvidenceGrid.innerHTML = [
@@ -1982,7 +2113,8 @@
           `DRP 절차 존재: ${evidence.hasDRP ? '예' : '아니오'}`,
           `BCP 전략 존재: ${evidence.hasBCP ? '예' : '아니오'}`,
           `자원 상실 정황: ${evidence.hasResourceLoss ? '예' : '아니오'}`,
-          `RTO 초과 가능성: ${evidence.likelyRtoBreach ? '예' : '아니오'}`
+          `RTO 초과 가능성: ${evidence.likelyRtoBreach ? '예' : '아니오'}`,
+          `BCP 판단: ${bcpStatusLabel[bcpAssess.status] || 'BCP 미대상'}`
         ].map((line) => `<div class="evidenceItem">${line}</div>`).join('');
 
         renderExecutionConsole();
@@ -2213,6 +2345,50 @@
         }
 
         addLog({ system:'대응 허브', event:`대응 단계 변경: ${mode}`, action: reason, operator:'사고 관리자' });
+
+        if (mode === 'BCP') {
+          const incidentId = state.currentIncident.incidentId || 'INC-DRAFT';
+          state.currentIncident.bcpStatus = 'activated';
+          state.currentIncident.bcpActivated = true;
+          state.currentIncident.bcpActivatedAt = nowIso();
+          saveBcpAssessment({
+            incidentId,
+            status: 'activated',
+            recommended: true,
+            linkedRtoHours: state.currentIncident.bcpLinkedRtoHours ?? null,
+            estimatedRecoveryHours: state.currentIncident.bcpEstimatedRecoveryHours ?? null,
+            reasonCodes: uniq([...(toArray(state.currentIncident.bcpReasonCodes)), 'MANUAL_ACTIVATED']),
+            reasons: uniq([...(toArray(state.currentIncident.bcpReasons)), '운영자 수동 가동으로 BCP를 즉시 적용했습니다.']),
+            evaluatedAt: nowIso(),
+            activatedAt: state.currentIncident.bcpActivatedAt
+          });
+        }
+
+        saveState();
+        renderAll();
+      });
+
+      btnActivateBcp.addEventListener('click', () => {
+        const incidentId = state.currentIncident.incidentId || 'INC-DRAFT';
+        state.currentIncident.currentResponseMode = 'BCP';
+        state.currentIncident.activationReason = '운영자 수동 BCP 가동';
+        state.currentIncident.bcpStatus = 'activated';
+        state.currentIncident.bcpActivated = true;
+        state.currentIncident.bcpActivatedAt = nowIso();
+        if (!Array.isArray(state.currentIncident.modeHistory)) state.currentIncident.modeHistory = [];
+        state.currentIncident.modeHistory.push({ mode:'BCP', changedAt: nowText(), reason:'운영자 수동 BCP 가동' });
+        saveBcpAssessment({
+          incidentId,
+          status: 'activated',
+          recommended: true,
+          linkedRtoHours: state.currentIncident.bcpLinkedRtoHours ?? null,
+          estimatedRecoveryHours: state.currentIncident.bcpEstimatedRecoveryHours ?? null,
+          reasonCodes: uniq([...(toArray(state.currentIncident.bcpReasonCodes)), 'MANUAL_ACTIVATED']),
+          reasons: uniq([...(toArray(state.currentIncident.bcpReasons)), '운영자 수동 가동으로 BCP를 즉시 적용했습니다.']),
+          evaluatedAt: nowIso(),
+          activatedAt: state.currentIncident.bcpActivatedAt
+        });
+        addLog({ system:'BCP 판단', event:'수동 BCP 가동', action:'BCP 가동 상태 반영', operator:'사고 관리자' });
         saveState();
         renderAll();
       });
