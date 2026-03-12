@@ -126,8 +126,20 @@
     .subTitle{ margin:0; font-size:14px; font-weight:900; color:var(--text-2); }
     .subHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
     .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-    .timeItem label{ display:block; margin-bottom:6px; font-size:12.5px; font-weight:800; color:#4d5d75; }
-    .timeItem select{ width:100%; }
+    .timeStep{ border:1px solid var(--line); border-radius:12px; padding:10px; background:#fff; }
+    .timeStepTop{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:8px; }
+    .timeStepLabel{ font-size:12px; font-weight:900; color:#334155; }
+    .timeStepValue{ font-size:12px; font-weight:900; color:#0f172a; }
+    .mtpdBadge{ display:inline-flex; align-items:center; border:1px solid #f1c07a; background:#fffbeb; color:#8a4b12; border-radius:999px; padding:2px 7px; font-size:11px; font-weight:900; }
+    .scoreBtns{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+    .scoreBtn{ border:1px solid var(--line-strong); background:#fff; color:#334155; border-radius:9px; padding:7px 4px; font-size:12px; font-weight:800; cursor:pointer; }
+    .scoreBtn:hover{ background:#f8fbff; }
+    .scoreBtn[aria-pressed="true"]{ border-color:#5b8cf2; background:#eff5ff; color:#1d4ed8; }
+    .scoreBtn[data-score="4"][aria-pressed="true"], .scoreBtn[data-score="5"][aria-pressed="true"]{ border-color:#f1c07a; background:#fffbeb; color:#8a4b12; }
+    .scoreBtn:disabled{ opacity:.45; cursor:not-allowed; background:#f8fafc; }
+    .timeHint{ margin-top:6px; font-size:11.5px; color:#64748b; }
+    .timeSummaryLine{ margin-top:9px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .timeSummaryLine .chip{ background:#fff; }
     .reasonInput{ width:100%; min-height:94px; resize:vertical; }
     .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:2px; }
     .resourceItem{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-2); }
@@ -161,6 +173,7 @@
       .kpiGrid{ grid-template-columns:1fr; }
       .summaryGrid{ grid-template-columns:1fr; }
       .timeGrid, .resourceGrid{ grid-template-columns:1fr; }
+      .scoreBtns{ grid-template-columns:repeat(3,minmax(0,1fr)); }
       .scoreGuideGrid{ grid-template-columns:1fr; }
       .panel{ padding:14px; }
     }
@@ -776,21 +789,33 @@
                                 <button class="btn" type="button" data-guide-toggle="${idx}">${scoreGuideOpened.has(key) ? '영향도 기준 닫기' : '영향도 기준 보기'}</button>
                               </div>
                               <div class="timeGrid">
-                                ${TIME_IMPACT_META.map((t, ti) => `
-                                  <div class="timeItem">
-                                    <label>${t.label}</label>
-                                    <select class="smallSelect" data-time-impact="${t.key}" data-idx="${idx}">
-                                      ${[1,2,3,4,5].map((n)=>{
-                                        const minAllowed = ti===0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti-1]] || 1);
-                                        return `<option value="${n}" ${Number(fn.timeImpact?.[t.key])===n?'selected':''} ${n<minAllowed?'disabled':''}>${n} ${impactLabels[n]}</option>`;
-                                      }).join('')}
-                                    </select>
-                                  </div>
-                                `).join('')}
+                                ${TIME_IMPACT_META.map((t, ti) => {
+                                  const minAllowed = ti===0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti-1]] || 1);
+                                  const currentScore = Number(fn.timeImpact?.[t.key] || 1);
+                                  const firstMtpd = TIME_IMPACT_META.find((x)=>Number(fn.timeImpact?.[x.key]||1)>=4);
+                                  const isMtpdPoint = firstMtpd && firstMtpd.key === t.key;
+                                  return `
+                                    <article class="timeStep">
+                                      <div class="timeStepTop">
+                                        <div class="timeStepLabel">${t.label}</div>
+                                        ${isMtpdPoint ? '<span class="mtpdBadge">MTPD</span>' : ''}
+                                      </div>
+                                      <div class="timeStepValue">현재: ${currentScore} ${impactLabels[currentScore]}</div>
+                                      <div class="scoreBtns" role="group" aria-label="${t.label} 영향도 선택">
+                                        ${[1,2,3,4,5].map((n)=>`<button type="button" class="scoreBtn" data-time-impact-btn="${t.key}" data-idx="${idx}" data-score="${n}" aria-pressed="${currentScore===n?'true':'false'}" ${n<minAllowed?'disabled':''}>${n}</button>`).join('')}
+                                      </div>
+                                      ${minAllowed > 1 ? `<div class="timeHint">이전 시점보다 낮게 설정할 수 없습니다. (최소 ${minAllowed})</div>` : ''}
+                                    </article>
+                                  `;
+                                }).join('')}
+                              </div>
+                              ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
+                              <div class="timeSummaryLine">
+                                <span class="chip">최고 영향 수준: ${Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))} ${impactLabels[Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))]}</span>
+                                <span class="chip">최대허용중단시간(MTPD): <b style="margin-left:4px;">${esc(fn.mtpd || '장기 허용')}</b></span>
                               </div>
                                                             ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
                               <div class="miniHelp">- 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>- 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>- 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.</div>
-                              <div class="muted" style="margin-top:8px;">최대허용중단시간(MTPD): <b>${esc(fn.mtpd || '장기 허용')}</b></div>
                             </div>
                             <div>
                               <h4 class="subTitle">RTO 설정 근거</h4>
@@ -848,14 +873,12 @@
         const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
         if (!detail) return;
 
-        const selects = detail.querySelectorAll('select[data-time-impact]');
-        selects.forEach((sel, i) => {
-          const key = sel.getAttribute('data-time-impact');
+        TIME_KEYS.forEach((key, i) => {
           const minAllowed = i === 0 ? 1 : Number(fn.timeImpact[TIME_KEYS[i-1]] || 1);
-          sel.value = String(fn.timeImpact[key] || minAllowed);
-          [...sel.options].forEach((op) => {
-            const n = Number(op.value);
-            op.disabled = n < minAllowed;
+          detail.querySelectorAll(`button[data-time-impact-btn="${key}"]`).forEach((btn) => {
+            const n = Number(btn.getAttribute('data-score'));
+            btn.disabled = n < minAllowed;
+            btn.setAttribute('aria-pressed', String(Number(fn.timeImpact[key] || 1) === n));
           });
         });
       };
@@ -951,24 +974,6 @@
           return;
         }
 
-        const tKey = e.target.getAttribute('data-time-impact');
-        if (tKey) {
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[idx];
-          if (!fn) return;
-            const tIndex = TIME_KEYS.indexOf(tKey);
-          fn.timeImpact[tKey] = clamp(Number(e.target.value || 1), 1, 5);
-          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
-          recalcFunction(fn);
-          markDirty();
-          refreshTimeImpactControls(idx);
-          refreshRowCells(idx);
-          renderSummaryOnly();
-          renderStickySummaryOnly();
-          return;
-        }
-
         const res = e.target.getAttribute('data-resource');
         if (res) {
           const team = teamSelect.value;
@@ -996,6 +1001,24 @@
 
 
       tableMount.addEventListener('click', (e) => {
+        const tKeyBtn = e.target.getAttribute('data-time-impact-btn');
+        if (tKeyBtn) {
+          const idx = Number(e.target.getAttribute('data-idx'));
+          if (!Number.isFinite(idx)) return;
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[idx];
+          if (!fn) return;
+          const tIndex = TIME_KEYS.indexOf(tKeyBtn);
+          const score = clamp(Number(e.target.getAttribute('data-score') || 1), 1, 5);
+          fn.timeImpact[tKeyBtn] = score;
+          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
+          recalcFunction(fn);
+          markDirty();
+          render();
+          return;
+        }
+
         const guideIdx = e.target.getAttribute('data-guide-toggle');
         if (guideIdx != null) {
           const team = teamSelect.value;
