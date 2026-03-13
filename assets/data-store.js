@@ -13,6 +13,8 @@
   const KEY_ORG_REGISTRY = 'bcms_org_registry_v1';
   const KEY_EOP_ROLE_MAPPING = 'bcms_eop_role_mapping_v1';
   const KEY_BCP_MODE = 'bcms_bcp_mode';
+  const KEY_BIA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
 
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
@@ -56,6 +58,86 @@
   // Resets a key to a specific seed value and returns it.
   const reset = (key, seedValue) => set(key, seedValue);
 
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+  const normalizeText = (v) => String(v || '').trim().toLowerCase();
+
+  const inferThreat = (functionName) => {
+    const name = String(functionName || '').trim();
+    if (!name) return '업무 중단';
+    if (/ups|전력|전원|발전기/i.test(name)) return '전력 공급 장애';
+    if (/네트워크|통신|망/i.test(name)) return '네트워크 장애';
+    if (/시스템|서버|서비스/i.test(name)) return '시스템 장애';
+    return `${name} 중단`;
+  };
+
+  // BIA 저장값 기반으로 Risk Register를 자동 동기화한다.
+  const syncRiskFromBIA = () => {
+    const biaRows = get(KEY_BIA, []);
+    const riskRows = get(KEY_RISK_ASSESSMENT, []);
+
+    const safeBiaRows = Array.isArray(biaRows) ? biaRows : [];
+    const safeRiskRows = Array.isArray(riskRows) ? riskRows : [];
+
+    const next = safeRiskRows.map((row) => ({
+      team: String(row.team || '').trim(),
+      risks: Array.isArray(row.risks) ? row.risks.map((risk) => ({ ...risk })) : []
+    })).filter((row) => row.team);
+
+    safeBiaRows.forEach((biaRow) => {
+      const team = String(biaRow.team || '').trim();
+      if (!team) return;
+
+      let riskRow = next.find((row) => row.team === team);
+      if (!riskRow) {
+        riskRow = { team, risks: [] };
+        next.push(riskRow);
+      }
+
+      const existing = new Set(
+        riskRow.risks.map((risk) => {
+          const functionName = normalizeText(risk.function || risk.functionName);
+          const threat = normalizeText(risk.threat || risk.risk);
+          return `${functionName}::${threat}`;
+        })
+      );
+
+      const functions = Array.isArray(biaRow.functions) ? biaRow.functions : [];
+      functions.forEach((fn) => {
+        const functionName = String(fn.name || fn.function || '').trim();
+        if (!functionName) return;
+
+        const importance = String(fn.importance || '').trim();
+        const grade = String(fn.grade || '').trim();
+        const isAutoTarget = importance === '중요' || grade === '핵심';
+        if (!isAutoTarget) return;
+
+        const impact = clamp(Number(fn.overallImpact || fn.impact || 3), 1, 5);
+        const likelihood = 3;
+        const threat = inferThreat(functionName);
+        const dedupeKey = `${normalizeText(functionName)}::${normalizeText(threat)}`;
+        if (existing.has(dedupeKey)) return;
+
+        riskRow.risks.push({
+          team,
+          functionName,
+          function: functionName,
+          threat,
+          risk: threat,
+          impact,
+          likelihood,
+          riskScore: impact * likelihood,
+          source: 'BIA',
+          riskLevel: impact * likelihood >= 13 ? '높음' : (impact * likelihood <= 5 ? '낮음' : '보통'),
+          critical: impact * likelihood >= 13
+        });
+        existing.add(dedupeKey);
+      });
+    });
+
+    set(KEY_RISK_ASSESSMENT, next);
+    return next;
+  };
+
   global.DataStore = {
     KEY_SERVICE_REGISTRY,
     KEY_INCIDENTS,
@@ -68,6 +150,8 @@
     KEY_ORG_REGISTRY,
     KEY_EOP_ROLE_MAPPING,
     KEY_BCP_MODE,
+    KEY_BIA,
+    KEY_RISK_ASSESSMENT,
     get,
     set,
     update,
@@ -75,5 +159,6 @@
     reset,
     nowISO,
     uid,
+    syncRiskFromBIA,
   };
 })(window);
