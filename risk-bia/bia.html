@@ -213,11 +213,13 @@
       .kpiGrid{ grid-template-columns:1fr 1fr; }
       .summaryGrid{ grid-template-columns:1fr 1fr; }
       .detailGrid{ grid-template-columns:1fr; }
-      .timeGrid, .resourceGrid{ grid-template-columns:1fr 1fr; }
+      .timeGrid,
+      .resourceGrid{ grid-template-columns:1fr 1fr; }
       .scoreGuideGrid{ grid-template-columns:1fr 1fr; }
       .overviewFilters select, .overviewFilters input{ min-width:140px; }
       .quickGrid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
     }
+
     @media (max-width:640px){
       .hero h1{ font-size:27px; }
       .kpiGrid{ grid-template-columns:1fr; }
@@ -357,7 +359,14 @@
       ];
 
       const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
-        get: (k, f) => { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : f; } catch { return f; } },
+        get: (k, f) => {
+          try {
+            const raw = localStorage.getItem(k);
+            return raw ? JSON.parse(raw) : f;
+          } catch {
+            return f;
+          }
+        },
         set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
       };
 
@@ -426,10 +435,15 @@
       const enforceMonotonicFrom = (timeImpact, startIdx = 0) => {
         const out = { ...timeImpact };
         const begin = Math.max(0, startIdx);
+
         if (begin > 0) {
           const prevKey = TIME_KEYS[begin - 1];
-          out[TIME_KEYS[begin]] = Math.max(clamp(Number(out[TIME_KEYS[begin]] || 1), 1, 5), clamp(Number(out[prevKey] || 1), 1, 5));
+          out[TIME_KEYS[begin]] = Math.max(
+            clamp(Number(out[TIME_KEYS[begin]] || 1), 1, 5),
+            clamp(Number(out[prevKey] || 1), 1, 5)
+          );
         }
+
         for (let i = begin + 1; i < TIME_KEYS.length; i++) {
           const k = TIME_KEYS[i];
           const pk = TIME_KEYS[i-1];
@@ -470,16 +484,21 @@
       const normalizeFunction = (rawFn) => {
         const name = String(rawFn.name || rawFn.function || '').trim();
         const impact = clamp(Number(rawFn.impact || rawFn.overallImpact || 3), 1, 5);
-        const parsedRto = rawFn.rtoValue !== undefined ? { value: rawFn.rtoValue, unit: rawFn.rtoUnit || '분' } : parseRtoString(rawFn.rto);
+        const parsedRto = rawFn.rtoValue !== undefined
+          ? { value: rawFn.rtoValue, unit: rawFn.rtoUnit || '분' }
+          : parseRtoString(rawFn.rto);
 
         const timeImpactRaw = rawFn.timeImpact || {};
+        const defaults = makeDefaultTimeImpact(impact);
         const timeImpactSeed = {};
-        for (const t of TIME_IMPACT_META) {
-          timeImpactSeed[t.key] = clamp(Number(timeImpactRaw[t.key] || makeDefaultTimeImpact(impact)[t.key]), 1, 5);
-        }
-        const timeImpact = normalizeMonotonicTimeImpact(timeImpactSeed);
 
+        for (const t of TIME_IMPACT_META) {
+          timeImpactSeed[t.key] = clamp(Number(timeImpactRaw[t.key] || defaults[t.key]), 1, 5);
+        }
+
+        const timeImpact = normalizeMonotonicTimeImpact(timeImpactSeed);
         const mtpd = calcMtpd(timeImpact);
+
         const fn = {
           name,
           importance: rawFn.importance || (rawFn.coreFinal ? '중요' : '일반'),
@@ -517,7 +536,11 @@
 
       const loadOrgTeams = () => {
         const org = store.get(ORG_KEY, { divisions: [] });
-        return uniq((org.divisions || []).flatMap((d) => (d.teams || []).map((t) => t.name)).filter(Boolean));
+        return uniq(
+          (org.divisions || [])
+            .flatMap((d) => (d.teams || []).map((t) => t.name))
+            .filter(Boolean)
+        );
       };
 
       const loadBiaData = () => {
@@ -540,14 +563,19 @@
         const coreFns = coreMap.get(team) || [];
 
         if (!found) {
-          found = { team, functions: coreFns.map((name) => normalizeFunction({ name })) };
+          found = {
+            team,
+            functions: coreFns.map((name) => normalizeFunction({ name }))
+          };
           rows.push(found);
           return found;
         }
 
         const byName = new Map((found.functions || []).map((fn) => [fn.name, normalizeFunction(fn)]));
-        found.functions = uniq([...(coreFns || []), ...(found.functions || []).map((f) => f.name)])
-          .map((name) => byName.get(name) || normalizeFunction({ name }));
+        found.functions = uniq([
+          ...(coreFns || []),
+          ...(found.functions || []).map((f) => f.name)
+        ]).map((name) => byName.get(name) || normalizeFunction({ name }));
 
         return found;
       };
@@ -555,7 +583,9 @@
       const getRtoWarnText = (fn) => {
         const rtoMin = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
         if (rtoMin === null || fn.mtpdMinutes === null) return '';
-        if (rtoMin >= fn.mtpdMinutes) return 'RTO는 MTPD보다 짧아야 합니다. 복구목표시간이 최대허용중단시간을 초과합니다.';
+        if (rtoMin >= fn.mtpdMinutes) {
+          return 'RTO는 MTPD보다 짧아야 합니다. 복구목표시간이 최대허용중단시간을 초과합니다.';
+        }
         return '';
       };
 
@@ -564,6 +594,7 @@
       const allTeams = uniq([...coreRows.map((r) => r.team), ...orgTeams]);
       const coreMap = new Map(coreRows.map((r) => [r.team, r.functions]));
       let biaRows = loadBiaData();
+
       const opened = new Set();
       const scoreGuideOpened = new Set();
       const animatedCounts = new Map();
@@ -935,6 +966,8 @@
                 const key = `${team}__${fn.name}__${idx}`;
                 const open = opened.has(key);
                 const warn = getRtoWarnText(fn);
+                const maxTimelineImpact = Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1)));
+
                 return `
                   <tr data-idx="${idx}">
                     <td>
@@ -949,7 +982,9 @@
                     </td>
                     <td>
                       <select class="smallSelect" data-field="overallImpact">
-                        ${[1,2,3,4,5].map((n)=>`<option value="${n}" ${Number(fn.overallImpact)===n?'selected':''}>${n} ${impactLabels[n]}</option>`).join('')}
+                        ${[1,2,3,4,5].map((n) => `
+                          <option value="${n}" ${Number(fn.overallImpact) === n ? 'selected' : ''}>${n} ${impactLabels[n]}</option>
+                        `).join('')}
                       </select>
                     </td>
                     <td><span class="tag">${esc(fn.mtpd || '장기 허용')}</span></td>
@@ -969,6 +1004,7 @@
                       <button class="btn" type="button" data-delete="${idx}" style="margin-left:6px;">삭제</button>
                     </td>
                   </tr>
+
                   ${open ? `
                     <tr class="detailRow" data-detail-for="${idx}">
                       <td colspan="7">
@@ -1007,9 +1043,15 @@
                               </div>
                               <div class="miniHelp">- 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>- 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>- 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.</div>
                             </div>
+
                             <div>
                               <h4 class="subTitle">RTO 설정 근거</h4>
-                              <textarea class="reasonInput" data-field="rtoReason" data-idx="${idx}" placeholder="고객 영향과 서비스 중단 허용시간을 반영\n대체 운영 가능시간 기준\n규제/계약 요구사항 반영">${esc(fn.rtoReason || '')}</textarea>
+                              <textarea
+                                class="reasonInput"
+                                data-field="rtoReason"
+                                data-idx="${idx}"
+                                placeholder="고객 영향과 서비스 중단 허용시간을 반영\n대체 운영 가능시간 기준\n규제/계약 요구사항 반영"
+                              >${esc(fn.rtoReason || '')}</textarea>
 
                               <h4 class="subTitle" style="margin-top:10px;">복구 필요자원(요약)</h4>
                               <div class="resourceGrid">
@@ -1022,6 +1064,7 @@
                               </div>
                             </div>
                           </div>
+
                           ${warn ? `<div class="warn">${warn}</div>` : ''}
                         </div>
                       </td>
@@ -1036,7 +1079,7 @@
 
       const recalcFunction = (fn) => {
         fn.overallImpact = clamp(Number(fn.overallImpact || 3), 1, 5);
-        fn.impact = fn.overallImpact; // Risk 호환 alias
+        fn.impact = fn.overallImpact;
         fn.timeImpact = normalizeMonotonicTimeImpact(fn.timeImpact || {});
         const mtpd = calcMtpd(fn.timeImpact || {});
         fn.mtpd = mtpd.text;
@@ -1052,7 +1095,6 @@
         const row = ensureTeamRecord(team, coreMap, biaRows);
         renderSummary(team, row.functions || []);
       };
-
 
       const refreshTimeImpactControls = (idx) => {
         const team = teamSelect.value;
@@ -1084,6 +1126,7 @@
 
         const mtpdTag = tr.children[3]?.querySelector('.tag');
         const gradeTag = tr.children[5]?.querySelector('.tag');
+
         if (mtpdTag) mtpdTag.textContent = fn.mtpd || '장기 허용';
         if (gradeTag) {
           gradeTag.textContent = fn.grade;
@@ -1092,11 +1135,9 @@
 
         const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
         if (detail) {
-          const mtpdText = detail.querySelector('.muted b');
-          if (mtpdText) mtpdText.textContent = fn.mtpd || '장기 허용';
-
           const warnText = getRtoWarnText(fn);
           let warnEl = detail.querySelector('.warn');
+
           if (warnText) {
             if (!warnEl) {
               warnEl = document.createElement('div');
@@ -1182,6 +1223,7 @@
           const row = ensureTeamRecord(team, coreMap, biaRows);
           const fn = row.functions[idx];
           if (!fn) return;
+
           const set = new Set(fn.requiredResources || []);
           if (e.target.checked) set.add(res);
           else set.delete(res);
@@ -1194,13 +1236,49 @@
       tableMount.addEventListener('input', (e) => {
         const field = e.target.getAttribute('data-field');
         if (field !== 'rtoValue' && field !== 'rtoReason') return;
+
         const tr = e.target.closest('tr[data-idx]');
         const idx = tr ? Number(tr.dataset.idx) : Number(e.target.getAttribute('data-idx'));
         if (!Number.isFinite(idx)) return;
+
         updateFnField(idx, field, e.target.value);
       });
 
+      tableMount.addEventListener('click', (e) => {
+        const tKeyBtn = e.target.getAttribute('data-time-impact-btn');
+        if (tKeyBtn) {
+          const idx = Number(e.target.getAttribute('data-idx'));
+          if (!Number.isFinite(idx)) return;
 
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[idx];
+          if (!fn) return;
+
+          const tIndex = TIME_KEYS.indexOf(tKeyBtn);
+          const score = clamp(Number(e.target.getAttribute('data-score') || 1), 1, 5);
+
+          fn.timeImpact[tKeyBtn] = score;
+          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
+          recalcFunction(fn);
+          markDirty();
+          render();
+          return;
+        }
+
+        const guideIdx = e.target.getAttribute('data-guide-toggle');
+        if (guideIdx != null) {
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[Number(guideIdx)];
+          if (!fn) return;
+
+          const key = `${team}__${fn.name}__${guideIdx}`;
+          if (scoreGuideOpened.has(key)) scoreGuideOpened.delete(key);
+          else scoreGuideOpened.add(key);
+          render();
+          return;
+        }
 
       tableMount.addEventListener('click', (e) => {
         const tKeyBtn = e.target.getAttribute('data-time-impact-btn');
@@ -1240,6 +1318,7 @@
           const row = ensureTeamRecord(team, coreMap, biaRows);
           const fn = row.functions[Number(toggleIdx)];
           if (!fn) return;
+
           const key = `${team}__${fn.name}__${toggleIdx}`;
           if (opened.has(key)) opened.delete(key);
           else { opened.add(key); activeByTeam.set(team, Number(toggleIdx)); }
@@ -1249,6 +1328,7 @@
 
         const del = e.target.getAttribute('data-delete');
         if (del == null) return;
+
         const team = teamSelect.value;
         const row = ensureTeamRecord(team, coreMap, biaRows);
         const delIdx = Number(del);
@@ -1272,6 +1352,7 @@
           alert('이미 등록된 핵심업무입니다.');
           return;
         }
+
         row.functions.push(normalizeFunction({ name }));
         markDirty();
         newFunctionName.value = '';
@@ -1305,7 +1386,9 @@
                 rtoReason: String(fn.rtoReason || ''),
                 grade: fn.grade,
                 coreFinal: !!fn.coreFinal,
-                requiredResources: Array.isArray(fn.requiredResources) ? fn.requiredResources.filter((r)=>RESOURCE_OPTIONS.includes(r)) : []
+                requiredResources: Array.isArray(fn.requiredResources)
+                  ? fn.requiredResources.filter((r) => RESOURCE_OPTIONS.includes(r))
+                  : []
               };
             }).filter((fn) => fn.name)
           }))
@@ -1320,6 +1403,7 @@
       resetBtn.addEventListener('click', () => {
         const team = teamSelect.value;
         if (!team) return;
+
         const row = ensureTeamRecord(team, coreMap, biaRows);
         row.functions = (coreMap.get(team) || []).map((name) => normalizeFunction({ name }));
         markDirty();
