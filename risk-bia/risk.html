@@ -33,7 +33,8 @@
     .likelihood{ width:100%; font-size:14px; }
 
     .impactReadonly,
-    .metaChip{
+    .metaChip,
+    .sourceChip{
       display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.14);
       border-radius:999px; padding:4px 10px; font-size:12px; font-weight:900;
       background:#fff; color:#0f172a;
@@ -46,6 +47,7 @@
     .mid{ color:#92400e; background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
     .high{ color:#991b1b; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
     .focusBadge{ display:inline-flex; margin-top:6px; padding:4px 8px; border-radius:999px; border:1px solid rgba(239,68,68,.4); background:rgba(239,68,68,.12); color:#991b1b; font-size:12px; font-weight:900; }
+    .sourceChip{ margin-left:6px; border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.08); color:#1d4ed8; }
 
     .btn{ border:1px solid rgba(15,23,42,.15); border-radius:10px; background:#fff; color:#0f172a; padding:9px 12px; font-size:14px; font-weight:900; cursor:pointer; }
     .btn:hover{ background:rgba(15,23,42,.04); }
@@ -94,6 +96,11 @@
           </div>
         </div>
 
+        <div style="margin-top:10px; display:flex; align-items:center; gap:8px; font-size:13px; color:#334155; font-weight:800;">
+          <span class="sourceChip">BIA</span>
+          <span>BIA 기반 자동 생성 리스크</span>
+        </div>
+
         <div class="summaryGrid">
           <article class="metric"><div class="k">선택 팀</div><div id="teamMetric" class="v">-</div></article>
           <article class="metric"><div class="k">핵심업무 수</div><div id="fnMetric" class="v">0</div></article>
@@ -138,6 +145,10 @@
         set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
       };
 
+      if (window.DataStore && typeof DataStore.syncRiskFromBIA === 'function') {
+        DataStore.syncRiskFromBIA();
+      }
+
       const teamSelect = document.getElementById('teamSelect');
       const quickRisk = document.getElementById('quickRisk');
       const tableMount = document.getElementById('tableMount');
@@ -156,6 +167,7 @@
 
       const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
       const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+      const escHtml = (v) => String(v || '').replace(/[&<>"']/g, (ch) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
 
       const scoreBand = (score) => {
         if (score <= 5) return { text: '낮음', cls: 'low' };
@@ -193,13 +205,18 @@
             const impact = clamp(Number(risk.impact || 3), 1, 5);
             const riskScore = Number(risk.riskScore || (likelihood * impact));
             const level = String(risk.riskLevel || scoreBand(riskScore).text);
+            const functionName = String(risk.function || risk.functionName || '').trim();
+            const threat = String(risk.threat || risk.risk || '').trim();
             return {
-              function: String(risk.function || '').trim(),
-              risk: String(risk.risk || risk.threat || '').trim(),
+              function: functionName,
+              functionName,
+              threat,
+              risk: threat,
               likelihood,
               impact,
               riskScore,
               riskLevel: level,
+              source: String(risk.source || 'Manual'),
               critical: !!(risk.critical ?? (riskScore >= 13))
             };
           }).filter((risk) => risk.function)
@@ -253,7 +270,7 @@
       const makeRisk = (fnName, impact) => {
         const riskScore = impact;
         const level = scoreBand(riskScore).text;
-        return { function: fnName, risk: '', likelihood: 1, impact, riskScore, riskLevel: level, critical: riskScore >= 13 };
+        return { function: fnName, functionName: fnName, threat: '', risk: '', likelihood: 1, impact, riskScore, riskLevel: level, source: 'Manual', critical: riskScore >= 13 };
       };
 
       const ensureTeamRisk = (team) => {
@@ -354,15 +371,15 @@
                 return `
                   <tr data-idx="${idx}" class="${focused ? 'focusRow' : ''}">
                     <td>
-                      <div class="fnName">${risk.function}</div>
-                      <button class="btn add" type="button" data-add-risk="${risk.function}">리스크 추가</button>
+                      <div class="fnName">${escHtml(risk.function)}${risk.source === 'BIA' ? ' <span class="sourceChip">AUTO</span>' : ''}</div>
+                      <button class="btn add" type="button" data-add-risk="${escHtml(risk.function)}">리스크 추가</button>
                     </td>
-                    <td><span class="metaChip">${meta.importance || '일반'}</span></td>
-                    <td><span class="metaChip">${meta.grade || '일반'}</span></td>
-                    <td><span class="metaChip">${meta.mtpd || '-'}</span></td>
-                    <td><span class="metaChip">${meta.rto || '-'}</span></td>
+                    <td><span class="metaChip">${escHtml(meta.importance || '일반')}</span></td>
+                    <td><span class="metaChip">${escHtml(meta.grade || '일반')}</span></td>
+                    <td><span class="metaChip">${escHtml(meta.mtpd || '-')}</span></td>
+                    <td><span class="metaChip">${escHtml(meta.rto || '-')}</span></td>
                     <td><span class="impactReadonly">${risk.impact} ${impactLabels[risk.impact]}</span></td>
-                    <td><input class="riskInput" type="text" data-field="risk" value="${risk.risk || ''}" placeholder="예: 외부전력중단, UPS 장애"/></td>
+                    <td><input class="riskInput" type="text" data-field="risk" value="${escHtml(risk.risk || '')}" placeholder="예: 외부전력중단, UPS 장애"/></td>
                     <td>
                       <select class="likelihood" data-field="likelihood">
                         ${[1,2,3,4,5].map((n) => `<option value="${n}" ${Number(risk.likelihood) === n ? 'selected' : ''}>${n} ${likelihoodLabels[n]}</option>`).join('')}
@@ -534,13 +551,17 @@
               const impact = clamp(Number(risk.impact || 3), 1, 5);
               const riskScore = likelihood * impact;
               const riskLevel = scoreBand(riskScore).text;
+              const threat = String(risk.threat || risk.risk || '').trim();
               return {
                 function: risk.function,
-                risk: String(risk.risk || '').trim(),
+                functionName: risk.function,
+                threat,
+                risk: threat,
                 likelihood,
                 impact,
                 riskScore,
                 riskLevel,
+                source: String(risk.source || 'Manual'),
                 critical: riskScore >= 13
               };
             }).filter((risk) => risk.function)
