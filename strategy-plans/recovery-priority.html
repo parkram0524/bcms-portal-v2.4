@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Recovery Priority | 전략·계획</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .wrap{ max-width:1400px; margin:0 auto; }
+    .hero h1{ margin:0; font-size:26px; font-weight:950; }
+    .hero p{ margin:8px 0 0; color:rgba(15,23,42,.66); font-size:15px; line-height:1.6; }
+
+    .panel{ margin-top:14px; border:1px solid rgba(15,23,42,.1); border-radius:14px; background:#fff; padding:14px; }
+    .filters{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .field label{ display:block; margin-bottom:6px; font-size:13px; font-weight:900; color:#334155; }
+    .field select{ width:100%; padding:10px 11px; font-size:14px; }
+
+    .summary{ margin-top:12px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .metric{ border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:11px; }
+    .metric .k{ font-size:13px; font-weight:800; color:rgba(15,23,42,.62); }
+    .metric .v{ margin-top:8px; font-size:28px; font-weight:950; }
+
+    .tableWrap{ margin-top:12px; overflow:auto; }
+    table{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.12); border-radius:12px; overflow:hidden; }
+    th, td{ padding:10px; font-size:14px; border-bottom:1px solid rgba(15,23,42,.08); text-align:left; }
+    th{ font-size:12.5px; font-weight:900; color:#334155; background:#f8fafc; white-space:nowrap; }
+    tr:last-child td{ border-bottom:none; }
+    tbody tr{ cursor:pointer; }
+    tbody tr:hover td{ background:#f8fbff; }
+
+    .rank{ font-weight:950; }
+    .score{ font-weight:900; }
+    .badge{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid; font-size:12px; font-weight:900; }
+    .badge-critical{ color:#991b1b; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
+    .badge-high{ color:#9a3412; background:rgba(249,115,22,.14); border-color:rgba(249,115,22,.35); }
+    .badge-normal{ color:#475569; background:#f8fafc; border-color:rgba(148,163,184,.35); }
+    .empty{ text-align:center; color:#64748b; padding:16px; }
+
+    @media (max-width:960px){ .filters,.summary{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+  <main class="main">
+    <div class="wrap">
+      <section class="hero">
+        <h1>Recovery Priority Dashboard</h1>
+        <p>BIA 전체 데이터를 스캔해 복구 우선순위를 자동 계산합니다. Priority Score 기준 상위 20개 업무를 표시합니다.</p>
+      </section>
+
+      <section class="panel">
+        <div class="filters">
+          <div class="field">
+            <label for="teamFilter">팀 필터</label>
+            <select id="teamFilter"></select>
+          </div>
+          <div class="field">
+            <label for="impactFilter">Impact 필터</label>
+            <select id="impactFilter">
+              <option value="all">전체</option>
+              <option value="5">5</option>
+              <option value="4">4+</option>
+              <option value="3">3+</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="limitInfo">표시 제한</label>
+            <select id="limitInfo" disabled>
+              <option>TOP 20</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="summary">
+          <article class="metric"><div class="k">총 핵심업무</div><div id="totalMetric" class="v">0</div></article>
+          <article class="metric"><div class="k">High Priority (&gt; 40)</div><div id="highMetric" class="v">0</div></article>
+          <article class="metric"><div class="k">Critical Priority (&gt; 60)</div><div id="criticalMetric" class="v">0</div></article>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>순위</th>
+                <th>서비스</th>
+                <th>팀</th>
+                <th>Impact</th>
+                <th>RTO</th>
+                <th>MTPD</th>
+                <th>Priority Score</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/demo-seed.js"></script>
+  <script>
+    (() => {
+      if (window.BCMSDemoSeed) {
+        window.BCMSDemoSeed.ensureDemoIfEmpty();
+        window.BCMSDemoSeed.mountBanner('.wrap');
+      }
+
+      const KEY_BIA = 'bcmsBIAData';
+      const escHtml = (v) => String(v || '').replace(/[&<>"']/g, (ch) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+      const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+      const teamFilter = document.getElementById('teamFilter');
+      const impactFilter = document.getElementById('impactFilter');
+      const tbody = document.getElementById('tbody');
+      const totalMetric = document.getElementById('totalMetric');
+      const highMetric = document.getElementById('highMetric');
+      const criticalMetric = document.getElementById('criticalMetric');
+
+      const loadJSON = (k, fallback) => {
+        try {
+          const raw = localStorage.getItem(k);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch {
+          return fallback;
+        }
+      };
+
+      function rtoToMinutes(value, unit) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return null;
+        const u = String(unit || '').trim();
+        if (u === '분' || u === 'minute' || u === 'minutes') return Math.round(n);
+        if (u === '시간' || u === 'hour' || u === 'hours') return Math.round(n * 60);
+        if (u === '일' || u === 'day' || u === 'days') return Math.round(n * 60 * 24);
+        return Math.round(n);
+      }
+
+      const toMinutesFromText = (text) => {
+        const raw = String(text || '').trim();
+        if (!raw) return null;
+        const number = Number((raw.match(/\d+(\.\d+)?/) || [])[0]);
+        if (!Number.isFinite(number)) return null;
+        if (/시간|hour/i.test(raw)) return Math.round(number * 60);
+        if (/일|day/i.test(raw)) return Math.round(number * 60 * 24);
+        return Math.round(number);
+      };
+
+      const minutesLabel = (m) => (Number.isFinite(m) ? `${m}분` : '-');
+      const priorityBadge = (score) => {
+        if (score > 60) return '<span class="badge badge-critical">Critical</span>';
+        if (score > 40) return '<span class="badge badge-high">High</span>';
+        return '<span class="badge badge-normal">Normal</span>';
+      };
+
+      const normalizeBia = (raw) => {
+        const rows = Array.isArray(raw) ? raw : [];
+        const out = [];
+        rows.forEach((teamRow) => {
+          const team = String(teamRow.team || '').trim();
+          if (!team) return;
+          const functions = Array.isArray(teamRow.functions) ? teamRow.functions : [];
+          functions.forEach((fn) => {
+            const name = String(fn.name || fn.function || '').trim();
+            if (!name) return;
+
+            const impact = clamp(Number(fn.overallImpact || fn.impact || 0), 0, 5);
+            const importance = String(fn.importance || '').trim();
+            const rtoMinutes = rtoToMinutes(fn.rtoValue, fn.rtoUnit) ?? toMinutesFromText(fn.rto);
+            const mtpdMinutes = Number.isFinite(Number(fn.mtpdMinutes)) ? Math.round(Number(fn.mtpdMinutes)) : toMinutesFromText(fn.mtpd);
+            const priorityScore = (impact * 10) + (importance === '중요' ? 10 : 0) + ((rtoMinutes !== null && rtoMinutes <= 60) ? 5 : 0);
+
+            out.push({ team, name, impact, rtoMinutes, mtpdMinutes, priorityScore });
+          });
+        });
+        return out;
+      };
+
+      const render = () => {
+        const allRows = normalizeBia(loadJSON(KEY_BIA, []));
+        const teams = ['전체', ...Array.from(new Set(allRows.map((r) => r.team))).sort((a, b) => a.localeCompare(b))];
+
+        if (!teamFilter.dataset.ready) {
+          teamFilter.innerHTML = teams.map((team) => `<option value="${escHtml(team)}">${escHtml(team)}</option>`).join('');
+          teamFilter.dataset.ready = '1';
+        } else {
+          const current = teamFilter.value || '전체';
+          teamFilter.innerHTML = teams.map((team) => `<option value="${escHtml(team)}" ${team === current ? 'selected' : ''}>${escHtml(team)}</option>`).join('');
+        }
+
+        const selectedTeam = teamFilter.value || '전체';
+        const impactMin = impactFilter.value === 'all' ? 0 : Number(impactFilter.value);
+
+        const filtered = allRows
+          .filter((r) => selectedTeam === '전체' || r.team === selectedTeam)
+          .filter((r) => r.impact >= impactMin)
+          .sort((a, b) => b.priorityScore - a.priorityScore || b.impact - a.impact || (a.rtoMinutes ?? 999999) - (b.rtoMinutes ?? 999999))
+          .slice(0, 20);
+
+        totalMetric.textContent = String(allRows.length);
+        highMetric.textContent = String(allRows.filter((r) => r.priorityScore > 40).length);
+        criticalMetric.textContent = String(allRows.filter((r) => r.priorityScore > 60).length);
+
+        if (!filtered.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="empty">조건에 맞는 항목이 없습니다.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = filtered.map((row, idx) => `
+          <tr data-team="${escHtml(row.team)}" data-name="${escHtml(row.name)}" title="클릭 시 BIA 상세로 이동">
+            <td class="rank">${idx + 1}</td>
+            <td>${escHtml(row.name)}</td>
+            <td>${escHtml(row.team)}</td>
+            <td>${row.impact}</td>
+            <td>${minutesLabel(row.rtoMinutes)}</td>
+            <td>${minutesLabel(row.mtpdMinutes)}</td>
+            <td class="score">${row.priorityScore}</td>
+            <td>${priorityBadge(row.priorityScore)}</td>
+          </tr>
+        `).join('');
+      };
+
+      tbody.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr[data-team][data-name]');
+        if (!tr) return;
+        const team = encodeURIComponent(tr.getAttribute('data-team') || '');
+        const name = encodeURIComponent(tr.getAttribute('data-name') || '');
+        window.location.href = `../risk-bia/bia.html?team=${team}&function=${name}`;
+      });
+
+      teamFilter.addEventListener('change', render);
+      impactFilter.addEventListener('change', render);
+
+      render();
+    })();
+  </script>
+</body>
+</html>
