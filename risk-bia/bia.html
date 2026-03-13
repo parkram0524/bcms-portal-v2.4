@@ -655,9 +655,25 @@
 
       const coreRows = loadCoreFunctions();
       const orgTeams = loadOrgTeams();
-      const allTeams = uniq([...coreRows.map((r) => r.team), ...orgTeams]);
       const coreMap = new Map(coreRows.map((r) => [r.team, r.functions]));
       let biaRows = loadBiaData();
+      let allTeams = [];
+
+      const getAllTeams = () => uniq([
+        ...coreRows.map((r) => r.team),
+        ...orgTeams,
+        ...biaRows.map((r) => r.team)
+      ]);
+
+      const refreshTeamOptions = () => {
+        const prev = teamSelect.value || '';
+        allTeams = getAllTeams();
+        teamSelect.innerHTML = allTeams.length
+          ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
+          : '<option value="">등록된 팀이 없습니다</option>';
+
+        if (allTeams.includes(prev)) teamSelect.value = prev;
+      };
 
       const opened = new Set();
       const scoreGuideOpened = new Set();
@@ -669,10 +685,7 @@
       let quickViewTeam = '';
       let quickViewPrevFocus = null;
 
-      teamSelect.innerHTML = allTeams.length
-        ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
-        : '<option value="">등록된 팀이 없습니다</option>';
-
+      refreshTeamOptions();
 
       const toDurationText = (mins) => {
         if (mins === null || mins === undefined) return '-';
@@ -1117,6 +1130,7 @@
       };
 
       const render = () => {
+        refreshTeamOptions();
         renderGlobalMetrics();
         renderOverviewFilters();
         renderOverviewTable();
