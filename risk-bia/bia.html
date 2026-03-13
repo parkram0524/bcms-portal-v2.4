@@ -184,6 +184,28 @@
 
     .empty{ margin-top:12px; border:1px dashed #c8d5e5; border-radius:12px; background:#f8fbff; color:#60758f; padding:14px; font-size:14px; }
 
+
+    body.modal-open{ overflow:hidden; }
+    .quickModal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:90; }
+    .quickModal.open{ display:flex; }
+    .quickModalBackdrop{ position:absolute; inset:0; background:rgba(15,23,42,.52); backdrop-filter:blur(2px); }
+    .quickModalDialog{ position:relative; width:min(980px, calc(100vw - 24px)); max-height:calc(100vh - 28px); background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:0 18px 44px rgba(2,6,23,.22); display:flex; flex-direction:column; overflow:hidden; }
+    .quickModalHead{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .quickModalTitle{ margin:0; font-size:18px; font-weight:900; color:var(--text); }
+    .quickModalBody{ padding:14px 16px; overflow:auto; display:grid; gap:12px; }
+    .quickGrid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+    .quickMetric{ border:1px solid var(--line); border-radius:10px; padding:9px; background:#f8fbff; }
+    .quickMetric .k{ font-size:12px; color:var(--muted); font-weight:800; }
+    .quickMetric .v{ margin-top:5px; font-size:18px; font-weight:900; color:var(--text); }
+    .quickList{ display:grid; gap:7px; }
+    .quickItem{ border:1px solid var(--line); border-radius:10px; padding:10px; background:#fff; display:grid; gap:6px; }
+    .quickItemTop{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .quickName{ font-size:14px; font-weight:900; color:var(--text); }
+    .quickBadges{ display:flex; gap:5px; flex-wrap:wrap; }
+    .quickMeta{ font-size:12.5px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
+    .quickModalFoot{ border-top:1px solid var(--line); padding:12px 16px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+    .quickInline{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:6px; }
+
     @media (max-width:980px){
       .editWorkspace{ grid-template-columns:1fr; }
       .summaryAside{ position:static; }
@@ -195,6 +217,7 @@
       .resourceGrid{ grid-template-columns:1fr 1fr; }
       .scoreGuideGrid{ grid-template-columns:1fr 1fr; }
       .overviewFilters select, .overviewFilters input{ min-width:140px; }
+      .quickGrid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
     }
 
     @media (max-width:640px){
@@ -205,6 +228,8 @@
       .scoreBtns{ grid-template-columns:repeat(3,minmax(0,1fr)); }
       .scoreGuideGrid{ grid-template-columns:1fr; }
       .panel{ padding:14px; }
+      .quickGrid{ grid-template-columns:1fr 1fr; }
+      .quickModalHead,.quickModalBody,.quickModalFoot{ padding-left:12px; padding-right:12px; }
     }
   </style>
 </head>
@@ -292,6 +317,23 @@
     </div>
   </main>
 
+
+
+  <div class="quickModal" id="quickViewModal" aria-hidden="true">
+    <div class="quickModalBackdrop" data-quick-close></div>
+    <section class="quickModalDialog" role="dialog" aria-modal="true" aria-labelledby="quickViewTitle">
+      <header class="quickModalHead">
+        <div id="quickViewHead"></div>
+        <button class="btn" type="button" data-quick-close>닫기</button>
+      </header>
+      <div class="quickModalBody" id="quickViewBody"></div>
+      <footer class="quickModalFoot">
+        <button class="btn" type="button" id="quickViewEditBtn">상세 편집으로 이동</button>
+        <button class="btn" type="button" data-quick-close>닫기</button>
+      </footer>
+    </section>
+  </div>
+
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
   <script src="../assets/demo-seed.js"></script>
@@ -343,6 +385,10 @@
       const resetBtn = document.getElementById('resetBtn');
       const stickySummaryMount = document.getElementById('stickySummaryMount');
       const overviewSection = document.getElementById('overviewSection');
+      const quickViewModal = document.getElementById('quickViewModal');
+      const quickViewHead = document.getElementById('quickViewHead');
+      const quickViewBody = document.getElementById('quickViewBody');
+      const quickViewEditBtn = document.getElementById('quickViewEditBtn');
       const teamMetric = document.getElementById('teamMetric');
       const countMetric = document.getElementById('countMetric');
       const importantMetric = document.getElementById('importantMetric');
@@ -556,6 +602,8 @@
       let dirtyState = false;
       let lastSavedAt = null;
       let overviewQuickMode = 'all';
+      let quickViewTeam = '';
+      let quickViewPrevFocus = null;
 
       teamSelect.innerHTML = allTeams.length
         ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
@@ -693,7 +741,7 @@
                   <td><span class="chip">${toDurationText(r.minMtpd)}</span></td>
                   <td><span class="chip ${r.minRto!==null && r.minRto<=240 ? 'rowFlag warn' : ''}">${toDurationText(r.minRto)}</span></td>
                   <td><div class="highImpactCell"><div class="numStrong">${r.highImpact}</div><span class="hiBadge ${r.highImpact >= 3 ? 'high' : (r.highImpact >= 1 ? 'low' : '')}">${r.highImpact === 0 ? '안정' : (r.highImpact === 1 ? '주의' : (r.highImpact === 2 ? '우선 확인' : '집중관리'))}</span></div></td>
-                  <td><button class="btn tableActionBtn" type="button" data-jump-team="${esc(r.team)}">상세 편집</button></td>
+                  <td style="display:flex; gap:6px; flex-wrap:wrap;"><button class="btn" type="button" data-quick-view-team="${esc(r.team)}">빠른 보기</button><button class="btn tableActionBtn" type="button" data-jump-team="${esc(r.team)}">상세 편집</button></td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -704,6 +752,82 @@
         const teamOpts = ['전체', ...allTeams];
         const prev = overviewTeamFilter.value || '전체';
         overviewTeamFilter.innerHTML = teamOpts.map((t) => `<option value="${esc(t)}" ${prev===t?'selected':''}>${esc(t)}</option>`).join('');
+      };
+
+      const goToTeamEditor = (team) => {
+        if (!team) return;
+        teamSelect.value = team;
+        render();
+        detailEditor.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      };
+
+      const getTeamQuickViewData = (team) => {
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        const functions = [...(row.functions || [])].map((fn) => ({
+          name: fn.name,
+          importance: fn.importance,
+          overallImpact: Number(fn.overallImpact || 0),
+          mtpd: fn.mtpd || '-',
+          rto: fn.rto || '-',
+          grade: fn.grade || '일반',
+          requiredResources: Array.isArray(fn.requiredResources) ? fn.requiredResources : [],
+          hasRtoWarning: !!getRtoWarnText(fn)
+        }));
+        functions.sort((a,b) => {
+          const aw = (a.overallImpact >= 4 ? 4 : 0) + (a.importance === '중요' ? 2 : 0);
+          const bw = (b.overallImpact >= 4 ? 4 : 0) + (b.importance === '중요' ? 2 : 0);
+          return bw - aw || a.name.localeCompare(b.name, 'ko');
+        });
+        const highImpactCount = functions.filter((f)=>f.overallImpact >= 4).length;
+        const importantCount = functions.filter((f)=>f.importance === '중요').length;
+        const coreCount = functions.length;
+        const mtpdMins = (row.functions || []).map((f)=>f.mtpdMinutes).filter((v)=>Number.isFinite(v));
+        const rtoMins = (row.functions || []).map((f)=>rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v)=>Number.isFinite(v));
+        const rtoWarnCount = functions.filter((f)=>f.hasRtoWarning).length;
+        return {
+          team,
+          coreCount,
+          importantCount,
+          highImpactCount,
+          minMtpd: mtpdMins.length ? Math.min(...mtpdMins) : null,
+          minRto: rtoMins.length ? Math.min(...rtoMins) : null,
+          rtoWarnCount,
+          functions
+        };
+      };
+
+      const closeQuickView = () => {
+        if (!quickViewModal) return;
+        quickViewModal.classList.remove('open');
+        quickViewModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        quickViewTeam = '';
+        if (quickViewPrevFocus && typeof quickViewPrevFocus.focus === 'function') quickViewPrevFocus.focus();
+      };
+
+      const openQuickView = (team, triggerEl = null) => {
+        if (!team || !quickViewModal) return;
+        const data = getTeamQuickViewData(team);
+        quickViewTeam = team;
+        quickViewPrevFocus = triggerEl || document.activeElement;
+        quickViewHead.innerHTML = `<div><h3 class="quickModalTitle" id="quickViewTitle">${esc(data.team)} · Quick View</h3><div class="quickInline">${data.importantCount > 0 ? '<span class="rowFlag warn">중요업무 있음</span>' : '<span class="rowFlag">중요업무 없음</span>'}${data.highImpactCount > 0 ? '<span class="rowFlag danger">고영향 업무 있음</span>' : ''}</div></div>`;
+        quickViewBody.innerHTML = `
+          <section class="quickGrid">
+            <article class="quickMetric"><div class="k">핵심업무 수</div><div class="v">${data.coreCount}</div></article>
+            <article class="quickMetric"><div class="k">중요업무 수</div><div class="v">${data.importantCount}</div></article>
+            <article class="quickMetric"><div class="k">고영향 업무 수</div><div class="v">${data.highImpactCount}</div></article>
+            <article class="quickMetric"><div class="k">최단 MTPD</div><div class="v">${toDurationText(data.minMtpd)}</div></article>
+            <article class="quickMetric"><div class="k">최단 RTO</div><div class="v">${toDurationText(data.minRto)}</div></article>
+          </section>
+          <section>
+            <div class="quickInline"><span class="rowFlag ${data.rtoWarnCount ? 'warn' : ''}">RTO 경고 ${data.rtoWarnCount}건</span></div>
+          </section>
+          <section class="quickList">
+            ${data.functions.length ? data.functions.map((f)=>`<article class="quickItem"><div class="quickItemTop"><div class="quickName">${esc(f.name)}</div><div class="quickBadges"><span class="tag g-${f.grade}">${f.grade}</span>${f.importance === '중요' ? '<span class="rowFlag warn">중요</span>' : ''}${f.overallImpact >= 4 ? '<span class="rowFlag danger">고영향</span>' : ''}${f.hasRtoWarning ? '<span class="rowFlag warn">RTO 경고</span>' : ''}</div></div><div class="quickMeta"><span>영향도 ${f.overallImpact}</span><span>MTPD ${esc(f.mtpd)}</span><span>RTO ${esc(f.rto)}</span></div><div class="quickInline">${f.requiredResources.length ? f.requiredResources.map((r)=>`<span class="chip">${esc(r)}</span>`).join('') : '<span class="muted">복구 필요자원 없음</span>'}</div></article>`).join('') : '<div class="empty">등록된 업무가 없습니다.</div>'}
+          </section>`;
+        quickViewModal.classList.add('open');
+        quickViewModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
       };
 
       const markDirty = () => { dirtyState = true; };
@@ -1073,11 +1197,15 @@
       });
 
       overviewTableMount.addEventListener('click', (e) => {
+        const quickTeam = e.target.closest('[data-quick-view-team]')?.getAttribute('data-quick-view-team');
+        if (quickTeam) {
+          e.stopPropagation();
+          openQuickView(quickTeam, e.target.closest('[data-quick-view-team]'));
+          return;
+        }
         const team = e.target.closest('[data-jump-team]')?.getAttribute('data-jump-team');
         if (!team) return;
-        teamSelect.value = team;
-        render();
-        detailEditor.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+        goToTeamEditor(team);
       });
 
       tableMount.addEventListener('change', (e) => {
@@ -1280,6 +1408,18 @@
         row.functions = (coreMap.get(team) || []).map((name) => normalizeFunction({ name }));
         markDirty();
         render();
+      });
+
+      quickViewModal?.addEventListener('click', (e) => {
+        if (e.target.hasAttribute('data-quick-close') || e.target.closest('[data-quick-close]')) closeQuickView();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && quickViewModal?.classList.contains('open')) closeQuickView();
+      });
+      quickViewEditBtn?.addEventListener('click', () => {
+        const team = quickViewTeam;
+        closeQuickView();
+        goToTeamEditor(team);
       });
 
       render();
