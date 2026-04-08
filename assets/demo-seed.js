@@ -102,7 +102,20 @@
 
   function parse(raw, fb){ try{ return JSON.parse(raw); }catch(e){ return fb; } }
   function getArr(key){ const v = parse(localStorage.getItem(key) || '[]', []); return Array.isArray(v) ? v : []; }
-  function setArr(key, arr){ localStorage.setItem(key, JSON.stringify(arr)); }
+  function setArr(key, arr){
+    if (window.DataStore && key === KEYS.BIA && typeof DataStore.writeBiaRecords === 'function' && typeof DataStore.readBiaRecords === 'function') {
+      localStorage.setItem(key, JSON.stringify(arr));
+      DataStore.writeBiaRecords(DataStore.readBiaRecords());
+      if (typeof DataStore.syncRiskWithBia === 'function') DataStore.syncRiskWithBia(DataStore.readBiaRecords());
+      return;
+    }
+    if (window.DataStore && key === KEYS.RISK && typeof DataStore.writeRiskRecords === 'function' && typeof DataStore.readRiskRecords === 'function') {
+      localStorage.setItem(key, JSON.stringify(arr));
+      DataStore.writeRiskRecords(DataStore.readRiskRecords());
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify(arr));
+  }
 
   function isEmptyKey(key){ return getArr(key).length === 0; }
   function allMainEmpty(){ return [KEYS.BIA, KEYS.RISK, KEYS.BCP, KEYS.DRP].every(isEmptyKey); }
