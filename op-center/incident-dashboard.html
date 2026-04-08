@@ -125,10 +125,21 @@
     }
 
     .modeFlow{ margin-top:8px; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
-    .modeNode{ border:1px solid rgba(15,23,42,.12); border-radius:12px; background:#fff; padding:10px; text-align:center; font-size:12px; font-weight:900; }
-    .modeNode.active{ border-color:rgba(37,99,235,.38); box-shadow:0 0 0 2px rgba(37,99,235,.14) inset; }
-    .modeNode.recommended{ border-color:rgba(217,119,6,.38); background:rgba(217,119,6,.08); }
+    .modeNode{ border:1px solid rgba(15,23,42,.12); border-radius:12px; background:#fff; padding:10px; text-align:center; font-size:12px; font-weight:900; position:relative; }
+    .modeNode.active{ border-color:rgba(37,99,235,.48); box-shadow:0 0 0 2px rgba(37,99,235,.14) inset; background:rgba(37,99,235,.08); }
+    .modeNode.recommended{ border-color:rgba(217,119,6,.45); }
+    .modeNode.parallel{ border-style:dashed; }
+    .modeNode .tag{ position:absolute; top:6px; right:8px; font-size:10px; font-weight:900; color:#9a3412; }
     @media (max-width:900px){ .modeFlow{ grid-template-columns:1fr; } }
+
+    .modeLegend{ margin-top:8px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+    .legendItem{ border:1px solid rgba(15,23,42,.1); border-radius:10px; padding:8px; font-size:12px; background:#fff; }
+    .decisionBox{ margin-top:10px; border:1px solid rgba(15,23,42,.1); border-radius:12px; background:#fff; padding:10px; }
+    .decisionTitle{ margin:0 0 8px; font-size:13px; font-weight:900; }
+    .decisionWarn{ margin-top:8px; border:1px solid rgba(217,119,6,.34); background:rgba(217,119,6,.08); color:#92400e; border-radius:10px; padding:8px; font-size:12px; font-weight:700; }
+    .evidenceGrid{ margin-top:8px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .evidenceItem{ border:1px solid rgba(15,23,42,.1); border-radius:10px; background:#fff; padding:8px; font-size:12px; }
+    @media (max-width:900px){ .modeLegend,.evidenceGrid{ grid-template-columns:1fr; } }
 
     .hubGrid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:8px; }
     .hubBox{ border:1px solid rgba(15,23,42,.10); border-radius:12px; background:rgba(255,255,255,.96); padding:10px; }
@@ -334,12 +345,21 @@
 
         <article class="card hubFlowCard">
           <h3>사고 대응 허브</h3>
+          <div class="modeLegend">
+            <div class="legendItem"><b>SOP</b>: 표준 절차 기반 복구</div>
+            <div class="legendItem"><b>EOP</b>: 비상대응 조직 / 상황통제 / 보고</div>
+            <div class="legendItem"><b>DRP</b>: 기술 복구 / 전환 / 재기동</div>
+            <div class="legendItem"><b>BCP</b>: 대체 자원 기반 업무 연속</div>
+          </div>
           <div class="metaGrid">
             <div class="metaItem"><div class="k">현재 대응 단계</div><div class="v" id="currentModeText">SOP</div></div>
-            <div class="metaItem"><div class="k">권장 대응 단계</div><div class="v" id="recommendedModeText">SOP</div></div>
+            <div class="metaItem"><div class="k">자동 권장 단계</div><div class="v" id="recommendedModeText">SOP</div></div>
+            <div class="metaItem"><div class="k">발동 사유</div><div class="v" id="activationReasonText">-</div></div>
+            <div class="metaItem"><div class="k">판단 근거 요약</div><div class="v" id="decisionSummaryText">-</div></div>
           </div>
           <div id="modeFlow" class="modeFlow"></div>
           <div id="modeReasonChips" class="chipRow"></div>
+          <div id="modeMismatchWarn" class="decisionWarn" style="display:none;"></div>
           <div class="modeCtl">
             <div>
               <label for="modeSelect">현재 단계 변경</label>
@@ -383,6 +403,10 @@
             <h4>권장 이유</h4>
             <ul id="hubRecoReasonList" class="hubList"></ul>
           </div>
+          <div class="decisionBox">
+            <h4 class="decisionTitle">왜 이 단계가 권장되는가</h4>
+            <div id="decisionEvidenceGrid" class="evidenceGrid"></div>
+          </div>
         </article>
 
         <article class="card hubTabsCard">
@@ -423,6 +447,7 @@
                 <summary>전략 요약 보기</summary>
                 <div id="bcpDetailList" class="mini"></div>
               </details>
+              <button class="btn" id="btnActivateBcp" type="button">BCP 가동</button>
               <a class="btn" href="../strategy-plans/bcp.html">BCP 전략 관리</a>
             </section>
           </div>
@@ -517,6 +542,7 @@
       const INCIDENTS_UNIFIED_KEY = 'bcmsIncidents';
       const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
       const SELECTED_INCIDENT_KEY = 'bcms_selected_incident';
+      const SELECTED_INCIDENT_ID_KEY = 'bcmsSelectedIncidentId';
       const CURRENT_INCIDENT_ID_KEY = 'bcmsCurrentIncidentId';
       const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
       const BIA_KEY = 'bcmsBIAData';
@@ -524,6 +550,7 @@
       const BCP_KEY = 'bcmsBCP';
       const DRP_KEY = 'bcmsDRP';
       const EXECUTION_KEY = 'bcmsIncidentExecution';
+      const BCP_ASSESS_KEY = 'bcmsBcpAssessments';
 
       const RESPONSE_MODES = ['SOP', 'EOP', 'DRP', 'BCP', '종료'];
       const TERMINAL_STATUSES = ['종료', '복구 완료', '종결'];
@@ -589,6 +616,10 @@
       const recommendedModeText = document.getElementById('recommendedModeText');
       const modeFlow = document.getElementById('modeFlow');
       const modeReasonChips = document.getElementById('modeReasonChips');
+      const activationReasonText = document.getElementById('activationReasonText');
+      const decisionSummaryText = document.getElementById('decisionSummaryText');
+      const modeMismatchWarn = document.getElementById('modeMismatchWarn');
+      const decisionEvidenceGrid = document.getElementById('decisionEvidenceGrid');
       const modeSelect = document.getElementById('modeSelect');
       const modeReasonInput = document.getElementById('modeReasonInput');
       const btnApplyMode = document.getElementById('btnApplyMode');
@@ -604,6 +635,7 @@
       const bcpNeedText = document.getElementById('bcpNeedText');
       const drpDetailList = document.getElementById('drpDetailList');
       const bcpDetailList = document.getElementById('bcpDetailList');
+      const btnActivateBcp = document.getElementById('btnActivateBcp');
 
       const progressSummary = document.getElementById('progressSummary');
       const checkModes = document.getElementById('checkModes');
@@ -619,21 +651,37 @@
       const autoGenNotice = document.getElementById('autoGenNotice');
       const autoGenSummaryText = document.getElementById('autoGenSummaryText');
 
-      const query = new URLSearchParams(location.search);
-      const readOnceSelection = () => {
-        const fromQuery = query.get('incidentRef') || '';
-        let fromStorage = '';
+      const safeParse = (raw, fallback = null) => {
         try {
-          const parsed = JSON.parse(localStorage.getItem(SELECTED_INCIDENT_KEY) || 'null');
-          fromStorage = parsed?.incidentRef || '';
+          return raw ? JSON.parse(raw) : fallback;
         } catch {
-          fromStorage = '';
+          return fallback;
         }
-        localStorage.removeItem(SELECTED_INCIDENT_KEY);
-        return (fromQuery || fromStorage || '').trim();
       };
 
-      const selectedIncidentRef = readOnceSelection();
+      const resolveSelectedIncidentId = () => {
+        const params = new URLSearchParams(location.search);
+        const fromQueryId = String(params.get('incidentId') || '').trim();
+        const fromQueryRef = String(params.get('incidentRef') || '').trim();
+        const fromSelectedId = String((window.DataStore && DataStore.getSelectedIncidentId) ? DataStore.getSelectedIncidentId() : (localStorage.getItem(SELECTED_INCIDENT_ID_KEY) || '')).trim();
+        const fromCurrent = String(localStorage.getItem(CURRENT_INCIDENT_ID_KEY) || '').trim();
+        const fromSelected = safeParse(localStorage.getItem(SELECTED_INCIDENT_KEY), {});
+        const fromFocus = safeParse(localStorage.getItem(FOCUS_TARGET_KEY), {});
+
+        const candidates = [
+          fromQueryId,
+          fromQueryRef,
+          fromSelectedId,
+          fromCurrent,
+          String(fromSelected?.incidentId || '').trim(),
+          String(fromSelected?.incidentRef || '').trim(),
+          fromFocus?.type === 'incident' ? String(fromFocus?.id || '').trim() : ''
+        ];
+
+        return candidates.find((v) => v) || null;
+      };
+
+      let selectedIncidentRef = '';
       let focusApplied = false;
 
       const drStateMap = {
@@ -691,6 +739,9 @@
           matchedDRPProcedures: [],
           currentResponseMode: 'SOP',
           recommendedModes: ['SOP'],
+          recommendationReasons: [],
+          responseDecision: null,
+          responseDecisionUpdatedAt: '',
           modeHistory: [],
           activationReason: ''
         },
@@ -805,11 +856,228 @@
         if (!Array.isArray(merged.currentIncident.matchedBCPStrategies)) merged.currentIncident.matchedBCPStrategies = [];
         if (!Array.isArray(merged.currentIncident.matchedDRPProcedures)) merged.currentIncident.matchedDRPProcedures = [];
         if (!Array.isArray(merged.currentIncident.recommendedModes)) merged.currentIncident.recommendedModes = ['SOP'];
+        if (!Array.isArray(merged.currentIncident.recommendationReasons)) merged.currentIncident.recommendationReasons = [];
         if (!Array.isArray(merged.currentIncident.modeHistory)) merged.currentIncident.modeHistory = [];
         if (!RESPONSE_MODES.includes(merged.currentIncident.currentResponseMode)) merged.currentIncident.currentResponseMode = 'SOP';
         merged.currentIncident.activationReason = String(merged.currentIncident.activationReason || '');
 
         return merged;
+      };
+
+      const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
+      const toMillis = (value) => {
+        if (!hasValue(value)) return 0;
+        const ts = new Date(value).getTime();
+        return Number.isFinite(ts) ? ts : 0;
+      };
+
+      const pickFirst = (obj, keys, fallback = '') => {
+        for (const key of keys) {
+          if (hasValue(obj?.[key])) return obj[key];
+        }
+        return fallback;
+      };
+
+      const normalizeStringList = (value) => {
+        if (Array.isArray(value)) {
+          return uniq(value.map((x) => String(x?.teamName || x?.name || x || '').trim()).filter(Boolean));
+        }
+        if (typeof value === 'string') {
+          return uniq(value.split(',').map((x) => x.trim()).filter(Boolean));
+        }
+        return [];
+      };
+
+      const normalizeIncidentRecord = (row = {}, idx = 0) => {
+        const incidentId = String(pickFirst(row, ['incidentId', 'id', 'incidentID', 'incidentRef', 'incidentCode'], `INC-${idx + 1}`) || '').trim();
+        const status = String(pickFirst(row, ['status', 'currentStatus', 'state'], '-')).trim();
+        const severity = String(pickFirst(row, ['severity', 'level'], '-')).trim();
+        const title = String(pickFirst(row, ['title', 'incidentTitle', 'name'], '')).trim();
+        const currentStage = String(pickFirst(row, ['currentStage', 'responseStage', 'phase', 'step'], status || '-')).trim();
+        const startedAt = pickFirst(row, ['startedAt', 'startTime', 'createdAt', 'incidentStartTime', 'openedAt'], null);
+        const endedAt = pickFirst(row, ['endedAt', 'endTime', 'closedAt', 'resolvedAt'], null);
+
+        const affectedRaw = row.affectedServices ?? row.services ?? row.impactedServices ?? row.selectedServices ?? row.serviceNames;
+        const relatedRaw = row.relatedTeamNames ?? row.relatedTeamIds ?? row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const affectedServices = normalizeStringList(Array.isArray(affectedRaw) ? affectedRaw : (hasValue(affectedRaw) ? [affectedRaw] : [row.serviceName, row.impacted]));
+        const relatedTeams = normalizeStringList(Array.isArray(relatedRaw) ? relatedRaw : (hasValue(relatedRaw) ? [relatedRaw] : [row.ownerTeam]));
+
+        const lowered = status.toLowerCase();
+        const isClosed = hasValue(endedAt) || ['종료', '종료됨', 'closed', 'resolved', '종결', '복구 완료'].includes(lowered);
+
+        return {
+          incidentId,
+          incidentRef: String(row.incidentRef || row.incidentId || row.id || '').trim(),
+          id: String(row.id || row.incidentId || '').trim(),
+          status: status || '-',
+          severity: severity || '-',
+          title,
+          affectedServices,
+          relatedTeams,
+          relatedTeamIds: Array.isArray(row.relatedTeamIds) ? row.relatedTeamIds.map((x) => String(x || '').trim()).filter(Boolean) : [],
+          relatedFunctionIds: Array.isArray(row.relatedFunctionIds) ? row.relatedFunctionIds.map((x) => String(x || '').trim()).filter(Boolean) : [],
+          relatedRiskIds: Array.isArray(row.relatedRiskIds) ? row.relatedRiskIds.map((x) => String(x || '').trim()).filter(Boolean) : [],
+          currentStage: currentStage || '-',
+          startedAt,
+          endedAt,
+          isClosed,
+          raw: row
+        };
+      };
+
+      const collectIncidentRecords = () => {
+        if (window.DataStore && DataStore.readIncidentRecords) {
+          return DataStore.readIncidentRecords().map((item, idx) => normalizeIncidentRecord({
+            ...(item.raw || {}),
+            incidentId: item.id,
+            id: item.id,
+            serviceName: item.serviceName,
+            severity: item.severity,
+            status: item.status,
+            relatedTeamIds: item.relatedTeamIds,
+            relatedFunctionIds: item.relatedFunctionIds,
+            relatedRiskIds: item.relatedRiskIds,
+            startedAt: item.startedAt,
+            endedAt: item.endedAt
+          }, idx)).filter((x) => x.incidentId);
+        }
+
+        let rows = [];
+
+        const unified = safeParse(localStorage.getItem(INCIDENTS_UNIFIED_KEY), null);
+        if (Array.isArray(unified)) rows = rows.concat(unified);
+        if (unified && typeof unified === 'object') {
+          if (unified.currentIncident && typeof unified.currentIncident === 'object') rows.push(unified.currentIncident);
+          if (Array.isArray(unified.logs)) rows = rows.concat(unified.logs);
+        }
+
+        const legacy = store.get(STORAGE_KEY, null);
+        if (legacy && typeof legacy === 'object') {
+          if (legacy.currentIncident && typeof legacy.currentIncident === 'object') rows.push(legacy.currentIncident);
+          if (Array.isArray(legacy.logs)) rows = rows.concat(legacy.logs);
+        }
+
+        const execution = store.get(EXECUTION_KEY, []);
+        if (Array.isArray(execution)) {
+          execution.forEach((row) => {
+            if (!row || typeof row !== 'object') return;
+            rows.push({
+              incidentId: row.incidentId || row.id || '',
+              status: row.status || row.currentStatus || '',
+              severity: row.severity || row.level || '',
+              startedAt: row.startedAt || row.createdAt || '',
+              endedAt: row.endedAt || '',
+              currentStage: row.currentStage || row.phase || ''
+            });
+          });
+        }
+
+        const normalized = rows.map(normalizeIncidentRecord).filter((x) => x.incidentId);
+        const byId = new Map();
+        normalized.forEach((item) => {
+          const key = item.incidentId;
+          const prev = byId.get(key);
+          if (!prev) {
+            byId.set(key, item);
+            return;
+          }
+          byId.set(key, {
+            ...prev,
+            ...item,
+            status: item.status !== '-' ? item.status : prev.status,
+            severity: item.severity !== '-' ? item.severity : prev.severity,
+            currentStage: item.currentStage !== '-' ? item.currentStage : prev.currentStage,
+            affectedServices: item.affectedServices.length ? item.affectedServices : prev.affectedServices,
+            relatedTeams: item.relatedTeams.length ? item.relatedTeams : prev.relatedTeams,
+            startedAt: hasValue(item.startedAt) ? item.startedAt : prev.startedAt,
+            endedAt: hasValue(item.endedAt) ? item.endedAt : prev.endedAt,
+            isClosed: item.isClosed || prev.isClosed
+          });
+        });
+
+        return [...byId.values()];
+      };
+
+      const findSelectedIncident = (records, selectedKey) => {
+        const key = String(selectedKey || '').trim();
+        const lowered = key.toLowerCase();
+
+        if (key) {
+          const exact = records.find((x) => x.incidentId === key)
+            || records.find((x) => x.incidentRef === key)
+            || records.find((x) => x.id === key)
+            || records.find((x) => String(x.incidentId || '').toLowerCase() === lowered)
+            || records.find((x) => String(x.incidentRef || '').toLowerCase() === lowered)
+            || records.find((x) => String(x.id || '').toLowerCase() === lowered);
+          if (exact) return exact;
+        }
+
+        const active = records
+          .filter((x) => !x.isClosed)
+          .sort((a, b) => toMillis(b.startedAt) - toMillis(a.startedAt));
+        if (active.length) return active[0];
+
+        const latest = [...records].sort((a, b) => {
+          const bt = toMillis(b.startedAt) || toMillis(b.endedAt);
+          const at = toMillis(a.startedAt) || toMillis(a.endedAt);
+          return bt - at;
+        });
+        return latest[0] || null;
+      };
+
+      const applySelectedIncident = (record) => {
+        if (!record) return false;
+        const raw = record.raw || {};
+        state.currentIncident = {
+          ...state.currentIncident,
+          ...raw,
+          incidentId: record.incidentId,
+          status: record.status,
+          severity: record.severity,
+          startTime: record.startedAt || state.currentIncident.startTime || '-',
+          endTime: record.endedAt || state.currentIncident.endTime || '-',
+          impactedServiceNames: record.affectedServices,
+          impacted: record.affectedServices.join(', '),
+          relatedOrgUnits: record.relatedTeams,
+          relatedTeamIds: Array.isArray(record.relatedTeamIds) ? [...record.relatedTeamIds] : [],
+          relatedFunctionIds: Array.isArray(record.relatedFunctionIds) ? [...record.relatedFunctionIds] : [],
+          relatedRiskIds: Array.isArray(record.relatedRiskIds) ? [...record.relatedRiskIds] : [],
+          currentResponseMode: RESPONSE_MODES.includes(String(raw.currentResponseMode || '')) ? raw.currentResponseMode : (state.currentIncident.currentResponseMode || 'SOP')
+        };
+        if (!Array.isArray(state.currentIncident.recommendedModes)) state.currentIncident.recommendedModes = ['SOP'];
+        if (!Array.isArray(state.currentIncident.recommendationReasons)) state.currentIncident.recommendationReasons = [];
+        if (!Array.isArray(state.currentIncident.modeHistory)) state.currentIncident.modeHistory = [];
+        return true;
+      };
+
+      const syncSelectedIncidentBinding = (incidentId) => {
+        const id = String(incidentId || '').trim();
+        if (!id) return;
+        selectedIncidentRef = id;
+
+        if (window.DataStore && DataStore.setSelectedIncidentId) DataStore.setSelectedIncidentId(id);
+        else {
+          localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId: id, incidentRef: id }));
+          localStorage.setItem(SELECTED_INCIDENT_ID_KEY, id);
+        }
+        localStorage.setItem(CURRENT_INCIDENT_ID_KEY, id);
+        localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type: 'incident', id }));
+
+        const params = new URLSearchParams(location.search);
+        params.set('incidentId', id);
+        if (params.get('incidentRef')) params.set('incidentRef', id);
+        const next = `${location.pathname}?${params.toString()}${location.hash || ''}`;
+        history.replaceState(null, '', next);
+      };
+
+      const resolveAndApplySelectedIncident = () => {
+        const selectedKey = resolveSelectedIncidentId();
+        const records = collectIncidentRecords();
+        const target = findSelectedIncident(records, selectedKey);
+        if (!target) return false;
+        const applied = applySelectedIncident(target);
+        if (applied) syncSelectedIncidentBinding(target.incidentId);
+        return applied;
       };
 
       const addLog = ({ system, event, action, operator = '운영자' }) => {
@@ -1102,6 +1370,8 @@
       };
 
       const parseRows = (key) => {
+        if (window.DataStore && key === BIA_KEY && DataStore.readBiaRecords) return DataStore.readBiaRecords();
+        if (window.DataStore && key === RISK_KEY && DataStore.readRiskRecords) return DataStore.readRiskRecords();
         const raw = store.get(key, []);
         return Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
       };
@@ -1124,6 +1394,105 @@
         return Math.round(n);
       };
 
+      const parseRtoHours = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        const s = String(value).trim().toLowerCase();
+        const m = s.match(/[0-9]+(?:\.[0-9]+)?/);
+        const n = toNum(m ? m[0] : null);
+        if (n === null) return null;
+        if (s.includes('일') || /\bdd?\b/.test(s)) return n * 24;
+        if (s.includes('시간') || s.includes('hour') || /\bh\b/.test(s)) return n;
+        if (s.includes('분') || s.includes('min')) return Math.round((n / 60) * 10) / 10;
+        return n;
+      };
+
+      const parseEstimatedRecoveryHours = (incident = {}) => {
+        const raw = pickFirst(incident, [
+          'estimatedRecoveryTime', 'expectedRecoveryTime', 'recoveryEtaHours', 'recoveryHours',
+          'downtimeEstimate', 'estimatedDowntime', 'expectedDowntime', 'recoveryTarget'
+        ], null);
+        return parseRtoHours(raw);
+      };
+
+      const getBcpAssessments = () => {
+        const rows = store.get(BCP_ASSESS_KEY, []);
+        return Array.isArray(rows) ? rows : [];
+      };
+
+      const saveBcpAssessment = (assessment) => {
+        if (!assessment || !assessment.incidentId) return;
+        const rows = getBcpAssessments();
+        const idx = rows.findIndex((r) => String(r?.incidentId || '') === String(assessment.incidentId));
+        if (idx >= 0) rows[idx] = { ...rows[idx], ...assessment };
+        else rows.push(assessment);
+        localStorage.setItem(BCP_ASSESS_KEY, JSON.stringify(rows));
+      };
+
+      const assessBcpForIncident = (incident, matched) => {
+        const manualActivated = ['activated', '가동', '가동중'].includes(String(incident?.bcpStatus || '').toLowerCase())
+          || incident?.bcpActivated === true
+          || incident?.continuityStatus === 'activated'
+          || incident?.currentResponseMode === 'BCP';
+
+        const coreFns = toArray(incident?.relatedCoreFunctions);
+        const rtoCandidates = coreFns.map((fn) => parseRtoHours(fn?.rto)).filter((v) => Number.isFinite(v));
+        const linkedRtoHours = rtoCandidates.length ? Math.min(...rtoCandidates) : null;
+        const estimatedRecoveryHours = parseEstimatedRecoveryHours(incident);
+
+        const reasons = [];
+        const reasonCodes = [];
+        const addReason = (code, text) => {
+          if (reasonCodes.includes(code)) return;
+          reasonCodes.push(code);
+          reasons.push(text);
+        };
+
+        if (linkedRtoHours !== null && estimatedRecoveryHours !== null && estimatedRecoveryHours > linkedRtoHours) {
+          addReason('RTO_EXCEEDED', `복구예상시간(${estimatedRecoveryHours}h)이 최소 RTO(${linkedRtoHours}h)를 초과합니다.`);
+        }
+
+        const incidentText = `${incident?.status || ''} ${incident?.severity || ''} ${incident?.currentStage || ''} ${incident?.finalSummary || ''} ${incident?.preventionMemo || ''} ${(incident?.impactedServiceNames || []).join(' ')}`.toLowerCase();
+        if (/(전원|정전|ups|발전기|냉각|공조|온도|화재|연기|방재|출입 불가|접근 불가|건물|센터|idc|시설|대체 근무|재택 전환|인력 부족)/.test(incidentText)) {
+          addReason('FACILITY_OR_WORKPLACE_DISRUPTION', '시설/업무환경/인력 접근 제약 정황이 있어 BCP 검토가 필요합니다.');
+        }
+
+        const highestImpact = Math.max(0, ...coreFns.map((fn) => Number(fn?.impact || 0) || 0));
+        if ((['high', 'critical', '높음', '심각'].includes(String(incident?.severity || '').toLowerCase())) && highestImpact >= 4) {
+          addReason('CRITICAL_BUSINESS_IMPACT', '핵심업무 영향도가 높고 심각도도 높아 연속성 대응 검토가 필요합니다.');
+        }
+
+        const matchedRisks = toArray(incident?.matchedRisks);
+        if (matchedRisks.some((r) => Number(r?.riskScore || 0) >= 13) && /(중단|장기|격리|자원 상실|업무 공백)/.test(incidentText)) {
+          addReason('PRIORITY_RISK_LINKED', '중점관리 리스크와 연계되어 BCP 대응 검토가 필요합니다.');
+        }
+
+        if ((toArray(incident?.impactedServiceNames).length >= 2 || toArray(incident?.relatedOrgUnits).length >= 2) && estimatedRecoveryHours === null) {
+          addReason('MULTI_SERVICE_ORG_DISRUPTION', '다수 서비스/조직 영향이 있으나 복구시간이 불명확하여 BCP 검토가 필요합니다.');
+        }
+
+        let status = 'none';
+        if (manualActivated) status = 'activated';
+        else if (reasonCodes.includes('RTO_EXCEEDED') || reasonCodes.includes('FACILITY_OR_WORKPLACE_DISRUPTION')) status = 'recommended';
+        else if (reasonCodes.length) status = 'review';
+
+        const recommended = status === 'recommended' || status === 'activated';
+        if (!reasons.length) reasons.push('현재는 BCP 미대상으로 판단됩니다.');
+
+        return {
+          incidentId: incident?.incidentId || 'INC-DRAFT',
+          status,
+          recommended,
+          linkedRtoHours,
+          estimatedRecoveryHours,
+          reasonCodes,
+          reasons,
+          evaluatedAt: nowIso(),
+          activatedAt: manualActivated ? (incident?.bcpActivatedAt || nowIso()) : null,
+          evidence: matched?.evidence || {}
+        };
+      };
+
       const keywordTeamRules = [
         { re: /(전력|정전|ups|발전기)/i, team:'전기팀' },
         { re: /(냉각|온도|냉동기|crah)/i, team:'기계(냉각)팀' },
@@ -1132,11 +1501,39 @@
         { re: /(보안|랜섬웨어|계정|침해)/i, team:'정보보호팀' },
         { re: /(관제|모니터링|알람)/i, team:'DC운영(NOC/관제)팀' }
       ];
+      const EOP_KEYWORDS = ['상황 전파','비상 대응','경영진 보고','고객 공지','다수 팀','보안 사고','화재','침수','안전'];
+      const DRP_KEYWORDS = ['정전','ups','발전기','냉각','온도','네트워크','회선','스위치','호스트','가상화','재기동','복구 지연','전환'];
+      const BCP_KEYWORDS = ['수기 처리','대체 인력','대체 장소','협력업체','공급업체','업무 공백','자원 부족','출입 불가','우회 운영'];
+      const RESOURCE_LOSS_WORDS = /(인력 부족|장소 사용 불가|유틸리티 상실|자원 상실|출입 불가|자원 부족|업무 공백)/i;
+      const TECH_PATTERN = /(전환|복구|재기동|failover|restore|전력|냉각|네트워크|서버|호스트|가상화|보안 플랫폼|관제시스템)/i;
+      const hasKeyword = (text, words) => words.some((word) => text.includes(word.toLowerCase()));
+      const sameList = (a, b) => JSON.stringify([...(a || [])].sort()) === JSON.stringify([...(b || [])].sort());
 
       const matchIncidentData = () => {
         const incident = state.currentIncident;
         const text = `${incident.status} ${incident.impacted} ${incident.serviceName} ${incident.finalSummary} ${incident.preventionMemo}`.toLowerCase();
-        const relatedTeams = new Set(normalizeOrgUnitNames(incident.relatedOrgUnits));
+        const resolvedCtx = (window.DataStore && DataStore.resolveIncidentContext)
+          ? DataStore.resolveIncidentContext({
+              id: incident.incidentId,
+              serviceName: incident.serviceName,
+              severity: incident.severity,
+              status: incident.status,
+              relatedTeamIds: incident.relatedTeamIds || [],
+              relatedFunctionIds: incident.relatedFunctionIds || [],
+              relatedRiskIds: incident.relatedRiskIds || [],
+              relatedTeamNames: incident.relatedOrgUnits || [],
+              relatedFunctionNames: (incident.relatedCoreFunctions || []).map((f) => f?.name || f).filter(Boolean),
+              relatedRiskNames: (incident.matchedRisks || []).map((r) => r?.risk || r?.threat || '').filter(Boolean),
+              startedAt: incident.startTime,
+              endedAt: incident.endTime
+            })
+          : null;
+        const relatedTeams = new Set([
+          ...normalizeOrgUnitNames(incident.relatedOrgUnits),
+          ...((resolvedCtx?.teams || []).map((t) => t.name).filter(Boolean))
+        ]);
+        const relatedFunctionIds = new Set((resolvedCtx?.functions || []).map((f) => f.id).filter(Boolean));
+        const relatedRiskIds = new Set((resolvedCtx?.risks || []).map((r) => r.id).filter(Boolean));
         keywordTeamRules.forEach((rule) => { if (rule.re.test(text)) relatedTeams.add(rule.team); });
 
         const biaRows = parseRows(BIA_KEY);
@@ -1146,20 +1543,23 @@
 
         const coreFns = [];
         biaRows.forEach((teamRow) => {
-          const team = String(teamRow.team || '').trim();
+          const team = String(teamRow.team || teamRow.teamName || '').trim();
           if (!relatedTeams.has(team)) return;
 
-          toArray(teamRow.functions).forEach((fn) => {
-            const isCore = !!fn.coreFinal || String(fn.grade || '') === '핵심' || String(fn.importance || '') === '중요';
+          const fnRows = Array.isArray(teamRow.functions) ? teamRow.functions : [teamRow];
+          toArray(fnRows).forEach((fn) => {
+            const functionId = String(fn.functionId || '').trim();
+            const isCore = !!fn.coreFinal || String(fn.grade || '') === '핵심' || String(fn.importance || '') === '중요' || (functionId && relatedFunctionIds.has(functionId));
             if (!isCore) return;
 
             coreFns.push({
               team,
-              name: String(fn.name || fn.function || ''),
+              functionId,
+              name: String(fn.name || fn.function || fn.functionName || ''),
               grade: String(fn.grade || '일반'),
-              mtpd: String(fn.mtpd || '-'),
-              rto: String(fn.rto || '-'),
-              rtoMinutes: toMinutes(fn.rto),
+              mtpd: String(fn.mtpd || (fn.mtpdMinutes != null ? `${fn.mtpdMinutes}분` : '-')),
+              rto: String(fn.rto || (fn.rtoValue != null ? `${fn.rtoValue}${fn.rtoUnit || ''}` : '-')),
+              rtoMinutes: toMinutes(fn.rto || (fn.rtoValue != null ? `${fn.rtoValue}${fn.rtoUnit || ''}` : '')),
               impact: toNum(fn.impact || fn.overallImpact) ?? 3
             });
           });
@@ -1167,15 +1567,18 @@
 
         const risks = [];
         riskRows.forEach((teamRow) => {
-          const team = String(teamRow.team || '').trim();
+          const team = String(teamRow.team || teamRow.teamName || '').trim();
           if (!relatedTeams.has(team)) return;
 
-          toArray(teamRow.risks).forEach((r) => {
+          const riskList = Array.isArray(teamRow.risks) ? teamRow.risks : [teamRow];
+          toArray(riskList).forEach((r) => {
             const score = toNum(r.riskScore) ?? ((toNum(r.impact) ?? 3) * (toNum(r.likelihood) ?? 1));
+            const riskId = String(r.id || '').trim();
             risks.push({
               team,
-              function: String(r.function || ''),
-              risk: String(r.risk || r.threat || ''),
+              riskId,
+              function: String(r.function || r.functionName || ''),
+              risk: String(r.risk || r.threat || r.riskName || ''),
               riskScore: score,
               critical: r.critical === undefined ? score >= 13 : !!r.critical,
               likelihood: toNum(r.likelihood) ?? 1,
@@ -1184,20 +1587,23 @@
           });
         });
 
-        if (!risks.length) {
+        if (!risks.length || relatedRiskIds.size) {
           riskRows.forEach((teamRow) => {
-            const team = String(teamRow.team || '').trim();
+            const team = String(teamRow.team || teamRow.teamName || '').trim();
             if (!relatedTeams.has(team)) return;
 
-            toArray(teamRow.risks).forEach((r) => {
+            const riskList = Array.isArray(teamRow.risks) ? teamRow.risks : [teamRow];
+            toArray(riskList).forEach((r) => {
               const score = toNum(r.riskScore) ?? ((toNum(r.impact) ?? 3) * (toNum(r.likelihood) ?? 1));
+              const riskId = String(r.id || '').trim();
               const isCritical = r.critical === undefined ? score >= 13 : !!r.critical;
-              if (!isCritical) return;
+              if (!isCritical && (!riskId || !relatedRiskIds.has(riskId))) return;
 
               risks.push({
                 team,
-                function: String(r.function || ''),
-                risk: String(r.risk || r.threat || ''),
+                riskId,
+                function: String(r.function || r.functionName || ''),
+                risk: String(r.risk || r.threat || r.riskName || ''),
                 riskScore: score,
                 critical: true,
                 likelihood: toNum(r.likelihood) ?? 1,
@@ -1227,46 +1633,109 @@
           });
         });
 
+        const incidentText = [incident.title, incident.description, incident.memo, incident.finalSummary, incident.preventionMemo, incident.impacted, incident.serviceName, incident.status]
+          .map((x) => String(x || '').trim().toLowerCase()).join(' ');
+        const highestRiskScore = risks.reduce((max, r) => Math.max(max, Number(r.riskScore || 0)), 0);
+        const criticalRiskCount = risks.filter((r) => r.critical === true || Number(r.riskScore || 0) >= 13).length;
+        const coreImpact = coreFns.some((fn) => ['핵심', '주요'].includes(String(fn.grade || '').trim()) || fn.coreFinal === true);
+        const rtoBreach = coreFns.some((fn) => {
+          const rtoM = toMinutes(fn.rto);
+          return rtoM !== null && rtoM <= 120 && (incident.status === '복구 완료' ? false : true);
+        }) && /복구 지연|장기|불확실|지연/.test(incidentText);
+        const hasResourceLoss = RESOURCE_LOSS_WORDS.test(incidentText);
+        const hasEopKey = hasKeyword(incidentText, EOP_KEYWORDS);
+        const hasDrpKey = hasKeyword(incidentText, DRP_KEYWORDS);
+        const hasBcpKey = hasKeyword(incidentText, BCP_KEYWORDS);
+
+        const reasonsByMode = { SOP: [], EOP: [], DRP: [], BCP: [] };
         const recommended = new Set(['SOP']);
-        const reasons = [];
 
-        if (relatedTeams.size >= 2) {
-          recommended.add('EOP');
-          reasons.push('다수 팀 대응 필요');
-        }
-        if (incident.severity === '심각' || incident.severity === '치명') {
-          recommended.add('EOP');
-          reasons.push('중요 서비스 영향');
-        }
-        if (/안전|시설|보안|대외|커뮤니케이션/.test(text)) {
-          recommended.add('EOP');
-          reasons.push('상황 통제/보고 필요');
-        }
+        if (relatedTeams.size >= 2) reasonsByMode.EOP.push(`관련 조직 ${relatedTeams.size}개로 다수 팀 대응 필요`);
+        if (incident.severity === '심각' || incident.severity === '치명') reasonsByMode.EOP.push(`심각도 ${incident.severity}로 상황 통제/보고 필요`);
+        if (coreImpact) reasonsByMode.EOP.push('핵심/주요 업무 영향이 확인됨');
+        if (hasEopKey || /시설|안전|보안|대외|커뮤니케이션/.test(incidentText)) reasonsByMode.EOP.push('상황 전파·의사결정·대외 커뮤니케이션 필요 정황');
+        if (/불확실|장기|지연/.test(incidentText)) reasonsByMode.EOP.push('복구시간 불확실/장기화 가능성');
 
-        const hasHigh = risks.some((r) => r.critical || r.riskScore >= 13);
-        const hasTechWord = /(전환|복구|재기동|failover|restore|전력|냉각|네트워크|호스트|보안|모니터링)/i.test(text);
-        if (drpMatched.length || hasTechWord || hasHigh) {
-          recommended.add('DRP');
-          reasons.push(drpMatched.length ? '매칭 DRP 절차 존재' : '기술 복구 절차 필요');
-        }
+        if (drpMatched.length) reasonsByMode.DRP.push(`매칭 DRP 절차 ${drpMatched.length}건 존재`);
+        if (criticalRiskCount > 0) reasonsByMode.DRP.push(`중점관리 리스크 ${criticalRiskCount}건(최고 ${highestRiskScore})`);
+        if (rtoBreach) reasonsByMode.DRP.push('RTO 초과 가능성으로 기술 복구 가속 필요');
+        if (TECH_PATTERN.test(incidentText) || hasDrpKey) reasonsByMode.DRP.push('전환/복구/재기동 성격의 기술 이슈');
 
-        const hasBcpWord = /(자원|인력|공간|협력업체|유틸리티|공백|수기|우회|대체)/i.test(text);
-        if (bcpMatched.length || hasBcpWord || hasHigh) {
-          recommended.add('BCP');
-          reasons.push(bcpMatched.length ? '매칭 BCP 전략 존재' : '업무 연속 대체 운영 필요');
-        }
+        if (bcpMatched.length) reasonsByMode.BCP.push(`매칭 BCP 전략 ${bcpMatched.length}건 존재`);
+        if (hasResourceLoss) reasonsByMode.BCP.push('정상 자원 사용이 어려운 정황(인력/장소/유틸리티)');
+        if (hasBcpKey) reasonsByMode.BCP.push('수기 처리/대체 인력/대체 장소/우회 운영 키워드 감지');
+        if (rtoBreach || /업무 공백|고객 응대|승인|보고|우회/.test(incidentText)) reasonsByMode.BCP.push('기술 복구와 별개로 업무 공백 대응 필요');
+
+        if (reasonsByMode.EOP.length) recommended.add('EOP');
+        if (reasonsByMode.DRP.length) recommended.add('DRP');
+        if (reasonsByMode.BCP.length) recommended.add('BCP');
+
+        const sopReasons = [];
+        if (relatedTeams.size <= 1) sopReasons.push('단일 조직 중심 대응 가능');
+        if (!criticalRiskCount) sopReasons.push('중점관리 리스크 미확인');
+        if (!hasResourceLoss) sopReasons.push('자원 상실 정황 없음');
+        if (!reasonsByMode.EOP.length && !reasonsByMode.DRP.length && !reasonsByMode.BCP.length) sopReasons.push('표준 절차 기반 복구 가능');
+        reasonsByMode.SOP = sopReasons;
+
+        const recommendationReasons = uniq([
+          ...reasonsByMode.EOP,
+          ...reasonsByMode.DRP,
+          ...reasonsByMode.BCP,
+          ...(recommended.size === 1 ? reasonsByMode.SOP : [])
+        ]);
+
+        const evidence = {
+          relatedOrgCount: relatedTeams.size,
+          coreImpact,
+          highestRiskScore,
+          criticalRiskCount,
+          hasDRP: drpMatched.length > 0,
+          hasBCP: bcpMatched.length > 0,
+          hasResourceLoss,
+          likelyRtoBreach: rtoBreach
+        };
+
+        const nextModes = [...recommended];
+        const prevModes = toArray(incident.recommendedModes);
+        const prevReasons = toArray(incident.recommendationReasons);
 
         incident.relatedCoreFunctions = coreFns;
         incident.matchedRisks = risks;
         incident.matchedBCPStrategies = bcpMatched;
         incident.matchedDRPProcedures = drpMatched;
-        incident.recommendedModes = [...recommended];
+        incident.recommendedModes = nextModes;
+        incident.recommendationReasons = recommendationReasons;
         incident.relatedOrgUnits = [...relatedTeams];
         incident.relatedResponseRoles = deriveResponseRolesFromOrgUnits(incident.relatedOrgUnits);
+        incident.responseDecision = {
+          currentMode: incident.currentResponseMode || 'SOP',
+          recommendedModes: nextModes,
+          reasons: recommendationReasons,
+          evidence
+        };
         if (!incident.currentResponseMode) incident.currentResponseMode = 'SOP';
-        if (!incident.activationReason && reasons.length) incident.activationReason = reasons.join(' / ');
+        if (!incident.activationReason && recommendationReasons.length) incident.activationReason = recommendationReasons[0];
 
-        return { reasons };
+        const changed = !sameList(prevModes, nextModes) || !sameList(prevReasons, recommendationReasons);
+        if (changed) {
+          incident.responseDecisionUpdatedAt = nowIso();
+          const rows = getExecStore();
+          const incidentId = incident.incidentId || 'INC-DRAFT';
+          const execRow = rows.find((r) => r && r.incidentId === incidentId);
+          if (execRow) {
+            if (!Array.isArray(execRow.logs)) execRow.logs = [];
+            const msg = `자동 권장: ${nextModes.join(', ')}`;
+            const note = `권장 사유: ${recommendationReasons.slice(0, 3).join(' / ')}`;
+            const last = execRow.logs[execRow.logs.length - 1];
+            const duplicated = last && last.category === '자동권장' && last.message === msg && last.note === note;
+            if (!duplicated) {
+              execRow.logs.push({ timestamp: nowIso(), category:'자동권장', message: msg, actor:'시스템', note, source:'auto-recommendation' });
+              saveExecStore(rows);
+            }
+          }
+        }
+
+        return { reasons: recommendationReasons, reasonsByMode, evidence };
       };
 
       const checklistTemplateByMode = (mode, incident) => {
@@ -1347,7 +1816,7 @@
       };
 
       const getServices = () => loadServices();
-      const getIncidents = () => store.get(STORAGE_KEY, null);
+      const getIncidents = () => collectIncidentRecords();
       const getCurrentIncident = () => state.currentIncident || null;
 
       let services = loadServices();
@@ -1588,22 +2057,54 @@
       const renderHub = () => {
         const matched = matchIncidentData();
         const incident = state.currentIncident;
+        const bcpAssess = assessBcpForIncident(incident, matched);
+        incident.bcpStatus = bcpAssess.status;
+        incident.bcpRecommended = bcpAssess.recommended;
+        incident.bcpReasonCodes = bcpAssess.reasonCodes;
+        incident.bcpReasons = bcpAssess.reasons;
+        incident.bcpLinkedRtoHours = bcpAssess.linkedRtoHours;
+        incident.bcpEstimatedRecoveryHours = bcpAssess.estimatedRecoveryHours;
+        if (bcpAssess.status === 'activated' && !incident.bcpActivatedAt) incident.bcpActivatedAt = bcpAssess.activatedAt || nowIso();
+        saveBcpAssessment({
+          incidentId: incident.incidentId || 'INC-DRAFT',
+          status: incident.bcpStatus,
+          recommended: incident.bcpRecommended,
+          linkedRtoHours: incident.bcpLinkedRtoHours ?? null,
+          estimatedRecoveryHours: incident.bcpEstimatedRecoveryHours ?? null,
+          reasonCodes: toArray(incident.bcpReasonCodes),
+          reasons: toArray(incident.bcpReasons),
+          evaluatedAt: nowIso(),
+          activatedAt: incident.bcpActivatedAt || null
+        });
 
         currentModeText.textContent = incident.currentResponseMode || 'SOP';
         recommendedModeText.textContent = (incident.recommendedModes || ['SOP']).join(', ');
+        activationReasonText.textContent = incident.activationReason || '-';
+        decisionSummaryText.textContent = (matched.reasons || []).slice(0, 2).join(' / ') || 'SOP 기본 대응';
         modeSelect.value = RESPONSE_MODES.includes(incident.currentResponseMode) ? incident.currentResponseMode : 'SOP';
 
+        const currentMode = incident.currentResponseMode || 'SOP';
+        const recoModes = toArray(incident.recommendedModes);
         modeFlow.innerHTML = RESPONSE_MODES.map((mode) => {
-          const active = incident.currentResponseMode === mode ? 'active' : '';
-          const reco = (incident.recommendedModes || []).includes(mode) ? 'recommended' : '';
-          return `<div class="modeNode ${active} ${reco}">${mode}</div>`;
+          const active = currentMode === mode ? 'active' : '';
+          const reco = recoModes.includes(mode) ? 'recommended' : '';
+          const parallel = recoModes.includes(mode) && currentMode !== mode ? 'parallel' : '';
+          const tag = active ? '<span class="tag">현재</span>' : (reco ? '<span class="tag">권장</span>' : '');
+          return `<div class="modeNode ${active} ${reco} ${parallel}">${mode}${tag}</div>`;
         }).join('');
 
         const chips = [];
-        chips.push(`<span class="chip">현재 단계: ${incident.currentResponseMode || 'SOP'}</span>`);
-        toArray(incident.recommendedModes).forEach((mode) => chips.push(`<span class="chip reco">권장: ${mode}</span>`));
-        if (incident.activationReason) chips.push(`<span class="chip warn">사유: ${incident.activationReason}</span>`);
+        chips.push(`<span class="chip">현재 단계: ${currentMode}</span>`);
+        recoModes.forEach((mode) => chips.push(`<span class="chip reco">자동 권장: ${mode}</span>`));
+        if (incident.activationReason) chips.push(`<span class="chip warn">운영자 결정 사유: ${incident.activationReason}</span>`);
         modeReasonChips.innerHTML = chips.join('');
+
+        if (!recoModes.includes(currentMode) && currentMode !== '종료') {
+          modeMismatchWarn.style.display = 'block';
+          modeMismatchWarn.textContent = `현재는 ${currentMode} 단계이지만, ${recoModes.join('/')} 검토가 권장됩니다.`;
+        } else {
+          modeMismatchWarn.style.display = 'none';
+        }
 
         const orgs = normalizeOrgUnitNames(incident.relatedOrgUnits || []);
         hubOrgList.innerHTML = orgs.length
@@ -1626,8 +2127,9 @@
           : '<li class="muted">현재는 SOP 기본 대응이 적합합니다.</li>';
 
         const eopReco = toArray(incident.recommendedModes).includes('EOP');
+        const eopReasons = (matched.reasonsByMode && matched.reasonsByMode.EOP) ? matched.reasonsByMode.EOP : [];
         eopRecommendedText.textContent = `EOP 권장: ${eopReco ? '예' : '아니오'}`;
-        eopReasonText.textContent = reasons.length ? reasons.join(' / ') : '단일팀·단기 복구로 판단되어 SOP 우선 대응';
+        eopReasonText.textContent = eopReasons.length ? eopReasons.join(' / ') : '단일팀·단기 복구로 판단되어 SOP 우선 대응';
         eopRolesText.textContent = toArray(incident.relatedResponseRoles).join(', ') || '-';
 
         const drpRows = incident.matchedDRPProcedures || [];
@@ -1642,11 +2144,35 @@
           : '<div>DRP 페이지에서 절차를 등록해 주세요.</div>';
 
         const bcpRows = incident.matchedBCPStrategies || [];
-        const bcpNeeded = toArray(incident.recommendedModes).includes('BCP');
-        bcpNeedText.textContent = `BCP 필요 여부: ${bcpNeeded ? '필요' : '조건부/대기'}${bcpNeeded ? ' (업무 공백/자원 제약 대비)' : ''}`;
-        bcpDetailList.innerHTML = bcpRows.length
-          ? bcpRows.slice(0, 4).map((s) => `<div>• ${s.team} / ${s.function} / ${s.risk} / ${s.strategyType || '-'} / ${s.strategyText || '-'} / ${Array.isArray(s.requiredResources) ? s.requiredResources.join(', ') : '-'}</div>`).join('')
-          : '<div>BCP 전략이 아직 정의되지 않았습니다.</div>';
+        const bcpStatusLabel = {
+          none: 'BCP 미대상',
+          review: 'BCP 검토 필요',
+          recommended: 'BCP 가동 권고',
+          activated: 'BCP 가동 중'
+        };
+        bcpNeedText.textContent = `BCP 상태: ${bcpStatusLabel[bcpAssess.status] || 'BCP 미대상'}`;
+        btnActivateBcp.textContent = bcpAssess.status === 'activated' ? 'BCP 가동 중' : 'BCP 가동';
+        btnActivateBcp.disabled = bcpAssess.status === 'activated';
+        bcpDetailList.innerHTML = [
+          `<div>• 최소 RTO: ${bcpAssess.linkedRtoHours === null ? '-' : `${bcpAssess.linkedRtoHours}h`}</div>`,
+          `<div>• 복구예상시간: ${bcpAssess.estimatedRecoveryHours === null ? '-' : `${bcpAssess.estimatedRecoveryHours}h`}</div>`,
+          ...toArray(bcpAssess.reasons).slice(0, 5).map((r) => `<div>• ${r}</div>`),
+          ...(bcpRows.length
+            ? bcpRows.slice(0, 3).map((s) => `<div>• 전략: ${s.team} / ${s.function} / ${s.strategyType || '-'} / ${s.strategyText || '-'}</div>`)
+            : ['<div>• 매칭된 BCP 전략 없음 (필요 시 BCP 전략 관리에서 등록)</div>'])
+        ].join('');
+
+        const evidence = matched.evidence || {};
+        decisionEvidenceGrid.innerHTML = [
+          `핵심업무 영향: ${evidence.coreImpact ? '있음' : '없음'}`,
+          `관련 조직 수: ${evidence.relatedOrgCount ?? 0}개`,
+          `최고 위험도: ${evidence.highestRiskScore ?? 0}`,
+          `DRP 절차 존재: ${evidence.hasDRP ? '예' : '아니오'}`,
+          `BCP 전략 존재: ${evidence.hasBCP ? '예' : '아니오'}`,
+          `자원 상실 정황: ${evidence.hasResourceLoss ? '예' : '아니오'}`,
+          `RTO 초과 가능성: ${evidence.likelyRtoBreach ? '예' : '아니오'}`,
+          `BCP 판단: ${bcpStatusLabel[bcpAssess.status] || 'BCP 미대상'}`
+        ].map((line) => `<div class="evidenceItem">${line}</div>`).join('');
 
         renderExecutionConsole();
       };
@@ -1750,7 +2276,28 @@
       };
 
       window.addEventListener('storage', (e) => {
-        if ([SERVICE_REGISTRY_KEY, ORG_REGISTRY_KEY].includes(e.key)) refreshServicesFromRegistry();
+        if ([SERVICE_REGISTRY_KEY, ORG_REGISTRY_KEY].includes(e.key)) {
+          refreshServicesFromRegistry();
+          return;
+        }
+
+        if ([INCIDENTS_UNIFIED_KEY, EXECUTION_KEY, STORAGE_KEY, SELECTED_INCIDENT_KEY, SELECTED_INCIDENT_ID_KEY, CURRENT_INCIDENT_ID_KEY, FOCUS_TARGET_KEY].includes(e.key)) {
+          const applied = resolveAndApplySelectedIncident();
+          if (applied) {
+            syncImpactedCache();
+            refreshImpactStatusMap();
+          }
+          renderAll();
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        const applied = resolveAndApplySelectedIncident();
+        if (applied) {
+          syncImpactedCache();
+          refreshImpactStatusMap();
+        }
+        renderAll();
       });
 
       document.getElementById('btnStartIncident').addEventListener('click', () => {
@@ -1770,6 +2317,9 @@
           preventionMemo: '',
           currentResponseMode: 'SOP',
           recommendedModes: ['SOP'],
+          recommendationReasons: [],
+          responseDecision: null,
+          responseDecisionUpdatedAt: '',
           activationReason: '초기 대응',
           modeHistory: [{ mode:'SOP', changedAt: nowText(), reason:'초기 대응' }]
         };
@@ -1852,6 +2402,50 @@
         }
 
         addLog({ system:'대응 허브', event:`대응 단계 변경: ${mode}`, action: reason, operator:'사고 관리자' });
+
+        if (mode === 'BCP') {
+          const incidentId = state.currentIncident.incidentId || 'INC-DRAFT';
+          state.currentIncident.bcpStatus = 'activated';
+          state.currentIncident.bcpActivated = true;
+          state.currentIncident.bcpActivatedAt = nowIso();
+          saveBcpAssessment({
+            incidentId,
+            status: 'activated',
+            recommended: true,
+            linkedRtoHours: state.currentIncident.bcpLinkedRtoHours ?? null,
+            estimatedRecoveryHours: state.currentIncident.bcpEstimatedRecoveryHours ?? null,
+            reasonCodes: uniq([...(toArray(state.currentIncident.bcpReasonCodes)), 'MANUAL_ACTIVATED']),
+            reasons: uniq([...(toArray(state.currentIncident.bcpReasons)), '운영자 수동 가동으로 BCP를 즉시 적용했습니다.']),
+            evaluatedAt: nowIso(),
+            activatedAt: state.currentIncident.bcpActivatedAt
+          });
+        }
+
+        saveState();
+        renderAll();
+      });
+
+      btnActivateBcp.addEventListener('click', () => {
+        const incidentId = state.currentIncident.incidentId || 'INC-DRAFT';
+        state.currentIncident.currentResponseMode = 'BCP';
+        state.currentIncident.activationReason = '운영자 수동 BCP 가동';
+        state.currentIncident.bcpStatus = 'activated';
+        state.currentIncident.bcpActivated = true;
+        state.currentIncident.bcpActivatedAt = nowIso();
+        if (!Array.isArray(state.currentIncident.modeHistory)) state.currentIncident.modeHistory = [];
+        state.currentIncident.modeHistory.push({ mode:'BCP', changedAt: nowText(), reason:'운영자 수동 BCP 가동' });
+        saveBcpAssessment({
+          incidentId,
+          status: 'activated',
+          recommended: true,
+          linkedRtoHours: state.currentIncident.bcpLinkedRtoHours ?? null,
+          estimatedRecoveryHours: state.currentIncident.bcpEstimatedRecoveryHours ?? null,
+          reasonCodes: uniq([...(toArray(state.currentIncident.bcpReasonCodes)), 'MANUAL_ACTIVATED']),
+          reasons: uniq([...(toArray(state.currentIncident.bcpReasons)), '운영자 수동 가동으로 BCP를 즉시 적용했습니다.']),
+          evaluatedAt: nowIso(),
+          activatedAt: state.currentIncident.bcpActivatedAt
+        });
+        addLog({ system:'BCP 판단', event:'수동 BCP 가동', action:'BCP 가동 상태 반영', operator:'사고 관리자' });
         saveState();
         renderAll();
       });
@@ -2069,6 +2663,7 @@
       }, 1000);
 
       services = loadServices();
+      resolveAndApplySelectedIncident();
       if (services.length && !state.currentIncident.impactedServiceIds.length) {
         state.currentIncident.impactedServiceIds = services.slice(0, 2).map((svc) => svc.id);
       }
@@ -2083,6 +2678,16 @@
 
       saveState();
       renderAll();
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const applied = resolveAndApplySelectedIncident();
+        if (applied) {
+          syncImpactedCache();
+          refreshImpactStatusMap();
+          saveState();
+        }
+        renderAll();
+      }, { once:true });
 
       window.BCMSIncidentDashboard = {
         getServices,
