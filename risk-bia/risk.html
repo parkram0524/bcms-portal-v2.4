@@ -137,8 +137,8 @@
         window.BCMSDemoSeed.mountBanner('.wrap');
       }
 
-      const BIA_KEY = 'bcmsBIAData';
-      const RISK_KEY = 'bcmsRiskAssessment';
+      const BIA_KEY = (window.DataStore && DataStore.KEY_BIA_DATA) || 'bcmsBIAData';
+      const RISK_KEY = (window.DataStore && DataStore.KEY_RISK_ASSESSMENT) || 'bcmsRiskAssessment';
 
       const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
         get: (k, f) => { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : f; } catch { return f; } },
@@ -178,11 +178,12 @@
       const normalizeBiaRows = (raw) => {
         const rows = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' && raw.team ? [raw] : []);
         return rows.map((row) => ({
-          team: String(row.team || '').trim(),
+          team: String(row.team || row.teamName || '').trim(),
           functions: (row.functions || []).map((fn) => {
             const name = String(fn.name || fn.function || '').trim();
             const impact = clamp(Number(fn.impact || fn.overallImpact || 3), 1, 5);
             return {
+              functionId: String(fn.functionId || '').trim(),
               name,
               importance: String(fn.importance || '일반'),
               overallImpact: clamp(Number(fn.overallImpact || impact), 1, 5),
@@ -199,7 +200,7 @@
       const normalizeRiskRows = (raw) => {
         const rows = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' && raw.team ? [raw] : []);
         return rows.map((row) => ({
-          team: String(row.team || '').trim(),
+          team: String(row.team || row.teamName || '').trim(),
           risks: (row.risks || []).map((risk) => {
             const likelihood = clamp(Number(risk.likelihood || 1), 1, 5);
             const impact = clamp(Number(risk.impact || 3), 1, 5);
@@ -208,10 +209,12 @@
             const functionName = String(risk.function || risk.functionName || '').trim();
             const threat = String(risk.threat || risk.risk || '').trim();
             return {
-              function: functionName,
-              functionName,
-              threat,
-              risk: threat,
+              id: String(risk.id || '').trim(),
+              functionId: String(risk.functionId || '').trim(),
+              source: String(risk.source || 'MANUAL'),
+              sourceRefId: String(risk.sourceRefId || ''),
+              function: String(risk.function || '').trim(),
+              risk: String(risk.risk || risk.threat || '').trim(),
               likelihood,
               impact,
               riskScore,
@@ -221,6 +224,56 @@
             };
           }).filter((risk) => risk.function)
         })).filter((row) => row.team);
+      };
+
+      const readBiaRows = () => {
+        if (window.DataStore && DataStore.readBiaRecords) {
+          const byTeam = new Map();
+          DataStore.readBiaRecords().forEach((row) => {
+            const team = String(row.teamName || '').trim();
+            if (!team) return;
+            if (!byTeam.has(team)) byTeam.set(team, { team, functions: [] });
+            byTeam.get(team).functions.push({
+              functionId: row.functionId,
+              name: row.functionName,
+              importance: row.importance,
+              overallImpact: row.overallImpact,
+              impact: row.overallImpact,
+              mtpd: row.mtpdMinutes == null ? '-' : `${row.mtpdMinutes}분`,
+              rto: row.rtoValue == null ? '-' : `${row.rtoValue}${row.rtoUnit || ''}`,
+              grade: row.grade,
+              coreFinal: row.grade !== '일반'
+            });
+          });
+          return [...byTeam.values()];
+        }
+        return normalizeBiaRows(store.get(BIA_KEY, []));
+      };
+
+      const readRiskRows = () => {
+        if (window.DataStore && DataStore.readRiskRecords) {
+          const byTeam = new Map();
+          DataStore.readRiskRecords().forEach((row) => {
+            const team = String(row.teamName || '').trim();
+            if (!team) return;
+            if (!byTeam.has(team)) byTeam.set(team, { team, risks: [] });
+            byTeam.get(team).risks.push({
+              id: row.id,
+              functionId: row.functionId,
+              source: row.source,
+              sourceRefId: row.sourceRefId,
+              function: row.functionName,
+              risk: row.threat,
+              likelihood: row.likelihood,
+              impact: row.impact,
+              riskScore: row.riskScore,
+              riskLevel: row.riskLevel,
+              critical: row.critical
+            });
+          });
+          return [...byTeam.values()];
+        }
+        return normalizeRiskRows(store.get(RISK_KEY, []));
       };
 
       const buildMatrixHtml = (activeLikelihood = null, activeImpact = null) => {
@@ -255,8 +308,8 @@
         `;
       };
 
-      const biaRows = normalizeBiaRows(store.get(BIA_KEY, []));
-      let riskRows = normalizeRiskRows(store.get(RISK_KEY, []));
+      const biaRows = readBiaRows();
+      let riskRows = readRiskRows();
       const biaTeamMap = new Map(biaRows.map((row) => [row.team, row.functions]));
       const teams = uniq(biaRows.map((row) => row.team));
       let activeCell = { likelihood: null, impact: null };
@@ -568,7 +621,22 @@
           }))
           .filter((row) => row.team);
 
-        store.set(RISK_KEY, riskRows);
+        if (window.DataStore && DataStore.writeRiskRecords && DataStore.normalizeRiskRecord) {
+          const canonical = riskRows.flatMap((row) => (row.risks || []).map((risk) => DataStore.normalizeRiskRecord({
+            id: risk.id,
+            teamName: row.team,
+            functionId: risk.functionId,
+            functionName: risk.function,
+            threat: risk.risk,
+            likelihood: risk.likelihood,
+            impact: risk.impact,
+            source: risk.source || 'MANUAL',
+            sourceRefId: risk.sourceRefId || ''
+          })));
+          DataStore.writeRiskRecords(canonical);
+        } else {
+          store.set(RISK_KEY, riskRows);
+        }
         alert('리스크 평가 데이터가 저장되었습니다.');
       });
 

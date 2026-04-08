@@ -240,6 +240,11 @@
       };
 
       const collectIncidents = () => {
+        if (window.DataStore && DataStore.readIncidentRecords) {
+          const normalized = DataStore.readIncidentRecords().map((item, idx) => normalizeIncident(item.raw || item, idx));
+          return normalized.filter((x) => hasValue(x.incidentId)).sort((a, b) => toTime(b.startedAt) - toTime(a.startedAt));
+        }
+
         let rows = [];
 
         const unifiedRaw = localStorage.getItem(INCIDENTS_UNIFIED_KEY);
@@ -329,6 +334,21 @@
       };
 
       const collectPriorityRisks = () => {
+        if (window.DataStore && DataStore.readRiskRecords) {
+          return DataStore.readRiskRecords()
+            .map((row) => ({
+              threat: asText(row.threat || '리스크 항목'),
+              functionName: asText(row.functionName || '-'),
+              team: asText(row.teamName || '-'),
+              riskScore: Number(row.riskScore || 0),
+              priority: asText(row.riskLevel || '').toLowerCase(),
+              isPriority: Number(row.riskScore || 0) >= 13 || asText(row.riskLevel || '').includes('높음')
+            }))
+            .filter((x) => x.isPriority)
+            .sort((a, b) => b.riskScore - a.riskScore)
+            .slice(0, 8);
+        }
+
         const rows = readArray(RISK_KEY, []);
         return rows
           .filter((row) => row && typeof row === 'object')
@@ -351,6 +371,18 @@
       };
 
       const collectCoreImpacts = (activeIncidents) => {
+        if (window.DataStore && DataStore.readCoreFunctions) {
+          const coreNames = uniq(DataStore.readCoreFunctions().map((row) => asText(row.name)).filter(Boolean));
+          const impactedNames = uniq(activeIncidents.flatMap((x) => x.affectedServices || []));
+          const impactedSet = new Set(impactedNames.map((x) => x.toLowerCase()));
+
+          return coreNames.map((name) => ({
+            name,
+            impacted: impactedSet.has(name.toLowerCase()),
+            incidentCount: activeIncidents.filter((x) => (x.affectedServices || []).some((s) => s.toLowerCase() === name.toLowerCase())).length
+          }));
+        }
+
         const coreRows = readArray(CORE_KEY, []);
         const coreNames = uniq(coreRows.map((row) => asText(pickFirst(row, ['functionName', 'name', 'title'], ''))).filter(Boolean));
         const impactedNames = uniq(activeIncidents.flatMap((x) => x.affectedServices || []));
@@ -372,7 +404,8 @@
 
       const navigateIncident = (incidentId) => {
         if (!hasValue(incidentId)) return;
-        localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId }));
+        if (window.DataStore && DataStore.setSelectedIncidentId) DataStore.setSelectedIncidentId(incidentId);
+        else localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId }));
         location.href = `./incident-dashboard.html?incidentId=${encodeURIComponent(incidentId)}`;
       };
 

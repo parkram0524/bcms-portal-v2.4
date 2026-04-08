@@ -663,7 +663,7 @@
         const params = new URLSearchParams(location.search);
         const fromQueryId = String(params.get('incidentId') || '').trim();
         const fromQueryRef = String(params.get('incidentRef') || '').trim();
-        const fromSelectedId = String(localStorage.getItem(SELECTED_INCIDENT_ID_KEY) || '').trim();
+        const fromSelectedId = String((window.DataStore && DataStore.getSelectedIncidentId) ? DataStore.getSelectedIncidentId() : (localStorage.getItem(SELECTED_INCIDENT_ID_KEY) || '')).trim();
         const fromCurrent = String(localStorage.getItem(CURRENT_INCIDENT_ID_KEY) || '').trim();
         const fromSelected = safeParse(localStorage.getItem(SELECTED_INCIDENT_KEY), {});
         const fromFocus = safeParse(localStorage.getItem(FOCUS_TARGET_KEY), {});
@@ -923,6 +923,10 @@
       };
 
       const collectIncidentRecords = () => {
+        if (window.DataStore && DataStore.readIncidentRecords) {
+          return DataStore.readIncidentRecords().map((item, idx) => normalizeIncidentRecord(item.raw || item, idx)).filter((x) => x.incidentId);
+        }
+
         let rows = [];
 
         const unified = safeParse(localStorage.getItem(INCIDENTS_UNIFIED_KEY), null);
@@ -1033,8 +1037,11 @@
         if (!id) return;
         selectedIncidentRef = id;
 
-        localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId: id, incidentRef: id }));
-        localStorage.setItem(SELECTED_INCIDENT_ID_KEY, id);
+        if (window.DataStore && DataStore.setSelectedIncidentId) DataStore.setSelectedIncidentId(id);
+        else {
+          localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId: id, incidentRef: id }));
+          localStorage.setItem(SELECTED_INCIDENT_ID_KEY, id);
+        }
         localStorage.setItem(CURRENT_INCIDENT_ID_KEY, id);
         localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type: 'incident', id }));
 
@@ -1345,6 +1352,8 @@
       };
 
       const parseRows = (key) => {
+        if (window.DataStore && key === BIA_KEY && DataStore.readBiaRecords) return DataStore.readBiaRecords();
+        if (window.DataStore && key === RISK_KEY && DataStore.readRiskRecords) return DataStore.readRiskRecords();
         const raw = store.get(key, []);
         return Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
       };
@@ -1495,20 +1504,21 @@
 
         const coreFns = [];
         biaRows.forEach((teamRow) => {
-          const team = String(teamRow.team || '').trim();
+          const team = String(teamRow.team || teamRow.teamName || '').trim();
           if (!relatedTeams.has(team)) return;
 
-          toArray(teamRow.functions).forEach((fn) => {
+          const fnRows = Array.isArray(teamRow.functions) ? teamRow.functions : [teamRow];
+          toArray(fnRows).forEach((fn) => {
             const isCore = !!fn.coreFinal || String(fn.grade || '') === '핵심' || String(fn.importance || '') === '중요';
             if (!isCore) return;
 
             coreFns.push({
               team,
-              name: String(fn.name || fn.function || ''),
+              name: String(fn.name || fn.function || fn.functionName || ''),
               grade: String(fn.grade || '일반'),
-              mtpd: String(fn.mtpd || '-'),
-              rto: String(fn.rto || '-'),
-              rtoMinutes: toMinutes(fn.rto),
+              mtpd: String(fn.mtpd || (fn.mtpdMinutes != null ? `${fn.mtpdMinutes}분` : '-')),
+              rto: String(fn.rto || (fn.rtoValue != null ? `${fn.rtoValue}${fn.rtoUnit || ''}` : '-')),
+              rtoMinutes: toMinutes(fn.rto || (fn.rtoValue != null ? `${fn.rtoValue}${fn.rtoUnit || ''}` : '')),
               impact: toNum(fn.impact || fn.overallImpact) ?? 3
             });
           });
@@ -1516,15 +1526,16 @@
 
         const risks = [];
         riskRows.forEach((teamRow) => {
-          const team = String(teamRow.team || '').trim();
+          const team = String(teamRow.team || teamRow.teamName || '').trim();
           if (!relatedTeams.has(team)) return;
 
-          toArray(teamRow.risks).forEach((r) => {
+          const riskList = Array.isArray(teamRow.risks) ? teamRow.risks : [teamRow];
+          toArray(riskList).forEach((r) => {
             const score = toNum(r.riskScore) ?? ((toNum(r.impact) ?? 3) * (toNum(r.likelihood) ?? 1));
             risks.push({
               team,
-              function: String(r.function || ''),
-              risk: String(r.risk || r.threat || ''),
+              function: String(r.function || r.functionName || ''),
+              risk: String(r.risk || r.threat || r.riskName || ''),
               riskScore: score,
               critical: r.critical === undefined ? score >= 13 : !!r.critical,
               likelihood: toNum(r.likelihood) ?? 1,
@@ -1535,18 +1546,19 @@
 
         if (!risks.length) {
           riskRows.forEach((teamRow) => {
-            const team = String(teamRow.team || '').trim();
+            const team = String(teamRow.team || teamRow.teamName || '').trim();
             if (!relatedTeams.has(team)) return;
 
-            toArray(teamRow.risks).forEach((r) => {
+            const riskList = Array.isArray(teamRow.risks) ? teamRow.risks : [teamRow];
+            toArray(riskList).forEach((r) => {
               const score = toNum(r.riskScore) ?? ((toNum(r.impact) ?? 3) * (toNum(r.likelihood) ?? 1));
               const isCritical = r.critical === undefined ? score >= 13 : !!r.critical;
               if (!isCritical) return;
 
               risks.push({
                 team,
-                function: String(r.function || ''),
-                risk: String(r.risk || r.threat || ''),
+                function: String(r.function || r.functionName || ''),
+                risk: String(r.risk || r.threat || r.riskName || ''),
                 riskScore: score,
                 critical: true,
                 likelihood: toNum(r.likelihood) ?? 1,
