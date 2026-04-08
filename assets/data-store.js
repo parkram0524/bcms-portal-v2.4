@@ -13,6 +13,105 @@
   const KEY_ORG_REGISTRY = 'bcms_org_registry_v1';
   const KEY_EOP_ROLE_MAPPING = 'bcms_eop_role_mapping_v1';
   const KEY_BCP_MODE = 'bcms_bcp_mode';
+  const KEY_BIA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const STORAGE_KEY_CONTRACT = {
+    orgRegistry: { canonicalKey: KEY_ORG_REGISTRY, legacyKeys: ['bcms_org_registry_v1'] },
+    coreFunctions: { canonicalKey: KEY_CORE_FUNCTIONS, legacyKeys: [] },
+    services: { canonicalKey: KEY_SERVICE_REGISTRY, legacyKeys: [] },
+    bia: { canonicalKey: KEY_BIA_DATA, legacyKeys: [] },
+    risks: { canonicalKey: KEY_RISK_ASSESSMENT, legacyKeys: [] },
+    incidents: { canonicalKey: KEY_INCIDENTS_UNIFIED, legacyKeys: [KEY_INCIDENTS] },
+    incidentExecution: { canonicalKey: KEY_INCIDENT_EXECUTION, legacyKeys: [] },
+    evidence: { canonicalKey: KEY_EVIDENCE_ITEMS, legacyKeys: [KEY_EVIDENCE] },
+    capa: { canonicalKey: KEY_CAPA_ITEMS, legacyKeys: [KEY_ACTION_ITEMS, KEY_CAPA] },
+    selectedIncident: { canonicalKey: KEY_SELECTED_INCIDENT_ID, legacyKeys: [KEY_SELECTED_INCIDENT] },
+    focusTarget: { canonicalKey: KEY_FOCUS_TARGET, legacyKeys: [] }
+  };
 
   const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
   const KEY_BIA_DATA = 'bcmsBIAData';
