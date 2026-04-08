@@ -581,10 +581,11 @@
           const rows = DataStore.getAllCoreFunctions();
           const byTeam = new Map();
           rows.forEach((row) => {
-            const team = String(row.teamName || '').trim();
-            if (!team) return;
+            const team = String(row.teamName || row.team || '').trim();
+            const fnName = String(row.name || row.functionName || row.coreFunction || '').trim();
+            if (!team || !fnName) return;
             if (!byTeam.has(team)) byTeam.set(team, []);
-            byTeam.get(team).push(String(row.name || '').trim());
+            byTeam.get(team).push(fnName);
           });
           return [...byTeam.entries()].map(([team, functions]) => ({ team, functions: uniq(functions) }));
         }
@@ -592,12 +593,8 @@
         const rows = Array.isArray(raw) ? raw : [];
         return rows
           .map((row) => ({
-            team: String(row.team || '').trim(),
-            functions: uniq(
-              (row.functions || [])
-                .map((f) => typeof f === 'string' ? f : f?.name)
-                .filter(Boolean)
-            )
+            team: String(row.team || row.teamName || '').trim(),
+            functions: uniq((row.functions || []).map((f) => typeof f === 'string' ? f : (f?.name || f?.functionName || f?.coreFunction)).filter(Boolean))
           }))
           .filter((row) => row.team);
       };
@@ -642,10 +639,10 @@
         }
 
         const raw = store.get(BIA_KEY, []);
-        const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
+        const rows = Array.isArray(raw) ? raw : (raw && (raw.team || raw.teamName) ? [raw] : []);
         return rows
           .map((row) => ({
-            team: String(row.team || '').trim(),
+            team: String(row.team || row.teamName || '').trim(),
             functions: (row.functions || []).map(normalizeFunction).filter((f) => f.name)
           }))
           .filter((row) => row.team);
@@ -720,34 +717,26 @@
         return '';
       };
 
-      const scoreGuideTemplate = () => `
-        <div class="scoreGuideInline" aria-label="영향평가 점수 기준">
-          <h3>영향평가 점수 기준</h3>
-          <div class="scoreGuideGrid">
-            <article class="scoreItem">
-              <div class="n">1 경미함</div>
-              <ul><li>서비스 영향 거의 없음</li><li>내부 처리 가능</li><li>대외 영향 없음</li></ul>
-            </article>
-            <article class="scoreItem">
-              <div class="n">2 작음</div>
-              <ul><li>일부 영향 있으나 대부분 수용 가능</li><li>평판/재무 영향 거의 없음</li></ul>
-            </article>
-            <article class="scoreItem">
-              <div class="n">3 보통</div>
-              <ul><li>고객 불편 또는 민원 가능</li><li>제한적 평판 영향</li><li>감내 가능한 재무 영향</li></ul>
-            </article>
-            <article class="scoreItem">
-              <div class="n">4 큼</div>
-              <ul><li>서비스 중단 영향이 큼</li><li>계약/법규/평판 영향 우려</li><li>복구 지연 시 수용 어려움</li></ul>
-            </article>
-            <article class="scoreItem">
-              <div class="n">5 매우 큼</div>
-              <ul><li>핵심 서비스 지속 불가 수준</li><li>중대한 대외 영향</li><li>즉시 복구 필요 수준</li></ul>
-            </article>
-          </div>
-        </div>
-      `;
-
+      const coreRows = loadCoreFunctions();
+      const orgTeams = loadOrgTeams();
+      let biaRows = loadBiaData();
+      const allTeams = uniq([
+        ...coreRows.map((r) => String(r.team || '').trim()),
+        ...orgTeams.map((t) => String(t || '').trim()),
+        ...biaRows.map((r) => String(r.team || '').trim())
+      ].filter(Boolean));
+      const coreMap = new Map();
+      coreRows.forEach((row) => {
+        const team = String(row.team || '').trim();
+        if (!team) return;
+        coreMap.set(team, uniq((coreMap.get(team) || []).concat(row.functions || []).filter(Boolean)));
+      });
+      biaRows.forEach((row) => {
+        const team = String(row.team || '').trim();
+        if (!team) return;
+        const names = (row.functions || []).map((fn) => String(fn.name || '').trim()).filter(Boolean);
+        coreMap.set(team, uniq((coreMap.get(team) || []).concat(names)));
+      });
       const opened = new Set();
       const scoreGuideOpened = new Set();
       const animatedCounts = new Map();

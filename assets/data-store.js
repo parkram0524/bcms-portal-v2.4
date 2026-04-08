@@ -139,6 +139,32 @@
     focusTarget: { canonicalKey: KEY_FOCUS_TARGET, legacyKeys: [] }
   };
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const STORAGE_KEY_CONTRACT = {
+    orgRegistry: { canonicalKey: KEY_ORG_REGISTRY, legacyKeys: ['bcms_org_registry_v1'] },
+    coreFunctions: { canonicalKey: KEY_CORE_FUNCTIONS, legacyKeys: [] },
+    services: { canonicalKey: KEY_SERVICE_REGISTRY, legacyKeys: [] },
+    bia: { canonicalKey: KEY_BIA_DATA, legacyKeys: [] },
+    risks: { canonicalKey: KEY_RISK_ASSESSMENT, legacyKeys: [] },
+    incidents: { canonicalKey: KEY_INCIDENTS_UNIFIED, legacyKeys: [KEY_INCIDENTS] },
+    incidentExecution: { canonicalKey: KEY_INCIDENT_EXECUTION, legacyKeys: [] },
+    evidence: { canonicalKey: KEY_EVIDENCE_ITEMS, legacyKeys: [KEY_EVIDENCE] },
+    capa: { canonicalKey: KEY_CAPA_ITEMS, legacyKeys: [KEY_ACTION_ITEMS, KEY_CAPA] },
+    selectedIncident: { canonicalKey: KEY_SELECTED_INCIDENT_ID, legacyKeys: [KEY_SELECTED_INCIDENT] },
+    focusTarget: { canonicalKey: KEY_FOCUS_TARGET, legacyKeys: [] }
+  };
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -307,9 +333,19 @@
 
   const normalizeCoreFunction = (record = {}, teamHint = null) => {
     const src = safeObject(record);
+<<<<<<< codex/enhance-ops-status.html-for-bcms-dashboard-z3t0nd
+    const explicitTeamName = asText(pickFirst(src, ['teamName', 'team', 'ownerTeam', 'department'], ''));
+    const team = normalizeTeam({
+      id: pickFirst(src, ['teamId'], teamHint?.id || ''),
+      teamName: explicitTeamName || teamHint?.name || '',
+      division: pickFirst(src, ['division', 'divisionName', 'ownerDivision'], teamHint?.division || '')
+    });
+    const name = asText(pickFirst(src, ['name', 'functionName', 'coreFunction', 'function', 'title'], ''));
+=======
     const seed = { ...(teamHint || {}), ...src };
     const team = normalizeTeam({ ...seed, name: pickFirst(seed, ['teamName', 'name', 'team', 'ownerTeam', 'department'], teamHint?.name || '') });
     const name = asText(pickFirst(seed, ['name', 'functionName', 'coreFunction', 'function', 'title'], ''));
+>>>>>>> main
     const idSeed = asText(pickFirst(src, ['id', 'functionId'], '')) || (team.id && name ? `CF-${slug(`${team.id}-${name}`)}` : '');
     return {
       id: idSeed || uid('CF'),
@@ -444,7 +480,17 @@
 
   const readCoreFunctions = () => {
     const raw = get(KEY_CORE_FUNCTIONS, []);
+<<<<<<< codex/enhance-ops-status.html-for-bcms-dashboard-z3t0nd
+    const rows = [];
+    if (Array.isArray(raw)) rows.push(...raw);
+    else if (raw && typeof raw === 'object') {
+      if (Array.isArray(raw.teams)) rows.push(...raw.teams);
+      if (Array.isArray(raw.coreFunctions)) rows.push(...raw.coreFunctions);
+      if (hasValue(raw.team) || hasValue(raw.teamName) || hasValue(raw.name) || hasValue(raw.functionName)) rows.push(raw);
+    }
+=======
     const rows = safeArray(raw);
+>>>>>>> main
     const out = [];
     rows.forEach((row) => {
       const team = normalizeTeam(row);
@@ -467,17 +513,36 @@
 
   const getOrgRegistry = () => {
     const raw = get(KEY_ORG_REGISTRY, { companyName: 'SJ Digital', divisions: [] });
+<<<<<<< codex/enhance-ops-status.html-for-bcms-dashboard-z3t0nd
+    const rawObj = safeObject(raw);
+    const rawDivisions = Array.isArray(raw)
+      ? raw
+      : (safeArray(rawObj.divisions).length
+        ? rawObj.divisions
+        : (safeArray(rawObj.departments).length ? rawObj.departments : rawObj.orgUnits));
+    const divisions = safeArray(rawDivisions).map((division, idx) => {
+      const divisionId = asText(division?.id) || `DIV-${idx + 1}`;
+      const divisionName = safeString(pickFirst(division || {}, ['name', 'divisionName', 'division'], ''), '미지정 본부');
+      const teams = safeArray(division?.teams || division?.teamList || division?.orgs || []).map((team) => normalizeTeam({
+        id: pickFirst(team || {}, ['id', 'teamId'], ''),
+        teamName: typeof team === 'string' ? team : pickFirst(team || {}, ['name', 'teamName', 'team'], ''),
+=======
     const divisions = safeArray(raw?.divisions).map((division, idx) => {
       const divisionId = asText(division?.id) || `DIV-${idx + 1}`;
       const divisionName = safeString(division?.name, '미지정 본부');
       const teams = safeArray(division?.teams).map((team) => normalizeTeam({
         id: pickFirst(team || {}, ['id'], ''),
         teamName: pickFirst(team || {}, ['name', 'teamName'], ''),
+>>>>>>> main
         divisionName
       }));
       return { id: divisionId, name: divisionName, teams };
     });
+<<<<<<< codex/enhance-ops-status.html-for-bcms-dashboard-z3t0nd
+    return { companyName: safeString(rawObj.companyName, 'SJ Digital'), divisions };
+=======
     return { companyName: safeString(raw?.companyName, 'SJ Digital'), divisions };
+>>>>>>> main
   };
 
   const writeOrgRegistry = (registry = {}) => {
@@ -665,7 +730,11 @@
   const readBiaRecords = () => {
     const raw = get(KEY_BIA_DATA, []);
     const rows = safeArray(raw);
+<<<<<<< codex/enhance-ops-status.html-for-bcms-dashboard-z3t0nd
+    if (!rows.length && raw && !Array.isArray(raw) && typeof raw === 'object') rows.push(raw);
+=======
     if (!rows.length && raw && typeof raw === 'object') rows.push(raw);
+>>>>>>> main
     const out = [];
     rows.forEach((row) => {
       if (Array.isArray(row?.functions)) {
@@ -683,7 +752,11 @@
   const readRiskRecords = () => {
     const raw = get(KEY_RISK_ASSESSMENT, []);
     const rows = safeArray(raw);
+<<<<<<< codex/enhance-ops-status.html-for-bcms-dashboard-z3t0nd
+    if (!rows.length && raw && !Array.isArray(raw) && typeof raw === 'object') rows.push(raw);
+=======
     if (!rows.length && raw && typeof raw === 'object') rows.push(raw);
+>>>>>>> main
     const out = [];
     rows.forEach((row) => {
       if (Array.isArray(row?.risks)) {
