@@ -81,6 +81,7 @@
           <button class="btn primary" id="reloadBtn" type="button">최신 데이터 다시 불러오기</button>
         </div>
       </div>
+      <div class="card" id="focusBanner" style="display:none; margin-bottom:12px;"></div>
 
       <div class="grid">
         <section class="card kpi"><p class="kTitle">DRP 대상 리스크 수</p><div class="kValue" id="kTarget">0</div></section>
@@ -127,6 +128,7 @@
 
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/demo-seed.js"></script>
+  <script src="../assets/response-assets.js"></script>
   <script>
     (() => {
       if (window.BCMSDemoSeed) {
@@ -151,6 +153,15 @@
       const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
 
       const state = { rows: [] };
+      const renderFocusBanner = () => {
+        const banner = $('focusBanner');
+        if (!banner) return;
+        const focus = (window.ResponseAssetRegistry && ResponseAssetRegistry.readFocusTarget) ? ResponseAssetRegistry.readFocusTarget() : {};
+        const matched = focus.source === 'incident_recommendation' && focus.assetId === 'strategy-drp-main';
+        if (!matched) { banner.style.display = 'none'; return; }
+        banner.style.display = '';
+        banner.innerHTML = `<b>Incident ${esc(focus.incidentId || '-')}에서 추천된 DR 실행계획</b><div class="muted" style="margin-top:6px;">영향 서비스: ${esc(focus.serviceName || '-')}</div>`;
+      };
 
       function get(key, fallback = []) {
         const val = parseJSON(localStorage.getItem(key) || 'null', fallback);
@@ -597,6 +608,7 @@
 
       loadRows();
       setTeamFilterOptions();
+      renderFocusBanner();
       renderTable();
     })();
   </script>

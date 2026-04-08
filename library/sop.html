@@ -74,6 +74,7 @@
 </div>
 
 <script src="../assets/sidebar.js"></script>
+<script src="../assets/response-assets.js"></script>
 
 <script>
 /* ===============================
@@ -134,15 +135,23 @@ const qs = new URLSearchParams(location.search);
 const dept = qs.get("dept");
 const process = qs.get("process");
 const level = qs.get("level");
+const focus = (window.ResponseAssetRegistry && ResponseAssetRegistry.readFocusTarget) ? ResponseAssetRegistry.readFocusTarget() : {};
+const focusMatched = focus.source === 'incident_recommendation' && focus.assetId === 'library-sop-main';
 
 /* ===============================
    🔗 컨텍스트 표시
 =================================*/
 function renderContext(){
-  if(!(dept || process || level)) return;
+  if(!(dept || process || level || focusMatched)) return;
 
   document.getElementById("ctxBox").style.display="block";
   const badges = document.getElementById("ctxBadges");
+  badges.innerHTML = '';
+
+  if(focusMatched) {
+    badges.innerHTML += `<span class="pill">Incident: ${focus.incidentId || '-'}</span>`;
+    if (focus.serviceName) badges.innerHTML += `<span class="pill">영향 서비스: ${focus.serviceName}</span>`;
+  }
 
   if(dept) badges.innerHTML += `<span class="pill">부서: ${dept}</span>`;
   if(process) badges.innerHTML += `<span class="pill">핵심업무: ${process}</span>`;

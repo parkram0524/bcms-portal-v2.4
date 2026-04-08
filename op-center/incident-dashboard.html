@@ -411,6 +411,7 @@
 
         <article class="card hubTabsCard">
           <h3>SOP / EOP / DRP / BCP 실행 영역</h3>
+          <div id="responseAssetReco" class="mini" style="margin:0 0 10px;"></div>
           <div class="trackGrid">
             <section class="track">
               <h4>SOP 표준 대응</h4>
@@ -528,6 +529,7 @@
 
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
+  <script src="../assets/response-assets.js"></script>
   <script>
     (() => {
       const STORAGE_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
@@ -636,6 +638,7 @@
       const drpDetailList = document.getElementById('drpDetailList');
       const bcpDetailList = document.getElementById('bcpDetailList');
       const btnActivateBcp = document.getElementById('btnActivateBcp');
+      const responseAssetReco = document.getElementById('responseAssetReco');
 
       const progressSummary = document.getElementById('progressSummary');
       const checkModes = document.getElementById('checkModes');
@@ -675,7 +678,7 @@
           fromCurrent,
           String(fromSelected?.incidentId || '').trim(),
           String(fromSelected?.incidentRef || '').trim(),
-          fromFocus?.type === 'incident' ? String(fromFocus?.id || '').trim() : ''
+          String(fromFocus?.incidentId || '').trim()
         ];
 
         return candidates.find((v) => v) || null;
@@ -1077,7 +1080,6 @@
           localStorage.setItem(SELECTED_INCIDENT_ID_KEY, id);
         }
         localStorage.setItem(CURRENT_INCIDENT_ID_KEY, id);
-        localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type: 'incident', id }));
 
         const params = new URLSearchParams(location.search);
         params.set('incidentId', id);
@@ -1538,10 +1540,88 @@
       const TECH_PATTERN = /(전환|복구|재기동|failover|restore|전력|냉각|네트워크|서버|호스트|가상화|보안 플랫폼|관제시스템)/i;
       const hasKeyword = (text, words) => words.some((word) => text.includes(word.toLowerCase()));
       const sameList = (a, b) => JSON.stringify([...(a || [])].sort()) === JSON.stringify([...(b || [])].sort());
+      const toSeverityToken = (severity) => {
+        const s = String(severity || '').toLowerCase();
+        if (['치명', '심각', 'critical', 'sev1'].some((x) => s.includes(x))) return 'sev1';
+        if (['높음', 'high', 'sev2'].some((x) => s.includes(x))) return 'sev2';
+        if (['중간', 'medium', 'sev3'].some((x) => s.includes(x))) return 'sev3';
+        if (['낮음', 'low', 'sev4'].some((x) => s.includes(x))) return 'sev4';
+        return 'sev5';
+      };
+      const normalizeIncidentContext = (incident) => {
+        const base = (window.DataStore && DataStore.normalizeIncidentContext)
+          ? DataStore.normalizeIncidentContext(incident || {})
+          : {
+              incidentId: String(incident?.incidentId || incident?.id || '').trim(),
+              title: String(incident?.title || incident?.finalSummary || '').trim(),
+              serviceName: String(incident?.serviceName || '').trim(),
+              severity: String(incident?.severity || '').trim(),
+              status: String(incident?.status || '').trim(),
+              relatedTeamIds: [],
+              relatedFunctionIds: [],
+              relatedRiskIds: [],
+              relatedTeamNames: normalizeOrgUnitNames(incident?.relatedOrgUnits || []),
+              relatedFunctionNames: toArray(incident?.relatedCoreFunctions).map((x) => String(x?.name || x || '').trim()).filter(Boolean),
+              relatedRiskTags: toArray(incident?.matchedRisks).map((x) => String(x?.risk || x?.threat || '').trim().toLowerCase()).filter(Boolean)
+            };
+        const text = [base.title, incident?.description, incident?.memo, incident?.finalSummary, incident?.preventionMemo, incident?.status, incident?.serviceName].map((x) => String(x || '').toLowerCase()).join(' ');
+        return {
+          ...base,
+          relatedTeamIds: uniq(base.relatedTeamIds || []),
+          relatedFunctionIds: uniq(base.relatedFunctionIds || []),
+          relatedRiskIds: uniq(base.relatedRiskIds || []),
+          relatedTeamNames: uniq(base.relatedTeamNames || []),
+          relatedFunctionNames: uniq(base.relatedFunctionNames || []),
+          relatedRiskTags: uniq(base.relatedRiskTags || []),
+          severityToken: toSeverityToken(base.severity),
+          text
+        };
+      };
+      const scoreResponseAsset = (asset, ctx) => {
+        const reasons = [];
+        let score = Number(asset.priority || 0);
+        const functionMatched = (asset.functionIds || []).some((id) => ctx.relatedFunctionIds.includes(id));
+        const teamMatched = (asset.teamIds || []).some((id) => ctx.relatedTeamIds.includes(id));
+        const svcMatched = (asset.serviceNames || []).some((name) => ctx.serviceName && ctx.serviceName.toLowerCase().includes(name));
+        const riskMatched = (asset.riskTags || []).some((tag) => ctx.relatedRiskTags.some((rt) => rt.includes(tag)));
+        const severityMatched = (asset.severityTriggers || []).includes(ctx.severityToken) || (asset.severityTriggers || []).includes(String(ctx.severity || '').toLowerCase());
+        const keywordMatched = (asset.keywords || []).some((kw) => ctx.text.includes(kw));
+        if (functionMatched) { score += 50; reasons.push('관련 핵심업무 일치'); }
+        if (teamMatched) { score += 30; reasons.push('관련 팀 일치'); }
+        if (svcMatched) { score += 20; reasons.push('영향 서비스 일치'); }
+        if (riskMatched) { score += 12; reasons.push('관련 리스크 유형 일치'); }
+        if (severityMatched) { score += 8; reasons.push('심각도 트리거 일치'); }
+        if (keywordMatched) { score += 3; reasons.push('사고 키워드 매칭'); }
+        return { score, reasons };
+      };
+      const explainRecommendation = (asset, ctx) => scoreResponseAsset(asset, ctx).reasons.slice(0, 3);
+      const resolveRecommendedAssets = (ctx) => {
+        const registry = (window.ResponseAssetRegistry && ResponseAssetRegistry.getAllResponseAssets)
+          ? ResponseAssetRegistry.getAllResponseAssets()
+          : [];
+        const scored = registry
+          .filter((asset) => asset && asset.active !== false)
+          .map((asset) => {
+            const out = scoreResponseAsset(asset, ctx);
+            return { ...asset, score: out.score, reasons: out.reasons };
+          })
+          .filter((asset) => asset.score >= 12)
+          .sort((a, b) => b.score - a.score);
+        const dedup = new Map();
+        scored.forEach((asset) => {
+          if (!dedup.has(asset.id)) dedup.set(asset.id, asset);
+        });
+        return [...dedup.values()].slice(0, 5);
+      };
+      const groupRecommendedAssets = (recommendations = []) => ({
+        library: recommendations.filter((row) => row.collection === 'library'),
+        strategy: recommendations.filter((row) => row.collection === 'strategy')
+      });
 
       const matchIncidentData = () => {
         const incident = state.currentIncident;
         const text = `${incident.status} ${incident.impacted} ${incident.serviceName} ${incident.finalSummary} ${incident.preventionMemo}`.toLowerCase();
+        const incidentCtx = normalizeIncidentContext(incident);
         const resolvedCtx = (window.DataStore && DataStore.resolveIncidentContext)
           ? DataStore.resolveIncidentContext({
               id: incident.incidentId,
@@ -1725,6 +1805,8 @@
           likelyRtoBreach: rtoBreach
         };
 
+        const recommendedAssets = resolveRecommendedAssets(incidentCtx);
+        recommendedAssets.forEach((asset) => recommended.add(asset.type));
         const nextModes = [...recommended];
         const prevModes = toArray(incident.recommendedModes);
         const prevReasons = toArray(incident.recommendationReasons);
@@ -1733,6 +1815,7 @@
         incident.matchedRisks = risks;
         incident.matchedBCPStrategies = bcpMatched;
         incident.matchedDRPProcedures = drpMatched;
+        incident.recommendedAssets = recommendedAssets;
         incident.recommendedModes = nextModes;
         incident.recommendationReasons = recommendationReasons;
         incident.relatedOrgUnits = [...relatedTeams];
@@ -1765,7 +1848,7 @@
           }
         }
 
-        return { reasons: recommendationReasons, reasonsByMode, evidence };
+        return { reasons: recommendationReasons, reasonsByMode, evidence, recommendations: recommendedAssets, incidentContext: incidentCtx };
       };
 
       const checklistTemplateByMode = (mode, incident) => {
@@ -2084,6 +2167,54 @@
           : '<div class="checkEmpty">실행 타임라인이 없습니다.</div>';
       };
 
+      const moveToRecommendedAsset = (asset) => {
+        if (!asset || !asset.href) return;
+        const incident = state.currentIncident || {};
+        if (incident.incidentId) {
+          if (window.DataStore && DataStore.setSelectedIncidentId) DataStore.setSelectedIncidentId(incident.incidentId);
+          else localStorage.setItem(SELECTED_INCIDENT_ID_KEY, incident.incidentId);
+        }
+        const payload = {
+          source: 'incident_recommendation',
+          incidentId: incident.incidentId || '',
+          assetId: asset.id,
+          assetType: asset.type,
+          assetCollection: asset.collection,
+          serviceName: incident.serviceName || '',
+          relatedTeamIds: toArray(incident.relatedTeamIds),
+          relatedFunctionIds: toArray(incident.relatedFunctionIds),
+          relatedRiskIds: toArray(incident.relatedRiskIds),
+          createdAt: nowIso()
+        };
+        if (window.DataStore && DataStore.setFocusTarget) DataStore.setFocusTarget(payload);
+        else if (window.ResponseAssetRegistry && ResponseAssetRegistry.writeFocusTarget) ResponseAssetRegistry.writeFocusTarget(payload);
+        else localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify(payload));
+        location.href = asset.href;
+      };
+
+      const renderRecommendedAssets = (matched) => {
+        if (!responseAssetReco) return;
+        const rows = toArray(matched?.recommendations);
+        if (!rows.length) {
+          responseAssetReco.innerHTML = '<div class="muted">현재 Incident 맥락에서 우선 추천 자산이 없습니다. 기본 SOP 흐름을 유지합니다.</div>';
+          return;
+        }
+        const grouped = groupRecommendedAssets(rows);
+        const renderRows = (items) => items.map((asset) => `
+          <div class="evidenceItem" style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+            <div>
+              <b>${asset.type}</b> <span class="muted">(${asset.collection === 'library' ? '즉시 참고 문서' : '실행 계획'})</span> · ${asset.title}
+              <div class="muted">${explainRecommendation(asset, matched.incidentContext).join(' / ') || 'Incident 맥락 기반 추천'}</div>
+            </div>
+            <button type="button" class="btn" data-open-asset="${asset.id}">열기</button>
+          </div>
+        `).join('');
+        responseAssetReco.innerHTML = `
+          ${grouped.library.length ? `<div style="margin-bottom:8px;"><b>즉시 참고 문서</b>${renderRows(grouped.library)}</div>` : ''}
+          ${grouped.strategy.length ? `<div><b>실행 계획</b>${renderRows(grouped.strategy)}</div>` : ''}
+        `;
+      };
+
       const renderHub = () => {
         const matched = matchIncidentData();
         const incident = state.currentIncident;
@@ -2204,6 +2335,7 @@
           `BCP 판단: ${bcpStatusLabel[bcpAssess.status] || 'BCP 미대상'}`
         ].map((line) => `<div class="evidenceItem">${line}</div>`).join('');
 
+        renderRecommendedAssets(matched);
         renderExecutionConsole();
       };
 
@@ -2478,6 +2610,17 @@
         addLog({ system:'BCP 판단', event:'수동 BCP 가동', action:'BCP 가동 상태 반영', operator:'사고 관리자' });
         saveState();
         renderAll();
+      });
+
+      document.addEventListener('click', (event) => {
+        const openBtn = event.target.closest('button[data-open-asset]');
+        if (!openBtn) return;
+        const assetId = openBtn.getAttribute('data-open-asset');
+        const asset = (window.ResponseAssetRegistry && ResponseAssetRegistry.getResponseAssetById)
+          ? ResponseAssetRegistry.getResponseAssetById(assetId)
+          : null;
+        if (!asset) return;
+        moveToRecommendedAsset(asset);
       });
 
       checkModes.addEventListener('change', (e) => {

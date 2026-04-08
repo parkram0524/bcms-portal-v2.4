@@ -51,6 +51,18 @@
   const KEY_ACTION_ITEMS = 'bcmsActionItems';
   const KEY_CAPA_ITEMS = 'bcmsCapaItems';
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -459,6 +471,30 @@
     return readIncidentRecords().find((row) => asText(row.id) === id) || null;
   };
 
+  const normalizeIncidentContext = (incident) => {
+    const row = normalizeIncidentRecord(incident || {});
+    const teams = resolveIncidentTeams(row);
+    const functions = resolveIncidentFunctions(row);
+    const risks = resolveIncidentRisks(row);
+    const riskTags = uniqueIds([
+      ...risks.map((r) => asText(r.threat).toLowerCase()),
+      ...row.relatedRiskNames.map((name) => asText(name).toLowerCase())
+    ].filter(Boolean));
+    return {
+      incidentId: row.id,
+      title: asText(row.title || row.raw?.title || ''),
+      serviceName: asText(row.serviceName || ''),
+      severity: asText(row.severity || ''),
+      status: asText(row.status || ''),
+      relatedTeamIds: uniqueIds(teams.map((t) => asText(t.id))),
+      relatedFunctionIds: uniqueIds(functions.map((f) => asText(f.id))),
+      relatedRiskIds: uniqueIds(risks.map((r) => asText(r.id))),
+      relatedTeamNames: uniqueIds(teams.map((t) => asText(t.name)).filter(Boolean)),
+      relatedFunctionNames: uniqueIds(functions.map((f) => asText(f.name)).filter(Boolean)),
+      relatedRiskTags: riskTags
+    };
+  };
+
   const resolveIncidentTeams = (incident) => {
     const row = normalizeIncidentRecord(incident || {});
     const teamMap = new Map(readBiaRecords().map((r) => [asText(r.teamId), r.teamName]));
@@ -504,7 +540,44 @@
     const functions = resolveIncidentFunctions(base);
     const risks = resolveIncidentRisks(base);
     const serviceName = base.serviceName || functions.find((f) => f.serviceName)?.serviceName || '';
-    return { ...base, teams, functions, risks, serviceName };
+    return { ...base, teams, functions, risks, serviceName, context: normalizeIncidentContext(base) };
+  };
+
+  const getFocusTarget = () => {
+    const raw = get(KEY_FOCUS_TARGET, {});
+    const src = safeObject(raw);
+    return {
+      source: asText(src.source),
+      incidentId: asText(src.incidentId || src.id),
+      assetId: asText(src.assetId),
+      assetType: asText(src.assetType).toUpperCase(),
+      assetCollection: asText(src.assetCollection).toLowerCase(),
+      serviceName: asText(src.serviceName),
+      relatedTeamIds: safeIdArray(src.relatedTeamIds || [], 'team'),
+      relatedFunctionIds: safeIdArray(src.relatedFunctionIds || [], 'function'),
+      relatedRiskIds: safeIdArray(src.relatedRiskIds || [], 'risk'),
+      createdAt: asText(src.createdAt)
+    };
+  };
+
+  const setFocusTarget = (payload = {}) => {
+    const target = getFocusTarget();
+    const src = safeObject(payload);
+    const next = {
+      ...target,
+      source: asText(src.source || target.source),
+      incidentId: asText(src.incidentId || src.id || target.incidentId),
+      assetId: asText(src.assetId || target.assetId),
+      assetType: asText(src.assetType || target.assetType).toUpperCase(),
+      assetCollection: asText(src.assetCollection || target.assetCollection).toLowerCase(),
+      serviceName: asText(src.serviceName || target.serviceName),
+      relatedTeamIds: safeIdArray(src.relatedTeamIds || target.relatedTeamIds || [], 'team'),
+      relatedFunctionIds: safeIdArray(src.relatedFunctionIds || target.relatedFunctionIds || [], 'function'),
+      relatedRiskIds: safeIdArray(src.relatedRiskIds || target.relatedRiskIds || [], 'risk'),
+      createdAt: asText(src.createdAt || nowISO())
+    };
+    set(KEY_FOCUS_TARGET, next);
+    return next;
   };
 
   const normalizeEvidenceRecord = (record = {}) => {
@@ -634,6 +707,7 @@
     KEY_INCIDENT_EXECUTION,
     KEY_SELECTED_INCIDENT_ID,
     KEY_SELECTED_INCIDENT,
+    KEY_FOCUS_TARGET,
     KEY_EVIDENCE_ITEMS,
     KEY_ACTION_ITEMS,
     KEY_CAPA_ITEMS,
@@ -664,7 +738,10 @@
     readIncidentRecords,
     getIncidentById,
     getSelectedIncidentId,
+    normalizeIncidentContext,
     setSelectedIncidentId,
+    getFocusTarget,
+    setFocusTarget,
     resolveIncidentTeams,
     resolveIncidentFunctions,
     resolveIncidentRisks,
