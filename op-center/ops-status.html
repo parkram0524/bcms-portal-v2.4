@@ -188,7 +188,7 @@
             : [row.serviceName, row.service, row.impacted];
         const affectedServices = normalizeStringList(serviceSeed);
 
-        const teamRaw = row.relatedTeamIds ?? row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const teamRaw = row.relatedTeamNames ?? row.relatedTeams ?? row.relatedTeamIds ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
         const teamSeed = Array.isArray(teamRaw)
           ? teamRaw
           : hasValue(teamRaw)
@@ -241,7 +241,18 @@
 
       const collectIncidents = () => {
         if (window.DataStore && DataStore.readIncidentRecords) {
-          const normalized = DataStore.readIncidentRecords().map((item, idx) => normalizeIncident(item.raw || item, idx));
+          const normalized = DataStore.readIncidentRecords().map((item, idx) => normalizeIncident({
+            ...(item.raw || {}),
+            incidentId: item.id,
+            id: item.id,
+            serviceName: item.serviceName,
+            severity: item.severity,
+            status: item.status,
+            relatedTeamIds: item.relatedTeamIds,
+            relatedTeamNames: item.relatedTeamNames,
+            startedAt: item.startedAt,
+            endedAt: item.endedAt
+          }, idx));
           return normalized.filter((x) => hasValue(x.incidentId)).sort((a, b) => toTime(b.startedAt) - toTime(a.startedAt));
         }
 

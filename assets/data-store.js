@@ -32,6 +32,14 @@
   const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
   const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -78,6 +86,30 @@
     if (Array.isArray(value)) return uniq(value.map((x) => asText(x?.id || x?.name || x?.teamName || x)));
     if (typeof value === 'string') return uniq(value.split(',').map((x) => asText(x)).filter(Boolean));
     return [];
+  };
+
+  const uniqueIds = (list) => uniq(safeArray(list).map((x) => asText(x)).filter(Boolean));
+  const toTeamId = (value) => {
+    const v = asText(value);
+    if (!v) return '';
+    return /^TEAM-/i.test(v) ? v : `TEAM-${slug(v)}`;
+  };
+  const toFunctionId = (value) => {
+    const v = asText(value);
+    if (!v) return '';
+    return /^CF-/i.test(v) ? v : `CF-${slug(v)}`;
+  };
+  const toRiskId = (value) => {
+    const v = asText(value);
+    if (!v) return '';
+    return /^RISK-/i.test(v) ? v : `RISK-${slug(v)}`;
+  };
+  const safeIdArray = (value, kind = 'generic') => {
+    const rows = normalizeStringList(value);
+    if (kind === 'team') return uniqueIds(rows.map(toTeamId));
+    if (kind === 'function') return uniqueIds(rows.map(toFunctionId));
+    if (kind === 'risk') return uniqueIds(rows.map(toRiskId));
+    return uniqueIds(rows);
   };
 
   // Reads and parses a JSON value; returns fallback on missing data or parse errors.
@@ -227,15 +259,22 @@
     const src = safeObject(record);
     const id = asText(pickFirst(src, ['id', 'incidentId', 'incidentRef', 'incidentCode'], `INC-${idx + 1}`));
     const serviceName = asText(pickFirst(src, ['serviceName', 'service', 'impacted'], ''));
+    const relatedTeamNames = normalizeStringList(src.relatedTeamNames || src.relatedTeams || src.relatedOrgUnits || src.responseTeams || src.selectedTeams || src.organizations);
+    const relatedFunctionNames = normalizeStringList(src.relatedFunctionNames || src.relatedCoreFunctions || src.functions || src.coreFunctions);
+    const relatedRiskNames = normalizeStringList(src.relatedRiskNames || src.matchedRisks || src.relatedRisks);
+
     return {
       id,
       title: asText(pickFirst(src, ['title', 'incidentTitle', 'name'], '')),
       serviceName,
       severity: asText(pickFirst(src, ['severity', 'level'], '-')) || '-',
       status: asText(pickFirst(src, ['status', 'currentStatus', 'state'], '-')) || '-',
-      relatedTeamIds: normalizeStringList(src.relatedTeamIds || src.relatedTeams || src.relatedOrgUnits),
-      relatedFunctionIds: normalizeStringList(src.relatedFunctionIds || src.relatedCoreFunctions),
-      relatedRiskIds: normalizeStringList(src.relatedRiskIds || src.matchedRisks),
+      relatedTeamIds: safeIdArray(src.relatedTeamIds?.length ? src.relatedTeamIds : relatedTeamNames, 'team'),
+      relatedFunctionIds: safeIdArray(src.relatedFunctionIds?.length ? src.relatedFunctionIds : relatedFunctionNames, 'function'),
+      relatedRiskIds: safeIdArray(src.relatedRiskIds?.length ? src.relatedRiskIds : relatedRiskNames, 'risk'),
+      relatedTeamNames,
+      relatedFunctionNames,
+      relatedRiskNames,
       startedAt: pickFirst(src, ['startedAt', 'startTime', 'createdAt', 'incidentStartTime', 'openedAt'], null),
       endedAt: pickFirst(src, ['endedAt', 'endTime', 'closedAt', 'resolvedAt'], null),
       raw: src
@@ -387,6 +426,60 @@
     return asText(selected.incidentId || selected.incidentRef || selected.id || '');
   };
 
+  const getIncidentById = (incidentId) => {
+    const id = asText(incidentId);
+    if (!id) return null;
+    return readIncidentRecords().find((row) => asText(row.id) === id) || null;
+  };
+
+  const resolveIncidentTeams = (incident) => {
+    const row = normalizeIncidentRecord(incident || {});
+    const teamMap = new Map(readBiaRecords().map((r) => [asText(r.teamId), r.teamName]));
+    row.relatedTeamNames.forEach((name) => teamMap.set(toTeamId(name), name));
+    return uniqueIds(row.relatedTeamIds).map((id) => ({ id, name: teamMap.get(id) || id.replace(/^TEAM-/, '') }));
+  };
+
+  const resolveIncidentFunctions = (incident) => {
+    const row = normalizeIncidentRecord(incident || {});
+    const fnMap = new Map(readBiaRecords().map((r) => [asText(r.functionId), r]));
+    row.relatedFunctionNames.forEach((name) => {
+      const id = toFunctionId(name);
+      if (!fnMap.has(id)) fnMap.set(id, { functionName: name, teamId: '', teamName: '', serviceName: '' });
+    });
+    return uniqueIds(row.relatedFunctionIds).map((id) => ({
+      id,
+      name: asText(fnMap.get(id)?.functionName || id.replace(/^CF-/, '')),
+      teamId: asText(fnMap.get(id)?.teamId || ''),
+      teamName: asText(fnMap.get(id)?.teamName || ''),
+      serviceName: asText(fnMap.get(id)?.serviceName || '')
+    }));
+  };
+
+  const resolveIncidentRisks = (incident) => {
+    const row = normalizeIncidentRecord(incident || {});
+    const riskMap = new Map(readRiskRecords().map((r) => [asText(r.id), r]));
+    row.relatedRiskNames.forEach((name) => {
+      const id = toRiskId(name);
+      if (!riskMap.has(id)) riskMap.set(id, { threat: name, riskScore: 0, teamId: '', functionId: '' });
+    });
+    return uniqueIds(row.relatedRiskIds).map((id) => ({
+      id,
+      threat: asText(riskMap.get(id)?.threat || id.replace(/^RISK-/, '')),
+      riskScore: toNum(riskMap.get(id)?.riskScore, 0) || 0,
+      teamId: asText(riskMap.get(id)?.teamId || ''),
+      functionId: asText(riskMap.get(id)?.functionId || '')
+    }));
+  };
+
+  const resolveIncidentContext = (incident) => {
+    const base = normalizeIncidentRecord(incident || {});
+    const teams = resolveIncidentTeams(base);
+    const functions = resolveIncidentFunctions(base);
+    const risks = resolveIncidentRisks(base);
+    const serviceName = base.serviceName || functions.find((f) => f.serviceName)?.serviceName || '';
+    return { ...base, teams, functions, risks, serviceName };
+  };
+
   const setSelectedIncidentId = (incidentId) => {
     const id = asText(incidentId);
     if (!id) return;
@@ -428,6 +521,8 @@
     normalizeBiaRecord,
     normalizeRiskRecord,
     normalizeIncidentRecord,
+    safeIdArray,
+    uniqueIds,
     readCoreFunctions,
     readBiaRecords,
     writeBiaRecords,
@@ -435,7 +530,12 @@
     writeRiskRecords,
     syncRiskWithBia,
     readIncidentRecords,
+    getIncidentById,
     getSelectedIncidentId,
-    setSelectedIncidentId
+    setSelectedIncidentId,
+    resolveIncidentTeams,
+    resolveIncidentFunctions,
+    resolveIncidentRisks,
+    resolveIncidentContext
   };
 })(window);
