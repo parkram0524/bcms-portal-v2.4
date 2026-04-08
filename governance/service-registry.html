@@ -256,6 +256,20 @@
       };
 
       const buildOrgIndex = () => {
+        if (window.DataStore && DataStore.getAllTeams) {
+          const teams = DataStore.getAllTeams();
+          const divisionMap = new Map();
+          const teamMap = new Map();
+          teams.forEach((team) => {
+            const divisionId = String(team.division || '기타');
+            if (!divisionMap.has(divisionId)) divisionMap.set(divisionId, { id: divisionId, name: team.division || '기타', teams: [] });
+            const division = divisionMap.get(divisionId);
+            const safeTeam = { id: team.id, name: team.name, divisionId, divisionName: division.name };
+            division.teams.push(safeTeam);
+            teamMap.set(safeTeam.id, safeTeam);
+          });
+          return { divisions: [...divisionMap.values()], divisionMap, teamMap };
+        }
         const divisions = getOrgDivisions();
         const divisionMap = new Map();
         const teamMap = new Map();
@@ -281,6 +295,28 @@
       };
 
       const loadItems = () => {
+        if (window.DataStore && DataStore.getAllServices) {
+          const rows = DataStore.getAllServices();
+          if (rows.length) {
+            return rows.map((item) => ({
+              id: item.id,
+              name: item.name,
+              divisionId: '',
+              divisionName: '',
+              teamId: item.ownerTeamId || '',
+              teamName: item.ownerTeamName || '',
+              dept: item.ownerTeamName || '',
+              importance: item.criticality || '보통',
+              rtoValue: '',
+              rtoUnit: '시간',
+              rpoValue: '',
+              rpoUnit: '분',
+              note: item.description || '',
+              active: item.active !== false,
+              updatedAt: item.updatedAt || nowISO()
+            }));
+          }
+        }
         const items = store.get(STORAGE_KEY, null);
         if (!Array.isArray(items) || !items.length) {
           const seeds = sampleData();
@@ -398,6 +434,20 @@
       };
 
       const saveRows = () => {
+        if (window.DataStore && DataStore.writeServices) {
+          DataStore.writeServices(rows.map((item) => ({
+            id: item.id,
+            name: item.name,
+            ownerTeamId: item.teamId,
+            ownerTeamName: item.teamName,
+            criticality: item.importance,
+            description: item.note,
+            active: item.active !== false,
+            updatedAt: item.updatedAt || nowISO()
+          })));
+          rows = loadItems();
+          return;
+        }
         rows = store.update(STORAGE_KEY, () => rows);
       };
 
