@@ -113,6 +113,32 @@
     focusTarget: { canonicalKey: KEY_FOCUS_TARGET, legacyKeys: [] }
   };
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const STORAGE_KEY_CONTRACT = {
+    orgRegistry: { canonicalKey: KEY_ORG_REGISTRY, legacyKeys: ['bcms_org_registry_v1'] },
+    coreFunctions: { canonicalKey: KEY_CORE_FUNCTIONS, legacyKeys: [] },
+    services: { canonicalKey: KEY_SERVICE_REGISTRY, legacyKeys: [] },
+    bia: { canonicalKey: KEY_BIA_DATA, legacyKeys: [] },
+    risks: { canonicalKey: KEY_RISK_ASSESSMENT, legacyKeys: [] },
+    incidents: { canonicalKey: KEY_INCIDENTS_UNIFIED, legacyKeys: [KEY_INCIDENTS] },
+    incidentExecution: { canonicalKey: KEY_INCIDENT_EXECUTION, legacyKeys: [] },
+    evidence: { canonicalKey: KEY_EVIDENCE_ITEMS, legacyKeys: [KEY_EVIDENCE] },
+    capa: { canonicalKey: KEY_CAPA_ITEMS, legacyKeys: [KEY_ACTION_ITEMS, KEY_CAPA] },
+    selectedIncident: { canonicalKey: KEY_SELECTED_INCIDENT_ID, legacyKeys: [KEY_SELECTED_INCIDENT] },
+    focusTarget: { canonicalKey: KEY_FOCUS_TARGET, legacyKeys: [] }
+  };
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -917,6 +943,75 @@
     }));
     return { generatedAt: nowISO(), collections, usage: summarizeStorageUsage() };
   };
+  const compareCountVsList = (logicalName) => {
+    const snap = getOpsStatusSnapshot();
+    if (logicalName === 'activeIncidents') return { logicalName, count: snap.activeIncidents.length, listSize: snap.activeIncidents.length, ok: true };
+    if (logicalName === 'pendingEvidence') return { logicalName, count: snap.pendingEvidence.length, listSize: snap.pendingEvidence.length, ok: true };
+    if (logicalName === 'openCapa') return { logicalName, count: snap.openCapaItems.length, listSize: snap.openCapaItems.length, ok: true };
+    if (logicalName === 'priorityRisks') return { logicalName, count: snap.priorityRisks.length, listSize: snap.priorityRisks.length, ok: true };
+    return { logicalName, count: 0, listSize: 0, ok: false, message: 'unknown logicalName' };
+  };
+  const assertNoDuplicateAutoItems = () => {
+    const evidence = getAllEvidence().filter((row) => asText(row.source) === 'INCIDENT_CLOSE_AUTO');
+    const capa = getAllCapaItems().filter((row) => asText(row.source) === 'INCIDENT_CLOSE_AUTO');
+    const keyOf = (row) => `${asText(row.source)}|${asText(row.sourceRefId)}|${asText(row.title)}`;
+    const uniqueEvidence = new Set(evidence.map(keyOf));
+    const uniqueCapa = new Set(capa.map(keyOf));
+    return {
+      pass: uniqueEvidence.size === evidence.length && uniqueCapa.size === capa.length,
+      evidence: { total: evidence.length, unique: uniqueEvidence.size },
+      capa: { total: capa.length, unique: uniqueCapa.size }
+    };
+  };
+  const assertSelectedIncidentCompat = () => {
+    const canonical = asText(localStorage.getItem(KEY_SELECTED_INCIDENT_ID));
+    const legacy = safeObject(get(KEY_SELECTED_INCIDENT, {}));
+    const legacyId = asText(legacy.incidentId || legacy.incidentRef || legacy.id || '');
+    return {
+      pass: !canonical && !legacyId ? true : (canonical ? !legacyId || canonical === legacyId : Boolean(legacyId)),
+      canonicalId: canonical,
+      legacyId
+    };
+  };
+  const assertStorageFailSoft = () => {
+    const keys = Object.values(STORAGE_KEY_CONTRACT)
+      .flatMap((contract) => [contract.canonicalKey, ...safeArray(contract.legacyKeys)]);
+    const malformedKeys = [];
+    keys.forEach((key) => {
+      const raw = localStorage.getItem(key);
+      if (raw === null) return;
+      try { JSON.parse(raw); } catch { malformedKeys.push(key); }
+    });
+    return { pass: true, malformedKeys };
+  };
+  const getRegressionSnapshot = () => {
+    const snap = getOpsStatusSnapshot();
+    return {
+      generatedAt: nowISO(),
+      counts: {
+        activeIncidents: snap.activeIncidents.length,
+        pendingEvidence: snap.pendingEvidence.length,
+        openCapa: snap.openCapaItems.length,
+        priorityRisks: snap.priorityRisks.length
+      },
+      selectedIncident: assertSelectedIncidentCompat(),
+      duplicates: assertNoDuplicateAutoItems(),
+      storageHealth: getStorageHealthReport()
+    };
+  };
+  const runSmokeChecks = () => {
+    const checks = [
+      { name: 'count-activeIncidents', ...compareCountVsList('activeIncidents') },
+      { name: 'count-pendingEvidence', ...compareCountVsList('pendingEvidence') },
+      { name: 'count-openCapa', ...compareCountVsList('openCapa') },
+      { name: 'count-priorityRisks', ...compareCountVsList('priorityRisks') },
+      { name: 'no-duplicate-auto-items', ...assertNoDuplicateAutoItems() },
+      { name: 'selected-incident-compat', ...assertSelectedIncidentCompat() },
+      { name: 'storage-fail-soft', ...assertStorageFailSoft() }
+    ];
+    const pass = checks.every((row) => row.ok !== false && row.pass !== false);
+    return { pass, checks, snapshot: getRegressionSnapshot() };
+  };
 
   const normalizeEvidenceRecord = (record = {}) => {
     const src = safeObject(record);
@@ -1101,6 +1196,12 @@
     countMalformedItems,
     summarizeStorageUsage,
     getStorageHealthReport,
+    compareCountVsList,
+    assertNoDuplicateAutoItems,
+    assertSelectedIncidentCompat,
+    assertStorageFailSoft,
+    getRegressionSnapshot,
+    runSmokeChecks,
     readBiaRecords,
     writeBiaRecords,
     getAllBiaRecords,

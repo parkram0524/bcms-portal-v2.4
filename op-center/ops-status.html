@@ -103,8 +103,8 @@
           <a class="quickBtn" href="./incident-dashboard.html">사고 대응 대시보드</a>
           <a class="quickBtn" href="../audit/evidence.html">증적 관리</a>
           <a class="quickBtn" href="../audit/capa.html">개선조치 관리</a>
-          <a class="quickBtn" href="../bia/core-functions.html">핵심기능 분석</a>
-          <a class="quickBtn" href="../risk/risk-register.html">리스크 등록부</a>
+          <a class="quickBtn" href="../risk-bia/core-functions.html">핵심기능 분석</a>
+          <a class="quickBtn" href="../risk-bia/risk.html">리스크 등록부</a>
         </div>
       </section>
     </div>
@@ -118,7 +118,7 @@
       // merge-rescue: keep singleton helpers/sections/handlers
       const INCIDENTS_UNIFIED_KEY = 'bcmsIncidents';
       const EXECUTION_KEY = 'bcmsIncidentExecution';
-      const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_evidence_v1';
+      const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
       const ACTION_KEY = (window.DataStore && DataStore.KEY_CAPA) || 'bcms_capa_v1';
       const RISK_KEY = (window.DataStore && DataStore.KEY_RISK_ASSESSMENT) || 'bcmsRiskAssessment';
       const CORE_KEY = (window.DataStore && DataStore.KEY_CORE_FUNCTIONS) || 'bcmsCoreFunctions';
