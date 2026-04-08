@@ -13,6 +13,8 @@
   const KEY_ORG_REGISTRY = 'bcms_org_registry_v1';
   const KEY_EOP_ROLE_MAPPING = 'bcms_eop_role_mapping_v1';
   const KEY_BCP_MODE = 'bcms_bcp_mode';
+  const KEY_BIA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
 
   const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
   const KEY_BIA_DATA = 'bcmsBIAData';
