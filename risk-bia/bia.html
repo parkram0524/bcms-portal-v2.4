@@ -370,8 +370,8 @@
         window.BCMSDemoSeed.mountBanner('.wrap');
       }
 
-      const CORE_KEY = 'bcmsCoreFunctions';
-      const BIA_KEY = 'bcmsBIAData';
+      const CORE_KEY = (window.DataStore && DataStore.KEY_CORE_FUNCTIONS) || 'bcmsCoreFunctions';
+      const BIA_KEY = (window.DataStore && DataStore.KEY_BIA_DATA) || 'bcmsBIAData';
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
       const RESOURCE_OPTIONS = ['인력','시스템','데이터','설비','유틸리티','협력업체'];
 
@@ -509,6 +509,10 @@
 
         const mtpd = calcMtpd(timeImpact);
         const fn = {
+          id: String(rawFn.id || rawFn.biaId || '').trim(),
+          functionId: String(rawFn.functionId || '').trim(),
+          teamId: String(rawFn.teamId || '').trim(),
+          serviceName: String(rawFn.serviceName || rawFn.service || '').trim(),
           name,
           importance: rawFn.importance || (rawFn.coreFinal ? '중요' : '일반'),
           overallImpact: impact,
@@ -549,6 +553,32 @@
       };
 
       const loadBiaData = () => {
+        if (window.DataStore && DataStore.readBiaRecords) {
+          const records = DataStore.readBiaRecords();
+          const byTeam = new Map();
+          records.forEach((record) => {
+            const team = String(record.teamName || record.team || '').trim();
+            if (!team) return;
+            if (!byTeam.has(team)) byTeam.set(team, []);
+            byTeam.get(team).push(normalizeFunction({
+              id: record.id,
+              functionId: record.functionId,
+              serviceName: record.serviceName,
+              name: record.functionName || record.name,
+              importance: record.importance,
+              overallImpact: record.overallImpact,
+              impact: record.overallImpact,
+              timeImpact: record.timeImpact,
+              mtpdMinutes: record.mtpdMinutes,
+              rtoValue: record.rtoValue,
+              rtoUnit: record.rtoUnit,
+              grade: record.grade,
+              requiredResources: record.requiredResources
+            }));
+          });
+          return [...byTeam.entries()].map(([team, functions]) => ({ team, functions })).filter((row) => row.team);
+        }
+
         const raw = store.get(BIA_KEY, []);
         const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
         return rows
@@ -560,6 +590,34 @@
       };
 
       const saveBiaData = (rows) => {
+        if (window.DataStore && DataStore.writeBiaRecords && DataStore.syncRiskWithBia) {
+          const canonical = [];
+          (rows || []).forEach((row) => {
+            const teamName = String(row.team || '').trim();
+            (row.functions || []).forEach((fn, idx) => {
+              canonical.push(DataStore.normalizeBiaRecord({
+                id: fn.id,
+                teamId: fn.teamId,
+                teamName,
+                functionId: fn.functionId,
+                functionName: fn.name,
+                serviceName: fn.serviceName || '',
+                importance: fn.importance,
+                overallImpact: fn.overallImpact,
+                timeImpact: fn.timeImpact,
+                mtpdMinutes: fn.mtpdMinutes,
+                rtoValue: fn.rtoValue === '' ? null : fn.rtoValue,
+                rtoUnit: fn.rtoUnit || '분',
+                grade: fn.grade,
+                requiredResources: fn.requiredResources,
+                sourceRefId: fn.id || `${teamName}-${fn.name}-${idx}`
+              }));
+            });
+          });
+          DataStore.writeBiaRecords(canonical);
+          DataStore.syncRiskWithBia(canonical);
+          return;
+        }
         store.set(BIA_KEY, rows);
       };
 
@@ -1316,6 +1374,10 @@
             functions: (row.functions || []).map((fn) => {
               recalcFunction(fn);
               return {
+                id: fn.id || '',
+                functionId: fn.functionId || '',
+                teamId: fn.teamId || '',
+                serviceName: fn.serviceName || '',
                 name: fn.name,
                 importance: fn.importance,
                 overallImpact: fn.overallImpact,
