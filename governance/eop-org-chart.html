@@ -666,8 +666,11 @@
 
         const incidentId = asText(merged.incidentId);
         if (incidentId) {
-          localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId, incidentRef: incidentId }));
-          localStorage.setItem(SELECTED_INCIDENT_ID_KEY, incidentId);
+          if (window.DataStore && DataStore.setSelectedIncidentId) DataStore.setSelectedIncidentId(incidentId);
+          else {
+            localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId, incidentRef: incidentId }));
+            localStorage.setItem(SELECTED_INCIDENT_ID_KEY, incidentId);
+          }
           localStorage.setItem(CURRENT_INCIDENT_ID_KEY, incidentId);
           const params = new URLSearchParams(location.search);
           params.set('incidentId', incidentId);

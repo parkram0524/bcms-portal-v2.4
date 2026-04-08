@@ -87,6 +87,32 @@
   const KEY_ACTION_ITEMS = 'bcmsActionItems';
   const KEY_CAPA_ITEMS = 'bcmsCapaItems';
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
+  const STORAGE_KEY_CONTRACT = {
+    orgRegistry: { canonicalKey: KEY_ORG_REGISTRY, legacyKeys: ['bcms_org_registry_v1'] },
+    coreFunctions: { canonicalKey: KEY_CORE_FUNCTIONS, legacyKeys: [] },
+    services: { canonicalKey: KEY_SERVICE_REGISTRY, legacyKeys: [] },
+    bia: { canonicalKey: KEY_BIA_DATA, legacyKeys: [] },
+    risks: { canonicalKey: KEY_RISK_ASSESSMENT, legacyKeys: [] },
+    incidents: { canonicalKey: KEY_INCIDENTS_UNIFIED, legacyKeys: [KEY_INCIDENTS] },
+    incidentExecution: { canonicalKey: KEY_INCIDENT_EXECUTION, legacyKeys: [] },
+    evidence: { canonicalKey: KEY_EVIDENCE_ITEMS, legacyKeys: [KEY_EVIDENCE] },
+    capa: { canonicalKey: KEY_CAPA_ITEMS, legacyKeys: [KEY_ACTION_ITEMS, KEY_CAPA] },
+    selectedIncident: { canonicalKey: KEY_SELECTED_INCIDENT_ID, legacyKeys: [KEY_SELECTED_INCIDENT] },
+    focusTarget: { canonicalKey: KEY_FOCUS_TARGET, legacyKeys: [] }
+  };
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -98,6 +124,14 @@
   };
 
   const asText = (value) => String(value ?? '').trim();
+  const safeParseJson = (raw, fallback = null) => {
+    try {
+      if (raw === null || raw === undefined || raw === '') return fallback;
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  };
   const safeString = (value, fallback = '') => {
     const s = asText(value);
     return s || fallback;
@@ -106,6 +140,12 @@
     const v = asText(value);
     if (v) return v;
     return `${prefix}-${slug(`${prefix}-${nowISO()}`)}`;
+  };
+  const stableSlug = (value) => slug(value);
+  const safeTimestamp = (value) => {
+    if (!hasValue(value)) return nowISO();
+    const ts = new Date(value).getTime();
+    return Number.isFinite(ts) ? new Date(ts).toISOString() : nowISO();
   };
   const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
   const safeArray = (value) => Array.isArray(value) ? value : [];
@@ -189,7 +229,7 @@
     try {
       const raw = localStorage.getItem(key);
       if (raw === null) return fallback;
-      return JSON.parse(raw);
+      return safeParseJson(raw, fallback);
     } catch {
       return fallback;
     }
@@ -483,6 +523,119 @@
     return rows;
   };
 
+  const getStorageContract = () => STORAGE_KEY_CONTRACT;
+  const resolveStorageKey = (logicalName) => STORAGE_KEY_CONTRACT[logicalName]?.canonicalKey || '';
+  const readRawCollection = (logicalName) => {
+    const key = resolveStorageKey(logicalName);
+    if (!key) return null;
+    return get(key, null);
+  };
+  const writeRawCollection = (logicalName, value) => {
+    const key = resolveStorageKey(logicalName);
+    if (!key) return value;
+    set(key, value);
+    return value;
+  };
+  const mergeLegacyCollections = (logicalName) => {
+    const contract = STORAGE_KEY_CONTRACT[logicalName];
+    if (!contract) return [];
+    const merged = [];
+    const canonical = get(contract.canonicalKey, null);
+    if (canonical !== null) merged.push(canonical);
+    safeArray(contract.legacyKeys).forEach((legacyKey) => {
+      const legacy = get(legacyKey, null);
+      if (legacy !== null) merged.push(legacy);
+    });
+    return merged;
+  };
+  const normalizeCollection = (logicalName, items) => {
+    if (logicalName === 'orgRegistry') return writeOrgRegistry(safeObject(items));
+    if (logicalName === 'coreFunctions') return safeArray(items).map((row) => normalizeCoreFunction(row));
+    if (logicalName === 'services') return safeArray(items).map((row) => normalizeService(row));
+    if (logicalName === 'bia') return safeArray(items).map((row) => normalizeBiaRecord(row));
+    if (logicalName === 'risks') return safeArray(items).map((row) => normalizeRiskRecord(row));
+    if (logicalName === 'incidents') return safeArray(items).map((row, idx) => normalizeIncidentRecord(row, idx));
+    if (logicalName === 'evidence') return safeArray(items).map((row) => normalizeEvidenceRecord(row));
+    if (logicalName === 'capa') return safeArray(items).map((row) => normalizeCapaRecord(row));
+    if (logicalName === 'focusTarget') return {
+      source: asText(safeObject(items).source),
+      incidentId: asText(safeObject(items).incidentId || safeObject(items).id),
+      assetId: asText(safeObject(items).assetId),
+      assetType: asText(safeObject(items).assetType).toUpperCase(),
+      assetCollection: asText(safeObject(items).assetCollection).toLowerCase(),
+      serviceName: asText(safeObject(items).serviceName),
+      relatedTeamIds: safeIdArray(safeObject(items).relatedTeamIds || [], 'team'),
+      relatedFunctionIds: safeIdArray(safeObject(items).relatedFunctionIds || [], 'function'),
+      relatedRiskIds: safeIdArray(safeObject(items).relatedRiskIds || [], 'risk'),
+      createdAt: safeTimestamp(safeObject(items).createdAt)
+    };
+    return safeArray(items);
+  };
+  const readCanonicalCollection = (logicalName) => {
+    if (logicalName === 'orgRegistry') return getOrgRegistry();
+    if (logicalName === 'coreFunctions') return getAllCoreFunctions();
+    if (logicalName === 'services') return getAllServices();
+    if (logicalName === 'bia') return readBiaRecords();
+    if (logicalName === 'risks') return readRiskRecords();
+    if (logicalName === 'incidents') return readIncidentRecords();
+    if (logicalName === 'evidence') return getAllEvidence();
+    if (logicalName === 'capa') return getAllCapaItems();
+    if (logicalName === 'selectedIncident') return getSelectedIncidentId();
+    if (logicalName === 'focusTarget') return getFocusTarget();
+    return readRawCollection(logicalName);
+  };
+  const writeCanonicalCollection = (logicalName, items) => {
+    if (logicalName === 'orgRegistry') return writeOrgRegistry(safeObject(items));
+    if (logicalName === 'coreFunctions') return writeCoreFunctions(items);
+    if (logicalName === 'services') return writeServices(items);
+    if (logicalName === 'bia') return writeBiaRecords(items);
+    if (logicalName === 'risks') return writeRiskRecords(items);
+    if (logicalName === 'incidents') return set(KEY_INCIDENTS_UNIFIED, safeArray(items).map((row, idx) => normalizeIncidentRecord(row, idx)));
+    if (logicalName === 'evidence') return writeEvidenceItems(items);
+    if (logicalName === 'capa') return writeCapaItems(items);
+    if (logicalName === 'focusTarget') return setFocusTarget(safeObject(items));
+    return writeRawCollection(logicalName, items);
+  };
+  const upsertCollectionItem = (logicalName, item) => {
+    const current = safeArray(readCanonicalCollection(logicalName));
+    const next = upsertById(current, item);
+    return writeCanonicalCollection(logicalName, next);
+  };
+  const removeCollectionItem = (logicalName, id) => {
+    const key = asText(id);
+    const current = safeArray(readCanonicalCollection(logicalName));
+    const next = current.filter((row) => asText(row?.id) !== key);
+    return writeCanonicalCollection(logicalName, next);
+  };
+
+  const getIncidentExecutionLog = (incidentId) => {
+    const id = asText(incidentId);
+    if (!id) return [];
+    const rows = safeArray(get(KEY_INCIDENT_EXECUTION, []));
+    const hit = rows.find((row) => asText(row?.incidentId || row?.id) === id);
+    return safeArray(hit?.logs || []);
+  };
+  const saveIncidentExecutionLog = (incidentId, entries) => {
+    const id = asText(incidentId);
+    if (!id) return [];
+    const logs = safeArray(entries).filter((row) => row && typeof row === 'object');
+    const rows = safeArray(get(KEY_INCIDENT_EXECUTION, []));
+    const idx = rows.findIndex((row) => asText(row?.incidentId || row?.id) === id);
+    if (idx < 0) rows.push({ incidentId: id, logs });
+    else rows[idx] = { ...safeObject(rows[idx]), incidentId: id, logs };
+    set(KEY_INCIDENT_EXECUTION, rows);
+    return logs;
+  };
+  const getAllBiaRecords = () => readBiaRecords();
+  const saveBiaRecords = (items) => writeBiaRecords(items);
+  const getAllRiskRecords = () => readRiskRecords();
+  const saveRiskRecords = (items) => writeRiskRecords(items);
+  const getAllIncidents = () => readIncidentRecords();
+  const saveIncidents = (items) => writeCanonicalCollection('incidents', items);
+  const saveOrgRegistry = (items) => writeOrgRegistry(items);
+  const saveEvidence = (items) => writeEvidenceItems(items);
+  const saveCapaItems = (items) => writeCapaItems(items);
+
   const readBiaRecords = () => {
     const raw = get(KEY_BIA_DATA, []);
     const rows = safeArray(raw);
@@ -725,6 +878,45 @@
     set(KEY_FOCUS_TARGET, next);
     return next;
   };
+  const clearFocusTarget = () => remove(KEY_FOCUS_TARGET);
+
+  const validateCollectionShape = (logicalName) => {
+    const raw = readRawCollection(logicalName);
+    const malformed = { logicalName, parseOk: true, type: typeof raw, malformedCount: 0, missingIdCount: 0 };
+    if (raw === null || raw === undefined) return malformed;
+    if (Array.isArray(raw)) {
+      malformed.type = 'array';
+      raw.forEach((row) => {
+        if (!row || typeof row !== 'object') malformed.malformedCount += 1;
+        else if (!hasValue(row.id) && logicalName !== 'selectedIncident') malformed.missingIdCount += 1;
+      });
+      return malformed;
+    }
+    if (typeof raw === 'object') {
+      malformed.type = 'object';
+      return malformed;
+    }
+    malformed.type = typeof raw;
+    malformed.malformedCount = 1;
+    return malformed;
+  };
+  const countMalformedItems = (logicalName) => validateCollectionShape(logicalName).malformedCount;
+  const summarizeStorageUsage = () => Object.keys(STORAGE_KEY_CONTRACT).map((name) => {
+    const contract = STORAGE_KEY_CONTRACT[name];
+    return {
+      logicalName: name,
+      canonicalKey: contract.canonicalKey,
+      hasCanonical: localStorage.getItem(contract.canonicalKey) !== null,
+      legacyUsed: safeArray(contract.legacyKeys).filter((legacy) => localStorage.getItem(legacy) !== null)
+    };
+  });
+  const getStorageHealthReport = () => {
+    const collections = Object.keys(STORAGE_KEY_CONTRACT).map((name) => ({
+      ...validateCollectionShape(name),
+      contract: STORAGE_KEY_CONTRACT[name]
+    }));
+    return { generatedAt: nowISO(), collections, usage: summarizeStorageUsage() };
+  };
 
   const normalizeEvidenceRecord = (record = {}) => {
     const src = safeObject(record);
@@ -868,6 +1060,9 @@
     safeObject,
     safeString,
     safeId,
+    safeParseJson,
+    stableSlug,
+    safeTimestamp,
     upsertById,
     normalizeTeam,
     normalizeService,
@@ -890,19 +1085,43 @@
     getCoreFunctionsByTeamId,
     getOrgRegistry,
     writeOrgRegistry,
+    saveOrgRegistry,
     getEopRoleAssignments,
+    getStorageContract,
+    resolveStorageKey,
+    readRawCollection,
+    writeRawCollection,
+    mergeLegacyCollections,
+    normalizeCollection,
+    readCanonicalCollection,
+    writeCanonicalCollection,
+    upsertCollectionItem,
+    removeCollectionItem,
+    validateCollectionShape,
+    countMalformedItems,
+    summarizeStorageUsage,
+    getStorageHealthReport,
     readBiaRecords,
     writeBiaRecords,
+    getAllBiaRecords,
+    saveBiaRecords,
     readRiskRecords,
     writeRiskRecords,
+    getAllRiskRecords,
+    saveRiskRecords,
     syncRiskWithBia,
     readIncidentRecords,
+    getAllIncidents,
+    saveIncidents,
     getIncidentById,
     getSelectedIncidentId,
     normalizeIncidentContext,
     setSelectedIncidentId,
     getFocusTarget,
     setFocusTarget,
+    clearFocusTarget,
+    getIncidentExecutionLog,
+    saveIncidentExecutionLog,
     resolveIncidentTeams,
     resolveIncidentFunctions,
     resolveIncidentRisks,
@@ -911,8 +1130,10 @@
     normalizeCapaRecord,
     getAllEvidence,
     writeEvidenceItems,
+    saveEvidence,
     getAllCapaItems,
     writeCapaItems,
+    saveCapaItems,
     getPendingEvidence,
     getOpenCapaItems,
     getActiveIncidents,
