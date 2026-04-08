@@ -380,6 +380,7 @@
 </div>
 
 <script src="../assets/sidebar.js"></script>
+<script src="../assets/response-assets.js"></script>
 <script>
   const EOP_LOG_KEY = "bcms_eop_exec_logs";
   const SYS_KEY = "bcms_system_registry_v1";
@@ -390,6 +391,8 @@
   const ctxProcess = qs.get("process") || "";
   const ctxLevel = qs.get("level") || "";
   const ctxFrom = qs.get("from") || "";
+  const focus = (window.ResponseAssetRegistry && ResponseAssetRegistry.readFocusTarget) ? ResponseAssetRegistry.readFocusTarget() : {};
+  const focusMatched = focus.source === 'incident_recommendation' && focus.assetId === 'library-eop-main';
 
   const EOP_DATA = [
     {
@@ -573,12 +576,16 @@
   function renderCtx(){
     const box = document.getElementById("ctxBox");
     const badges = document.getElementById("ctxBadges");
-    if(!(ctxDept || ctxProcess || ctxLevel || ctxFrom)){
+    if(!(ctxDept || ctxProcess || ctxLevel || ctxFrom || focusMatched)){
       box.style.display = "none";
       return;
     }
     box.style.display = "block";
     badges.innerHTML = "";
+    if(focusMatched) {
+      badges.innerHTML += `<span class="pill">Incident: ${escapeHtml(focus.incidentId || '-')}</span>`;
+      if (focus.serviceName) badges.innerHTML += `<span class="pill">영향 서비스: ${escapeHtml(focus.serviceName)}</span>`;
+    }
     if(ctxFrom) badges.innerHTML += `<span class="pill">from: ${escapeHtml(ctxFrom)}</span>`;
     if(ctxDept) badges.innerHTML += `<span class="pill">부서: ${escapeHtml(ctxDept)}</span>`;
     if(ctxProcess) badges.innerHTML += `<span class="pill">핵심업무: ${escapeHtml(ctxProcess)}</span>`;

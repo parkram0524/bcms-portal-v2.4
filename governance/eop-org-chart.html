@@ -356,6 +356,11 @@
       const MODE_KEY = (window.DataStore && DataStore.KEY_BCP_MODE) || 'bcms_bcp_mode';
       const SELECTED_ORG_KEY = 'bcms_selected_org';
       const INCIDENT_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
+      const INCIDENT_UNIFIED_KEY = 'bcmsIncidents';
+      const INCIDENT_EXEC_KEY = 'bcmsIncidentExecution';
+      const SELECTED_INCIDENT_KEY = 'bcms_selected_incident';
+      const SELECTED_INCIDENT_ID_KEY = 'bcmsSelectedIncidentId';
+      const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
       const CURRENT_INCIDENT_ID_KEY = 'bcmsCurrentIncidentId';
       const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
 
@@ -458,6 +463,10 @@
 
       const selectedTeamName = readSelectedOrg();
 
+      const safeParse = (raw, fallback = null) => {
+        try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
+      };
+
       const toTeamName = (orgUnit) => {
         if (!orgUnit) return '';
         if (typeof orgUnit === 'string') return orgUnit.trim();
@@ -465,23 +474,210 @@
         return '';
       };
       const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
+      const hasValue = (v) => v !== null && v !== undefined && String(v).trim() !== '';
+      const asText = (v) => String(v || '').trim();
+      const norm = (v) => asText(v).toLowerCase();
+      const toMillis = (v) => {
+        if (!hasValue(v)) return 0;
+        const ts = new Date(v).getTime();
+        return Number.isFinite(ts) ? ts : 0;
+      };
+
+      const TEAM_ALIAS_MAP = {
+        'noc': 'DC운영(NOC/관제)팀',
+        '관제': 'DC운영(NOC/관제)팀',
+        'dc운영': 'DC운영(NOC/관제)팀',
+        'dc운영팀': 'DC운영(NOC/관제)팀',
+        'sre': 'SRE/플랫폼운영팀',
+        '플랫폼운영': 'SRE/플랫폼운영팀',
+        'db운영': '데이터/DB운영팀',
+        '데이터운영': '데이터/DB운영팀',
+        'dba': '데이터/DB운영팀',
+        '네트워크': '네트워크운영팀',
+        '앱운영': '애플리케이션운영팀',
+        '애플리케이션': '애플리케이션운영팀',
+        'bcm': '재난안전(BCM)팀',
+        '재난안전': '재난안전(BCM)팀',
+        '컴플라이언스': '감사·컴플라이언스팀',
+        '감사': '감사·컴플라이언스팀'
+      };
+
+      const canonicalTeamName = (name) => {
+        const src = asText(name);
+        if (!src) return '';
+        const lower = src.toLowerCase();
+        if (TEAM_ROLE_MAP[src]) return src;
+        if (TEAM_ALIAS_MAP[lower]) return TEAM_ALIAS_MAP[lower];
+        const fuzzyKey = Object.keys(TEAM_ALIAS_MAP).find((k) => lower.includes(k));
+        return fuzzyKey ? TEAM_ALIAS_MAP[fuzzyKey] : src;
+      };
+
       const normalizeOrgUnits = (orgUnits) => uniq((orgUnits || []).map(toTeamName).filter(Boolean));
+      const normalizeTeams = (values) => uniq((Array.isArray(values) ? values : []).map(toTeamName).map(canonicalTeamName).filter(Boolean));
       const deriveResponseRolesFromOrgUnits = (orgUnits) => {
-        const roles = normalizeOrgUnits(orgUnits).flatMap((teamName) => TEAM_ROLE_MAP[teamName] || []);
+        const roles = normalizeTeams(normalizeOrgUnits(orgUnits)).flatMap((teamName) => TEAM_ROLE_MAP[teamName] || []);
         return uniq(roles);
       };
 
-      const getCurrentIncident = () => {
-        const fromCurrent = store.get(CURRENT_INCIDENT_KEY, null);
-        if (fromCurrent && typeof fromCurrent === 'object') return fromCurrent;
-
-        const currentId = localStorage.getItem(CURRENT_INCIDENT_ID_KEY) || '';
-        const incidentStore = store.get(INCIDENT_KEY, null);
-        const current = incidentStore?.currentIncident;
-        if (current && typeof current === 'object') {
-          if (!currentId || currentId === current.incidentId) return current;
+      const pickFirst = (obj, keys, fallback = '') => {
+        for (const key of keys) {
+          if (hasValue(obj?.[key])) return obj[key];
         }
-        return null;
+        return fallback;
+      };
+
+      const normalizeStringList = (value) => {
+        if (Array.isArray(value)) return uniq(value.map((x) => asText(x?.teamName || x?.name || x)).filter(Boolean));
+        if (typeof value === 'string') return uniq(value.split(',').map((x) => x.trim()).filter(Boolean));
+        return [];
+      };
+
+      const normalizeIncident = (row = {}, idx = 0) => {
+        const incidentId = asText(pickFirst(row, ['incidentId', 'id', 'incidentID', 'incidentRef', 'incidentCode'], `INC-${idx + 1}`));
+        const status = asText(pickFirst(row, ['status', 'currentStatus', 'state'], '-'));
+        const severity = asText(pickFirst(row, ['severity', 'level'], '-'));
+        const currentStage = asText(pickFirst(row, ['currentStage', 'responseStage', 'phase', 'step'], status || '-'));
+        const startedAt = pickFirst(row, ['startedAt', 'startTime', 'createdAt', 'incidentStartTime', 'openedAt'], null);
+        const endedAt = pickFirst(row, ['endedAt', 'endTime', 'closedAt', 'resolvedAt'], null);
+
+        const affectedRaw = row.affectedServices ?? row.services ?? row.impactedServices ?? row.selectedServices ?? row.serviceNames;
+        const relatedRaw = row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const affectedServices = normalizeStringList(affectedRaw);
+        const relatedTeams = normalizeTeams(normalizeStringList(relatedRaw));
+        const lowered = status.toLowerCase();
+        const isClosed = hasValue(endedAt) || ['종료', '종료됨', 'closed', 'resolved', '종결', '복구 완료'].includes(lowered);
+
+        return { incidentId, status, severity, affectedServices, relatedTeams, currentStage, startedAt, endedAt, isClosed, raw: row };
+      };
+
+      const resolveSelectedIncidentId = () => {
+        const params = new URLSearchParams(location.search);
+        const fromQueryId = asText(params.get('incidentId'));
+        const fromQueryRef = asText(params.get('incidentRef'));
+        const fromSelectedId = asText(localStorage.getItem(SELECTED_INCIDENT_ID_KEY));
+        const selectedObj = safeParse(localStorage.getItem(SELECTED_INCIDENT_KEY), {});
+        const focus = safeParse(localStorage.getItem(FOCUS_TARGET_KEY), {});
+        return [
+          fromQueryId,
+          fromQueryRef,
+          fromSelectedId,
+          asText(selectedObj?.incidentId),
+          asText(selectedObj?.incidentRef),
+          focus?.type === 'incident' ? asText(focus?.id) : ''
+        ].find(Boolean) || null;
+      };
+
+      const collectIncidentRows = () => {
+        let rows = [];
+        const unified = safeParse(localStorage.getItem(INCIDENT_UNIFIED_KEY), null);
+        if (Array.isArray(unified)) rows = rows.concat(unified);
+        if (unified && typeof unified === 'object') {
+          if (unified.currentIncident && typeof unified.currentIncident === 'object') rows.push(unified.currentIncident);
+          if (Array.isArray(unified.logs)) rows = rows.concat(unified.logs);
+        }
+
+        const legacy = store.get(INCIDENT_KEY, null);
+        if (Array.isArray(legacy)) rows = rows.concat(legacy);
+        if (legacy && typeof legacy === 'object') {
+          if (legacy.currentIncident && typeof legacy.currentIncident === 'object') rows.push(legacy.currentIncident);
+          if (Array.isArray(legacy.logs)) rows = rows.concat(legacy.logs);
+        }
+
+        const execRows = store.get(INCIDENT_EXEC_KEY, []);
+        if (Array.isArray(execRows)) {
+          execRows.forEach((row) => {
+            rows.push({
+              incidentId: row?.incidentId || row?.id || '',
+              status: row?.status || row?.currentStatus || '',
+              severity: row?.severity || row?.level || '',
+              currentStage: row?.currentStage || row?.phase || '',
+              startedAt: row?.startedAt || row?.createdAt || '',
+              endedAt: row?.endedAt || '',
+              relatedTeams: row?.relatedTeams || row?.relatedOrgs || row?.relatedOrgUnits || [],
+              affectedServices: row?.affectedServices || row?.services || row?.serviceNames || []
+            });
+          });
+        }
+
+        const normalized = rows.map(normalizeIncident).filter((x) => x.incidentId);
+        const byId = new Map();
+        normalized.forEach((item) => {
+          const prev = byId.get(item.incidentId);
+          if (!prev) {
+            byId.set(item.incidentId, item);
+            return;
+          }
+          byId.set(item.incidentId, {
+            ...prev,
+            ...item,
+            relatedTeams: item.relatedTeams.length ? item.relatedTeams : prev.relatedTeams,
+            affectedServices: item.affectedServices.length ? item.affectedServices : prev.affectedServices,
+            startedAt: hasValue(item.startedAt) ? item.startedAt : prev.startedAt,
+            endedAt: hasValue(item.endedAt) ? item.endedAt : prev.endedAt,
+            isClosed: item.isClosed || prev.isClosed
+          });
+        });
+        return [...byId.values()];
+      };
+
+      const inferTeamsFromIncident = (incident) => {
+        const text = `${incident?.status || ''} ${incident?.currentStage || ''} ${(incident?.affectedServices || []).join(' ')}`.toLowerCase();
+        const inferred = [];
+        if (/security|침해|랜섬웨어|보안/.test(text)) inferred.push('정보보호팀');
+        if (/db|database|데이터베이스|sql/.test(text)) inferred.push('데이터/DB운영팀');
+        if (/network|네트워크/.test(text)) inferred.push('네트워크운영팀');
+        if (/전원|정전|냉각|화재|소방/.test(text)) inferred.push('전기팀', '기계(냉각)팀', '방재·소방팀');
+        if (/고객|공지|커뮤니케이션|대외/.test(text)) inferred.push('고객지원팀', '서비스품질팀');
+        return uniq(inferred);
+      };
+
+      const findSelectedIncident = () => {
+        const selectedId = resolveSelectedIncidentId();
+        const incidents = collectIncidentRows();
+        if (!incidents.length) return null;
+        if (selectedId) {
+          const key = norm(selectedId);
+          const matched = incidents.find((x) => norm(x.incidentId) === key)
+            || incidents.find((x) => norm(x.raw?.incidentRef) === key)
+            || incidents.find((x) => norm(x.raw?.id) === key);
+          if (matched) return matched;
+        }
+        const active = incidents.filter((x) => !x.isClosed).sort((a, b) => toMillis(b.startedAt) - toMillis(a.startedAt));
+        if (active.length) return active[0];
+        const latest = [...incidents].sort((a, b) => toMillis(b.startedAt) - toMillis(a.startedAt));
+        return latest[0] || null;
+      };
+
+      const getCurrentIncident = () => {
+        const selected = findSelectedIncident();
+        if (!selected) return null;
+
+        const merged = {
+          ...(selected.raw || {}),
+          incidentId: selected.incidentId,
+          status: selected.status,
+          severity: selected.severity,
+          currentStage: selected.currentStage,
+          relatedOrgUnits: selected.relatedTeams,
+          impactedServiceNames: selected.affectedServices,
+          startTime: selected.startedAt || '-',
+          endTime: selected.endedAt || '-'
+        };
+
+        const incidentId = asText(merged.incidentId);
+        if (incidentId) {
+          if (window.DataStore && DataStore.setSelectedIncidentId) DataStore.setSelectedIncidentId(incidentId);
+          else {
+            localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId, incidentRef: incidentId }));
+            localStorage.setItem(SELECTED_INCIDENT_ID_KEY, incidentId);
+          }
+          localStorage.setItem(CURRENT_INCIDENT_ID_KEY, incidentId);
+          const params = new URLSearchParams(location.search);
+          params.set('incidentId', incidentId);
+          history.replaceState(null, '', `${location.pathname}?${params.toString()}${location.hash || ''}`);
+        }
+
+        return merged;
       };
 
       const renderIncidentContextBanner = (incident) => {
@@ -490,22 +686,28 @@
           return;
         }
 
-        const relatedOrgUnits = normalizeOrgUnits(incident.relatedOrgUnits || []);
+        const relatedOrgUnits = normalizeTeams(normalizeOrgUnits(incident.relatedOrgUnits || []));
+        const inferredTeams = inferTeamsFromIncident(incident);
+        const allTeams = uniq([...relatedOrgUnits, ...inferredTeams]);
         const relatedRoles = uniq((incident.relatedResponseRoles || []).length
           ? incident.relatedResponseRoles
-          : deriveResponseRolesFromOrgUnits(relatedOrgUnits));
+          : deriveResponseRolesFromOrgUnits(allTeams));
 
         incidentContextMount.innerHTML = `
           <section class="incidentContext">
             <h3>현재 사고 기준 관련 대응조직이 강조되어 있습니다.</h3>
+            <p>Incident: ${incident.incidentId || '-'} / 상태: ${incident.status || '-'} / 심각도: ${incident.severity || '-'} / 단계: ${incident.currentStage || '-'}</p>
             <p>영향 서비스: ${incident.serviceName || incident.impactedServiceNames?.[0] || '확인 필요'}</p>
-            <p>관련 조직: ${relatedOrgUnits.length ? relatedOrgUnits.join(', ') : '연계 조직 없음'}</p>
+            <p>관련 조직: ${allTeams.length ? allTeams.join(', ') : '연계 조직 없음'} (${allTeams.length}개)</p>
             <p>관련 대응 역할: ${relatedRoles.length ? relatedRoles.join(', ') : '연계 역할 없음'}</p>
           </section>
         `;
       };
 
       const availableTeams = () => {
+        if (window.DataStore && DataStore.getAllTeams) {
+          return new Set(DataStore.getAllTeams().map((team) => team.name).filter(Boolean));
+        }
         const data = store.get(ORG_KEY, { divisions: [] });
         return new Set(
           (data.divisions || [])
@@ -516,15 +718,23 @@
 
       const normalizeMapping = (rawMap) => {
         const merged = { ...defaultMapping };
+        const assignmentRows = (window.DataStore && DataStore.getEopRoleAssignments) ? DataStore.getEopRoleAssignments() : [];
+        const namesByRole = new Map();
+        assignmentRows.forEach((row) => {
+          const key = String(row.roleName || '').trim();
+          if (!key) return;
+          if (!namesByRole.has(key)) namesByRole.set(key, []);
+          namesByRole.get(key).push(...(row.teamNames || []));
+        });
 
         // 기존 키 구조와의 호환
         merged.basicRoles = {
-          situation: rawMap?.situation || defaultMapping.basicRoles.situation,
-          techRecovery: rawMap?.techRecovery || defaultMapping.basicRoles.techRecovery,
-          facility: rawMap?.facility || defaultMapping.basicRoles.facility,
-          security: rawMap?.security || defaultMapping.basicRoles.security,
-          communication: rawMap?.communication || defaultMapping.basicRoles.communication,
-          record: rawMap?.record || defaultMapping.basicRoles.record
+          situation: rawMap?.situation || namesByRole.get('상황관리') || defaultMapping.basicRoles.situation,
+          techRecovery: rawMap?.techRecovery || namesByRole.get('기술복구') || defaultMapping.basicRoles.techRecovery,
+          facility: rawMap?.facility || namesByRole.get('시설지원(IDC)') || defaultMapping.basicRoles.facility,
+          security: rawMap?.security || namesByRole.get('보안대응') || defaultMapping.basicRoles.security,
+          communication: rawMap?.communication || namesByRole.get('대외커뮤니케이션') || defaultMapping.basicRoles.communication,
+          record: rawMap?.record || namesByRole.get('기록·증적') || defaultMapping.basicRoles.record
         };
 
         merged.bcpTeams = {
@@ -571,11 +781,13 @@
         const mode = store.get(MODE_KEY, 'pre');
         const available = availableTeams();
         const currentIncident = getCurrentIncident();
-        const incidentOrgUnits = normalizeOrgUnits(currentIncident?.relatedOrgUnits || []);
+        const incidentOrgUnits = normalizeTeams(normalizeOrgUnits(currentIncident?.relatedOrgUnits || []));
+        const inferredTeams = inferTeamsFromIncident(currentIncident || {});
+        const incidentTeamNames = uniq([...incidentOrgUnits, ...inferredTeams]);
         const incidentRoleNames = uniq((currentIncident?.relatedResponseRoles || []).length
           ? currentIncident.relatedResponseRoles
-          : deriveResponseRolesFromOrgUnits(incidentOrgUnits));
-        const incidentOrgSet = new Set(incidentOrgUnits);
+          : deriveResponseRolesFromOrgUnits(incidentTeamNames));
+        const incidentOrgSet = new Set(incidentTeamNames);
         const incidentRoleSet = new Set(incidentRoleNames);
 
         renderIncidentContextBanner(currentIncident);
@@ -587,7 +799,7 @@
           const teams = mapData.basicRoles[role.key] || [];
           const cardClass = incidentRoleSet.has(role.label) ? 'roleCard incidentHighlight' : 'roleCard';
           return `
-            <section class="${cardClass}">
+            <section class="${cardClass}" data-team-role="${role.label}">
               <h3 class="roleCardHead">${role.label}</h3>
               <div class="roleCardBody">
                 ${renderChips({ names: teams, kind: 'default', available, mode, incidentOrgSet })}
@@ -602,7 +814,7 @@
           const cardClass = incidentRoleSet.has(team.label) ? 'teamCard incidentHighlight' : 'teamCard';
 
           return `
-            <section class="${cardClass}">
+            <section class="${cardClass}" data-team-role="${team.label}">
               <h4 class="teamTitle">${team.label}</h4>
               <p class="subLabel">편성 조직</p>
               ${renderChips({ names: teamData.composed, kind: 'composed', available, mode, incidentOrgSet })}
@@ -668,9 +880,19 @@
 
       modePreBtn.addEventListener('click', () => { store.set(MODE_KEY, 'pre'); render(); });
       modePostBtn.addEventListener('click', () => { store.set(MODE_KEY, 'post'); render(); });
-      window.addEventListener('storage', (e) => {
-        if ([ORG_KEY, MAP_KEY, MODE_KEY, INCIDENT_KEY, CURRENT_INCIDENT_KEY, CURRENT_INCIDENT_ID_KEY].includes(e.key)) render();
+      treeMount.addEventListener('click', (e) => {
+        const node = e.target.closest('[data-team-name]');
+        if (!node) return;
+        const current = getCurrentIncident();
+        const incidentId = asText(current?.incidentId);
+        if (!incidentId) return;
+        location.href = `../op-center/incident-dashboard.html?incidentId=${encodeURIComponent(incidentId)}`;
       });
+      window.addEventListener('storage', (e) => {
+        if ([ORG_KEY, MAP_KEY, MODE_KEY, INCIDENT_KEY, INCIDENT_UNIFIED_KEY, INCIDENT_EXEC_KEY, CURRENT_INCIDENT_KEY, CURRENT_INCIDENT_ID_KEY, SELECTED_INCIDENT_KEY, SELECTED_INCIDENT_ID_KEY, FOCUS_TARGET_KEY].includes(e.key)) render();
+      });
+      window.addEventListener('focus', render);
+      document.addEventListener('DOMContentLoaded', render);
 
       setInterval(render, 3000);
       render();

@@ -29,24 +29,24 @@
     .itemList{ display:grid; gap:10px; }
     .itemRow{ border:1px solid #dbe3ef; border-radius:12px; background:#fff; padding:12px; display:grid; grid-template-columns:2fr 1.5fr 2fr 1fr 1fr; gap:10px; align-items:start; }
     .itemRow:hover{ background:#fbfdff; }
-    .titleBtn{ border:none; background:transparent; padding:0; text-align:left; color:#1d4ed8; font-weight:900; cursor:pointer; font-size:14px; }
-    .titleBtn:hover{ text-decoration:underline; }
+    .itemRow.clickable{ cursor:pointer; }
     .meta{ font-size:12px; color:#475569; line-height:1.45; }
     .label{ font-size:11px; color:#64748b; font-weight:800; margin-bottom:4px; }
     .cell{ min-width:0; }
-
-    .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
-    .chip{ display:inline-flex; align-items:center; border:1px solid #cbd5e1; border-radius:999px; padding:4px 9px; font-size:12px; background:#fff; color:#1e293b; }
 
     .badge{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:900; border:1px solid; }
     .warn{ color:#92400e; background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.3); }
     .progress{ color:#1d4ed8; background:rgba(37,99,235,.12); border-color:rgba(37,99,235,.3); }
 
+    .linkBtn{ border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; border-radius:10px; padding:8px 10px; font-size:12px; font-weight:900; cursor:pointer; }
+    .linkBtn:hover{ background:#dbeafe; }
+
+    .twoCol{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:14px; }
     .quickActions{ margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
     .quickBtn{ display:inline-flex; align-items:center; text-decoration:none; border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:8px 12px; color:#0f172a; background:#fff; font-size:12px; font-weight:900; }
     .quickBtn:hover{ background:rgba(15,23,42,.04); }
 
-    @media (max-width:1024px){ .itemRow{ grid-template-columns:1fr; } }
+    @media (max-width:1024px){ .itemRow{ grid-template-columns:1fr; } .twoCol{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -54,25 +54,46 @@
   <main class="main">
     <div class="wrap">
       <section class="hero">
-        <h1>운영 현황</h1>
-        <p>현재 미처리 항목을 확인할 수 있습니다. 사고 종료 결과물이 증적/개선조치로 자동 연결됩니다.</p>
+        <h1>BCMS 운영 상황판</h1>
+        <p>Incident Dashboard 실데이터 기준으로 현재 운영 상태를 통합 모니터링합니다.</p>
       </section>
 
       <section class="summaryGrid">
-        <article class="summaryCard"><div class="k">진행 중 사고</div><div class="v" id="kIncident">0</div><div class="h">원인 조사/영향 완화/안정화 모니터링</div></article>
-        <article class="summaryCard"><div class="k">미확인 증적</div><div class="v" id="kEvidence">0</div><div class="h">확인 필요 항목</div></article>
-        <article class="summaryCard"><div class="k">미완료 개선조치</div><div class="v" id="kAction">0</div><div class="h">미완료/미착수/진행중 항목</div></article>
-        <article class="summaryCard"><div class="k">최근 종료 사고</div><div class="v" id="kClosed">0</div><div class="h">복구 완료/종료/종결</div></article>
+        <article class="summaryCard"><div class="k">진행중 Incident</div><div class="v" id="kIncident">0</div><div class="h">종료/Resolved 제외</div></article>
+        <article class="summaryCard"><div class="k">미확인 증적</div><div class="v" id="kEvidence">0</div><div class="h">확인 필요/미승인</div></article>
+        <article class="summaryCard"><div class="k">미완료 개선조치</div><div class="v" id="kAction">0</div><div class="h">완료/종결 제외</div></article>
+        <article class="summaryCard"><div class="k">중점관리 리스크</div><div class="v" id="kRisk">0</div><div class="h">riskScore ≥ 13 또는 critical</div></article>
       </section>
 
       <section class="panel">
-        <div class="panelHead"><h2>미확인 증적</h2><span class="helper">항목 클릭 시 증적 관리 화면으로 이동합니다.</span></div>
-        <div id="evidenceList" class="itemList"></div>
+        <div class="panelHead"><h2>인시던트 현황</h2><span class="helper">행 클릭 시 Incident Dashboard에서 해당 Incident를 로드합니다.</span></div>
+        <div id="incidentList" class="itemList"></div>
       </section>
 
       <section class="panel">
-        <div class="panelHead"><h2>미완료 개선조치</h2><span class="helper">항목 클릭 시 개선조치 관리 화면으로 이동합니다.</span></div>
-        <div id="actionList" class="itemList"></div>
+        <div class="panelHead"><h2>최근 종료 Incident (최근 3건)</h2><span class="helper">종료/Resolved 상태 요약</span></div>
+        <div id="closedList" class="itemList"></div>
+      </section>
+
+      <section class="twoCol">
+        <section class="panel" style="margin-top:0;">
+          <div class="panelHead"><h2>미확인 증적</h2><span class="helper">버튼 클릭 시 증적 관리 화면으로 이동합니다.</span></div>
+          <div id="evidenceList" class="itemList"></div>
+        </section>
+        <section class="panel" style="margin-top:0;">
+          <div class="panelHead"><h2>미완료 개선조치</h2><span class="helper">버튼 클릭 시 개선조치 관리 화면으로 이동합니다.</span></div>
+          <div id="actionList" class="itemList"></div>
+        </section>
+      </section>
+
+      <section class="panel">
+        <div class="panelHead"><h2>핵심기능 영향 현황</h2><span class="helper">핵심기능 목록과 현재 인시던트의 영향 서비스 기준</span></div>
+        <div id="coreImpactList" class="itemList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panelHead"><h2>중점관리 리스크</h2><span class="helper">riskScore 13 이상 또는 중요도 critical</span></div>
+        <div id="priorityRiskList" class="itemList"></div>
       </section>
 
       <section class="panel">
@@ -81,7 +102,8 @@
           <a class="quickBtn" href="./incident-dashboard.html">사고 대응 대시보드</a>
           <a class="quickBtn" href="../audit/evidence.html">증적 관리</a>
           <a class="quickBtn" href="../audit/capa.html">개선조치 관리</a>
-          <a class="quickBtn" href="../governance/eop-org-chart.html">비상대응 조직도</a>
+          <a class="quickBtn" href="../risk-bia/core-functions.html">핵심기능 분석</a>
+          <a class="quickBtn" href="../risk-bia/risk.html">리스크 등록부</a>
         </div>
       </section>
     </div>
@@ -91,207 +113,517 @@
   <script src="../assets/data-store.js"></script>
   <script>
     (() => {
-      const INCIDENT_KEY = DataStore.KEY_INCIDENTS || 'bcms_incidents_v1';
-      const EVIDENCE_KEY = DataStore.KEY_EVIDENCE || 'bcms_audit_evidence_v1';
-      const CAPA_KEY = DataStore.KEY_CAPA || 'bcms_capa_v1';
-
+      const INCIDENTS_KEY = (window.DataStore && DataStore.KEY_INCIDENTS) || 'bcms_incidents_v1';
+      // merge-rescue: keep singleton helpers/sections/handlers
       const INCIDENTS_UNIFIED_KEY = 'bcmsIncidents';
-      const EVIDENCE_ITEMS_KEY = 'bcmsEvidenceItems';
-      const ACTION_ITEMS_KEY = 'bcmsActionItems';
-      const CURRENT_INCIDENT_KEY = 'bcmsCurrentIncident';
-      const FOCUS_TARGET_KEY = 'bcmsFocusTarget';
+      const EXECUTION_KEY = 'bcmsIncidentExecution';
+      const EVIDENCE_KEY = (window.DataStore && DataStore.KEY_EVIDENCE) || 'bcms_audit_evidence_v1';
+      const ACTION_KEY = (window.DataStore && DataStore.KEY_CAPA) || 'bcms_capa_v1';
+      const RISK_KEY = (window.DataStore && DataStore.KEY_RISK_ASSESSMENT) || 'bcmsRiskAssessment';
+      const CORE_KEY = (window.DataStore && DataStore.KEY_CORE_FUNCTIONS) || 'bcmsCoreFunctions';
+      const SELECTED_INCIDENT_KEY = 'bcms_selected_incident';
 
-      const readSafe = (key, fallback) => {
+      const safeParseArray = (raw) => {
+        if (raw == null || raw === '') return [];
         try {
-          const raw = localStorage.getItem(key);
-          if (raw == null) return fallback;
-          return JSON.parse(raw);
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          return Array.isArray(parsed) ? parsed : [];
         } catch {
-          return fallback;
+          return [];
         }
       };
-      const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
-      const toDate = (iso) => {
-        if (!iso) return '-';
-        const d = new Date(iso);
+
+      const readArray = (key, fallback = []) => {
+        const local = safeParseArray(localStorage.getItem(key));
+        if (local.length) return local;
+        if (window.DataStore && DataStore.get) {
+          const fromStore = DataStore.get(key, fallback);
+          return Array.isArray(fromStore) ? fromStore : [];
+        }
+        return Array.isArray(fallback) ? fallback : [];
+      };
+
+      const asText = (value) => String(value || '').trim();
+      const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
+      const uniq = (arr) => [...new Set((Array.isArray(arr) ? arr : []).filter(Boolean))];
+
+      const toDateText = (v) => {
+        if (!hasValue(v)) return '-';
+        const d = new Date(v);
         if (Number.isNaN(d.getTime())) return '-';
-        return d.toLocaleString('ko-KR', { hour12:false });
-      };
-      const toTeamName = (value) => {
-        if (!value) return '';
-        if (typeof value === 'string') return value.trim();
-        if (typeof value === 'object') return String(value.teamName || value.name || '').trim();
-        return '';
-      };
-      const normalizeOrgUnits = (orgUnits, ownerTeam = '') => {
-        const names = uniq((orgUnits || []).map(toTeamName).filter(Boolean));
-        if (!names.length && ownerTeam) names.push(ownerTeam);
-        return uniq(names);
+        return d.toLocaleString('ko-KR', { hour12: false });
       };
 
-      const getIncidents = () => {
-        const modern = readSafe(INCIDENTS_UNIFIED_KEY, null);
-        if (modern && typeof modern === 'object') return modern;
-        return DataStore.get(INCIDENT_KEY, { currentIncident: {}, logs: [] }) || { currentIncident: {}, logs: [] };
-      };
-      const saveIncidents = (data) => {
-        DataStore.set(INCIDENT_KEY, data);
-        localStorage.setItem(INCIDENTS_UNIFIED_KEY, JSON.stringify(data));
-      };
-      const getEvidenceItems = () => {
-        const modern = readSafe(EVIDENCE_ITEMS_KEY, null);
-        if (Array.isArray(modern)) return modern;
-        const legacy = DataStore.get(EVIDENCE_KEY, []);
-        return Array.isArray(legacy) ? legacy : [];
-      };
-      const saveEvidenceItems = (rows) => {
-        const safe = Array.isArray(rows) ? rows : [];
-        DataStore.set(EVIDENCE_KEY, safe);
-        localStorage.setItem(EVIDENCE_ITEMS_KEY, JSON.stringify(safe));
-      };
-      const getActionItems = () => {
-        const modern = readSafe(ACTION_ITEMS_KEY, null);
-        if (Array.isArray(modern)) return modern;
-        const legacy = DataStore.get(CAPA_KEY, []);
-        return Array.isArray(legacy) ? legacy : [];
-      };
-      const saveActionItems = (rows) => {
-        const safe = Array.isArray(rows) ? rows : [];
-        DataStore.set(CAPA_KEY, safe);
-        localStorage.setItem(ACTION_ITEMS_KEY, JSON.stringify(safe));
+      const toTime = (v) => {
+        if (!hasValue(v)) return 0;
+        const t = new Date(v).getTime();
+        return Number.isFinite(t) ? t : 0;
       };
 
-      const createDefaultEvidenceForIncident = () => [];
-      const createDefaultActionsForIncident = () => [];
-      const syncIncidentOutputs = (incident) => incident;
-
-      const getOpenEvidenceItems = () => getEvidenceItems().filter((item) => ['미확인', '확인필요'].includes(String(item.status || '').trim()));
-      const getOpenActionItems = () => getActionItems().filter((item) => ['미완료', '미착수', '진행중', 'OPEN', 'IN_PROGRESS'].includes(String(item.status || '').trim()));
-
-      const setFocusTarget = (type, id) => {
-        localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type, id }));
-      };
-      const getFocusTarget = () => readSafe(FOCUS_TARGET_KEY, null);
-      const clearFocusTarget = () => localStorage.removeItem(FOCUS_TARGET_KEY);
-
-      const incidents = getIncidents();
-      saveIncidents(incidents);
-      saveEvidenceItems(getEvidenceItems());
-      saveActionItems(getActionItems());
-      clearFocusTarget();
-
-      const currentIncident = incidents.currentIncident || readSafe(CURRENT_INCIDENT_KEY, {}) || {};
-      const status = String(currentIncident.status || '');
-      const ongoingStatuses = ['원인 조사', '영향 완화', '안정화 모니터링'];
-      const closedStatuses = ['복구 완료', '종료', '종결'];
-
-      const openEvidence = getOpenEvidenceItems().sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      const openActions = getOpenActionItems().sort((a,b) => new Date(a.dueDate || '2999-12-31') - new Date(b.dueDate || '2999-12-31'));
-
-      document.getElementById('kIncident').textContent = ongoingStatuses.includes(status) ? '1' : '0';
-      document.getElementById('kEvidence').textContent = String(openEvidence.length);
-      document.getElementById('kAction').textContent = String(openActions.length);
-      document.getElementById('kClosed').textContent = closedStatuses.includes(status) ? '1' : '0';
-
-      const renderOrgChips = (orgUnits, ownerTeam = '') => {
-        const names = normalizeOrgUnits(orgUnits, ownerTeam);
-        if (!names.length) return '<span class="chip">관련 조직 확인 필요</span>';
-        return names.map((name) => `<span class="chip">${name}</span>`).join('');
+      const pickFirst = (obj, keys, fallback = '') => {
+        for (const key of keys) {
+          if (hasValue(obj?.[key])) return obj[key];
+        }
+        return fallback;
       };
 
-      const evidenceList = document.getElementById('evidenceList');
-      if (!openEvidence.length) {
-        evidenceList.innerHTML = '<div class="empty">미확인 증적이 없습니다.</div>';
-      } else {
-        evidenceList.innerHTML = openEvidence.map((item) => `
-          <article class="itemRow">
-            <div class="cell">
-              <div class="label">증적명</div>
-              <button class="titleBtn" type="button" data-type="evidence" data-id="${item.id}">${item.title || item.description || '증적 항목'}</button>
-              <div class="meta">연계 사고: ${item.incidentTitle || item.incidentId || item.incident || '-'}</div>
-            </div>
-            <div class="cell">
-              <div class="label">영향 서비스</div>
-              <div class="meta">${item.serviceName || (item.services || []).join(', ') || '-'}</div>
-            </div>
-            <div class="cell">
-              <div class="label">관련 조직</div>
-              <div class="chipWrap">${renderOrgChips(item.relatedOrgUnits, item.ownerTeam)}</div>
-            </div>
-            <div class="cell">
-              <div class="label">생성일</div>
-              <div class="meta">${toDate(item.createdAt)}</div>
-            </div>
-            <div class="cell">
-              <div class="label">상태</div>
-              <span class="badge warn">확인 필요</span>
-            </div>
-          </article>
-        `).join('');
-      }
+      const normalizeStringList = (value) => {
+        if (Array.isArray(value)) return uniq(value.map((x) => asText(x?.teamName || x?.name || x)).filter(Boolean));
+        if (typeof value === 'string') return uniq(value.split(',').map((x) => x.trim()).filter(Boolean));
+        return [];
+      };
 
-      const actionList = document.getElementById('actionList');
-      if (!openActions.length) {
-        actionList.innerHTML = '<div class="empty">미완료 개선조치가 없습니다.</div>';
-      } else {
-        actionList.innerHTML = openActions.map((item) => `
-          <article class="itemRow">
-            <div class="cell">
-              <div class="label">조치명</div>
-              <button class="titleBtn" type="button" data-type="action" data-id="${item.id}">${item.title || '개선조치 항목'}</button>
-              <div class="meta">연계 사고: ${item.incidentTitle || item.incidentId || item.incident || '-'}</div>
-            </div>
-            <div class="cell">
-              <div class="label">영향 서비스</div>
-              <div class="meta">${item.serviceName || item.service || '-'}</div>
-            </div>
-            <div class="cell">
-              <div class="label">관련 조직</div>
-              <div class="chipWrap">${renderOrgChips(item.relatedOrgUnits, item.ownerTeam)}</div>
-            </div>
-            <div class="cell">
-              <div class="label">우선순위 / 기한</div>
-              <div class="meta">${item.priority || '-'} / ${item.dueDate || '-'}</div>
-            </div>
-            <div class="cell">
-              <div class="label">상태</div>
-              <span class="badge progress">조치 필요</span>
-            </div>
-          </article>
-        `).join('');
-      }
+      const normalizeIncident = (row = {}, idx = 0) => {
+        const incidentId = asText(pickFirst(row, ['incidentId', 'id', 'incidentID', 'incidentRef'], `INC-${idx + 1}`));
+        const status = asText(pickFirst(row, ['status', 'currentStatus', 'state'], '-'));
+        const severity = asText(pickFirst(row, ['severity', 'level'], '-'));
+        const currentStage = asText(pickFirst(row, ['currentStage', 'responseStage', 'phase', 'step'], status || '-'));
 
-      document.body.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-type][data-id]');
-        if (!btn) return;
-        const type = btn.dataset.type;
-        const id = btn.dataset.id;
-        if (!id) return;
-        if (type === 'evidence') {
-          setFocusTarget('evidence', id);
-          location.href = '../audit/evidence.html?focus=' + encodeURIComponent(id);
+        const serviceRaw = row.affectedServices ?? row.services ?? row.impactedServices ?? row.selectedServices ?? row.serviceNames ?? row.impactedServiceNames;
+        const serviceSeed = Array.isArray(serviceRaw)
+          ? serviceRaw
+          : hasValue(serviceRaw)
+            ? [serviceRaw]
+            : [row.serviceName, row.service, row.impacted];
+        const affectedServices = normalizeStringList(serviceSeed);
+
+        const teamRaw = row.relatedTeamNames ?? row.relatedTeams ?? row.relatedTeamIds ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const teamSeed = Array.isArray(teamRaw)
+          ? teamRaw
+          : hasValue(teamRaw)
+            ? [teamRaw]
+            : [row.ownerTeam];
+        const relatedTeams = normalizeStringList(teamSeed);
+
+        const startedAt = pickFirst(row, ['startedAt', 'startTime', 'createdAt', 'incidentStartTime', 'openedAt'], null);
+        const endedAt = pickFirst(row, ['endedAt', 'endTime', 'closedAt', 'resolvedAt'], null);
+        const lowered = status.toLowerCase();
+        const isClosed = hasValue(endedAt) || ['종료', '종료됨', 'closed', 'resolved', '종결', '복구 완료'].includes(lowered);
+
+        return {
+          incidentId,
+          status: status || '-',
+          severity: severity || '-',
+          affectedServices,
+          relatedTeams,
+          currentStage: currentStage || '-',
+          startedAt,
+          endedAt,
+          isClosed
+        };
+      };
+
+      const compactList = (items = [], limit = 3) => {
+        const list = uniq(items.filter(Boolean));
+        if (!list.length) return '-';
+        if (list.length <= limit) return list.join(', ');
+        return `${list.slice(0, limit).join(', ')} 외 ${list.length - limit}건`;
+      };
+
+      const isEvidencePending = (row = {}) => {
+        const status = asText(row.status).toLowerCase();
+        const pendingStatuses = ['pending', '미확인', '미완료', '확인필요', '확인 필요'];
+        if (pendingStatuses.includes(status)) return true;
+        const boolKeys = ['confirmed', 'checked', 'approved', 'isConfirmed', 'isChecked', 'isApproved'];
+        for (const key of boolKeys) {
+          if (row[key] === false) return true;
+        }
+        return false;
+      };
+
+      const isActionOpen = (row = {}) => {
+        const status = asText(pickFirst(row, ['status', 'state', 'currentStatus'], '')).toLowerCase();
+        if (!status) return true;
+        const doneStatuses = ['완료', '종료', '종결', 'closed', 'done', 'resolved'];
+        return !doneStatuses.includes(status);
+      };
+
+      const collectIncidents = () => {
+        if (window.DataStore && DataStore.readIncidentRecords) {
+          const normalized = DataStore.readIncidentRecords().map((item, idx) => normalizeIncident({
+            ...(item.raw || {}),
+            incidentId: item.id,
+            id: item.id,
+            serviceName: item.serviceName,
+            severity: item.severity,
+            status: item.status,
+            relatedTeamIds: item.relatedTeamIds,
+            relatedTeamNames: item.relatedTeamNames,
+            startedAt: item.startedAt,
+            endedAt: item.endedAt
+          }, idx));
+          return normalized.filter((x) => hasValue(x.incidentId)).sort((a, b) => toTime(b.startedAt) - toTime(a.startedAt));
+        }
+
+        let rows = [];
+
+        const unifiedRaw = localStorage.getItem(INCIDENTS_UNIFIED_KEY);
+        let unified = null;
+        try { unified = JSON.parse(unifiedRaw || 'null'); } catch { unified = null; }
+        if (Array.isArray(unified)) rows = rows.concat(unified);
+        if (unified && typeof unified === 'object') {
+          if (unified.currentIncident && typeof unified.currentIncident === 'object') rows.push(unified.currentIncident);
+          if (Array.isArray(unified.logs)) rows = rows.concat(unified.logs);
+        }
+
+        const legacy = (window.DataStore && DataStore.get) ? DataStore.get(INCIDENTS_KEY, null) : null;
+        if (legacy && typeof legacy === 'object') {
+          if (legacy.currentIncident && typeof legacy.currentIncident === 'object') rows.push(legacy.currentIncident);
+          if (Array.isArray(legacy.logs)) rows = rows.concat(legacy.logs);
+        }
+
+        const execRows = readArray(EXECUTION_KEY, []);
+        execRows.forEach((row) => {
+          const id = asText(row?.incidentId);
+          if (!id) return;
+          rows.push({
+            incidentId: id,
+            status: row.status || '',
+            severity: row.severity || '',
+            startedAt: row.startedAt || row.createdAt || '',
+            endedAt: row.endedAt || '',
+            currentStage: row.currentStage || row.phase || ''
+          });
+        });
+
+        const normalized = rows.map(normalizeIncident).filter((x) => hasValue(x.incidentId));
+        const byId = new Map();
+        normalized.forEach((item) => {
+          const prev = byId.get(item.incidentId);
+          if (!prev) {
+            byId.set(item.incidentId, item);
+            return;
+          }
+          byId.set(item.incidentId, {
+            ...prev,
+            ...item,
+            status: item.status !== '-' ? item.status : prev.status,
+            severity: item.severity !== '-' ? item.severity : prev.severity,
+            currentStage: item.currentStage !== '-' ? item.currentStage : prev.currentStage,
+            affectedServices: item.affectedServices.length ? item.affectedServices : prev.affectedServices,
+            relatedTeams: item.relatedTeams.length ? item.relatedTeams : prev.relatedTeams,
+            startedAt: hasValue(item.startedAt) ? item.startedAt : prev.startedAt,
+            endedAt: hasValue(item.endedAt) ? item.endedAt : prev.endedAt,
+            isClosed: item.isClosed || prev.isClosed
+          });
+        });
+
+        return [...byId.values()].sort((a, b) => toTime(b.startedAt) - toTime(a.startedAt));
+      };
+
+      const collectEvidence = () => {
+        if (window.DataStore && DataStore.getPendingEvidence) {
+          return DataStore.getPendingEvidence().map((row) => ({
+            id: asText(row.id),
+            title: asText(row.title || row.description || '증적 항목'),
+            owner: asText(row.owner || '담당 미지정'),
+            status: asText(row.status || 'pending'),
+            dueDate: row.confirmedAt || row.createdAt || null,
+            pending: true
+          })).sort((a, b) => toTime(a.dueDate) - toTime(b.dueDate));
+        }
+
+        const rows = readArray(EVIDENCE_KEY, []);
+        return rows
+          .filter((row) => row && typeof row === 'object')
+          .map((row, idx) => ({
+            id: asText(pickFirst(row, ['evidenceId', 'id'], `EV-${idx + 1}`)),
+            title: asText(pickFirst(row, ['title', 'name', 'evidenceName'], '증적 항목')),
+            owner: asText(pickFirst(row, ['ownerTeam', 'team', 'department'], '담당 미지정')),
+            status: asText(pickFirst(row, ['status', 'state'], '-')),
+            dueDate: pickFirst(row, ['dueDate', 'deadline', 'targetDate'], null),
+            pending: isEvidencePending(row)
+          }))
+          .filter((x) => x.pending)
+          .sort((a, b) => toTime(a.dueDate) - toTime(b.dueDate));
+      };
+
+      const collectActions = () => {
+        if (window.DataStore && DataStore.getOpenCapaItems) {
+          return DataStore.getOpenCapaItems().map((row) => ({
+            id: asText(row.id),
+            title: asText(row.title || '개선조치'),
+            owner: asText(row.owner || '담당 미지정'),
+            status: asText(row.status || 'open'),
+            dueDate: row.dueAt || null,
+            open: true
+          })).sort((a, b) => toTime(a.dueDate) - toTime(b.dueDate));
+        }
+
+        const rows = readArray(ACTION_KEY, []);
+        return rows
+          .filter((row) => row && typeof row === 'object')
+          .map((row, idx) => ({
+            id: asText(pickFirst(row, ['actionId', 'id', 'capaId'], `CA-${idx + 1}`)),
+            title: asText(pickFirst(row, ['title', 'actionName', 'task'], '개선조치')),
+            owner: asText(pickFirst(row, ['owner', 'ownerTeam', 'team'], '담당 미지정')),
+            status: asText(pickFirst(row, ['status', 'state', 'currentStatus'], '-')),
+            dueDate: pickFirst(row, ['dueDate', 'deadline', 'targetDate'], null),
+            open: isActionOpen(row)
+          }))
+          .filter((x) => x.open)
+          .sort((a, b) => toTime(a.dueDate) - toTime(b.dueDate));
+      };
+
+      const collectPriorityRisks = () => {
+        if (window.DataStore && DataStore.readRiskRecords) {
+          return DataStore.readRiskRecords()
+            .map((row) => ({
+              threat: asText(row.threat || '리스크 항목'),
+              functionName: asText(row.functionName || '-'),
+              team: asText(row.teamName || '-'),
+              riskScore: Number(row.riskScore || 0),
+              priority: asText(row.riskLevel || '').toLowerCase(),
+              isPriority: Number(row.riskScore || 0) >= 13 || asText(row.riskLevel || '').includes('높음')
+            }))
+            .filter((x) => x.isPriority)
+            .sort((a, b) => b.riskScore - a.riskScore)
+            .slice(0, 8);
+        }
+
+        const rows = readArray(RISK_KEY, []);
+        return rows
+          .filter((row) => row && typeof row === 'object')
+          .map((row) => {
+            const scoreRaw = pickFirst(row, ['riskScore', 'score', 'totalScore'], '0');
+            const riskScore = Number(scoreRaw) || 0;
+            const priority = asText(pickFirst(row, ['priority', 'importance', 'level'], '')).toLowerCase();
+            return {
+              threat: asText(pickFirst(row, ['threat', 'riskName', 'title'], '리스크 항목')),
+              functionName: asText(pickFirst(row, ['functionName', 'coreFunction', 'serviceName'], '-')),
+              team: asText(pickFirst(row, ['team', 'ownerTeam', 'department'], '-')),
+              riskScore,
+              priority,
+              isPriority: riskScore >= 13 || priority === 'critical' || priority === '높음'
+            };
+          })
+          .filter((x) => x.isPriority)
+          .sort((a, b) => b.riskScore - a.riskScore)
+          .slice(0, 8);
+      };
+
+      const collectCoreImpacts = (activeIncidents) => {
+        if (window.DataStore && DataStore.readCoreFunctions) {
+          const coreNames = uniq(DataStore.readCoreFunctions().map((row) => asText(row.name)).filter(Boolean));
+          const impactedNames = uniq(activeIncidents.flatMap((x) => x.affectedServices || []));
+          const impactedSet = new Set(impactedNames.map((x) => x.toLowerCase()));
+
+          return coreNames.map((name) => ({
+            name,
+            impacted: impactedSet.has(name.toLowerCase()),
+            incidentCount: activeIncidents.filter((x) => (x.affectedServices || []).some((s) => s.toLowerCase() === name.toLowerCase())).length
+          }));
+        }
+
+        const coreRows = readArray(CORE_KEY, []);
+        const coreNames = uniq(coreRows.map((row) => asText(pickFirst(row, ['functionName', 'name', 'title'], ''))).filter(Boolean));
+        const impactedNames = uniq(activeIncidents.flatMap((x) => x.affectedServices || []));
+        const impactedSet = new Set(impactedNames.map((x) => x.toLowerCase()));
+
+        return coreNames.map((name) => ({
+          name,
+          impacted: impactedSet.has(name.toLowerCase()),
+          incidentCount: activeIncidents.filter((x) => (x.affectedServices || []).some((s) => s.toLowerCase() === name.toLowerCase())).length
+        }));
+      };
+
+      const incidentListEl = document.getElementById('incidentList');
+      const closedListEl = document.getElementById('closedList');
+      const evidenceListEl = document.getElementById('evidenceList');
+      const actionListEl = document.getElementById('actionList');
+      const coreImpactListEl = document.getElementById('coreImpactList');
+      const priorityRiskListEl = document.getElementById('priorityRiskList');
+
+      const navigateIncident = (incidentId) => {
+        if (!hasValue(incidentId)) return;
+        if (window.DataStore && DataStore.setSelectedIncidentId) DataStore.setSelectedIncidentId(incidentId);
+        else localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId }));
+        location.href = `./incident-dashboard.html?incidentId=${encodeURIComponent(incidentId)}`;
+      };
+
+      const renderIncidents = (rows) => {
+        if (!rows.length) {
+          incidentListEl.innerHTML = '<div class="empty">진행 중 Incident가 없습니다.</div>';
           return;
         }
-        if (type === 'action') {
-          setFocusTarget('action', id);
-          location.href = '../audit/capa.html?focus=' + encodeURIComponent(id);
+        incidentListEl.innerHTML = rows.map((row) => `
+          <article class="itemRow clickable" data-incident-id="${row.incidentId}">
+            <div class="cell"><div class="label">Incident ID</div><div class="meta"><strong>${row.incidentId}</strong></div></div>
+            <div class="cell"><div class="label">상태/심각도</div><div class="meta"><span class="badge progress">${row.status}</span> <span class="badge warn">${row.severity}</span></div></div>
+            <div class="cell"><div class="label">영향 서비스</div><div class="meta">${compactList(row.affectedServices)}</div></div>
+            <div class="cell"><div class="label">관련 조직</div><div class="meta">${compactList(row.relatedTeams)}</div></div>
+            <div class="cell"><div class="label">시작 시각</div><div class="meta">${toDateText(row.startedAt)}</div></div>
+          </article>
+        `).join('');
+      };
+
+      const renderClosedSummary = (rows) => {
+        if (!rows.length) {
+          closedListEl.innerHTML = '<div class="empty">최근 종료 Incident가 없습니다.</div>';
+          return;
+        }
+        closedListEl.innerHTML = rows.slice(0, 3).map((row) => `
+          <article class="itemRow">
+            <div class="cell"><div class="label">Incident ID</div><div class="meta"><strong>${row.incidentId}</strong></div></div>
+            <div class="cell"><div class="label">상태</div><div class="meta">${row.status}</div></div>
+            <div class="cell"><div class="label">종료 시각</div><div class="meta">${toDateText(row.endedAt)}</div></div>
+            <div class="cell"><div class="label">영향 서비스</div><div class="meta">${compactList(row.affectedServices, 2)}</div></div>
+            <div class="cell"><div class="label">관련 조직</div><div class="meta">${compactList(row.relatedTeams, 2)}</div></div>
+          </article>
+        `).join('');
+      };
+
+      const renderEvidence = (rows) => {
+        if (!rows.length) {
+          evidenceListEl.innerHTML = '<div class="empty">미확인 증적이 없습니다.</div>';
+          return;
+        }
+        evidenceListEl.innerHTML = rows.slice(0, 8).map((row) => `
+          <article class="itemRow">
+            <div class="cell"><div class="label">증적 ID</div><div class="meta"><strong>${row.id}</strong></div></div>
+            <div class="cell"><div class="label">항목</div><div class="meta">${row.title}</div></div>
+            <div class="cell"><div class="label">담당</div><div class="meta">${row.owner}</div></div>
+            <div class="cell"><div class="label">기한</div><div class="meta">${toDateText(row.dueDate)}</div></div>
+            <div class="cell"><button class="linkBtn" data-nav="evidence">증적 관리 이동</button></div>
+          </article>
+        `).join('');
+      };
+
+      const renderActions = (rows) => {
+        if (!rows.length) {
+          actionListEl.innerHTML = '<div class="empty">미완료 개선조치가 없습니다.</div>';
+          return;
+        }
+        actionListEl.innerHTML = rows.slice(0, 8).map((row) => `
+          <article class="itemRow">
+            <div class="cell"><div class="label">조치 ID</div><div class="meta"><strong>${row.id}</strong></div></div>
+            <div class="cell"><div class="label">조치</div><div class="meta">${row.title}</div></div>
+            <div class="cell"><div class="label">담당</div><div class="meta">${row.owner}</div></div>
+            <div class="cell"><div class="label">기한</div><div class="meta">${toDateText(row.dueDate)}</div></div>
+            <div class="cell"><button class="linkBtn" data-nav="action">개선조치 이동</button></div>
+          </article>
+        `).join('');
+      };
+
+      const renderCoreImpacts = (rows) => {
+        if (!rows.length) {
+          coreImpactListEl.innerHTML = '<div class="empty">핵심기능 데이터가 없습니다.</div>';
+          return;
+        }
+        coreImpactListEl.innerHTML = rows.slice(0, 10).map((row) => `
+          <article class="itemRow">
+            <div class="cell"><div class="label">핵심기능</div><div class="meta"><strong>${row.name}</strong></div></div>
+            <div class="cell"><div class="label">영향 여부</div><div class="meta">${row.impacted ? '<span class="badge warn">영향 있음</span>' : '<span class="badge progress">정상</span>'}</div></div>
+            <div class="cell"><div class="label">연관 Incident</div><div class="meta">${row.incidentCount}건</div></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+          </article>
+        `).join('');
+      };
+
+      const renderPriorityRisks = (rows) => {
+        if (!rows.length) {
+          priorityRiskListEl.innerHTML = '<div class="empty">중점관리 리스크가 없습니다.</div>';
+          return;
+        }
+        priorityRiskListEl.innerHTML = rows.map((row) => `
+          <article class="itemRow">
+            <div class="cell"><div class="label">리스크</div><div class="meta"><strong>${row.threat}</strong></div></div>
+            <div class="cell"><div class="label">핵심기능</div><div class="meta">${row.functionName}</div></div>
+            <div class="cell"><div class="label">담당 조직</div><div class="meta">${row.team}</div></div>
+            <div class="cell"><div class="label">점수</div><div class="meta"><span class="badge warn">${row.riskScore}</span></div></div>
+            <div class="cell"><div class="label">우선순위</div><div class="meta">${row.priority || '-'}</div></div>
+          </article>
+        `).join('');
+      };
+
+      const render = () => {
+        if (window.DataStore && DataStore.getOpsStatusSnapshot) {
+          const snap = DataStore.getOpsStatusSnapshot();
+          const active = (snap.activeIncidents || []).map((x) => normalizeIncident({
+            incidentId: x.id,
+            status: x.status,
+            severity: x.severity,
+            serviceName: x.serviceName,
+            relatedTeamNames: x.relatedTeamNames || x.relatedTeamIds || [],
+            startedAt: x.startedAt,
+            endedAt: x.endedAt
+          }));
+          const closed = (snap.recentClosedIncidents || []).map((x) => normalizeIncident({
+            incidentId: x.id,
+            status: x.status,
+            severity: x.severity,
+            serviceName: x.serviceName,
+            relatedTeamNames: x.relatedTeamNames || x.relatedTeamIds || [],
+            startedAt: x.startedAt,
+            endedAt: x.endedAt
+          }));
+          const evidences = collectEvidence();
+          const actions = collectActions();
+          const risks = (snap.priorityRisks || []).map((r) => ({
+            threat: asText(r.threat), functionName: asText(r.functionName), team: asText(r.teamName), riskScore: Number(r.riskScore || 0), priority: asText(r.riskLevel || ''), isPriority: true
+          })).sort((a,b)=>b.riskScore-a.riskScore).slice(0,8);
+          const coreImpacts = collectCoreImpacts(active);
+
+          document.getElementById('kIncident').textContent = String(active.length);
+          document.getElementById('kEvidence').textContent = String(evidences.length);
+          document.getElementById('kAction').textContent = String(actions.length);
+          document.getElementById('kRisk').textContent = String(risks.length);
+
+          renderIncidents(active);
+          renderClosedSummary(closed);
+          renderEvidence(evidences);
+          renderActions(actions);
+          renderCoreImpacts(coreImpacts);
+          renderPriorityRisks(risks);
+          return;
+        }
+
+        const incidents = collectIncidents();
+        const active = incidents.filter((x) => !x.isClosed);
+        const closed = incidents.filter((x) => x.isClosed).sort((a, b) => toTime(b.endedAt) - toTime(a.endedAt));
+        const evidences = collectEvidence();
+        const actions = collectActions();
+        const risks = collectPriorityRisks();
+        const coreImpacts = collectCoreImpacts(active);
+
+        document.getElementById('kIncident').textContent = String(active.length);
+        document.getElementById('kEvidence').textContent = String(evidences.length);
+        document.getElementById('kAction').textContent = String(actions.length);
+        document.getElementById('kRisk').textContent = String(risks.length);
+
+        renderIncidents(active);
+        renderClosedSummary(closed);
+        renderEvidence(evidences);
+        renderActions(actions);
+        renderCoreImpacts(coreImpacts);
+        renderPriorityRisks(risks);
+      };
+
+      document.body.addEventListener('click', (event) => {
+        const navBtn = event.target.closest('button[data-nav]');
+        if (navBtn) {
+          const nav = navBtn.getAttribute('data-nav');
+          if (nav === 'evidence') {
+            location.href = '../audit/evidence.html';
+            return;
+          }
+          if (nav === 'action') {
+            location.href = '../audit/capa.html';
+            return;
+          }
+        }
+
+        const row = event.target.closest('.itemRow[data-incident-id]');
+        if (row) {
+          navigateIncident(row.getAttribute('data-incident-id'));
         }
       });
 
-      window.getIncidents = getIncidents;
-      window.saveIncidents = saveIncidents;
-      window.getEvidenceItems = getEvidenceItems;
-      window.saveEvidenceItems = saveEvidenceItems;
-      window.getActionItems = getActionItems;
-      window.saveActionItems = saveActionItems;
-      window.createDefaultEvidenceForIncident = createDefaultEvidenceForIncident;
-      window.createDefaultActionsForIncident = createDefaultActionsForIncident;
-      window.syncIncidentOutputs = syncIncidentOutputs;
-      window.getOpenEvidenceItems = getOpenEvidenceItems;
-      window.getOpenActionItems = getOpenActionItems;
-      window.setFocusTarget = setFocusTarget;
-      window.getFocusTarget = getFocusTarget;
-      window.clearFocusTarget = clearFocusTarget;
+      document.addEventListener('DOMContentLoaded', render);
+      window.addEventListener('focus', render);
+      window.addEventListener('storage', render);
+      render();
     })();
   </script>
 </body>
