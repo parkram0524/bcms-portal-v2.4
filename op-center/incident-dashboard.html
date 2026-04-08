@@ -1330,6 +1330,18 @@
       const saveDemoMode = (flag) => store.set(DEMO_MODE_KEY, Boolean(flag));
 
       const loadOrgTeamMap = () => {
+        if (window.DataStore && DataStore.getAllTeams) {
+          const teamMap = new Map();
+          DataStore.getAllTeams().forEach((team) => {
+            teamMap.set(team.id, {
+              divisionId: '',
+              divisionName: team.division || '미지정 본부',
+              teamId: team.id,
+              teamName: team.name || '미지정 팀'
+            });
+          });
+          return teamMap;
+        }
         const org = store.get(ORG_REGISTRY_KEY, { divisions:[] });
         const divisions = Array.isArray(org?.divisions) ? org.divisions : [];
         const teamMap = new Map();

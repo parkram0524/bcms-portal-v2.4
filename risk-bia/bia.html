@@ -577,6 +577,17 @@
       };
 
       const loadCoreFunctions = () => {
+        if (window.DataStore && DataStore.getAllCoreFunctions) {
+          const rows = DataStore.getAllCoreFunctions();
+          const byTeam = new Map();
+          rows.forEach((row) => {
+            const team = String(row.teamName || '').trim();
+            if (!team) return;
+            if (!byTeam.has(team)) byTeam.set(team, []);
+            byTeam.get(team).push(String(row.name || '').trim());
+          });
+          return [...byTeam.entries()].map(([team, functions]) => ({ team, functions: uniq(functions) }));
+        }
         const raw = store.get(CORE_KEY, []);
         const rows = Array.isArray(raw) ? raw : [];
         return rows
@@ -592,6 +603,9 @@
       };
 
       const loadOrgTeams = () => {
+        if (window.DataStore && DataStore.getAllTeams) {
+          return uniq(DataStore.getAllTeams().map((team) => team.name).filter(Boolean));
+        }
         const org = store.get(ORG_KEY, { divisions: [] });
         return uniq(
           (org.divisions || [])

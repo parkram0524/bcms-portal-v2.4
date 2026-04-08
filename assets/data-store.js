@@ -63,6 +63,18 @@
   const KEY_ACTION_ITEMS = 'bcmsActionItems';
   const KEY_CAPA_ITEMS = 'bcmsCapaItems';
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_FOCUS_TARGET = 'bcmsFocusTarget';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -74,6 +86,15 @@
   };
 
   const asText = (value) => String(value ?? '').trim();
+  const safeString = (value, fallback = '') => {
+    const s = asText(value);
+    return s || fallback;
+  };
+  const safeId = (value, prefix = 'ID') => {
+    const v = asText(value);
+    if (v) return v;
+    return `${prefix}-${slug(`${prefix}-${nowISO()}`)}`;
+  };
   const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
   const safeArray = (value) => Array.isArray(value) ? value : [];
   const safeObject = (value) => (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
@@ -221,6 +242,29 @@
     };
   };
 
+  const normalizeService = (record = {}, context = {}) => {
+    const src = safeObject(record);
+    const name = safeString(pickFirst(src, ['name', 'serviceName', 'service', 'title'], ''), '');
+    const ownerTeam = normalizeTeam({
+      id: pickFirst(src, ['ownerTeamId', 'teamId'], context.ownerTeamId || ''),
+      name: pickFirst(src, ['ownerTeamName', 'teamName', 'ownerTeam', 'team'], context.ownerTeamName || ''),
+      division: pickFirst(src, ['ownerDivision', 'divisionName', 'division'], context.ownerDivision || '')
+    });
+    const idSeed = asText(pickFirst(src, ['id', 'serviceId'], '')) || (name ? `SVC-${slug(name)}` : '');
+    return {
+      id: idSeed || uid('SVC'),
+      name: name || '미지정 서비스',
+      ownerTeamId: ownerTeam.id,
+      ownerTeamName: ownerTeam.name,
+      active: src.active !== false,
+      tier: safeString(src.tier),
+      criticality: safeString(src.criticality || src.importance),
+      description: safeString(src.description || src.note),
+      tags: uniq(safeArray(src.tags).map((x) => asText(x)).filter(Boolean)),
+      updatedAt: pickFirst(src, ['updatedAt'], nowISO())
+    };
+  };
+
   const normalizeBiaRecord = (record = {}, context = {}) => {
     const src = safeObject(record);
     const seed = { ...(context.team || {}), ...src, teamName: src.teamName || context.teamName || '' };
@@ -335,6 +379,96 @@
       }
     });
     return out;
+  };
+
+  const writeCoreFunctions = (records) => {
+    const normalized = safeArray(records).map((row) => normalizeCoreFunction(row));
+    set(KEY_CORE_FUNCTIONS, normalized);
+    return normalized;
+  };
+
+  const getOrgRegistry = () => {
+    const raw = get(KEY_ORG_REGISTRY, { companyName: 'SJ Digital', divisions: [] });
+    const divisions = safeArray(raw?.divisions).map((division, idx) => {
+      const divisionId = asText(division?.id) || `DIV-${idx + 1}`;
+      const divisionName = safeString(division?.name, '미지정 본부');
+      const teams = safeArray(division?.teams).map((team) => normalizeTeam({
+        id: pickFirst(team || {}, ['id'], ''),
+        teamName: pickFirst(team || {}, ['name', 'teamName'], ''),
+        divisionName
+      }));
+      return { id: divisionId, name: divisionName, teams };
+    });
+    return { companyName: safeString(raw?.companyName, 'SJ Digital'), divisions };
+  };
+
+  const writeOrgRegistry = (registry = {}) => {
+    const raw = safeObject(registry);
+    const divisions = safeArray(raw.divisions).map((division, idx) => {
+      const divisionName = safeString(division?.name, '미지정 본부');
+      const divisionId = asText(division?.id) || `DIV-${idx + 1}`;
+      const teams = safeArray(division?.teams).map((team) => normalizeTeam({
+        id: pickFirst(team || {}, ['id'], ''),
+        teamName: pickFirst(team || {}, ['name', 'teamName'], ''),
+        divisionName
+      }));
+      return { id: divisionId, name: divisionName, teams };
+    });
+    const normalized = { companyName: safeString(raw.companyName, 'SJ Digital'), divisions };
+    set(KEY_ORG_REGISTRY, normalized);
+    return normalized;
+  };
+
+  const getAllTeams = () => {
+    const org = getOrgRegistry();
+    return org.divisions.flatMap((division) => safeArray(division.teams).map((team) => normalizeTeam({ ...team, division: division.name })));
+  };
+  const getTeamById = (teamId) => {
+    const id = asText(teamId);
+    if (!id) return null;
+    return getAllTeams().find((team) => asText(team.id) === id) || null;
+  };
+
+  const getAllServices = () => safeArray(get(KEY_SERVICE_REGISTRY, [])).map((row) => normalizeService(row));
+  const writeServices = (services) => {
+    const normalized = safeArray(services).map((row) => normalizeService(row));
+    set(KEY_SERVICE_REGISTRY, normalized);
+    return normalized;
+  };
+  const getServiceById = (serviceId) => {
+    const id = asText(serviceId);
+    if (!id) return null;
+    return getAllServices().find((svc) => asText(svc.id) === id) || null;
+  };
+
+  const getAllCoreFunctions = () => readCoreFunctions();
+  const getCoreFunctionById = (functionId) => {
+    const id = asText(functionId);
+    if (!id) return null;
+    return readCoreFunctions().find((fn) => asText(fn.id) === id) || null;
+  };
+  const getCoreFunctionsByTeamId = (teamId) => {
+    const id = asText(teamId);
+    if (!id) return [];
+    return readCoreFunctions().filter((fn) => asText(fn.teamId) === id);
+  };
+
+  const getEopRoleAssignments = () => {
+    const raw = safeObject(get(KEY_EOP_ROLE_MAPPING, {}));
+    const teams = getAllTeams();
+    const teamByName = new Map(teams.map((team) => [team.name, team]));
+    const rows = [];
+    const toRows = (source = {}, roleSeed = '') => uniqueIds(source || []).map((teamName) => {
+      const hit = teamByName.get(teamName);
+      return { roleId: roleSeed, roleName: roleSeed, teamIds: [asText(hit?.id || '')].filter(Boolean), teamNames: [teamName] };
+    });
+    rows.push(...toRows(raw.situation || raw.basicRoles?.situation || [], '상황관리'));
+    rows.push(...toRows(raw.techRecovery || raw.basicRoles?.techRecovery || [], '기술복구'));
+    rows.push(...toRows(raw.facility || raw.basicRoles?.facility || [], '시설지원(IDC)'));
+    rows.push(...toRows(raw.security || raw.basicRoles?.security || [], '보안대응'));
+    rows.push(...toRows(raw.communication || raw.basicRoles?.communication || [], '대외커뮤니케이션'));
+    rows.push(...toRows(raw.record || raw.basicRoles?.record || [], '기록·증적'));
+    return rows;
   };
 
   const readBiaRecords = () => {
@@ -720,8 +854,11 @@
     uid,
     safeArray,
     safeObject,
+    safeString,
+    safeId,
     upsertById,
     normalizeTeam,
+    normalizeService,
     normalizeCoreFunction,
     normalizeBiaRecord,
     normalizeRiskRecord,
@@ -730,6 +867,18 @@
     uniqueIds,
     safeStatus,
     readCoreFunctions,
+    writeCoreFunctions,
+    getAllTeams,
+    getTeamById,
+    getAllServices,
+    writeServices,
+    getServiceById,
+    getAllCoreFunctions,
+    getCoreFunctionById,
+    getCoreFunctionsByTeamId,
+    getOrgRegistry,
+    writeOrgRegistry,
+    getEopRoleAssignments,
     readBiaRecords,
     writeBiaRecords,
     readRiskRecords,

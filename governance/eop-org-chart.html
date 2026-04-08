@@ -669,7 +669,6 @@
           localStorage.setItem(SELECTED_INCIDENT_KEY, JSON.stringify({ incidentId, incidentRef: incidentId }));
           localStorage.setItem(SELECTED_INCIDENT_ID_KEY, incidentId);
           localStorage.setItem(CURRENT_INCIDENT_ID_KEY, incidentId);
-          localStorage.setItem(FOCUS_TARGET_KEY, JSON.stringify({ type: 'incident', id: incidentId }));
           const params = new URLSearchParams(location.search);
           params.set('incidentId', incidentId);
           history.replaceState(null, '', `${location.pathname}?${params.toString()}${location.hash || ''}`);
@@ -703,6 +702,9 @@
       };
 
       const availableTeams = () => {
+        if (window.DataStore && DataStore.getAllTeams) {
+          return new Set(DataStore.getAllTeams().map((team) => team.name).filter(Boolean));
+        }
         const data = store.get(ORG_KEY, { divisions: [] });
         return new Set(
           (data.divisions || [])
@@ -713,15 +715,23 @@
 
       const normalizeMapping = (rawMap) => {
         const merged = { ...defaultMapping };
+        const assignmentRows = (window.DataStore && DataStore.getEopRoleAssignments) ? DataStore.getEopRoleAssignments() : [];
+        const namesByRole = new Map();
+        assignmentRows.forEach((row) => {
+          const key = String(row.roleName || '').trim();
+          if (!key) return;
+          if (!namesByRole.has(key)) namesByRole.set(key, []);
+          namesByRole.get(key).push(...(row.teamNames || []));
+        });
 
         // 기존 키 구조와의 호환
         merged.basicRoles = {
-          situation: rawMap?.situation || defaultMapping.basicRoles.situation,
-          techRecovery: rawMap?.techRecovery || defaultMapping.basicRoles.techRecovery,
-          facility: rawMap?.facility || defaultMapping.basicRoles.facility,
-          security: rawMap?.security || defaultMapping.basicRoles.security,
-          communication: rawMap?.communication || defaultMapping.basicRoles.communication,
-          record: rawMap?.record || defaultMapping.basicRoles.record
+          situation: rawMap?.situation || namesByRole.get('상황관리') || defaultMapping.basicRoles.situation,
+          techRecovery: rawMap?.techRecovery || namesByRole.get('기술복구') || defaultMapping.basicRoles.techRecovery,
+          facility: rawMap?.facility || namesByRole.get('시설지원(IDC)') || defaultMapping.basicRoles.facility,
+          security: rawMap?.security || namesByRole.get('보안대응') || defaultMapping.basicRoles.security,
+          communication: rawMap?.communication || namesByRole.get('대외커뮤니케이션') || defaultMapping.basicRoles.communication,
+          record: rawMap?.record || namesByRole.get('기록·증적') || defaultMapping.basicRoles.record
         };
 
         merged.bcpTeams = {
