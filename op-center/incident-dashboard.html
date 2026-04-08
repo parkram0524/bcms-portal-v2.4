@@ -898,7 +898,7 @@
         const endedAt = pickFirst(row, ['endedAt', 'endTime', 'closedAt', 'resolvedAt'], null);
 
         const affectedRaw = row.affectedServices ?? row.services ?? row.impactedServices ?? row.selectedServices ?? row.serviceNames;
-        const relatedRaw = row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const relatedRaw = row.relatedTeamIds ?? row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
         const affectedServices = normalizeStringList(Array.isArray(affectedRaw) ? affectedRaw : (hasValue(affectedRaw) ? [affectedRaw] : [row.serviceName, row.impacted]));
         const relatedTeams = normalizeStringList(Array.isArray(relatedRaw) ? relatedRaw : (hasValue(relatedRaw) ? [relatedRaw] : [row.ownerTeam]));
 

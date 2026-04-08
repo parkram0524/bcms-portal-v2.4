@@ -175,7 +175,7 @@
       };
 
       const normalizeIncident = (row = {}, idx = 0) => {
-        const incidentId = asText(pickFirst(row, ['incidentId', 'id', 'incidentID'], `INC-${idx + 1}`));
+        const incidentId = asText(pickFirst(row, ['incidentId', 'id', 'incidentID', 'incidentRef'], `INC-${idx + 1}`));
         const status = asText(pickFirst(row, ['status', 'currentStatus', 'state'], '-'));
         const severity = asText(pickFirst(row, ['severity', 'level'], '-'));
         const currentStage = asText(pickFirst(row, ['currentStage', 'responseStage', 'phase', 'step'], status || '-'));
@@ -188,7 +188,7 @@
             : [row.serviceName, row.service, row.impacted];
         const affectedServices = normalizeStringList(serviceSeed);
 
-        const teamRaw = row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
+        const teamRaw = row.relatedTeamIds ?? row.relatedTeams ?? row.relatedOrgs ?? row.responseTeams ?? row.selectedTeams ?? row.organizations ?? row.relatedOrgUnits;
         const teamSeed = Array.isArray(teamRaw)
           ? teamRaw
           : hasValue(teamRaw)

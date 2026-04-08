@@ -24,6 +24,14 @@
   const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
   const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -291,14 +299,20 @@
     const biaRecords = safeArray(biaRecordsInput && biaRecordsInput.length ? biaRecordsInput : readBiaRecords()).map((row) => normalizeBiaRecord(row));
     const existingRisks = readRiskRecords();
 
-    const byAutoRef = new Map(existingRisks.map((risk) => [asText(risk.sourceRefId || ''), risk]).filter(([key]) => key));
+    const byAutoRef = new Map();
+    existingRisks.forEach((risk) => {
+      const ref = asText(risk.sourceRefId || '');
+      if (ref) byAutoRef.set(ref, risk);
+      const fnKey = `${asText(risk.teamId)}||${asText(risk.functionId)}`;
+      if (fnKey !== '||' && !byAutoRef.has(fnKey)) byAutoRef.set(fnKey, risk);
+    });
     const next = existingRisks.filter((risk) => asText(risk.source) !== 'BIA_AUTO');
 
     const activeRefs = new Set();
     biaRecords.forEach((bia) => {
       const sourceRefId = bia.id;
       activeRefs.add(sourceRefId);
-      const prev = byAutoRef.get(sourceRefId);
+      const prev = byAutoRef.get(sourceRefId) || byAutoRef.get(`${asText(bia.teamId)}||${asText(bia.functionId)}`);
       const merged = normalizeRiskRecord({
         ...prev,
         teamId: bia.teamId,
