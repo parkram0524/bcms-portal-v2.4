@@ -239,6 +239,7 @@
       .overviewFilters select, .overviewFilters input{ min-width:140px; }
       .quickGrid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
     }
+
     @media (max-width:640px){
       .hero h1{ font-size:27px; }
       .kpiGrid{ grid-template-columns:1fr; }
@@ -261,6 +262,7 @@
 </head>
 <body>
   <aside id="sidebarMount"></aside>
+
   <main class="main">
     <div class="wrap">
       <section class="hero">
@@ -363,6 +365,7 @@
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
   <script src="../assets/demo-seed.js"></script>
+
   <script>
     (() => {
       if (window.BCMSDemoSeed) {
@@ -373,6 +376,7 @@
       const CORE_KEY = (window.DataStore && DataStore.KEY_CORE_FUNCTIONS) || 'bcmsCoreFunctions';
       const BIA_KEY = (window.DataStore && DataStore.KEY_BIA_DATA) || 'bcmsBIAData';
       const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+
       const RESOURCE_OPTIONS = ['인력','시스템','데이터','설비','유틸리티','협력업체'];
 
       const TIME_IMPACT_META = [
@@ -383,11 +387,29 @@
         { key:'day1', label:'1일', minutes:1440, text:'1일' },
         { key:'week1', label:'1주일', minutes:10080, text:'1주일' }
       ];
+      const TIME_KEYS = TIME_IMPACT_META.map(t => t.key);
 
-      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
-        get: (k, f) => { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : f; } catch { return f; } },
-        set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+      const impactLabels = {
+        1:'매우 낮음',
+        2:'낮음',
+        3:'보통',
+        4:'높음',
+        5:'매우 높음'
       };
+
+      const store = (window.DataStore && DataStore.get && DataStore.set)
+        ? DataStore
+        : {
+            get: (k, fallback) => {
+              try{
+                const raw = localStorage.getItem(k);
+                return raw ? JSON.parse(raw) : fallback;
+              }catch{
+                return fallback;
+              }
+            },
+            set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+          };
 
       const teamSelect = document.getElementById('teamSelect');
       const overviewTeamFilter = document.getElementById('overviewTeamFilter');
@@ -413,17 +435,19 @@
       const importantMetric = document.getElementById('importantMetric');
       const timeMetric = document.getElementById('timeMetric');
 
-      const impactLabels = { 1:'매우 낮음', 2:'낮음', 3:'보통', 4:'높음', 5:'매우 높음' };
-
       const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
-      const clamp = (v,min,max) => Math.min(max, Math.max(min, v));
-      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
+      ));
 
       const parseRtoString = (rtoRaw) => {
         const s = String(rtoRaw || '').trim();
         if (!s) return { value:'', unit:'분' };
+
         const n = Number((s.match(/[0-9]+(?:\.[0-9]+)?/) || [])[0] || '');
         if (!Number.isFinite(n)) return { value:'', unit:'분' };
+
         if (s.includes('일')) return { value:n, unit:'일' };
         if (s.includes('시간')) return { value:n, unit:'시간' };
         return { value:n, unit:'분' };
@@ -437,7 +461,12 @@
         return n;
       };
 
-      const TIME_KEYS = TIME_IMPACT_META.map((t) => t.key);
+      const toDurationText = (mins) => {
+        if (mins === null || mins === undefined) return '-';
+        if (mins >= 1440 && mins % 1440 === 0) return `${mins / 1440}일`;
+        if (mins >= 60 && mins % 60 === 0) return `${mins / 60}시간`;
+        return `${mins}분`;
+      };
 
       const normalizeMonotonicTimeImpact = (timeImpact) => {
         const out = {};
@@ -454,16 +483,21 @@
       const enforceMonotonicFrom = (timeImpact, startIdx = 0) => {
         const out = { ...timeImpact };
         const begin = Math.max(0, startIdx);
+
         if (begin > 0) {
           const prevKey = TIME_KEYS[begin - 1];
-          out[TIME_KEYS[begin]] = Math.max(clamp(Number(out[TIME_KEYS[begin]] || 1), 1, 5), clamp(Number(out[prevKey] || 1), 1, 5));
+          out[TIME_KEYS[begin]] = Math.max(
+            clamp(Number(out[TIME_KEYS[begin]] || 1), 1, 5),
+            clamp(Number(out[prevKey] || 1), 1, 5)
+          );
         }
+
         for (let i = begin + 1; i < TIME_KEYS.length; i++) {
-          const k = TIME_KEYS[i];
-          const pk = TIME_KEYS[i-1];
-          const cur = clamp(Number(out[k] || 1), 1, 5);
-          const prev = clamp(Number(out[pk] || 1), 1, 5);
-          out[k] = Math.max(cur, prev);
+          const curKey = TIME_KEYS[i];
+          const prevKey = TIME_KEYS[i - 1];
+          const cur = clamp(Number(out[curKey] || 1), 1, 5);
+          const prev = clamp(Number(out[prevKey] || 1), 1, 5);
+          out[curKey] = Math.max(cur, prev);
         }
         return out;
       };
@@ -471,9 +505,9 @@
       const calcMtpd = (timeImpact) => {
         for (const t of TIME_IMPACT_META) {
           const score = Number(timeImpact?.[t.key] || 1);
-          if (score >= 4) return { text: t.text, minutes: t.minutes };
+          if (score >= 4) return { text:t.text, minutes:t.minutes };
         }
-        return { text: '장기 허용', minutes: null };
+        return { text:'장기 허용', minutes:null };
       };
 
       const calcGrade = (fn) => {
@@ -498,16 +532,22 @@
       const normalizeFunction = (rawFn) => {
         const name = String(rawFn.name || rawFn.function || '').trim();
         const impact = clamp(Number(rawFn.impact || rawFn.overallImpact || 3), 1, 5);
-        const parsedRto = rawFn.rtoValue !== undefined ? { value: rawFn.rtoValue, unit: rawFn.rtoUnit || '분' } : parseRtoString(rawFn.rto);
+
+        const parsedRto = rawFn.rtoValue !== undefined
+          ? { value:rawFn.rtoValue, unit:rawFn.rtoUnit || '분' }
+          : parseRtoString(rawFn.rto);
 
         const timeImpactRaw = rawFn.timeImpact || {};
+        const defaults = makeDefaultTimeImpact(impact);
         const timeImpactSeed = {};
-        for (const t of TIME_IMPACT_META) {
-          timeImpactSeed[t.key] = clamp(Number(timeImpactRaw[t.key] || makeDefaultTimeImpact(impact)[t.key]), 1, 5);
-        }
-        const timeImpact = normalizeMonotonicTimeImpact(timeImpactSeed);
 
+        for (const t of TIME_IMPACT_META) {
+          timeImpactSeed[t.key] = clamp(Number(timeImpactRaw[t.key] || defaults[t.key]), 1, 5);
+        }
+
+        const timeImpact = normalizeMonotonicTimeImpact(timeImpactSeed);
         const mtpd = calcMtpd(timeImpact);
+
         const fn = {
           id: String(rawFn.id || rawFn.biaId || '').trim(),
           functionId: String(rawFn.functionId || '').trim(),
@@ -564,7 +604,11 @@
           return uniq(DataStore.getAllTeams().map((team) => team.name).filter(Boolean));
         }
         const org = store.get(ORG_KEY, { divisions: [] });
-        return uniq((org.divisions || []).flatMap((d) => (d.teams || []).map((t) => t.name)).filter(Boolean));
+        return uniq(
+          (org.divisions || [])
+            .flatMap((d) => (d.teams || []).map((t) => t.name))
+            .filter(Boolean)
+        );
       };
 
       const loadBiaData = () => {
@@ -636,19 +680,30 @@
         store.set(BIA_KEY, rows);
       };
 
+      const coreRows = loadCoreFunctions();
+      const orgTeams = loadOrgTeams();
+      const allTeams = uniq([...coreRows.map((r) => r.team), ...orgTeams]);
+      const coreMap = new Map(coreRows.map((r) => [r.team, r.functions]));
+      let biaRows = loadBiaData();
+
       const ensureTeamRecord = (team, coreMap, rows) => {
         let found = rows.find((r) => r.team === team);
         const coreFns = coreMap.get(team) || [];
 
         if (!found) {
-          found = { team, functions: coreFns.map((name) => normalizeFunction({ name })) };
+          found = {
+            team,
+            functions: coreFns.map((name) => normalizeFunction({ name }))
+          };
           rows.push(found);
           return found;
         }
 
         const byName = new Map((found.functions || []).map((fn) => [fn.name, normalizeFunction(fn)]));
-        found.functions = uniq([...(coreFns || []), ...(found.functions || []).map((f) => f.name)])
-          .map((name) => byName.get(name) || normalizeFunction({ name }));
+        found.functions = uniq([
+          ...(coreFns || []),
+          ...(found.functions || []).map((f) => f.name)
+        ]).map((name) => byName.get(name) || normalizeFunction({ name }));
 
         return found;
       };
@@ -656,7 +711,9 @@
       const getRtoWarnText = (fn) => {
         const rtoMin = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
         if (rtoMin === null || fn.mtpdMinutes === null) return '';
-        if (rtoMin >= fn.mtpdMinutes) return 'RTO는 MTPD보다 짧아야 합니다. 복구목표시간이 최대허용중단시간을 초과합니다.';
+        if (rtoMin >= fn.mtpdMinutes) {
+          return 'RTO는 MTPD보다 짧아야 합니다. 복구목표시간이 최대허용중단시간을 초과합니다.';
+        }
         return '';
       };
 
@@ -1003,15 +1060,12 @@
         countMetric.textContent = String(functions.length);
         importantMetric.textContent = String(functions.filter((f) => f.importance === '중요').length);
 
-        const mtpdMinutes = functions.map((f) => f.mtpdMinutes).filter((v) => v !== null);
-        const rtoMinutes = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => v !== null);
-        const minMtpd = mtpdMinutes.length ? Math.min(...mtpdMinutes) : null;
-        const minRto = rtoMinutes.length ? Math.min(...rtoMinutes) : null;
+        if (prev === next) {
+          el.textContent = next.toLocaleString('ko-KR');
+          return;
+        }
 
-        const mtpdText = minMtpd === null ? '-' : `${minMtpd >= 60 && minMtpd % 60 === 0 ? `${minMtpd/60}시간` : `${minMtpd}분`}`;
-        const rtoText = minRto === null ? '-' : `${minRto >= 60 && minRto % 60 === 0 ? `${minRto/60}시간` : `${minRto}분`}`;
-        timeMetric.textContent = `${mtpdText} / ${rtoText}`;
-      };
+        animatedCounts.set(el.id, next);
 
       const render = () => {
         renderGlobalMetrics();
@@ -1026,6 +1080,33 @@
           return;
         }
 
+        const duration = 450;
+        const start = performance.now();
+        const from = Number(el.dataset.last || 0);
+
+        const step = (now) => {
+          const progress = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = Math.round(from + (next - from) * eased);
+          el.textContent = value.toLocaleString('ko-KR');
+
+          if (progress < 1) requestAnimationFrame(step);
+          else el.dataset.last = String(next);
+        };
+
+        requestAnimationFrame(step);
+      };
+
+      const computeGlobalMetrics = () => {
+        const teamCount = allTeams.length;
+        const coreCount = coreRows.reduce((acc, row) => acc + (Array.isArray(row.functions) ? row.functions.length : 0), 0);
+        const biaFunctions = biaRows.flatMap((r) => r.functions || []);
+        const importantCount = biaFunctions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length;
+        const biaCount = biaFunctions.length;
+        return { teamCount, coreCount, importantCount, biaCount };
+      };
+
+      const computeOverviewRows = () => allTeams.map((team) => {
         const row = ensureTeamRecord(team, coreMap, biaRows);
         const functions = row.functions || [];
         renderSummary(team, functions);
@@ -1036,56 +1117,110 @@
           return;
         }
 
-        tableMount.innerHTML = `
-          <table>
+      const renderGlobalMetrics = () => {
+        const m = computeGlobalMetrics();
+
+        globalKpi.innerHTML = `
+          <article class="kpiCard"><div class="k">전체 부서 수</div><div class="v" id="kpiTeamCount">0</div></article>
+          <article class="kpiCard"><div class="k">전체 핵심업무 수</div><div class="v" id="kpiCoreCount">0</div></article>
+          <article class="kpiCard"><div class="k">전체 중요업무 수</div><div class="v" id="kpiImportantCount">0</div></article>
+          <article class="kpiCard"><div class="k">전체 BIA 등록 업무 수</div><div class="v" id="kpiBiaCount">0</div></article>
+        `;
+
+        animateCount(document.getElementById('kpiTeamCount'), m.teamCount);
+        animateCount(document.getElementById('kpiCoreCount'), m.coreCount);
+        animateCount(document.getElementById('kpiImportantCount'), m.importantCount);
+        animateCount(document.getElementById('kpiBiaCount'), m.biaCount);
+      };
+
+      const renderOverviewFilters = () => {
+        const teamOpts = ['전체', ...allTeams];
+        const prev = overviewTeamFilter.value || '전체';
+
+        overviewTeamFilter.innerHTML = teamOpts.map((t) =>
+          `<option value="${esc(t)}" ${prev === t ? 'selected' : ''}>${esc(t)}</option>`
+        ).join('');
+      };
+
+      const renderOverviewTable = () => {
+        const selectedFilter = overviewTeamFilter.value || '전체';
+        const sortBy = overviewSort.value || 'name';
+        const q = String(overviewSearch?.value || '').trim().toLowerCase();
+
+        let rows = computeOverviewRows();
+
+        if (selectedFilter !== '전체') rows = rows.filter((r) => r.team === selectedFilter);
+        if (overviewQuickMode === 'important') rows = rows.filter((r) => r.importantCount > 0);
+        if (overviewQuickMode === 'high') rows = rows.filter((r) => r.highImpact > 0);
+        if (q) rows = rows.filter((r) => r.team.toLowerCase().includes(q));
+
+        rows.sort((a, b) => {
+          if (sortBy === 'coreDesc') return b.coreCount - a.coreCount || a.team.localeCompare(b.team, 'ko');
+          if (sortBy === 'importantDesc') return b.importantCount - a.importantCount || a.team.localeCompare(b.team, 'ko');
+          if (sortBy === 'highImpactDesc') return b.highImpact - a.highImpact || a.team.localeCompare(b.team, 'ko');
+          if (sortBy === 'rtoAsc') {
+            const ar = a.minRto ?? Number.MAX_SAFE_INTEGER;
+            const br = b.minRto ?? Number.MAX_SAFE_INTEGER;
+            return ar - br || a.team.localeCompare(b.team, 'ko');
+          }
+          return a.team.localeCompare(b.team, 'ko');
+        });
+
+        const maxCore = Math.max(1, ...rows.map((r) => r.coreCount));
+        const maxImportant = Math.max(1, ...rows.map((r) => r.importantCount));
+        const maxHigh = Math.max(1, ...rows.map((r) => r.highImpact));
+
+        const bar = (v, max, warn = false) => `
+          <span class="density ${warn ? 'warn' : ''}">
+            <i style="width:${Math.round((v / max) * 100)}%"></i>
+          </span>
+        `;
+
+        overviewTableMount.innerHTML = rows.length ? `
+          <table class="overviewTable">
             <thead>
               <tr>
-                <th style="width:24%;">핵심업무</th>
-                <th style="width:11%;">중요업무 여부</th>
-                <th style="width:11%;">종합 영향도</th>
-                <th style="width:11%;">MTPD</th>
-                <th style="width:16%;">RTO</th>
-                <th style="width:10%;">업무등급</th>
-                <th style="width:17%;">관리</th>
+                <th>부서명</th>
+                <th>핵심업무 수</th>
+                <th>중요업무 수</th>
+                <th>최단 MTPD</th>
+                <th>최단 RTO</th>
+                <th>고영향 업무 수(4↑)</th>
+                <th>관리</th>
               </tr>
             </thead>
             <tbody>
-              ${functions.map((fn, idx) => {
-                const key = `${team}__${fn.name}__${idx}`;
-                const open = opened.has(key);
-                const warn = getRtoWarnText(fn);
+              ${rows.map((r) => {
+                const selected = teamSelect.value === r.team;
+                const highRisk = r.highImpact >= 3 || (r.minRto !== null && r.minRto <= 240);
+
                 return `
-                  <tr data-idx="${idx}">
+                  <tr class="clickRow ${selected ? 'active' : ''} ${highRisk ? 'risk-focus' : ''}" data-jump-team="${esc(r.team)}">
                     <td>
-                      <div class="functionName">${esc(fn.name)}</div>
-                      <div class="muted">팀: ${esc(team)}</div>
-                    </td>
-                    <td>
-                      <select class="smallSelect" data-field="importance">
-                        <option value="중요" ${fn.importance === '중요' ? 'selected' : ''}>중요</option>
-                        <option value="일반" ${fn.importance === '일반' ? 'selected' : ''}>일반</option>
-                      </select>
-                    </td>
-                    <td>
-                      <select class="smallSelect" data-field="overallImpact">
-                        ${[1,2,3,4,5].map((n)=>`<option value="${n}" ${Number(fn.overallImpact)===n?'selected':''}>${n} ${impactLabels[n]}</option>`).join('')}
-                      </select>
-                    </td>
-                    <td><span class="tag">${esc(fn.mtpd || '장기 허용')}</span></td>
-                    <td>
-                      <div class="rtoWrap">
-                        <input class="smallInput" type="number" min="1" step="1" data-field="rtoValue" value="${fn.rtoValue ?? ''}" placeholder="수치"/>
-                        <select class="smallSelect" data-field="rtoUnit">
-                          <option value="분" ${fn.rtoUnit === '분' ? 'selected' : ''}>분</option>
-                          <option value="시간" ${fn.rtoUnit === '시간' ? 'selected' : ''}>시간</option>
-                          <option value="일" ${fn.rtoUnit === '일' ? 'selected' : ''}>일</option>
-                        </select>
+                      <div class="teamCell">
+                        <div class="teamNameLine">
+                          <div class="teamName">${esc(r.team)}</div>
+                          ${selected ? '<span class="rowFlag current">현재 편집중</span>' : ''}
+                          ${r.highImpact >= 3 ? '<span class="rowFlag danger">고영향</span>' : (r.highImpact >= 1 ? '<span class="rowFlag warn">주의</span>' : '')}
+                        </div>
+                        <div class="teamMeta">등록 ${r.coreCount}건 · 중요 ${r.importantCount}건</div>
                       </div>
                     </td>
-                    <td><span class="tag g-${fn.grade}">${fn.grade}</span></td>
+                    <td><div class="numStrong">${r.coreCount}</div>${bar(r.coreCount, maxCore)}</td>
+                    <td><div class="numStrong">${r.importantCount}</div>${bar(r.importantCount, maxImportant)}</td>
+                    <td><span class="chip">${toDurationText(r.minMtpd)}</span></td>
+                    <td><span class="chip ${r.minRto !== null && r.minRto <= 240 ? 'rowFlag warn' : ''}">${toDurationText(r.minRto)}</span></td>
                     <td>
-                      <button class="btn" type="button" data-toggle="${idx}">${open ? '상세 닫기' : '상세 보기'}</button>
-                      <button class="btn" type="button" data-delete="${idx}" style="margin-left:6px;">삭제</button>
+                      <div class="highImpactCell">
+                        <div class="numStrong">${r.highImpact}</div>
+                        <span class="hiBadge ${r.highImpact >= 3 ? 'high' : (r.highImpact >= 1 ? 'low' : '')}">
+                          ${r.highImpact === 0 ? '안정' : (r.highImpact === 1 ? '주의' : (r.highImpact === 2 ? '우선 확인' : '집중관리'))}
+                        </span>
+                      </div>
+                    </td>
+                    <td style="display:flex; gap:6px; flex-wrap:wrap;">
+                      <button class="btn" type="button" data-quick-view-team="${esc(r.team)}">빠른 보기</button>
+                      <button class="btn tableActionBtn" type="button" data-jump-team="${esc(r.team)}">상세 편집</button>
                     </td>
                   </tr>
                   ${open ? `
@@ -1150,19 +1285,117 @@
               }).join('')}
             </tbody>
           </table>
-        `;
+        ` : '<div class="empty">조건에 맞는 팀이 없습니다.</div>';
       };
 
-      const recalcFunction = (fn) => {
-        fn.overallImpact = clamp(Number(fn.overallImpact || 3), 1, 5);
-        fn.impact = fn.overallImpact; // Risk 호환 alias
-        fn.timeImpact = normalizeMonotonicTimeImpact(fn.timeImpact || {});
-        const mtpd = calcMtpd(fn.timeImpact || {});
-        fn.mtpd = mtpd.text;
-        fn.mtpdMinutes = mtpd.minutes;
-        fn.rto = (fn.rtoValue || fn.rtoValue === 0) && fn.rtoValue !== '' ? `${fn.rtoValue}${fn.rtoUnit || '분'}` : '';
-        fn.grade = calcGrade(fn);
-        fn.coreFinal = fn.grade !== '일반';
+      const markDirty = () => { dirtyState = true; };
+      const markSaved = () => { dirtyState = false; lastSavedAt = new Date(); };
+
+      const resolveActiveFunction = (team, functions) => {
+        if (!functions.length) return { fn:null, idx:-1 };
+
+        const remembered = activeByTeam.get(team);
+        if (Number.isInteger(remembered) && remembered >= 0 && remembered < functions.length) {
+          return { fn:functions[remembered], idx:remembered };
+        }
+
+        const recentOpened = [...opened].reverse().find((k) => k.startsWith(`${team}__`));
+        if (recentOpened) {
+          const idx = Number(recentOpened.split('__').pop());
+          if (Number.isInteger(idx) && idx >= 0 && idx < functions.length) {
+            activeByTeam.set(team, idx);
+            return { fn:functions[idx], idx };
+          }
+        }
+
+        activeByTeam.set(team, 0);
+        return { fn:functions[0], idx:0 };
+      };
+
+      const renderStickySummary = (team, functions) => {
+        if (!stickySummaryMount) return;
+
+        const highImpact = functions.filter((f) => Number(f.overallImpact || 0) >= 4).length;
+        const minMtpd = functions.map((f) => f.mtpdMinutes).filter((v) => Number.isFinite(v));
+        const minRto = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => Number.isFinite(v));
+        const active = resolveActiveFunction(team, functions);
+        const fn = active.fn;
+        const firstCritical = fn ? TIME_IMPACT_META.find((t) => Number(fn.timeImpact?.[t.key] || 1) >= 4) : null;
+        const maxImpact = fn ? Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1))) : null;
+        const warn = fn ? getRtoWarnText(fn) : '';
+        const saveStatus = dirtyState
+          ? '<span class="statusPill status-dirty">저장 필요</span>'
+          : '<span class="statusPill status-saved">저장 완료</span>';
+
+        stickySummaryMount.innerHTML = `
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">선택 팀 요약</h3>
+            <div class="kv">
+              <div class="k">팀</div><div><b>${esc(team || '-')}</b></div>
+              <div class="k">핵심업무 수</div><div>${functions.length}</div>
+              <div class="k">중요업무 수</div><div>${functions.filter((f)=>f.importance === '중요').length}</div>
+              <div class="k">고영향 업무 수</div><div>${highImpact}</div>
+              <div class="k">최단 MTPD</div><div>${toDurationText(minMtpd.length ? Math.min(...minMtpd) : null)}</div>
+              <div class="k">최단 RTO</div><div>${toDurationText(minRto.length ? Math.min(...minRto) : null)}</div>
+            </div>
+          </article>
+
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">현재 선택 업무</h3>
+            ${fn ? `
+              <div class="kv">
+                <div class="k">업무명</div><div><b>${esc(fn.name)}</b></div>
+                <div class="k">중요업무</div><div>${fn.importance}</div>
+                <div class="k">종합 영향도</div><div>${fn.overallImpact} ${impactLabels[Number(fn.overallImpact)] || ''}</div>
+                <div class="k">업무등급</div><div><span class="tag g-${fn.grade}">${fn.grade}</span></div>
+                <div class="k">MTPD / RTO</div><div>${esc(fn.mtpd || '-')} / ${esc(fn.rto || '-')}</div>
+                <div class="k">최고 시간경과 영향</div><div>${maxImpact || '-'} ${maxImpact ? impactLabels[maxImpact] : ''}</div>
+                <div class="k">영향도 4+ 최초 시점</div><div>${firstCritical ? firstCritical.label : '없음'}</div>
+                <div class="k">RTO 경고</div><div>${warn ? '있음' : '없음'}</div>
+              </div>
+              ${warn ? `<div class="warn" style="margin-top:8px;">${warn}</div>` : ''}
+              <div class="chipWrap" style="margin-top:9px;">
+                ${(fn.requiredResources || []).length
+                  ? fn.requiredResources.map((r)=>`<span class="chip">${esc(r)}</span>`).join('')
+                  : '<span class="muted">복구 필요자원 없음</span>'}
+              </div>
+            ` : '<div class="muted">선택된 업무가 없습니다.</div>'}
+          </article>
+
+          <article class="stickyPanel">
+            <h3 class="stickyTitle">저장 상태</h3>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              ${saveStatus}
+              <span class="muted">${lastSavedAt ? `마지막 저장: ${lastSavedAt.toLocaleString('ko-KR', { hour12:false })}` : '아직 저장 이력이 없습니다.'}</span>
+            </div>
+            <div class="compactActions">
+              <button class="btn primary" type="button" id="quickSaveBtn">저장</button>
+              <button class="btn" type="button" id="goOverviewBtn">총괄표로 이동</button>
+            </div>
+          </article>
+        `;
+
+        stickySummaryMount.querySelector('#quickSaveBtn')?.addEventListener('click', () => saveBtn.click());
+        stickySummaryMount.querySelector('#goOverviewBtn')?.addEventListener('click', () => {
+          overviewSection?.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+            block:'start'
+          });
+        });
+      };
+
+      const renderSummary = (team, functions) => {
+        teamMetric.textContent = team || '-';
+        countMetric.textContent = String(functions.length);
+        importantMetric.textContent = String(functions.filter((f) => f.importance === '중요').length);
+
+        const mtpdMinutes = functions.map((f) => f.mtpdMinutes).filter((v) => v !== null);
+        const rtoMinutes = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => v !== null);
+
+        const minMtpd = mtpdMinutes.length ? Math.min(...mtpdMinutes) : null;
+        const minRto = rtoMinutes.length ? Math.min(...rtoMinutes) : null;
+
+        timeMetric.textContent = `${toDurationText(minMtpd)} / ${toDurationText(minRto)}`;
       };
 
       const renderSummaryOnly = () => {
@@ -1172,12 +1405,15 @@
         renderSummary(team, row.functions || []);
       };
 
-
-      const refreshTimeImpactControls = (idx) => {
+      const renderStickySummaryOnly = () => {
         const team = teamSelect.value;
+        if (!team) {
+          renderStickySummary('', []);
+          return;
+        }
         const row = ensureTeamRecord(team, coreMap, biaRows);
-        const fn = row.functions[idx];
-        if (!fn) return;
+        renderStickySummary(team, row.functions || []);
+      };
 
         const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
         if (!detail) return;
@@ -1190,6 +1426,114 @@
             btn.setAttribute('aria-pressed', String(Number(fn.timeImpact[key] || 1) === n));
           });
         });
+
+        const highImpactCount = functions.filter((f) => f.overallImpact >= 4).length;
+        const importantCount = functions.filter((f) => f.importance === '중요').length;
+        const coreCount = functions.length;
+        const mtpdMins = (row.functions || []).map((f) => f.mtpdMinutes).filter((v) => Number.isFinite(v));
+        const rtoMins = (row.functions || []).map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => Number.isFinite(v));
+        const rtoWarnCount = functions.filter((f) => f.hasRtoWarning).length;
+
+        return {
+          team,
+          coreCount,
+          importantCount,
+          highImpactCount,
+          minMtpd: mtpdMins.length ? Math.min(...mtpdMins) : null,
+          minRto: rtoMins.length ? Math.min(...rtoMins) : null,
+          rtoWarnCount,
+          functions
+        };
+      };
+
+      const closeQuickView = () => {
+        if (!quickViewModal) return;
+        quickViewModal.classList.remove('open');
+        quickViewModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        quickViewTeam = '';
+
+        if (quickViewPrevFocus && typeof quickViewPrevFocus.focus === 'function') {
+          quickViewPrevFocus.focus();
+        }
+      };
+
+      const openQuickView = (team, triggerEl = null) => {
+        if (!team || !quickViewModal) return;
+
+        const data = getTeamQuickViewData(team);
+        quickViewTeam = team;
+        quickViewPrevFocus = triggerEl || document.activeElement;
+
+        quickViewHead.innerHTML = `
+          <div>
+            <h3 class="quickModalTitle" id="quickViewTitle">${esc(data.team)}</h3>
+            <div class="quickModalSubtitle">Executive Quick View · 핵심업무 영향 요약</div>
+            <div class="quickStatusBar">
+              ${data.importantCount > 0 ? '<span class="rowFlag warn">중요업무 있음</span>' : '<span class="rowFlag">중요업무 없음</span>'}
+              ${data.highImpactCount > 0 ? '<span class="rowFlag danger">고영향 업무 있음</span>' : '<span class="rowFlag">고영향 없음</span>'}
+              <span class="rowFlag ${data.rtoWarnCount ? 'warn' : ''}">RTO 경고 ${data.rtoWarnCount}건</span>
+            </div>
+          </div>
+        `;
+
+        quickViewBody.innerHTML = `
+          <section>
+            <h4 class="quickSectionTitle">요약 KPI</h4>
+            <div class="quickGrid">
+              <article class="quickMetric"><div class="k">핵심업무 수</div><div class="v">${data.coreCount}</div></article>
+              <article class="quickMetric"><div class="k">중요업무 수</div><div class="v">${data.importantCount}</div></article>
+              <article class="quickMetric emphasis"><div class="k">고영향 업무 수</div><div class="v">${data.highImpactCount}</div></article>
+              <article class="quickMetric"><div class="k">최단 MTPD</div><div class="v">${toDurationText(data.minMtpd)}</div></article>
+              <article class="quickMetric caution"><div class="k">최단 RTO</div><div class="v">${toDurationText(data.minRto)}</div></article>
+            </div>
+          </section>
+
+          <section>
+            <h4 class="quickSectionTitle">핵심업무 목록</h4>
+            <div class="quickList">
+              ${data.functions.length ? data.functions.map((f) => `
+                <article class="quickItem">
+                  <div class="quickItemTop">
+                    <div class="quickName">${esc(f.name)}</div>
+                    <div class="quickBadges">
+                      <span class="tag g-${f.grade}">${f.grade}</span>
+                      ${f.importance === '중요' ? '<span class="rowFlag warn">중요</span>' : ''}
+                      ${f.overallImpact >= 4 ? '<span class="rowFlag danger">고영향</span>' : ''}
+                      ${f.hasRtoWarning ? '<span class="rowFlag warn">RTO 경고</span>' : ''}
+                    </div>
+                  </div>
+                  <div class="quickMetaRow">
+                    <span class="quickMeta">영향도 <b>${f.overallImpact}</b></span>
+                    <span class="quickMeta">MTPD <b>${esc(f.mtpd)}</b></span>
+                    <span class="quickMeta">RTO <b>${esc(f.rto)}</b></span>
+                  </div>
+                  <div class="quickResourceChips">
+                    ${f.requiredResources.length
+                      ? f.requiredResources.map((r) => `<span class="chip">${esc(r)}</span>`).join('')
+                      : '<span class="muted">복구 필요자원 없음</span>'}
+                  </div>
+                </article>
+              `).join('') : '<div class="empty">등록된 업무가 없습니다.</div>'}
+            </div>
+          </section>
+        `;
+
+        quickViewModal.classList.add('open');
+        quickViewModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+      };
+
+      const recalcFunction = (fn) => {
+        fn.overallImpact = clamp(Number(fn.overallImpact || 3), 1, 5);
+        fn.impact = fn.overallImpact;
+        fn.timeImpact = normalizeMonotonicTimeImpact(fn.timeImpact || {});
+        const mtpd = calcMtpd(fn.timeImpact || {});
+        fn.mtpd = mtpd.text;
+        fn.mtpdMinutes = mtpd.minutes;
+        fn.rto = (fn.rtoValue || fn.rtoValue === 0) && fn.rtoValue !== '' ? `${fn.rtoValue}${fn.rtoUnit || '분'}` : '';
+        fn.grade = calcGrade(fn);
+        fn.coreFinal = fn.grade !== '일반';
       };
 
       const refreshRowCells = (idx) => {
@@ -1203,6 +1547,7 @@
 
         const mtpdTag = tr.children[3]?.querySelector('.tag');
         const gradeTag = tr.children[5]?.querySelector('.tag');
+
         if (mtpdTag) mtpdTag.textContent = fn.mtpd || '장기 허용';
         if (gradeTag) {
           gradeTag.textContent = fn.grade;
@@ -1211,11 +1556,9 @@
 
         const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
         if (detail) {
-          const mtpdText = detail.querySelector('.muted b');
-          if (mtpdText) mtpdText.textContent = fn.mtpd || '장기 허용';
-
           const warnText = getRtoWarnText(fn);
           let warnEl = detail.querySelector('.warn');
+
           if (warnText) {
             if (!warnEl) {
               warnEl = document.createElement('div');
@@ -1248,6 +1591,179 @@
           renderSummaryOnly();
           renderStickySummaryOnly();
         }
+      };
+
+      const render = () => {
+        renderGlobalMetrics();
+        renderOverviewFilters();
+        renderOverviewTable();
+
+        const team = teamSelect.value;
+
+        if (!team) {
+          tableMount.innerHTML = '<div class="empty">선택 가능한 팀이 없습니다. 조직 관리 또는 핵심업무 레지스트리를 먼저 확인해 주세요.</div>';
+          renderSummary('', []);
+          renderStickySummary('', []);
+          return;
+        }
+
+        const row = ensureTeamRecord(team, coreMap, biaRows);
+        const functions = row.functions || [];
+
+        renderSummary(team, functions);
+        renderStickySummary(team, functions);
+
+        if (!functions.length) {
+          tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 아래에서 업무를 추가해 주세요.</div>';
+          return;
+        }
+
+        tableMount.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th style="width:24%;">핵심업무</th>
+                <th style="width:11%;">중요업무 여부</th>
+                <th style="width:11%;">종합 영향도</th>
+                <th style="width:11%;">MTPD</th>
+                <th style="width:16%;">RTO</th>
+                <th style="width:10%;">업무등급</th>
+                <th style="width:17%;">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${functions.map((fn, idx) => {
+                const key = `${team}__${fn.name}__${idx}`;
+                const open = opened.has(key);
+                const warn = getRtoWarnText(fn);
+                const maxTimelineImpact = Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1)));
+
+                return `
+                  <tr data-idx="${idx}">
+                    <td>
+                      <div class="functionName">${esc(fn.name)}</div>
+                      <div class="muted">팀: ${esc(team)}</div>
+                    </td>
+                    <td>
+                      <select class="smallSelect" data-field="importance">
+                        <option value="중요" ${fn.importance === '중요' ? 'selected' : ''}>중요</option>
+                        <option value="일반" ${fn.importance === '일반' ? 'selected' : ''}>일반</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select class="smallSelect" data-field="overallImpact">
+                        ${[1,2,3,4,5].map((n) => `
+                          <option value="${n}" ${Number(fn.overallImpact) === n ? 'selected' : ''}>${n} ${impactLabels[n]}</option>
+                        `).join('')}
+                      </select>
+                    </td>
+                    <td><span class="tag">${esc(fn.mtpd || '장기 허용')}</span></td>
+                    <td>
+                      <div class="rtoWrap">
+                        <input class="smallInput" type="number" min="1" step="1" data-field="rtoValue" value="${fn.rtoValue ?? ''}" placeholder="수치"/>
+                        <select class="smallSelect" data-field="rtoUnit">
+                          <option value="분" ${fn.rtoUnit === '분' ? 'selected' : ''}>분</option>
+                          <option value="시간" ${fn.rtoUnit === '시간' ? 'selected' : ''}>시간</option>
+                          <option value="일" ${fn.rtoUnit === '일' ? 'selected' : ''}>일</option>
+                        </select>
+                      </div>
+                    </td>
+                    <td><span class="tag g-${fn.grade}">${fn.grade}</span></td>
+                    <td>
+                      <button class="btn" type="button" data-toggle="${idx}">${open ? '상세 닫기' : '상세 보기'}</button>
+                      <button class="btn" type="button" data-delete="${idx}" style="margin-left:6px;">삭제</button>
+                    </td>
+                  </tr>
+
+                  ${open ? `
+                    <tr class="detailRow" data-detail-for="${idx}">
+                      <td colspan="7">
+                        <div class="detailCard">
+                          <div class="detailGrid">
+                            <div>
+                              <div class="subHead">
+                                <h4 class="subTitle">시간경과 영향평가</h4>
+                                <button class="btn" type="button" data-guide-toggle="${idx}">${scoreGuideOpened.has(key) ? '영향도 기준 닫기' : '영향도 기준 보기'}</button>
+                              </div>
+
+                              <div class="timeGrid">
+                                ${TIME_IMPACT_META.map((t, ti) => {
+                                  const minAllowed = ti === 0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti - 1]] || 1);
+                                  const currentScore = Number(fn.timeImpact?.[t.key] || 1);
+                                  const firstMtpd = TIME_IMPACT_META.find((x) => Number(fn.timeImpact?.[x.key] || 1) >= 4);
+                                  const isMtpdPoint = firstMtpd && firstMtpd.key === t.key;
+
+                                  return `
+                                    <article class="timeStep">
+                                      <div class="timeStepTop">
+                                        <div class="timeStepLabel">${t.label}</div>
+                                        ${isMtpdPoint ? '<span class="mtpdBadge">MTPD</span>' : ''}
+                                      </div>
+                                      <div class="timeStepValue">현재: ${currentScore} ${impactLabels[currentScore]}</div>
+                                      <div class="scoreBtns" role="group" aria-label="${t.label} 영향도 선택">
+                                        ${[1,2,3,4,5].map((n) => `
+                                          <button
+                                            type="button"
+                                            class="scoreBtn"
+                                            data-time-impact-btn="${t.key}"
+                                            data-idx="${idx}"
+                                            data-score="${n}"
+                                            aria-pressed="${currentScore === n ? 'true' : 'false'}"
+                                            ${n < minAllowed ? 'disabled' : ''}
+                                          >${n}</button>
+                                        `).join('')}
+                                      </div>
+                                      ${minAllowed > 1 ? `<div class="timeHint">이전 시점보다 낮게 설정할 수 없습니다. (최소 ${minAllowed})</div>` : ''}
+                                    </article>
+                                  `;
+                                }).join('')}
+                              </div>
+
+                              ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
+
+                              <div class="timeSummaryLine">
+                                <span class="chip">최고 영향 수준: ${maxTimelineImpact} ${impactLabels[maxTimelineImpact]}</span>
+                                <span class="chip">최대허용중단시간(MTPD): <b style="margin-left:4px;">${esc(fn.mtpd || '장기 허용')}</b></span>
+                              </div>
+
+                              <div class="miniHelp">
+                                - 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>
+                                - 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>
+                                - 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 class="subTitle">RTO 설정 근거</h4>
+                              <textarea
+                                class="reasonInput"
+                                data-field="rtoReason"
+                                data-idx="${idx}"
+                                placeholder="고객 영향과 서비스 중단 허용시간을 반영&#10;대체 운영 가능시간 기준&#10;규제/계약 요구사항 반영"
+                              >${esc(fn.rtoReason || '')}</textarea>
+
+                              <h4 class="subTitle" style="margin-top:10px;">복구 필요자원(요약)</h4>
+                              <div class="resourceGrid">
+                                ${RESOURCE_OPTIONS.map((r) => `
+                                  <label class="resourceItem">
+                                    <input type="checkbox" data-resource="${r}" data-idx="${idx}" ${fn.requiredResources.includes(r) ? 'checked' : ''}/>
+                                    <span>${r}</span>
+                                  </label>
+                                `).join('')}
+                              </div>
+                            </div>
+                          </div>
+
+                          ${warn ? `<div class="warn">${warn}</div>` : ''}
+                        </div>
+                      </td>
+                    </tr>
+                  ` : ''}
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
       };
 
       let normalizedChanged = false;
@@ -1301,6 +1817,7 @@
           const row = ensureTeamRecord(team, coreMap, biaRows);
           const fn = row.functions[idx];
           if (!fn) return;
+
           const set = new Set(fn.requiredResources || []);
           if (e.target.checked) set.add(res);
           else set.delete(res);
@@ -1313,13 +1830,50 @@
       tableMount.addEventListener('input', (e) => {
         const field = e.target.getAttribute('data-field');
         if (field !== 'rtoValue' && field !== 'rtoReason') return;
+
         const tr = e.target.closest('tr[data-idx]');
         const idx = tr ? Number(tr.dataset.idx) : Number(e.target.getAttribute('data-idx'));
         if (!Number.isFinite(idx)) return;
+
         updateFnField(idx, field, e.target.value);
       });
 
+      tableMount.addEventListener('click', (e) => {
+        const timeKey = e.target.getAttribute('data-time-impact-btn');
+        if (timeKey) {
+          const idx = Number(e.target.getAttribute('data-idx'));
+          if (!Number.isFinite(idx)) return;
 
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[idx];
+          if (!fn) return;
+
+          const tIndex = TIME_KEYS.indexOf(timeKey);
+          const score = clamp(Number(e.target.getAttribute('data-score') || 1), 1, 5);
+
+          fn.timeImpact[timeKey] = score;
+          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
+          recalcFunction(fn);
+          markDirty();
+          render();
+          return;
+        }
+
+        const guideIdx = e.target.getAttribute('data-guide-toggle');
+        if (guideIdx != null) {
+          const team = teamSelect.value;
+          const row = ensureTeamRecord(team, coreMap, biaRows);
+          const fn = row.functions[Number(guideIdx)];
+          if (!fn) return;
+
+          const key = `${team}__${fn.name}__${guideIdx}`;
+          if (scoreGuideOpened.has(key)) scoreGuideOpened.delete(key);
+          else scoreGuideOpened.add(key);
+
+          render();
+          return;
+        }
 
       tableMount.addEventListener('click', (e) => {
         const tKeyBtn = e.target.getAttribute('data-time-impact-btn');
@@ -1359,6 +1913,7 @@
           const row = ensureTeamRecord(team, coreMap, biaRows);
           const fn = row.functions[Number(toggleIdx)];
           if (!fn) return;
+
           const key = `${team}__${fn.name}__${toggleIdx}`;
           if (opened.has(key)) opened.delete(key);
           else { opened.add(key); activeByTeam.set(team, Number(toggleIdx)); }
@@ -1384,6 +1939,7 @@
       addFunctionBtn.addEventListener('click', () => {
         const team = teamSelect.value;
         const name = String(newFunctionName.value || '').trim();
+
         if (!team || !name) return;
 
         const row = ensureTeamRecord(team, coreMap, biaRows);
@@ -1391,6 +1947,7 @@
           alert('이미 등록된 핵심업무입니다.');
           return;
         }
+
         row.functions.push(normalizeFunction({ name }));
         markDirty();
         newFunctionName.value = '';
@@ -1428,7 +1985,9 @@
                 rtoReason: String(fn.rtoReason || ''),
                 grade: fn.grade,
                 coreFinal: !!fn.coreFinal,
-                requiredResources: Array.isArray(fn.requiredResources) ? fn.requiredResources.filter((r)=>RESOURCE_OPTIONS.includes(r)) : []
+                requiredResources: Array.isArray(fn.requiredResources)
+                  ? fn.requiredResources.filter((r) => RESOURCE_OPTIONS.includes(r))
+                  : []
               };
             }).filter((fn) => fn.name)
           }))
@@ -1443,6 +2002,7 @@
       resetBtn.addEventListener('click', () => {
         const team = teamSelect.value;
         if (!team) return;
+
         const row = ensureTeamRecord(team, coreMap, biaRows);
         row.functions = (coreMap.get(team) || []).map((name) => normalizeFunction({ name }));
         markDirty();
