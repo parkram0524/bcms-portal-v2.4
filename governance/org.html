@@ -73,8 +73,9 @@
     (() => {
       const KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
       const SELECTED_ORG_KEY = 'bcms_selected_org';
-      const store = (window.DataStore && DataStore.get) ? DataStore : {
-        get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } }
+      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
+        get:(k,f)=>{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
+        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v))
       };
       const mount = document.getElementById('orgView');
       const query = new URLSearchParams(location.search);
@@ -111,6 +112,7 @@
       };
 
       const normalizeOrgData = (raw) => {
+        if (window.DataStore && DataStore.getOrgRegistry) return DataStore.getOrgRegistry();
         const current = raw && Array.isArray(raw.divisions) ? raw : { companyName: baseTemplate.companyName, divisions: [] };
         const currentMap = new Map((current.divisions || []).map((d) => [d.id, d]));
         const mergedDivisions = baseTemplate.divisions.map((tpl) => {
@@ -131,7 +133,8 @@
 
       const render = () => {
         const data = normalizeOrgData(store.get(KEY, null));
-        store.set && store.set(KEY, data);
+        if (window.DataStore && DataStore.writeOrgRegistry) DataStore.writeOrgRegistry(data);
+        else store.set && store.set(KEY, data);
         if (!Array.isArray(data.divisions) || !data.divisions.length) {
           mount.innerHTML = '<p class="empty">조직 레지스트리 데이터가 없습니다. 조직 관리 페이지에서 기본 템플릿을 초기화해 주세요.</p>';
           return;

@@ -1,6 +1,7 @@
 (function(){
   const KEYS = {
     CORE: 'bcmsCoreFunctions',
+    SERVICE: 'bcms_service_registry_v1',
     BIA: 'bcmsBIAData',
     RISK: 'bcmsRiskAssessment',
     BCP: 'bcmsBCP',
@@ -11,12 +12,18 @@
 
   const DEMO = {
     [KEYS.CORE]: [
-      { team:'전기팀', functions:['데이터센터 전력 공급 운영','UPS 및 배터리 시스템 운영','비상 발전기 운영'], ...DEMO_TAG },
-      { team:'기계(냉각)팀', functions:['데이터센터 냉각 시스템 운영','냉동기 및 공조기 운영'], ...DEMO_TAG },
-      { team:'SRE/플랫폼운영팀', functions:['플랫폼 서비스 운영','시스템 장애 대응 및 복구'], ...DEMO_TAG },
-      { team:'네트워크운영팀', functions:['데이터센터 네트워크 운영'], ...DEMO_TAG },
-      { team:'정보보호팀', functions:['보안 위협 탐지 및 대응'], ...DEMO_TAG },
-      { team:'DC운영(NOC/관제)팀', functions:['데이터센터 통합 모니터링'], ...DEMO_TAG }
+      { team:'전기팀', teamId:'TEAM-전기팀', functions:[{ id:'CF-전기-전력공급', name:'데이터센터 전력 공급 운영', serviceName:'IDC 전력' },{ id:'CF-전기-UPS', name:'UPS 및 배터리 시스템 운영', serviceName:'IDC 전력' },{ id:'CF-전기-발전기', name:'비상 발전기 운영', serviceName:'IDC 전력' }], ...DEMO_TAG },
+      { team:'기계(냉각)팀', teamId:'TEAM-기계냉각팀', functions:[{ id:'CF-냉각-운영', name:'데이터센터 냉각 시스템 운영', serviceName:'IDC 냉각' },{ id:'CF-냉각-공조', name:'냉동기 및 공조기 운영', serviceName:'IDC 냉각' }], ...DEMO_TAG },
+      { team:'SRE/플랫폼운영팀', teamId:'TEAM-sre플랫폼운영팀', functions:[{ id:'CF-sre-플랫폼운영', name:'플랫폼 서비스 운영', serviceName:'플랫폼 공통서비스' },{ id:'CF-sre-장애복구', name:'시스템 장애 대응 및 복구', serviceName:'플랫폼 공통서비스' }], ...DEMO_TAG },
+      { team:'네트워크운영팀', teamId:'TEAM-네트워크운영팀', functions:[{ id:'CF-net-운영', name:'데이터센터 네트워크 운영', serviceName:'코어 네트워크' }], ...DEMO_TAG },
+      { team:'정보보호팀', teamId:'TEAM-정보보호팀', functions:[{ id:'CF-sec-보안탐지', name:'보안 위협 탐지 및 대응', serviceName:'보안 관제' }], ...DEMO_TAG },
+      { team:'DC운영(NOC/관제)팀', teamId:'TEAM-dc운영noc관제팀', functions:[{ id:'CF-noc-관제', name:'데이터센터 통합 모니터링', serviceName:'통합 모니터링' }], ...DEMO_TAG }
+    ],
+    [KEYS.SERVICE]: [
+      { id:'SVC-IDC-POWER', name:'IDC 전력', ownerTeamId:'TEAM-전기팀', ownerTeamName:'전기팀', active:true, criticality:'매우높음', description:'전력 공급 운영', ...DEMO_TAG },
+      { id:'SVC-IDC-COOL', name:'IDC 냉각', ownerTeamId:'TEAM-기계냉각팀', ownerTeamName:'기계(냉각)팀', active:true, criticality:'매우높음', description:'냉각 운영', ...DEMO_TAG },
+      { id:'SVC-PLATFORM', name:'플랫폼 공통서비스', ownerTeamId:'TEAM-sre플랫폼운영팀', ownerTeamName:'SRE/플랫폼운영팀', active:true, criticality:'높음', description:'플랫폼 운영', ...DEMO_TAG },
+      { id:'SVC-SECURITY', name:'보안 관제', ownerTeamId:'TEAM-정보보호팀', ownerTeamName:'정보보호팀', active:true, criticality:'높음', description:'보안 위협 탐지', ...DEMO_TAG }
     ],
     [KEYS.BIA]: [
       { team:'전기팀', isDemo:true, demoLabel:'예시', functions:[
@@ -102,7 +109,24 @@
 
   function parse(raw, fb){ try{ return JSON.parse(raw); }catch(e){ return fb; } }
   function getArr(key){ const v = parse(localStorage.getItem(key) || '[]', []); return Array.isArray(v) ? v : []; }
-  function setArr(key, arr){ localStorage.setItem(key, JSON.stringify(arr)); }
+  function setArr(key, arr){
+    if (window.DataStore && key === KEYS.BIA && typeof DataStore.writeBiaRecords === 'function' && typeof DataStore.readBiaRecords === 'function') {
+      localStorage.setItem(key, JSON.stringify(arr));
+      DataStore.writeBiaRecords(DataStore.readBiaRecords());
+      if (typeof DataStore.syncRiskWithBia === 'function') DataStore.syncRiskWithBia(DataStore.readBiaRecords());
+      return;
+    }
+    if (window.DataStore && key === KEYS.RISK && typeof DataStore.writeRiskRecords === 'function' && typeof DataStore.readRiskRecords === 'function') {
+      localStorage.setItem(key, JSON.stringify(arr));
+      DataStore.writeRiskRecords(DataStore.readRiskRecords());
+      return;
+    }
+    if (window.DataStore && key === KEYS.SERVICE && typeof DataStore.writeServices === 'function') {
+      DataStore.writeServices(arr);
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify(arr));
+  }
 
   function isEmptyKey(key){ return getArr(key).length === 0; }
   function allMainEmpty(){ return [KEYS.BIA, KEYS.RISK, KEYS.BCP, KEYS.DRP].every(isEmptyKey); }

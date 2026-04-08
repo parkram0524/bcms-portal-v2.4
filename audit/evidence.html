@@ -133,6 +133,8 @@
       const uid = () => (window.DataStore && DataStore.uid ? DataStore.uid('EVD') : `EVD-${Date.now()}`);
       const toLocalInput = (iso) => new Date(iso).toISOString().slice(0, 16);
       const toText = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('ko-KR', { hour12:false }); };
+      const statusLabel = (v) => (String(v || '').toLowerCase() === 'confirmed' ? '확인완료' : '확인필요');
+      const toEvidenceStatus = (v) => (window.DataStore && DataStore.safeStatus) ? DataStore.safeStatus(v, 'evidence') : (String(v || '').includes('완료') ? 'confirmed' : 'pending');
 
       const evForm = document.getElementById('evidenceForm');
       const evType = document.getElementById('evType');
@@ -193,15 +195,18 @@
       ]);
 
       const seedIfEmpty = () => {
-        const modernRows = store.get(EVIDENCE_ITEMS_KEY, null);
-        const rows = Array.isArray(modernRows) ? modernRows : store.get(EVIDENCE_KEY, null);
-        if (!Array.isArray(rows) || !rows.length) {
+        const existing = (window.DataStore && DataStore.getAllEvidence) ? DataStore.getAllEvidence() : (() => {
+          const modernRows = store.get(EVIDENCE_ITEMS_KEY, null);
+          return Array.isArray(modernRows) ? modernRows : store.get(EVIDENCE_KEY, null);
+        })();
+        if (!Array.isArray(existing) || !existing.length) {
           const seeds = sampleData();
+          if (window.DataStore && DataStore.writeEvidenceItems) return DataStore.writeEvidenceItems(seeds);
           store.set(EVIDENCE_KEY, seeds);
           store.set(EVIDENCE_ITEMS_KEY, seeds);
-          return seeds;
+          return seeds.map((x) => ({ ...x, status: toEvidenceStatus(x.status) }));
         }
-        return rows;
+        return existing.map((x) => (window.DataStore && DataStore.normalizeEvidenceRecord) ? DataStore.normalizeEvidenceRecord(x) : ({ ...x, status: toEvidenceStatus(x.status) }));
       };
 
       let selectedServiceIds = [];
@@ -249,14 +254,20 @@
         return { name: file.name, size: file.size };
       };
 
-      const saveRows = () => { store.set(EVIDENCE_KEY, rows); store.set(EVIDENCE_ITEMS_KEY, rows); };
+      const saveRows = () => {
+        if (window.DataStore && DataStore.writeEvidenceItems) {
+          rows = DataStore.writeEvidenceItems(rows);
+          return;
+        }
+        store.set(EVIDENCE_KEY, rows); store.set(EVIDENCE_ITEMS_KEY, rows);
+      };
 
       const filteredRows = () => {
         const q = (searchInput.value || '').trim().toLowerCase();
         return rows.filter((r) => {
           const matchQ = !q || (r.description || '').toLowerCase().includes(q) || (r.incident || '').toLowerCase().includes(q) || (r.relatedOrgText || '').toLowerCase().includes(q) || (r.services || []).join(', ').toLowerCase().includes(q);
           const matchType = typeFilter.value === '전체' || r.type === typeFilter.value;
-          const matchStatus = statusFilter.value === '전체' || r.status === statusFilter.value;
+          const matchStatus = statusFilter.value === '전체' || statusLabel(r.status) === statusFilter.value;
           return matchQ && matchType && matchStatus;
         });
       };
@@ -272,7 +283,7 @@
         view.forEach((r) => {
           const tr = document.createElement('tr');
           const focused = selectedEvidenceId && r.id === selectedEvidenceId;
-          const stateClass = r.status === '확인완료' ? 'done' : 'pending';
+          const stateClass = r.status === 'confirmed' ? 'done' : 'pending';
           tr.dataset.evidenceId = r.id;
           if (focused) tr.classList.add('focusRow');
           const orgUnits = Array.isArray(r.relatedOrgUnits) ? r.relatedOrgUnits.filter(Boolean).join(', ') : '';
@@ -284,7 +295,7 @@
             <td>${r.incident || '-'}</td>
             <td>${r.description || '-'}${focused ? '<span class="focusBadge">현재 선택 항목</span>' : ''}</td>
             <td>${r.attachment ? `${r.attachment.name} (${Math.round(r.attachment.size / 1024)}KB)` : '-'}</td>
-            <td><button type="button" class="state ${stateClass}" data-toggle="${r.id}">${r.status}</button></td>
+            <td><button type="button" class="state ${stateClass}" data-toggle="${r.id}">${statusLabel(r.status)}</button></td>
             <td><button type="button" class="btn" data-delete="${r.id}">삭제</button></td>
           `;
           evidenceBody.appendChild(tr);
@@ -326,17 +337,26 @@
         e.preventDefault();
         const map = new Map(services.map((s) => [s.id, s.name]));
         const serviceNames = selectedServiceIds.map((id) => map.get(id)).filter(Boolean);
-        const incidentText = evIncident.value ? evIncident.options[evIncident.selectedIndex].textContent : '';
+        const incidentId = evIncident.value || '';
+        const incidentText = incidentId ? evIncident.options[evIncident.selectedIndex].textContent : '';
         const item = {
           id: uid(),
           createdAt: new Date(evCollectedAt.value).toISOString(),
           type: evType.value,
+          incidentId,
+          incidentTitle: incidentText,
+          serviceName: serviceNames[0] || '',
+          relatedTeamIds: [],
+          relatedFunctionIds: [],
+          relatedRiskIds: [],
+          owner: '',
           services: serviceNames,
           relatedOrgText: '-',
           incident: incidentText,
           description: evDescription.value.trim(),
           attachment: readAttachment(),
-          status: evStatus.value,
+          status: toEvidenceStatus(evStatus.value),
+          source: 'MANUAL'
         };
         rows.unshift(item);
         saveRows();
@@ -355,7 +375,7 @@
         const toggleId = e.target.getAttribute('data-toggle');
         const deleteId = e.target.getAttribute('data-delete');
         if (toggleId) {
-          rows = rows.map((r) => r.id === toggleId ? { ...r, status: r.status === '확인완료' ? '확인필요' : '확인완료' } : r);
+          rows = rows.map((r) => r.id === toggleId ? { ...r, status: r.status === 'confirmed' ? 'pending' : 'confirmed', confirmedAt: r.status === 'confirmed' ? null : nowISO() } : r);
           saveRows();
           renderTable();
           return;
