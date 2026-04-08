@@ -313,6 +313,17 @@
       };
 
       const collectEvidence = () => {
+        if (window.DataStore && DataStore.getPendingEvidence) {
+          return DataStore.getPendingEvidence().map((row) => ({
+            id: asText(row.id),
+            title: asText(row.title || row.description || '증적 항목'),
+            owner: asText(row.owner || '담당 미지정'),
+            status: asText(row.status || 'pending'),
+            dueDate: row.confirmedAt || row.createdAt || null,
+            pending: true
+          })).sort((a, b) => toTime(a.dueDate) - toTime(b.dueDate));
+        }
+
         const rows = readArray(EVIDENCE_KEY, []);
         return rows
           .filter((row) => row && typeof row === 'object')
@@ -329,6 +340,17 @@
       };
 
       const collectActions = () => {
+        if (window.DataStore && DataStore.getOpenCapaItems) {
+          return DataStore.getOpenCapaItems().map((row) => ({
+            id: asText(row.id),
+            title: asText(row.title || '개선조치'),
+            owner: asText(row.owner || '담당 미지정'),
+            status: asText(row.status || 'open'),
+            dueDate: row.dueAt || null,
+            open: true
+          })).sort((a, b) => toTime(a.dueDate) - toTime(b.dueDate));
+        }
+
         const rows = readArray(ACTION_KEY, []);
         return rows
           .filter((row) => row && typeof row === 'object')
@@ -517,6 +539,47 @@
       };
 
       const render = () => {
+        if (window.DataStore && DataStore.getOpsStatusSnapshot) {
+          const snap = DataStore.getOpsStatusSnapshot();
+          const active = (snap.activeIncidents || []).map((x) => normalizeIncident({
+            incidentId: x.id,
+            status: x.status,
+            severity: x.severity,
+            serviceName: x.serviceName,
+            relatedTeamNames: x.relatedTeamNames || x.relatedTeamIds || [],
+            startedAt: x.startedAt,
+            endedAt: x.endedAt
+          }));
+          const closed = (snap.recentClosedIncidents || []).map((x) => normalizeIncident({
+            incidentId: x.id,
+            status: x.status,
+            severity: x.severity,
+            serviceName: x.serviceName,
+            relatedTeamNames: x.relatedTeamNames || x.relatedTeamIds || [],
+            startedAt: x.startedAt,
+            endedAt: x.endedAt
+          }));
+          const evidences = collectEvidence();
+          const actions = collectActions();
+          const risks = (snap.priorityRisks || []).map((r) => ({
+            threat: asText(r.threat), functionName: asText(r.functionName), team: asText(r.teamName), riskScore: Number(r.riskScore || 0), priority: asText(r.riskLevel || ''), isPriority: true
+          })).sort((a,b)=>b.riskScore-a.riskScore).slice(0,8);
+          const coreImpacts = collectCoreImpacts(active);
+
+          document.getElementById('kIncident').textContent = String(active.length);
+          document.getElementById('kEvidence').textContent = String(evidences.length);
+          document.getElementById('kAction').textContent = String(actions.length);
+          document.getElementById('kRisk').textContent = String(risks.length);
+
+          renderIncidents(active);
+          renderClosedSummary(closed);
+          renderEvidence(evidences);
+          renderActions(actions);
+          renderCoreImpacts(coreImpacts);
+          renderPriorityRisks(risks);
+          return;
+        }
+
         const incidents = collectIncidents();
         const active = incidents.filter((x) => !x.isClosed);
         const closed = incidents.filter((x) => x.isClosed).sort((a, b) => toTime(b.endedAt) - toTime(a.endedAt));

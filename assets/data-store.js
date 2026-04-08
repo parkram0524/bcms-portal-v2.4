@@ -40,6 +40,17 @@
   const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
   const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
 
+  const KEY_CORE_FUNCTIONS = 'bcmsCoreFunctions';
+  const KEY_BIA_DATA = 'bcmsBIAData';
+  const KEY_RISK_ASSESSMENT = 'bcmsRiskAssessment';
+  const KEY_INCIDENTS_UNIFIED = 'bcmsIncidents';
+  const KEY_INCIDENT_EXECUTION = 'bcmsIncidentExecution';
+  const KEY_SELECTED_INCIDENT_ID = 'bcmsSelectedIncidentId';
+  const KEY_SELECTED_INCIDENT = 'bcms_selected_incident';
+  const KEY_EVIDENCE_ITEMS = 'bcmsEvidenceItems';
+  const KEY_ACTION_ITEMS = 'bcmsActionItems';
+  const KEY_CAPA_ITEMS = 'bcmsCapaItems';
+
   // Returns the current timestamp as an ISO-8601 string.
   const nowISO = () => new Date().toISOString();
 
@@ -110,6 +121,22 @@
     if (kind === 'function') return uniqueIds(rows.map(toFunctionId));
     if (kind === 'risk') return uniqueIds(rows.map(toRiskId));
     return uniqueIds(rows);
+  };
+
+  const safeStatus = (value, type = 'generic') => {
+    const v = asText(value).toLowerCase();
+    if (type === 'evidence') {
+      if (!v || ['new', 'draft', 'open', 'unconfirmed', 'pending_review', 'pending', '미확인', '확인필요', '확인 필요'].includes(v)) return 'pending';
+      if (['done', 'closed', 'complete', 'completed', 'resolved', 'confirmed', '확인완료', '완료', '종결'].includes(v)) return 'confirmed';
+      return 'pending';
+    }
+    if (type === 'capa') {
+      if (!v || ['new', 'draft', 'open', '미완료', '미착수', 'pending', 'todo'].includes(v)) return 'open';
+      if (['progress', 'ongoing', 'working', '진행중', 'in_progress'].includes(v)) return 'in_progress';
+      if (['done', 'closed', 'complete', 'completed', 'resolved', '완료', '종결'].includes(v)) return 'completed';
+      return 'open';
+    }
+    return asText(value);
   };
 
   // Reads and parses a JSON value; returns fallback on missing data or parse errors.
@@ -480,6 +507,107 @@
     return { ...base, teams, functions, risks, serviceName };
   };
 
+  const normalizeEvidenceRecord = (record = {}) => {
+    const src = safeObject(record);
+    const incidentId = asText(pickFirst(src, ['incidentId', 'incidentRef', 'idRef'], ''));
+    const idSeed = asText(pickFirst(src, ['id', 'evidenceId'], '')) || (incidentId ? `EVD-${slug(`${incidentId}-${pickFirst(src, ['title', 'description'], 'item')}`)}` : '');
+    return {
+      id: idSeed || uid('EVD'),
+      incidentId,
+      incidentTitle: asText(pickFirst(src, ['incidentTitle', 'incident', 'title'], '')),
+      serviceName: asText(pickFirst(src, ['serviceName', 'service'], '')),
+      relatedTeamIds: safeIdArray(src.relatedTeamIds || src.relatedOrgUnits || src.relatedTeams, 'team'),
+      relatedFunctionIds: safeIdArray(src.relatedFunctionIds || src.relatedCoreFunctions, 'function'),
+      relatedRiskIds: safeIdArray(src.relatedRiskIds || src.relatedRisks, 'risk'),
+      type: asText(pickFirst(src, ['type', 'category'], '기타')) || '기타',
+      status: safeStatus(pickFirst(src, ['status'], 'pending'), 'evidence'),
+      owner: asText(pickFirst(src, ['owner', 'ownerTeam'], '')),
+      createdAt: pickFirst(src, ['createdAt', 'collectedAt'], nowISO()),
+      confirmedAt: pickFirst(src, ['confirmedAt'], null),
+      source: asText(pickFirst(src, ['source'], 'MANUAL')) || 'MANUAL',
+      sourceRefId: asText(pickFirst(src, ['sourceRefId'], '')),
+      title: asText(pickFirst(src, ['title', 'description'], '증적 항목')),
+      description: asText(pickFirst(src, ['description', 'summary'], ''))
+    };
+  };
+
+  const normalizeCapaRecord = (record = {}) => {
+    const src = safeObject(record);
+    const incidentId = asText(pickFirst(src, ['incidentId', 'incidentRef', 'idRef'], ''));
+    const idSeed = asText(pickFirst(src, ['id', 'capaId', 'actionId'], '')) || (incidentId ? `CAPA-${slug(`${incidentId}-${pickFirst(src, ['title', 'actionName'], 'item')}`)}` : '');
+    return {
+      id: idSeed || uid('CAPA'),
+      incidentId,
+      incidentTitle: asText(pickFirst(src, ['incidentTitle', 'incident', 'title'], '')),
+      serviceName: asText(pickFirst(src, ['serviceName', 'service'], '')),
+      relatedTeamIds: safeIdArray(src.relatedTeamIds || src.relatedOrgUnits || src.relatedTeams, 'team'),
+      relatedFunctionIds: safeIdArray(src.relatedFunctionIds || src.relatedCoreFunctions, 'function'),
+      relatedRiskIds: safeIdArray(src.relatedRiskIds || src.relatedRisks, 'risk'),
+      title: asText(pickFirst(src, ['title', 'actionName', 'task'], '개선조치')),
+      description: asText(pickFirst(src, ['description', 'actionPlan'], '')),
+      owner: asText(pickFirst(src, ['owner', 'ownerTeam'], '')),
+      status: safeStatus(pickFirst(src, ['status'], 'open'), 'capa'),
+      dueAt: pickFirst(src, ['dueAt', 'dueDate', 'deadline'], null),
+      completedAt: pickFirst(src, ['completedAt'], null),
+      createdAt: pickFirst(src, ['createdAt'], nowISO()),
+      source: asText(pickFirst(src, ['source'], 'MANUAL')) || 'MANUAL',
+      sourceRefId: asText(pickFirst(src, ['sourceRefId'], '')),
+      priority: asText(pickFirst(src, ['priority'], '')),
+      incidentSeverity: asText(pickFirst(src, ['incidentSeverity'], ''))
+    };
+  };
+
+  const getAllEvidence = () => {
+    const modern = safeArray(get(KEY_EVIDENCE_ITEMS, []));
+    const legacy = safeArray(get(KEY_EVIDENCE, []));
+    const merged = [...modern, ...legacy].map((row) => normalizeEvidenceRecord(row));
+    const byId = new Map();
+    merged.forEach((row) => byId.set(row.id, { ...(byId.get(row.id) || {}), ...row }));
+    return [...byId.values()];
+  };
+
+  const writeEvidenceItems = (items) => {
+    const normalized = safeArray(items).map((row) => normalizeEvidenceRecord(row));
+    set(KEY_EVIDENCE_ITEMS, normalized);
+    set(KEY_EVIDENCE, normalized);
+    return normalized;
+  };
+
+  const getAllCapaItems = () => {
+    const modern = safeArray(get(KEY_CAPA_ITEMS, []));
+    const legacyAction = safeArray(get(KEY_ACTION_ITEMS, []));
+    const legacyCapa = safeArray(get(KEY_CAPA, []));
+    const merged = [...modern, ...legacyAction, ...legacyCapa].map((row) => normalizeCapaRecord(row));
+    const byId = new Map();
+    merged.forEach((row) => byId.set(row.id, { ...(byId.get(row.id) || {}), ...row }));
+    return [...byId.values()];
+  };
+
+  const writeCapaItems = (items) => {
+    const normalized = safeArray(items).map((row) => normalizeCapaRecord(row));
+    set(KEY_CAPA_ITEMS, normalized);
+    set(KEY_ACTION_ITEMS, normalized);
+    set(KEY_CAPA, normalized);
+    return normalized;
+  };
+
+  const getPendingEvidence = () => getAllEvidence().filter((row) => safeStatus(row.status, 'evidence') !== 'confirmed');
+  const getOpenCapaItems = () => getAllCapaItems().filter((row) => safeStatus(row.status, 'capa') !== 'completed');
+  const getActiveIncidents = () => readIncidentRecords().filter((row) => !['종료', 'resolved', 'closed', 'completed', 'ended'].includes(asText(row.status).toLowerCase()) && !hasValue(row.endedAt));
+  const getRecentClosedIncidents = () => readIncidentRecords()
+    .filter((row) => hasValue(row.endedAt) || ['종료', 'resolved', 'closed', 'completed', 'ended'].includes(asText(row.status).toLowerCase()))
+    .sort((a, b) => new Date(b.endedAt || b.startedAt || 0).getTime() - new Date(a.endedAt || a.startedAt || 0).getTime());
+
+  const getOpsStatusSnapshot = () => {
+    const incidents = readIncidentRecords();
+    const activeIncidents = getActiveIncidents();
+    const recentClosedIncidents = getRecentClosedIncidents().slice(0, 3);
+    const pendingEvidence = getPendingEvidence();
+    const openCapaItems = getOpenCapaItems();
+    const priorityRisks = readRiskRecords().filter((row) => Number(row.riskScore || 0) >= 13 || row.critical === true);
+    return { incidents, activeIncidents, recentClosedIncidents, pendingEvidence, openCapaItems, priorityRisks };
+  };
+
   const setSelectedIncidentId = (incidentId) => {
     const id = asText(incidentId);
     if (!id) return;
@@ -506,6 +634,9 @@
     KEY_INCIDENT_EXECUTION,
     KEY_SELECTED_INCIDENT_ID,
     KEY_SELECTED_INCIDENT,
+    KEY_EVIDENCE_ITEMS,
+    KEY_ACTION_ITEMS,
+    KEY_CAPA_ITEMS,
     get,
     set,
     update,
@@ -523,6 +654,7 @@
     normalizeIncidentRecord,
     safeIdArray,
     uniqueIds,
+    safeStatus,
     readCoreFunctions,
     readBiaRecords,
     writeBiaRecords,
@@ -536,6 +668,17 @@
     resolveIncidentTeams,
     resolveIncidentFunctions,
     resolveIncidentRisks,
-    resolveIncidentContext
+    resolveIncidentContext,
+    normalizeEvidenceRecord,
+    normalizeCapaRecord,
+    getAllEvidence,
+    writeEvidenceItems,
+    getAllCapaItems,
+    writeCapaItems,
+    getPendingEvidence,
+    getOpenCapaItems,
+    getActiveIncidents,
+    getRecentClosedIncidents,
+    getOpsStatusSnapshot
   };
 })(window);
