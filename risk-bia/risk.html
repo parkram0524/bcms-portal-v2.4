@@ -227,20 +227,22 @@
     }
     .tableSection .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
 
-    .tableWrap { overflow-x: auto; }
-    table { width: 100%; min-width: 1400px; }
-    th { font-size: 11px !important; padding: 10px 14px !important; height: 38px; }
-    td { font-size: 13px !important; padding: 12px 14px !important; height: 52px; vertical-align: middle; }
+    .tableWrap { overflow: hidden; }
+    table { width: 100%; min-width: 0; table-layout: fixed; }
+    th { font-size: 11px !important; padding: 9px 8px !important; height: 36px; overflow: hidden; white-space: nowrap; }
+    td { font-size: 13px !important; padding: 10px 8px !important; height: 50px; vertical-align: middle; overflow: hidden; }
 
     /* Inline slider in table */
     .inlineSlider {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      overflow: hidden;
     }
     .inlineSlider input[type="range"] {
       flex: 1;
-      width: auto !important;
+      min-width: 60px;
+      width: 0 !important; /* let flex control width */
     }
     .inlineSliderVal {
       font-size: 12px;
@@ -248,12 +250,26 @@
       font-variant-numeric: tabular-nums;
       font-family: "SF Mono", monospace;
       color: var(--text);
-      min-width: 16px;
+      min-width: 14px;
       text-align: center;
+      flex-shrink: 0;
     }
 
-    .fnName { font-size: 13px; font-weight: 600; color: var(--text); }
-    .riskInput { width: 100%; font-size: 12px; }
+    .fnName {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+    .riskInput { width: 100%; min-width: 0; font-size: 12px; }
+    .badge, .metaChip, .impactReadonly, .sourceChip, .focusBadge {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .score { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: monospace; }
     .focusBadge { display: inline-flex; padding: 3px 8px; border-radius: 6px; border: 0.5px solid rgba(239,68,68,.35); background: rgba(239,68,68,.1); color: #dc2626; font-size: 11px; font-weight: 600; }
     tr.focusRow td { background: var(--accent-subtle) !important; }
@@ -793,6 +809,19 @@
         }
         tableMount.innerHTML = `
           <table>
+            <colgroup>
+              <col style="width:17%"/><!-- 핵심업무 -->
+              <col style="width:6%"/> <!-- 중요업무 -->
+              <col style="width:6%"/> <!-- 업무등급 -->
+              <col style="width:6%"/> <!-- MTPD -->
+              <col style="width:6%"/> <!-- RTO -->
+              <col style="width:9%"/> <!-- 영향도 -->
+              <col style="width:16%"/><!-- 중단리스크 -->
+              <col style="width:13%"/><!-- 발생가능성 -->
+              <col style="width:5%"/> <!-- 위험도 -->
+              <col style="width:7%"/> <!-- 관리등급 -->
+              <col style="width:9%"/> <!-- 관리 -->
+            </colgroup>
             <thead><tr>
               <th>핵심업무</th><th>중요업무</th><th>업무등급</th>
               <th>MTPD</th><th>RTO</th><th>영향도(BIA)</th>
@@ -818,7 +847,7 @@
                     <td><input class="riskInput" type="text" data-field="risk" value="${escHtml(risk.risk||'')}" placeholder="예: 외부전력중단"/></td>
                     <td>
                       <div class="inlineSlider">
-                        <input type="range" min="1" max="5" step="1" value="${Number(risk.likelihood)||1}" data-field="likelihood" style="min-width:80px"/>
+                        <input type="range" min="1" max="5" step="1" value="${Number(risk.likelihood)||1}" data-field="likelihood"/>
                         <span class="inlineSliderVal">${Number(risk.likelihood)||1}</span>
                       </div>
                     </td>
