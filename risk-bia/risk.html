@@ -136,8 +136,9 @@
 
     .tableWrap { overflow: hidden; }
     table { width: 100%; min-width: 0; table-layout: fixed; }
-    th { font-size: 11px !important; padding: 9px 8px !important; height: 36px; overflow: hidden; white-space: nowrap; }
-    td { font-size: 13px !important; padding: 10px 8px !important; height: 50px; vertical-align: middle; overflow: hidden; }
+    th { font-size: 11px !important; padding: 9px 8px !important; height: 36px; overflow: hidden; white-space: nowrap; text-align: center; }
+    td { font-size: 13px !important; padding: 10px 8px !important; height: 50px; vertical-align: middle; overflow: hidden; text-align: center; }
+    td.td-left { text-align: left !important; }
 
     .inlineSlider { display: flex; align-items: center; gap: 6px; overflow: hidden; }
     .inlineSlider input[type="range"] { flex: 1; min-width: 60px; width: 0 !important; }
@@ -807,28 +808,21 @@
                 const resBand = scoreBand(resScore);
                 return `
                   <tr data-idx="${idx}" class="${focused?'focusRow':''}">
-                    <td>
+                    <td class="td-left">
                       <div class="fnName">${escHtml(risk.function)}${risk.source==='BIA'?' <span class="sourceChip" style="font-size:10px">AUTO</span>':''}</div>
-                      <button class="btn" style="margin-top:3px;font-size:10px;padding:3px 7px" type="button" data-add-risk="${escHtml(risk.function)}">+ 추가</button>
                     </td>
                     <td><span class="badge">${escHtml(meta.importance||'일반')}</span></td>
                     <td><span class="badge">${escHtml(meta.grade||'일반')}</span></td>
                     <td><span class="badge">${escHtml(meta.mtpd||'-')}</span></td>
                     <td><span class="badge">${escHtml(meta.rto||'-')}</span></td>
                     <td><span class="badge">${risk.impact} ${impactLabels[risk.impact]||''}</span></td>
-                    <td><input class="riskInput" type="text" data-field="risk" value="${escHtml(risk.risk||'')}" placeholder="리스크 명칭"/></td>
-                    <td>
-                      <div class="inlineSlider">
-                        <input type="range" min="1" max="5" step="1" value="${Number(risk.likelihood)||1}" data-field="likelihood"/>
-                        <span class="inlineSliderVal">${Number(risk.likelihood)||1}</span>
-                      </div>
-                    </td>
+                    <td class="td-left">${escHtml(risk.risk||'') || '<span style="color:var(--text-3);font-size:12px">-</span>'}</td>
+                    <td>${Number(risk.likelihood)||1}</td>
                     <td><div class="score">${risk.riskScore}</div></td>
                     <td><span class="badge ${band.cls}">${band.text}</span></td>
                     <td>
                       ${risk.riskScore>=13?'<span class="focusBadge">중점관리</span>':'<span style="color:var(--text-3);font-size:12px">-</span>'}
                       ${resScore > 0 ? `<div style="margin-top:2px"><span class="badge ${resBand.cls}" style="font-size:10px">잔여 ${resScore}</span></div>` : ''}
-                      <div style="margin-top:3px"><button class="btn" style="font-size:10px;padding:3px 7px" type="button" data-delete="${idx}">삭제</button></div>
                     </td>
                   </tr>`;
               }).join('')}
@@ -903,26 +897,11 @@
         updateRisk(tr, Number(tr.dataset.idx), field, e.target.value);
       });
       tableMount.addEventListener('click', e => {
-        if (isInteractive(e.target) && !e.target.getAttribute('data-delete') && !e.target.getAttribute('data-add-risk')) return;
-        const addFn = e.target.getAttribute('data-add-risk');
-        if (addFn) {
-          const row  = ensureTeamRisk(teamSelect.value);
-          const meta = getFnMap(teamSelect.value).get(addFn);
-          row.risks.push(makeRisk(addFn, meta ? meta.impact : 3));
-          renderTable(); return;
-        }
+        if (isInteractive(e.target)) return;
         const tr = e.target.closest('tr[data-idx]');
-        if (tr && !e.target.getAttribute('data-delete')) {
-          const risk = ensureTeamRisk(teamSelect.value).risks[Number(tr.dataset.idx)];
-          if (risk) setFocusedRisk(tr, risk); return;
-        }
-        const deleteIdx = e.target.getAttribute('data-delete');
-        if (deleteIdx == null) return;
-        const row = ensureTeamRisk(teamSelect.value);
-        row.risks.splice(Number(deleteIdx), 1);
-        activeCell = { likelihood:null, impact:null };
-        matrixHint.textContent = '행을 클릭하면 매트릭스에서 위치가 강조됩니다.';
-        renderTable();
+        if (!tr) return;
+        const risk = ensureTeamRisk(teamSelect.value).risks[Number(tr.dataset.idx)];
+        if (risk) setFocusedRisk(tr, risk);
       });
 
       /* ── Standalone risk list (Tab 1) ── */
@@ -960,10 +939,10 @@
                   <tr>
                     <td><span style="font-family:monospace;font-size:10px;word-break:break-all">${escHtml(item.id)}</span></td>
                     <td><span class="badge">${escHtml(item.riskType)}</span></td>
-                    <td>${escHtml(item.riskName)}</td>
+                    <td class="td-left">${escHtml(item.riskName)}</td>
                     <td><span style="font-size:11px;color:var(--text-2)">${escHtml(res)||'-'}</span></td>
-                    <td style="text-align:center">${item.likelihood}</td>
-                    <td style="text-align:center">${item.impact}</td>
+                    <td>${item.likelihood}</td>
+                    <td>${item.impact}</td>
                     <td><span class="badge ${band.cls}">${item.riskScore} ${band.text}</span></td>
                     <td><span class="badge ${resBand.cls}">${item.residualScore} ${resBand.text}</span></td>
                     <td><span class="badge">${escHtml(item.treatment)}</span></td>
