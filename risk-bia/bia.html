@@ -751,25 +751,18 @@
     };
 
     /* ── State ── */
-    const coreRows = loadCoreFunctions();
-    const orgTeams = loadOrgTeams();
     let biaRows = loadBiaData();
-    const allTeams = uniq([
-      ...coreRows.map(r => r.team), ...orgTeams,
-      ...biaRows.map(r => r.team)
-    ].filter(Boolean));
     const coreMap = new Map();
-    coreRows.forEach(row => {
-      const t = String(row.team || '').trim();
-      if (!t) return;
-      coreMap.set(t, uniq((coreMap.get(t) || []).concat(row.functions || [])));
-    });
-    biaRows.forEach(row => {
-      const t = String(row.team || '').trim();
-      if (!t) return;
-      const names = (row.functions || []).map(fn => String(fn.name || '').trim()).filter(Boolean);
-      coreMap.set(t, uniq((coreMap.get(t) || []).concat(names)));
-    });
+    const refreshCoreMap = () => {
+      coreMap.clear();
+      biaRows.forEach(row => {
+        const t = String(row.team || '').trim();
+        if (!t) return;
+        const names = (row.functions || []).map(fn => String(fn.name || '').trim()).filter(Boolean);
+        coreMap.set(t, uniq((coreMap.get(t) || []).concat(names)));
+      });
+    };
+    refreshCoreMap();
 
     const opened = new Set();
     const scoreGuideOpened = new Set();
@@ -794,11 +787,18 @@
     const newFnTeam       = document.getElementById('newFnTeam');
 
     /* ── Populate selects ── */
-    const teamOptions = allTeams.length
-      ? allTeams.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('')
-      : '<option value="">등록된 팀이 없습니다</option>';
-    teamSelect.innerHTML  = teamOptions;
-    newFnTeam.innerHTML   = teamOptions;
+    const renderTeamSelect = () => {
+      const teams = uniq(biaRows.map(r => r.team).filter(Boolean));
+      const prev  = teamSelect.value;
+      const opts  = teams.length
+        ? teams.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('')
+        : '<option value="">등록된 팀이 없습니다</option>';
+      teamSelect.innerHTML = opts;
+      newFnTeam.innerHTML  = opts;
+      if (prev && teams.includes(prev)) teamSelect.value = prev;
+      refreshCoreMap();
+    };
+    renderTeamSelect();
 
     /* ── BIA ID generator ── */
     const genBiaId = (() => {
@@ -839,6 +839,7 @@
         });
       }
       biaRows = loadBiaData();
+      refreshCoreMap(); renderTeamSelect();
     }
 
     /* ── Impact score update ── */
@@ -1022,6 +1023,7 @@
       renderBiaList();
       renderResourceSummary();
       renderMetrics();
+      renderTeamSelect();
       switchTab('biaList');
       document.getElementById('clearEntryBtn').click();
     });
@@ -1086,7 +1088,7 @@
         if (teamRow) {
           teamRow.functions.splice(Number(idxStr), 1);
           saveBiaData(biaRows);
-          renderBiaList(); renderResourceSummary(); renderMetrics();
+          renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect();
         }
         return;
       }
@@ -1145,7 +1147,7 @@
 
         teamRow.functions.splice(Number(idxStr), 1);
         saveBiaData(biaRows);
-        renderBiaList(); renderResourceSummary(); renderMetrics();
+        renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect();
 
         if (!panelOpen) {
           panelOpen = true;
@@ -1185,7 +1187,7 @@
     const renderMetrics = () => {
       const allFns = biaRows.flatMap(r => r.functions || []);
       const rtoMins = allFns.map(fn => rtoToMinutes(fn.rtoValue, fn.rtoUnit)).filter(v => v !== null && Number.isFinite(v));
-      document.getElementById('mTeamCount').textContent      = allTeams.length;
+      document.getElementById('mTeamCount').textContent      = uniq(biaRows.map(r => r.team).filter(Boolean)).length;
       document.getElementById('mBiaCount').textContent       = allFns.length;
       document.getElementById('mImportantCount').textContent = allFns.filter(fn => fn.importance !== '일반').length;
       document.getElementById('mMinRto').textContent         = toDurationText(rtoMins.length ? Math.min(...rtoMins) : null);
@@ -1487,7 +1489,7 @@
       saveBiaData(biaRows);
       dirtyState = false;
       alert('BIA 데이터가 저장되었습니다.');
-      renderBiaList(); renderResourceSummary(); renderMetrics();
+      renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect();
     });
 
     resetBtn.addEventListener('click', () => {
