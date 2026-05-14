@@ -1,2028 +1,1523 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BIA (업무영향분석) | BCMS Portal v2</title>
+  <title>BIA (업무영향분석) | BCMS Portal</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    :root{
-      --bg:#f3f6fb;
-      --card:#ffffff;
-      --text:#0f172a;
-      --text-2:#1e293b;
-      --muted:#5b6b82;
-      --line:#dbe4ef;
-      --line-strong:#c9d5e3;
-      --blue:#2563eb;
-      --blue-soft:#eff5ff;
-      --red:#b42318;
-      --red-soft:#fef2f2;
-      --amber:#92400e;
-      --amber-soft:#fffbeb;
-      --green:#166534;
-      --green-soft:#f0fdf4;
-      --shadow:0 1px 2px rgba(15,23,42,.04);
-      --radius:14px;
-    }
-    .main{ background:var(--bg); }
-    .wrap{ max-width:1320px; margin:0 auto; }
+    /* ── Layout ── */
+    .wrap { max-width: 1280px; margin: 0 auto; }
 
-    .hero{ border:1px solid var(--line); border-radius:16px; background:var(--card); padding:18px 20px; box-shadow:var(--shadow); }
-    .hero h1{ margin:0; font-size:30px; font-weight:900; letter-spacing:-.02em; color:var(--text); }
-    .hero p{ margin:10px 0 0; font-size:15px; color:var(--muted); line-height:1.62; }
-
-    .panel{ margin-top:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); padding:18px; box-shadow:var(--shadow); }
-    .sectionTitle{ margin:0; font-size:19px; font-weight:900; color:var(--text); letter-spacing:-.01em; }
-    .sectionDesc{ margin:7px 0 0; font-size:13px; color:var(--muted); }
-
-    .kpiGrid{ margin-top:18px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-    .kpiCard{ border:1px solid var(--line); border-radius:13px; background:var(--card); padding:16px; box-shadow:var(--shadow); transition:background-color .18s ease,border-color .18s ease,transform .18s ease; }
-    .kpiCard:hover{ background:#fbfdff; border-color:var(--line-strong); transform:translateY(-1px); }
-    .kpiCard .k{ font-size:13px; color:var(--muted); font-weight:800; }
-    .kpiCard .v{ margin-top:10px; font-size:37px; line-height:1.05; font-weight:900; color:var(--text); letter-spacing:-.02em; }
-
-    .overviewHead{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px; }
-    .overviewFilters{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px; border:1px solid var(--line); border-radius:10px; background:#f8fbff; }
-    .overviewFilters select, .overviewFilters input{ min-width:180px; height:36px; }
-    .quickFilters{ display:flex; gap:6px; flex-wrap:wrap; }
-    .quickChip{ border:1px solid var(--line-strong); background:#fff; color:#334155; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:800; cursor:pointer; }
-    .quickChip.active{ border-color:#5b8cf2; background:#eff5ff; color:#1d4ed8; }
-
-    .overviewTableWrap{ overflow:auto; border-radius:12px; border:1px solid var(--line); }
-    .overviewTable{ width:100%; min-width:980px; border-collapse:separate; border-spacing:0; background:var(--card); }
-    .overviewTable th,.overviewTable td{ padding:12px 11px; font-size:14px; border-bottom:1px solid #e7edf5; color:var(--text-2); }
-    .overviewTable td{ vertical-align:middle; }
-    .overviewTable th{ position:sticky; top:0; z-index:1; background:#f8fbff; color:#334155; font-weight:900; font-size:13px; letter-spacing:.01em; }
-    .overviewTable tr:last-child td{ border-bottom:none; }
-    .clickRow{ cursor:pointer; transition:background-color .18s ease; }
-    .clickRow:hover td{ background:rgba(37,99,235,.075); }
-    .clickRow.active td{ background:rgba(37,99,235,.12); }
-    .clickRow.active:hover td{ background:rgba(37,99,235,.15); }
-    .overviewTable td:first-child{ font-weight:800; color:var(--text); position:relative; }
-    .clickRow.active td:first-child::before{ content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:999px; background:#3b82f6; }
-    .teamCell{ display:grid; gap:4px; padding-left:6px; }
-    .teamNameLine{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .teamName{ font-size:14px; font-weight:900; color:var(--text); }
-    .clickRow.active .teamName{ color:#1d4ed8; }
-    .teamMeta{ font-size:11.5px; color:var(--muted); }
-    .numStrong{ font-weight:900; color:#0f172a; }
-    .density{ margin-top:4px; height:5px; border-radius:999px; background:#edf2f8; overflow:hidden; }
-    .density > i{ display:block; height:100%; background:#8bb1f7; }
-    .density.warn > i{ background:#f0b96a; }
-    .highImpactCell{ display:grid; gap:5px; justify-items:start; }
-    .hiBadge{ display:inline-flex; align-items:center; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:900; border:1px solid var(--line-strong); background:#fff; color:#64748b; }
-    .hiBadge.low{ border-color:#f5dfb5; background:#fffbeb; color:#8a4b12; }
-    .hiBadge.high{ border-color:#f1c07a; background:#fff7e6; color:#7c2d12; }
-    .rowFlag{ display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid var(--line-strong); background:#fff; color:#475569; }
-    .rowFlag.current{ border-color:#bfdbfe; background:#eff6ff; color:#1d4ed8; }
-    .rowFlag.warn{ border-color:#f1c07a; background:#fffbeb; color:#8a4b12; }
-    .rowFlag.danger{ border-color:#f0b9b3; background:#fff1f1; color:#9f1239; }
-    .overviewTable tr.risk-focus td{ background:linear-gradient(0deg, rgba(255,251,235,.55), rgba(255,251,235,.55)); }
-    .overviewTable tr.risk-focus:hover td{ background:linear-gradient(0deg, rgba(255,244,222,.75), rgba(255,244,222,.75)); }
-    .tableActionBtn{ border-radius:999px; padding:7px 12px; font-size:12px; font-weight:900; color:#1e3a8a; border-color:#c7d7ee; background:#f8fbff; }
-    .tableActionBtn:hover{ background:#eef5ff; border-color:#9db7df; }
-
-    .chip{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; border:1px solid var(--line-strong); background:#f8fbff; font-size:12px; font-weight:800; color:#334155; }
-    .editSection{ scroll-margin-top:20px; }
-    .editWorkspace{ display:grid; grid-template-columns:minmax(0,2fr) minmax(300px,1fr); gap:14px; align-items:start; }
-    .editorMain{ min-width:0; }
-    .summaryAside{ position:sticky; top:18px; }
-    .stickyPanel{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:12px; box-shadow:var(--shadow); }
-    .stickyPanel + .stickyPanel{ margin-top:10px; }
-    .stickyTitle{ margin:0 0 8px; font-size:14px; font-weight:900; color:var(--text); }
-    .kv{ display:grid; grid-template-columns:1fr auto; gap:6px 10px; font-size:12.5px; color:var(--text-2); }
-    .kv .k{ color:var(--muted); }
-    .chipWrap{ display:flex; flex-wrap:wrap; gap:6px; }
-    .statusPill{ display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:900; border:1px solid var(--line-strong); }
-    .status-dirty{ color:#8a4b12; background:#fffbeb; border-color:#f1c07a; }
-    .status-saved{ color:#166534; background:#f0fdf4; border-color:#b8e5c8; }
-    .compactActions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-
-
-    .row{ display:grid; grid-template-columns:1fr 260px auto; gap:12px; align-items:end; }
-    .row label{ font-size:13px; font-weight:800; color:#42526a; display:block; margin-bottom:6px; }
-    .row select, .row input{ width:100%; }
-
-    .btn{ border:1px solid var(--line-strong); border-radius:10px; background:#fff; color:var(--text-2); padding:9px 12px; font-size:14px; font-weight:800; cursor:pointer; transition:background-color .18s ease,border-color .18s ease,color .18s ease; }
-    .btn:hover{ background:#f8fbff; border-color:#b8c8da; }
-    .btn:focus-visible{ outline:2px solid rgba(37,99,235,.45); outline-offset:2px; }
-    .btn.primary{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.10); color:#1d4ed8; }
-    .btn.primary:hover{ background:rgba(37,99,235,.16); }
-
-    .summaryGrid{ margin-top:14px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; }
-    .metric{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:12px; }
-    .metric .k{ font-size:13px; color:var(--muted); font-weight:800; }
-    .metric .v{ margin-top:8px; font-size:25px; line-height:1.2; font-weight:900; color:var(--text); }
-
-    .tableWrap{ margin-top:14px; overflow:auto; }
-    table{ width:100%; min-width:1120px; border-collapse:separate; border-spacing:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; }
-    th, td{ padding:12px 11px; font-size:14px; border-bottom:1px solid #e7edf5; vertical-align:middle; color:var(--text-2); }
-    th{ background:#f8fbff; font-size:13px; font-weight:900; text-align:left; color:#334155; letter-spacing:.01em; }
-    tr:last-child td{ border-bottom:none; }
-
-    .functionName{ font-size:15px; font-weight:900; color:var(--text); letter-spacing:-.01em; }
-    .muted{ font-size:12.5px; color:var(--muted); }
-
-    .smallSelect, .smallInput, .reasonInput, .row select, .row input{
-      border:1px solid var(--line-strong);
-      border-radius:10px;
-      background:#fff;
-      color:var(--text-2);
-      padding:9px 10px;
-      font-size:14px;
-      line-height:1.35;
-    }
-    .smallSelect:focus-visible, .smallInput:focus-visible, .reasonInput:focus-visible, .row select:focus-visible, .row input:focus-visible{
-      outline:2px solid rgba(37,99,235,.20);
-      border-color:rgba(37,99,235,.55);
-    }
-    .smallInput::placeholder, .reasonInput::placeholder, .row input::placeholder{ color:#7a8ca5; }
-
-    .rtoWrap{ display:flex; gap:7px; }
-    .rtoWrap .smallInput{ width:90px; }
-
-    .tag{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--line-strong); font-size:12px; font-weight:900; }
-    .g-핵심{ color:var(--red); background:var(--red-soft); border-color:#f2b8b5; }
-    .g-주요{ color:var(--amber); background:var(--amber-soft); border-color:#f4d09a; }
-    .g-일반{ color:var(--green); background:var(--green-soft); border-color:#b8e5c8; }
-
-    .detailRow td{ background:#fcfdff; }
-    .detailCard{ border:1px solid var(--line); border-radius:14px; padding:16px; background:#fff; box-shadow:0 1px 2px rgba(15,23,42,.03); }
-    .detailGrid{ display:grid; grid-template-columns:2fr 1.2fr; gap:14px; }
-    .subTitle{ margin:0; font-size:14px; font-weight:900; color:var(--text-2); }
-    .subHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
-    .timeGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-    .timeStep{ border:1px solid var(--line); border-radius:12px; padding:10px; background:#fff; }
-    .timeStepTop{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:8px; }
-    .timeStepLabel{ font-size:12px; font-weight:900; color:#334155; }
-    .timeStepValue{ font-size:12px; font-weight:900; color:#0f172a; }
-    .mtpdBadge{ display:inline-flex; align-items:center; border:1px solid #f1c07a; background:#fffbeb; color:#8a4b12; border-radius:999px; padding:2px 7px; font-size:11px; font-weight:900; }
-    .scoreBtns{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
-    .scoreBtn{ border:1px solid var(--line-strong); background:#fff; color:#334155; border-radius:9px; padding:7px 4px; font-size:12px; font-weight:800; cursor:pointer; }
-    .scoreBtn:hover{ background:#f8fbff; }
-    .scoreBtn[aria-pressed="true"]{ border-color:#5b8cf2; background:#eff5ff; color:#1d4ed8; }
-    .scoreBtn[data-score="4"][aria-pressed="true"], .scoreBtn[data-score="5"][aria-pressed="true"]{ border-color:#f1c07a; background:#fffbeb; color:#8a4b12; }
-    .scoreBtn:disabled{ opacity:.45; cursor:not-allowed; background:#f8fafc; }
-    .timeHint{ margin-top:6px; font-size:11.5px; color:#64748b; }
-    .timeSummaryLine{ margin-top:9px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .timeSummaryLine .chip{ background:#fff; }
-    .reasonInput{ width:100%; min-height:94px; resize:vertical; }
-    .resourceGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:2px; }
-    .resourceItem{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-2); }
-    .resourceItem input[type="checkbox"]{ accent-color:var(--blue); width:15px; height:15px; }
-
-    .warn{ margin-top:12px; border:1px solid #f1c07a; border-radius:10px; background:#fffbeb; color:#8a4b12; padding:9px 10px; font-size:12.5px; font-weight:800; }
-
-    .scoreGuideInline{ margin-top:10px; border:1px solid var(--line); border-radius:12px; background:#f8fbff; padding:10px; max-height:520px; transition:max-height .2s ease,opacity .2s ease; opacity:1; }
-    .scoreGuideInline h3{ margin:0 0 8px; font-size:13px; font-weight:900; color:#0f172a; }
-    .scoreGuideGrid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
-    .scoreItem{ border:1px solid var(--line); border-radius:10px; background:#fff; padding:8px; }
-    .scoreItem .n{ font-size:12px; font-weight:900; color:#0f172a; }
-    .scoreItem ul{ margin:6px 0 0; padding-left:16px; color:#55657c; font-size:11.5px; line-height:1.45; }
-    .miniHelp{ margin-top:10px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:#f8fbff; color:#5a6b82; font-size:12px; line-height:1.52; }
-
-    .empty{ margin-top:12px; border:1px dashed #c8d5e5; border-radius:12px; background:#f8fbff; color:#60758f; padding:14px; font-size:14px; }
-
-
-    body.modal-open{ overflow:hidden; }
-    .quickModal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:90; }
-    .quickModal.open{ display:flex; }
-    .quickModalBackdrop{ position:absolute; inset:0; background:rgba(15,23,42,.58); backdrop-filter:blur(2.5px); }
-    .quickModalDialog{ position:relative; width:min(980px, calc(100vw - 24px)); max-height:calc(100vh - 28px); background:#fcfdff; border:1px solid #d7e0ec; border-radius:16px; box-shadow:0 20px 48px rgba(2,6,23,.22); display:flex; flex-direction:column; overflow:hidden; }
-    .quickModalHead{ padding:16px 18px; border-bottom:1px solid #dbe4ef; display:flex; justify-content:space-between; gap:12px; align-items:flex-start; background:#fff; }
-    .quickModalHead > div{ min-width:0; }
-    .quickModalTitle{ margin:0; font-size:24px; font-weight:900; color:#0b1220; letter-spacing:-.02em; line-height:1.18; }
-    .quickModalSubtitle{ margin-top:6px; font-size:12.5px; font-weight:700; color:#64748b; }
-    .quickModalLead{ margin-top:4px; font-size:12px; color:#8a98ac; }
-    .quickStatusBar{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:9px; }
-    .quickModalClose{ border-radius:999px; padding:7px 12px; font-size:12.5px; color:#475569; background:#fff; border-color:#cbd5e1; }
-    .quickModalClose:hover{ background:#f8fafc; border-color:#b8c3d3; }
-    .quickModalBody{ padding:16px 18px; overflow:auto; display:grid; gap:14px; background:#fcfdff; }
-    .quickModalBody::-webkit-scrollbar{ width:10px; }
-    .quickModalBody::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:999px; border:2px solid #fcfdff; }
-    .quickModalBody::-webkit-scrollbar-track{ background:transparent; }
-    .quickSectionTitle{ margin:0 0 8px; font-size:12px; font-weight:900; color:#64748b; letter-spacing:.04em; text-transform:uppercase; }
-    .quickGrid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
-    .quickMetric{ border:1px solid #dbe4ef; border-radius:12px; padding:11px 12px; background:#fff; display:grid; gap:5px; }
-    .quickMetric .k{ font-size:11.5px; color:#64748b; font-weight:800; }
-    .quickMetric .v{ font-size:24px; font-weight:900; color:#0f172a; letter-spacing:-.01em; line-height:1.15; }
-    .quickMetric.emphasis{ border-color:#f0b9b3; background:#fff6f6; }
-    .quickMetric.caution{ border-color:#f1d39f; background:#fffaf0; }
-    .quickList{ display:grid; gap:10px; }
-    .quickItem{ border:1px solid #dbe4ef; border-radius:12px; padding:12px; background:#fff; display:grid; gap:9px; box-shadow:0 1px 0 rgba(15,23,42,.03); }
-    .quickItemTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-    .quickName{ font-size:15px; font-weight:900; color:#0f172a; line-height:1.35; word-break:break-word; }
-    .quickBadges{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; }
-    .quickMetaRow{ display:flex; flex-wrap:wrap; gap:8px; }
-    .quickMeta{ font-size:12.5px; color:#516277; display:inline-flex; gap:5px; align-items:center; border:1px solid #e2e8f0; border-radius:999px; padding:4px 8px; background:#f8fbff; white-space:nowrap; }
-    .quickMeta b{ color:#0f172a; }
-    .quickResourceChips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-    .quickResourceChips .chip{ background:#f8fafc; border-color:#d2dce8; color:#3f4f64; }
-    .quickResourceChips .muted{ font-size:12px; }
-    .quickModalFoot{ border-top:1px solid #dbe4ef; padding:12px 18px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; background:#fff; }
-    .quickFooterBtnPrimary{ border-color:#c7d7f8; background:#eef4ff; color:#1e40af; }
-    .quickFooterBtnPrimary:hover{ background:#e2ecff; border-color:#acc2ef; }
-    .quickFooterBtnNeutral{ background:#fff; color:#4b5d73; border-color:#ccd6e2; }
-    .quickFooterBtnNeutral:hover{ background:#f8fafc; }
-    .quickInline{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-
-    @media (max-width:980px){
-      .editWorkspace{ grid-template-columns:1fr; }
-      .summaryAside{ position:static; }
-      .row{ grid-template-columns:1fr; }
-      .kpiGrid{ grid-template-columns:1fr 1fr; }
-      .summaryGrid{ grid-template-columns:1fr 1fr; }
-      .detailGrid{ grid-template-columns:1fr; }
-      .timeGrid, .resourceGrid{ grid-template-columns:1fr 1fr; }
-      .scoreGuideGrid{ grid-template-columns:1fr 1fr; }
-      .overviewFilters select, .overviewFilters input{ min-width:140px; }
-      .quickGrid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .demoBannerSmall {
+      margin-bottom: 20px !important; padding: 7px 14px !important;
+      border: 0.5px solid rgba(0,112,243,.18) !important;
+      background: rgba(0,112,243,.04) !important;
+      border-radius: 8px !important; display: flex !important;
+      gap: 10px !important; flex-wrap: wrap !important; align-items: center !important;
     }
 
-    @media (max-width:640px){
-      .hero h1{ font-size:27px; }
-      .kpiGrid{ grid-template-columns:1fr; }
-      .summaryGrid{ grid-template-columns:1fr; }
-      .timeGrid, .resourceGrid{ grid-template-columns:1fr; }
-      .scoreBtns{ grid-template-columns:repeat(3,minmax(0,1fr)); }
-      .scoreGuideGrid{ grid-template-columns:1fr; }
-      .panel{ padding:14px; }
-      .quickModalTitle{ font-size:21px; }
-      .quickGrid{ grid-template-columns:1fr 1fr; }
-      .quickModalHead,.quickModalBody,.quickModalFoot{ padding-left:12px; padding-right:12px; }
+    .hero { padding-bottom: 28px; border-bottom: 0.5px solid var(--border); margin-bottom: 28px; }
+    .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+    .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+    /* ── Metrics ── */
+    .metricsStrip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 14px; }
+    .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+    .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
+
+    /* ── Control row ── */
+    .controlRow {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--r); padding: 20px 24px;
+      display: grid; grid-template-columns: 200px 1fr auto; gap: 16px; align-items: end;
+      margin-top: 14px;
     }
-    @media (max-width:520px){
-      .quickGrid{ grid-template-columns:1fr; }
-      .quickItemTop{ flex-direction:column; }
-      .quickBadges{ justify-content:flex-start; }
-      .quickModalFoot .btn{ flex:1 1 auto; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .field input, .field select { width: 100%; }
+
+    /* ── Entry form ── */
+    .entryToggle { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
+    .entryToggle h2 { font-size: 13px; font-weight: 600; color: var(--text-2); }
+    .entryPanel { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .entryPanel.collapsed { display: none; }
+    .entryCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 22px 24px; }
+    .entryCard.full { grid-column: 1 / -1; }
+    .entryCard h3 {
+      font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase;
+      letter-spacing: .06em; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 0.5px solid var(--border);
+    }
+
+    .formRow { margin-bottom: 14px; }
+    .formRow:last-child { margin-bottom: 0; }
+    .formRow label { display: block; font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 5px; letter-spacing: .02em; }
+    .formRow input, .formRow select, .formRow textarea { width: 100%; }
+    .formRow textarea { resize: vertical; min-height: 56px; line-height: 1.5; }
+    .biaIdDisplay {
+      font-size: 13px; font-weight: 600; font-family: "SF Mono","Consolas",monospace;
+      color: var(--accent); background: var(--accent-subtle);
+      border: 0.5px solid var(--accent-border) !important;
+      border-radius: var(--r-sm); padding: 7px 11px;
+    }
+
+    /* ── Importance cards ── */
+    .importanceGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .importanceCard { position: relative; cursor: pointer; }
+    .importanceCard input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .importanceLabel {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 10px; border: 0.5px solid var(--border-strong); border-radius: var(--r-sm);
+      cursor: pointer; transition: all .12s; background: var(--surface); text-align: center;
+    }
+    .importanceLabel .iName { font-size: 12px; font-weight: 700; color: var(--text); }
+    .importanceLabel .iDesc { font-size: 10px; color: var(--text-2); line-height: 1.3; }
+    .importanceCard input:checked + .importanceLabel { border-color: var(--accent); background: var(--accent-subtle); }
+    .importanceCard input:checked + .importanceLabel .iName { color: var(--accent); }
+
+    /* ── Sliders ── */
+    .sliderRow { margin-bottom: 14px; }
+    .sliderRow:last-child { margin-bottom: 0; }
+    .sliderLabel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+    .sliderLabel span { font-size: 11px; font-weight: 600; color: var(--text-2); letter-spacing: .02em; }
+    .sliderValue { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); min-width: 20px; text-align: right; }
+    .sliderTicks { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+    .impactScoreBox {
+      margin-top: 14px; padding: 12px; background: var(--bg);
+      border: 0.5px solid var(--border); border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .impactScoreBox .label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .impactScoreBox .scoreNum { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
+    .scoreBadge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 0.5px solid; }
+    .scoreBadge.low { background: rgba(34,197,94,.1); color: #16a34a; border-color: rgba(34,197,94,.25); }
+    .scoreBadge.mid { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.25); }
+    .scoreBadge.high { background: rgba(239,68,68,.1); color: #dc2626; border-color: rgba(239,68,68,.25); }
+
+    /* ── Recovery targets ── */
+    .recRow { display: grid; grid-template-columns: 1fr 78px; gap: 6px; }
+    .fieldHint { font-size: 10px; color: var(--text-3); margin-top: 4px; line-height: 1.4; }
+
+    /* ── Resource analysis ── */
+    .resourceAnalysisGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .resItem { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 10px; display: flex; flex-direction: column; gap: 6px; transition: all .12s; }
+    .resItem.enabled { background: var(--accent-subtle); border-color: var(--accent-border); }
+    .resToggleLabel { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-2); user-select: none; }
+    .resToggleLabel input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; }
+    .rIcon { font-size: 15px; }
+    .resFields { display: none; flex-direction: column; gap: 5px; }
+    .resItem.enabled .resFields { display: flex; }
+    .resFields input { width: 100%; font-size: 11px; }
+    .resFieldLabel { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+
+    /* ── Related risks ── */
+    .relatedRisksList { display: flex; flex-direction: column; gap: 5px; max-height: 160px; overflow-y: auto; margin-top: 6px; }
+    .relatedRiskItem { display: flex; align-items: center; gap: 8px; padding: 5px 8px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); font-size: 11px; cursor: pointer; }
+    .relatedRiskItem input[type="checkbox"] { width: 13px; height: 13px; accent-color: var(--accent); }
+    .relatedRiskEmpty { font-size: 12px; color: var(--text-3); padding: 6px 0; }
+
+    .entryActions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+
+    /* ── Table section (shared) ── */
+    .tableSection { margin-top: 24px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .tableSection .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 0.5px solid var(--border); }
+    .tableSection .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .tableWrap { overflow-x: auto; }
+    table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; }
+    th { font-size: 11px !important; padding: 9px 8px !important; height: 36px; overflow: hidden; white-space: nowrap; text-align: center; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); font-weight: 600; }
+    td { font-size: 13px !important; padding: 10px 8px !important; height: 50px; vertical-align: middle; overflow: hidden; text-align: center; border-bottom: 0.5px solid var(--border); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    td.td-left { text-align: left !important; }
+
+    /* ── Badge ── */
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; border: 0.5px solid var(--border-strong); font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface); white-space: nowrap; }
+    .badge.core  { background: rgba(239,68,68,.1); color: #dc2626; border-color: rgba(239,68,68,.25); }
+    .badge.important { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.25); }
+    .badge.general  { background: rgba(34,197,94,.1); color: #16a34a; border-color: rgba(34,197,94,.25); }
+    .badge.low  { background: rgba(34,197,94,.1); color: #16a34a; border-color: rgba(34,197,94,.25); }
+    .badge.mid  { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.25); }
+    .badge.high { background: rgba(239,68,68,.1); color: #dc2626; border-color: rgba(239,68,68,.25); }
+
+    .chip { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px; border: 0.5px solid var(--border-strong); background: var(--surface); font-size: 11px; font-weight: 600; color: var(--text-2); }
+
+    .empty { padding: 32px 16px; text-align: center; color: var(--text-3); font-size: 13px; }
+    .actions { margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Tabs ── */
+    .tabNav { display: flex; gap: 6px; margin-top: 24px; margin-bottom: 0; }
+    .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
+    .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
+    .tabPane.hidden { display: none; }
+
+    /* ── Resource summary tab ── */
+    .resourceSummaryGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px; }
+    .resSummaryCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 14px; }
+    .resSummaryCard .rTitle { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+    .resSummaryCard .rCount { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
+    .resFnList { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+    .resFnItem { font-size: 11px; color: var(--text-2); padding: 3px 0; border-bottom: 0.5px solid var(--border); }
+    .resFnItem:last-child { border-bottom: none; }
+
+    /* ── Team editor (collapsible) ── */
+    .teamEditorSection { margin-top: 24px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .teamEditorSection .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 0.5px solid var(--border); }
+    .teamEditorSection .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .teamEditorBody { padding: 20px 24px; }
+    .teamEditorBody.collapsed { display: none; }
+
+    .summaryStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .sumStat { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 12px; }
+    .sumStat .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .sumStat .v { margin-top: 6px; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
+
+    /* ── Team editor table ── */
+    .smallSelect, .smallInput {
+      border: 0.5px solid var(--border-strong); border-radius: var(--r-sm);
+      background: var(--surface); color: var(--text);
+      padding: 7px 9px; font-size: 12px;
+    }
+    .rtoWrap { display: flex; gap: 6px; }
+    .rtoWrap .smallInput { width: 80px; }
+    .functionName { font-size: 13px; font-weight: 600; color: var(--text); }
+    .fnMuted { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+    /* ── Detail expand row ── */
+    .detailRow td { background: var(--bg) !important; padding: 0 !important; height: auto !important; }
+    .detailCard { border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 16px; margin: 10px; background: var(--surface); }
+    .detailGrid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+    .subTitle { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+    .subHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .timeGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .timeStep { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 8px; }
+    .timeStepTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .timeStepLabel { font-size: 11px; font-weight: 600; color: var(--text-2); }
+    .timeStepValue { font-size: 11px; color: var(--text-2); margin-bottom: 4px; }
+    .mtpdBadge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: rgba(245,158,11,.15); color: #b45309; border: 0.5px solid rgba(245,158,11,.3); }
+    .scoreBtns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+    .scoreBtn { border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text-2); border-radius: 4px; padding: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .1s; }
+    .scoreBtn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
+    .scoreBtn[data-score="4"][aria-pressed="true"],
+    .scoreBtn[data-score="5"][aria-pressed="true"] { border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.1); color: #dc2626; }
+    .scoreBtn:disabled { opacity: .4; cursor: not-allowed; }
+    .timeHint { font-size: 10px; color: var(--text-3); margin-top: 3px; }
+    .timeSummaryLine { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .miniHelp { margin-top: 10px; padding: 9px 12px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); font-size: 11px; color: var(--text-2); line-height: 1.5; }
+    .reasonInput { width: 100%; min-height: 80px; resize: vertical; border: 0.5px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface); color: var(--text); padding: 8px 10px; font-size: 12px; }
+    .resourceGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .resourceItem { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--text-2); }
+    .resourceItem input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; }
+    .warnBox { margin-top: 8px; padding: 8px 10px; background: rgba(245,158,11,.1); border: 0.5px solid rgba(245,158,11,.35); border-radius: var(--r-sm); font-size: 12px; color: #b45309; }
+
+    /* Score guide */
+    .scoreGuideInline { margin-top: 10px; border: 0.5px solid var(--border); border-radius: var(--r-sm); background: var(--bg); padding: 10px; }
+    .scoreGuideInline h3 { font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+    .scoreGuideGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .scoreItem { border: 0.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); padding: 8px; }
+    .scoreItem .n { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .scoreItem ul { margin: 0; padding-left: 14px; color: var(--text-2); font-size: 10px; line-height: 1.4; }
+
+    @media (max-width: 960px) {
+      .entryPanel { grid-template-columns: 1fr; }
+      .entryCard.full { grid-column: 1; }
+      .metricsStrip { grid-template-columns: repeat(3, 1fr); }
+      .controlRow { grid-template-columns: 1fr; }
+      .resourceAnalysisGrid { grid-template-columns: repeat(2, 1fr); }
+      .resourceSummaryGrid { grid-template-columns: repeat(2, 1fr); }
+      .detailGrid { grid-template-columns: 1fr; }
+      .timeGrid { grid-template-columns: repeat(2, 1fr); }
+      .summaryStrip { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
   <aside id="sidebarMount"></aside>
-
   <main class="main">
     <div class="wrap">
+
       <section class="hero">
         <h1>BIA (업무영향분석)</h1>
-        <p>핵심업무별 영향도, MTPD, RTO를 통합 관리합니다. 전체 현황을 분석한 뒤 팀별 상세를 편집하세요.</p>
+        <p>ISO 22301 기준으로 핵심업무별 중단 영향, 복구 목표(MTPD·RTO·RPO·MBCO), 소요자원을 체계적으로 분석합니다.</p>
       </section>
 
-      <section class="kpiGrid" id="globalKpi"></section>
+      <!-- 지표 -->
+      <div class="metricsStrip">
+        <div class="metric"><div class="k">전체 팀 수</div><div class="v" id="mTeamCount">0</div></div>
+        <div class="metric"><div class="k">등록 업무 수</div><div class="v" id="mBiaCount">0</div></div>
+        <div class="metric"><div class="k">핵심·중요 업무</div><div class="v" id="mImportantCount">0</div></div>
+        <div class="metric"><div class="k">최단 RTO</div><div class="v" id="mMinRto" style="font-size:16px;margin-top:10px">-</div></div>
+        <div class="metric"><div class="k">연결 리스크 수</div><div class="v" id="mRiskCount">0</div></div>
+      </div>
 
-      <section class="panel" id="overviewSection">
-        <div class="overviewHead">
-          <div>
-            <h2 class="sectionTitle">전체 팀 총괄표</h2>
-            <p class="sectionDesc">전체 현황을 먼저 확인한 후 팀별 상세 편집으로 이동하세요.</p>
+      <!-- 팀 선택 / 업무 추가 (편집기용) -->
+      <div class="controlRow">
+        <div class="field">
+          <label for="teamSelect">팀 선택 (편집기)</label>
+          <select id="teamSelect"></select>
+        </div>
+        <div class="field">
+          <label for="newFunctionName">핵심업무 직접 추가</label>
+          <input id="newFunctionName" type="text" placeholder="예: 전력 장애 원인 분석"/>
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;">
+          <button id="addFunctionBtn" class="btn" type="button" style="white-space:nowrap">업무 추가</button>
+        </div>
+      </div>
+
+      <!-- BIA 등록 폼 (5섹션) -->
+      <div class="entryToggle">
+        <h2>BIA 등록</h2>
+        <button class="btn" id="toggleEntry" type="button">▾ 펼치기</button>
+      </div>
+      <div class="entryPanel collapsed" id="entryPanel">
+
+        <!-- ① 기본 정보 -->
+        <div class="entryCard">
+          <h3>① 기본 정보</h3>
+          <div class="formRow">
+            <label>BIA ID</label>
+            <div class="biaIdDisplay" id="newBiaId">BIA-2026-001</div>
           </div>
-          <div class="overviewFilters">
-            <div>
-              <label for="overviewTeamFilter" class="muted">부서 필터</label>
-              <select id="overviewTeamFilter"></select>
+          <div class="formRow">
+            <label for="newFnName">업무명칭</label>
+            <input id="newFnName" type="text" placeholder="예: 전력 장애 대응 업무"/>
+          </div>
+          <div class="formRow">
+            <label for="newFnTeam">소속 부서/팀</label>
+            <select id="newFnTeam"></select>
+          </div>
+          <div class="formRow">
+            <label>업무 중요도</label>
+            <div class="importanceGrid">
+              <label class="importanceCard">
+                <input type="radio" name="newImportance" value="핵심"/>
+                <span class="importanceLabel"><span class="iName">핵심</span><span class="iDesc">즉시 복구 필요</span></span>
+              </label>
+              <label class="importanceCard">
+                <input type="radio" name="newImportance" value="중요" checked/>
+                <span class="importanceLabel"><span class="iName">중요</span><span class="iDesc">단기 내 복구</span></span>
+              </label>
+              <label class="importanceCard">
+                <input type="radio" name="newImportance" value="일반"/>
+                <span class="importanceLabel"><span class="iName">일반</span><span class="iDesc">지연 허용</span></span>
+              </label>
             </div>
+          </div>
+          <div class="formRow">
+            <label for="newFnDesc">업무 설명</label>
+            <textarea id="newFnDesc" placeholder="업무 목적, 수행 범위, 주요 이해관계자 등을 기술하세요."></textarea>
+          </div>
+        </div>
+
+        <!-- ② 중단 영향 분석 -->
+        <div class="entryCard">
+          <h3>② 중단 영향 분석</h3>
+          <div class="sliderRow">
+            <div class="sliderLabel"><span>재무적 영향</span><span class="sliderValue" id="slFinancialVal">1</span></div>
+            <input type="range" id="slFinancial" min="1" max="5" step="1" value="1"/>
+            <div class="sliderTicks"><span>1 미미</span><span>2</span><span>3 보통</span><span>4</span><span>5 심각</span></div>
+          </div>
+          <div class="sliderRow">
+            <div class="sliderLabel"><span>운영적 영향</span><span class="sliderValue" id="slOperationalVal">1</span></div>
+            <input type="range" id="slOperational" min="1" max="5" step="1" value="1"/>
+            <div class="sliderTicks"><span>1 미미</span><span>2</span><span>3 보통</span><span>4</span><span>5 심각</span></div>
+          </div>
+          <div class="sliderRow">
+            <div class="sliderLabel"><span>평판/법규적 영향</span><span class="sliderValue" id="slReputationVal">1</span></div>
+            <input type="range" id="slReputation" min="1" max="5" step="1" value="1"/>
+            <div class="sliderTicks"><span>1 미미</span><span>2</span><span>3 보통</span><span>4</span><span>5 심각</span></div>
+          </div>
+          <div class="impactScoreBox">
             <div>
-              <label for="overviewSort" class="muted">정렬</label>
-              <select id="overviewSort">
-                <option value="name">가나다순</option>
-                <option value="coreDesc">핵심업무 많은 순</option>
-                <option value="importantDesc">중요업무 많은 순</option>
-                <option value="highImpactDesc">고영향 업무 많은 순</option>
-                <option value="rtoAsc">최단 RTO 짧은 순</option>
+              <div class="label">종합 영향도</div>
+              <div class="scoreNum" id="overallImpactNum">1</div>
+            </div>
+            <span class="scoreBadge low" id="overallImpactBadge">낮음</span>
+          </div>
+        </div>
+
+        <!-- ③ 복구 목표 설정 -->
+        <div class="entryCard">
+          <h3>③ 복구 목표 설정</h3>
+          <div class="formRow">
+            <label>MTPD <span style="font-weight:400;color:var(--text-3);font-size:10px">최대허용중단기간</span></label>
+            <div class="recRow">
+              <input type="number" id="newMtpdVal" min="1" step="1" placeholder="수치" class="smallInput" style="width:100%"/>
+              <select id="newMtpdUnit" class="smallSelect">
+                <option value="시간">시간</option>
+                <option value="일">일</option>
               </select>
             </div>
+            <div class="fieldHint">업무 중단 후 허용할 수 있는 최대 시간</div>
+          </div>
+          <div class="formRow">
+            <label>RTO <span style="font-weight:400;color:var(--text-3);font-size:10px">목표복구시간</span></label>
+            <div class="recRow">
+              <input type="number" id="newRtoVal" min="1" step="1" placeholder="수치" class="smallInput" style="width:100%"/>
+              <select id="newRtoUnit" class="smallSelect">
+                <option value="분">분</option>
+                <option value="시간">시간</option>
+                <option value="일">일</option>
+              </select>
+            </div>
+            <div class="fieldHint">최소 수준으로 복구할 목표 시간 (MTPD 미만)</div>
+          </div>
+          <div class="formRow">
+            <label>RPO <span style="font-weight:400;color:var(--text-3);font-size:10px">목표복구시점</span></label>
+            <div class="recRow">
+              <input type="number" id="newRpoVal" min="1" step="1" placeholder="수치" class="smallInput" style="width:100%"/>
+              <select id="newRpoUnit" class="smallSelect">
+                <option value="분">분</option>
+                <option value="시간">시간</option>
+              </select>
+            </div>
+            <div class="fieldHint">데이터 복구 기준점 — 이 시점 이후 데이터는 유실 허용</div>
+          </div>
+          <div class="formRow">
+            <label>
+              MBCO <span style="font-weight:400;color:var(--text-3);font-size:10px">최소업무연속성수준</span>
+              &nbsp;<span id="mbcoVal" style="font-size:13px;font-weight:700;font-family:monospace;color:var(--text)">50%</span>
+            </label>
+            <input type="range" id="newMbco" min="0" max="100" step="5" value="50"/>
+            <div class="fieldHint">중단 상황에서 유지해야 할 최소 업무 수행 수준</div>
+          </div>
+          <div id="rtoMtpdWarn" style="display:none;padding:7px 10px;background:rgba(245,158,11,.1);border:0.5px solid rgba(245,158,11,.35);border-radius:var(--r-sm);font-size:11px;color:#b45309;margin-top:8px;">
+            ⚠ RTO는 MTPD보다 짧아야 합니다.
+          </div>
+        </div>
+
+        <!-- ④ 소요자원 분석 (full width) -->
+        <div class="entryCard full">
+          <h3>④ 소요자원 분석 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--text-3)">ISO 22301 §8.3.4 — 체크 후 수량/대체수단 입력</span></h3>
+          <div class="resourceAnalysisGrid" id="resourceAnalysisMount"></div>
+        </div>
+
+        <!-- ⑤ 연관 리스크 + 액션 (full width) -->
+        <div class="entryCard full">
+          <h3>⑤ 연관 리스크</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div>
-              <label for="overviewSearch" class="muted">검색</label>
-              <input id="overviewSearch" class="smallInput" type="text" placeholder="팀명 검색"/>
+              <div class="formRow" style="margin-bottom:0">
+                <label>자동 매칭 리스크 (소요자원 기준)</label>
+                <div class="relatedRisksList" id="autoRisksList">
+                  <div class="relatedRiskEmpty">④에서 소요자원을 선택하면 관련 리스크가 표시됩니다.</div>
+                </div>
+              </div>
             </div>
-            <div class="quickFilters" id="overviewQuickFilters">
-              <button class="quickChip active" type="button" data-quick="all">전체</button>
-              <button class="quickChip" type="button" data-quick="important">중요업무 있는 팀</button>
-              <button class="quickChip" type="button" data-quick="high">고영향 팀</button>
+            <div>
+              <div class="formRow">
+                <label for="newRelatedManual">직접 입력 (리스크 ID·명칭)</label>
+                <textarea id="newRelatedManual" placeholder="예: R-2026-001, 외부 전력 공급 중단" style="min-height:70px;"></textarea>
+              </div>
             </div>
           </div>
-        </div>
-        <div id="overviewTableMount" class="overviewTableWrap"></div>
-      </section>
-
-      <section class="panel editSection" id="detailEditor">
-        <h2 class="sectionTitle">팀별 BIA 상세 편집</h2>
-        <p class="sectionDesc">총괄표에서 팀을 선택하면 아래 편집 영역과 동기화됩니다.</p>
-        <div class="editWorkspace">
-          <div class="editorMain">
-            <div class="row">
-              <div>
-                <label for="teamSelect">팀 선택</label>
-                <select id="teamSelect"></select>
-              </div>
-              <div>
-                <label for="newFunctionName">핵심업무 추가</label>
-                <input id="newFunctionName" type="text" placeholder="예: 전력 장애 원인 분석"/>
-              </div>
-              <button id="addFunctionBtn" class="btn" type="button">업무 추가</button>
-            </div>
-
-            <div class="summaryGrid">
-              <article class="metric"><div class="k">선택 팀</div><div class="v" id="teamMetric">-</div></article>
-              <article class="metric"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></article>
-              <article class="metric"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></article>
-              <article class="metric"><div class="k">최단 MTPD / 최단 RTO</div><div class="v" id="timeMetric">-</div></article>
-            </div>
-
-            <div id="tableMount" class="tableWrap"></div>
-            <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
-              <button id="saveBtn" class="btn primary" type="button">저장</button>
-              <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
-            </div>
+          <div class="entryActions">
+            <button type="button" class="btn" id="clearEntryBtn">초기화</button>
+            <button type="button" class="btn primary" id="addEntryBtn">BIA 등록</button>
           </div>
-          <aside class="summaryAside">
-            <div id="stickySummaryMount"></div>
-          </aside>
         </div>
-      </section>
+
+      </div><!-- /entryPanel -->
+
+      <!-- 탭 내비게이션 -->
+      <div class="tabNav" id="biaTabNav">
+        <button class="tabBtn active" id="tabBtnBiaList" type="button">BIA 목록</button>
+        <button class="tabBtn" id="tabBtnResources" type="button">소요자원 현황</button>
+      </div>
+
+      <!-- 탭 1: BIA 목록 -->
+      <div class="tableSection tabPane" id="tabPaneBiaList" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+        <div class="sectionHeader">
+          <h2>BIA 목록</h2>
+          <span style="font-size:12px;color:var(--text-2)">bcmsBIAData 연동</span>
+        </div>
+        <div id="biaListMount" class="tableWrap"></div>
+      </div>
+
+      <!-- 탭 2: 소요자원 현황 -->
+      <div class="tableSection tabPane hidden" id="tabPaneResources" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+        <div class="sectionHeader">
+          <h2>소요자원 현황</h2>
+        </div>
+        <div id="resourceSummaryMount"></div>
+      </div>
+
+      <!-- 팀별 BIA 상세 편집 (접힘) -->
+      <div class="teamEditorSection">
+        <div class="sectionHeader">
+          <h2>팀별 BIA 상세 편집 <span style="font-weight:400;color:var(--text-2);font-size:12px;margin-left:6px">· 시간경과 영향평가</span></h2>
+          <button class="btn" type="button" id="teamEditorToggle">▾ 펼치기</button>
+        </div>
+        <div class="teamEditorBody collapsed" id="teamEditorBody">
+          <div class="summaryStrip">
+            <div class="sumStat"><div class="k">선택 팀</div><div class="v" id="teamMetric" style="font-size:15px;margin-top:8px">-</div></div>
+            <div class="sumStat"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></div>
+            <div class="sumStat"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></div>
+            <div class="sumStat"><div class="k">최단 MTPD/RTO</div><div class="v" id="timeMetric" style="font-size:14px;margin-top:10px">-</div></div>
+          </div>
+          <div id="tableMount" class="tableWrap"></div>
+          <div class="actions">
+            <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
+            <button id="saveBtn" class="btn primary" type="button">저장</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 
-
-
-  <div class="quickModal" id="quickViewModal" aria-hidden="true">
-    <div class="quickModalBackdrop" data-quick-close></div>
-    <section class="quickModalDialog" role="dialog" aria-modal="true" aria-labelledby="quickViewTitle">
-      <header class="quickModalHead">
-        <div id="quickViewHead"></div>
-        <button class="btn quickModalClose" type="button" data-quick-close>닫기</button>
-      </header>
-      <div class="quickModalBody" id="quickViewBody"></div>
-      <footer class="quickModalFoot">
-        <button class="btn quickFooterBtnPrimary" type="button" id="quickViewEditBtn">상세 편집으로 이동</button>
-        <button class="btn quickFooterBtnNeutral" type="button" data-quick-close>닫기</button>
-      </footer>
-    </section>
-  </div>
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
   <script src="../assets/demo-seed.js"></script>
-
   <script>
-    (() => {
-      if (window.BCMSDemoSeed) {
-        window.BCMSDemoSeed.ensureDemoIfEmpty();
-        window.BCMSDemoSeed.mountBanner('.wrap');
+  (() => {
+    /* ── Theme ── */
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('bcmsTheme') || 'light';
+    root.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    themeToggle.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('bcmsTheme', next);
+    });
+
+    /* ── Constants ── */
+    const CORE_KEY = (window.DataStore && DataStore.KEY_CORE_FUNCTIONS) || 'bcmsCoreFunctions';
+    const BIA_KEY  = (window.DataStore && DataStore.KEY_BIA_DATA)       || 'bcmsBIAData';
+    const ORG_KEY  = (window.DataStore && DataStore.KEY_ORG_REGISTRY)   || 'bcms_org_registry_v1';
+    const RISK_LIST_KEY = 'bcmsRiskList';
+
+    const RESOURCE_OPTIONS = ['인원','시설·작업장','기술·IT','정보·문서','공급망·외주','유틸리티','설비·장비','자금'];
+    const RESOURCE_ICONS   = { '인원':'👤','시설·작업장':'🏢','기술·IT':'💻','정보·문서':'📋','공급망·외주':'🔗','유틸리티':'⚡','설비·장비':'🔧','자금':'💰' };
+
+    const TIME_IMPACT_META = [
+      { key:'immediate', label:'즉시',  minutes:0    },
+      { key:'min30',     label:'30분',  minutes:30   },
+      { key:'hour1',     label:'1시간', minutes:60   },
+      { key:'hour4',     label:'4시간', minutes:240  },
+      { key:'day1',      label:'1일',   minutes:1440 },
+      { key:'week1',     label:'1주일', minutes:10080}
+    ];
+    const TIME_KEYS = TIME_IMPACT_META.map(t => t.key);
+    const impactLabels = { 1:'매우낮음', 2:'낮음', 3:'보통', 4:'높음', 5:'매우높음' };
+
+    /* ── Helpers ── */
+    const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
+      get: (k, f) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : f; } catch { return f; } },
+      set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+    };
+    const readRiskList = () => { try { return JSON.parse(localStorage.getItem(RISK_LIST_KEY) || '[]'); } catch { return []; } };
+    const uniq    = arr => [...new Set((arr || []).filter(Boolean))];
+    const clamp   = (v, a, b) => Math.min(b, Math.max(a, v));
+    const escHtml = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    const scoreBand = score => {
+      if (score <= 2) return { text:'낮음', cls:'low' };
+      if (score <= 3) return { text:'보통', cls:'mid' };
+      return { text:'높음', cls:'high' };
+    };
+
+    const toDurationText = mins => {
+      if (mins === null || mins === undefined) return '-';
+      if (mins >= 1440 && mins % 1440 === 0) return `${mins/1440}일`;
+      if (mins >= 60   && mins % 60   === 0) return `${mins/60}시간`;
+      return `${mins}분`;
+    };
+
+    const rtoToMinutes = (val, unit) => {
+      const n = Number(val);
+      if (!Number.isFinite(n) || n <= 0) return null;
+      if (unit === '일')   return n * 1440;
+      if (unit === '시간') return n * 60;
+      return n;
+    };
+
+    const parseRtoString = rtoRaw => {
+      const s = String(rtoRaw || '').trim();
+      if (!s) return { value:'', unit:'분' };
+      const n = Number((s.match(/[0-9]+(?:\.[0-9]+)?/) || [])[0] || '');
+      if (!Number.isFinite(n)) return { value:'', unit:'분' };
+      if (s.includes('일'))   return { value:n, unit:'일' };
+      if (s.includes('시간')) return { value:n, unit:'시간' };
+      return { value:n, unit:'분' };
+    };
+
+    const normalizeMonotonicTimeImpact = ti => {
+      const out = {}; let prev = 1;
+      for (const key of TIME_KEYS) {
+        const now = clamp(Number(ti?.[key] || 1), 1, 5);
+        const fixed = Math.max(prev, now);
+        out[key] = fixed; prev = fixed;
       }
+      return out;
+    };
 
-      const CORE_KEY = (window.DataStore && DataStore.KEY_CORE_FUNCTIONS) || 'bcmsCoreFunctions';
-      const BIA_KEY = (window.DataStore && DataStore.KEY_BIA_DATA) || 'bcmsBIAData';
-      const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+    const enforceMonotonicFrom = (ti, startIdx = 0) => {
+      const out = { ...ti };
+      if (startIdx > 0) {
+        const pk = TIME_KEYS[startIdx - 1];
+        out[TIME_KEYS[startIdx]] = Math.max(clamp(Number(out[TIME_KEYS[startIdx]] || 1), 1, 5), clamp(Number(out[pk] || 1), 1, 5));
+      }
+      for (let i = startIdx + 1; i < TIME_KEYS.length; i++) {
+        const cur = clamp(Number(out[TIME_KEYS[i]]   || 1), 1, 5);
+        const prv = clamp(Number(out[TIME_KEYS[i-1]] || 1), 1, 5);
+        out[TIME_KEYS[i]] = Math.max(cur, prv);
+      }
+      return out;
+    };
 
-      const RESOURCE_OPTIONS = ['인력','시스템','데이터','설비','유틸리티','협력업체'];
+    const calcMtpd = ti => {
+      for (const t of TIME_IMPACT_META) {
+        if (Number(ti?.[t.key] || 1) >= 4) return { text:t.label, minutes:t.minutes };
+      }
+      return { text:'장기 허용', minutes:null };
+    };
 
-      const TIME_IMPACT_META = [
-        { key:'immediate', label:'즉시', minutes:0, text:'즉시' },
-        { key:'min30', label:'30분', minutes:30, text:'30분' },
-        { key:'hour1', label:'1시간', minutes:60, text:'1시간' },
-        { key:'hour4', label:'4시간', minutes:240, text:'4시간' },
-        { key:'day1', label:'1일', minutes:1440, text:'1일' },
-        { key:'week1', label:'1주일', minutes:10080, text:'1주일' }
-      ];
-      const TIME_KEYS = TIME_IMPACT_META.map(t => t.key);
+    const calcGrade = fn => {
+      const mtpd = calcMtpd(fn.timeImpact || {});
+      const impact = Number(fn.overallImpact || 3);
+      const important = fn.importance === '중요' || fn.importance === '핵심';
+      if (important && (impact >= 4 || (mtpd.minutes !== null && mtpd.minutes <= 240))) return '핵심';
+      if (important && mtpd.minutes !== null && mtpd.minutes <= 1440) return '주요';
+      return '일반';
+    };
 
-      const impactLabels = {
-        1:'매우 낮음',
-        2:'낮음',
-        3:'보통',
-        4:'높음',
-        5:'매우 높음'
+    const makeDefaultTimeImpact = impact => ({
+      immediate: Math.max(1, impact - 2), min30: Math.max(1, impact - 1),
+      hour1: impact, hour4: impact,
+      day1: Math.min(5, impact + 1), week1: Math.min(5, impact + 1)
+    });
+
+    const normalizeFunction = raw => {
+      const name = String(raw.name || raw.function || '').trim();
+      const impact = clamp(Number(raw.impact || raw.overallImpact || 3), 1, 5);
+      const parsedRto = raw.rtoValue !== undefined ? { value:raw.rtoValue, unit:raw.rtoUnit || '분' } : parseRtoString(raw.rto);
+      const tiRaw = raw.timeImpact || {};
+      const defaults = makeDefaultTimeImpact(impact);
+      const tiSeed = {};
+      for (const t of TIME_IMPACT_META) tiSeed[t.key] = clamp(Number(tiRaw[t.key] || defaults[t.key]), 1, 5);
+      const timeImpact = normalizeMonotonicTimeImpact(tiSeed);
+      const mtpd = calcMtpd(timeImpact);
+      const fn = {
+        id: String(raw.id || raw.biaId || '').trim(),
+        biaId: String(raw.biaId || raw.id || '').trim(),
+        functionId: String(raw.functionId || '').trim(),
+        teamId: String(raw.teamId || '').trim(),
+        name,
+        importance: raw.importance || '일반',
+        overallImpact: impact, impact,
+        timeImpact,
+        mtpd: mtpd.text, mtpdMinutes: mtpd.minutes,
+        rtoValue: parsedRto.value === '' ? '' : Number(parsedRto.value),
+        rtoUnit: parsedRto.unit || '분',
+        rto: parsedRto.value === '' ? '' : `${parsedRto.value}${parsedRto.unit}`,
+        rtoReason: String(raw.rtoReason || ''),
+        grade: raw.grade || '일반', coreFinal: !!raw.coreFinal,
+        requiredResources: Array.isArray(raw.requiredResources) ? raw.requiredResources : [],
+        description:      String(raw.description      || ''),
+        financialImpact:  Number(raw.financialImpact  || impact),
+        operationalImpact:Number(raw.operationalImpact|| impact),
+        reputationalImpact:Number(raw.reputationalImpact|| impact),
+        rpoValue: raw.rpoValue || '', rpoUnit: raw.rpoUnit || '분',
+        mbco: raw.mbco != null ? Number(raw.mbco) : null,
+        resourceDetails: raw.resourceDetails || {},
+        relatedRisks: Array.isArray(raw.relatedRisks) ? raw.relatedRisks : []
       };
+      fn.grade = calcGrade(fn);
+      fn.coreFinal = fn.grade !== '일반';
+      return fn;
+    };
 
-      const store = (window.DataStore && DataStore.get && DataStore.set)
-        ? DataStore
-        : {
-            get: (k, fallback) => {
-              try{
-                const raw = localStorage.getItem(k);
-                return raw ? JSON.parse(raw) : fallback;
-              }catch{
-                return fallback;
-              }
-            },
-            set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
-          };
+    const recalcFunction = fn => {
+      fn.overallImpact = clamp(Number(fn.overallImpact || 3), 1, 5);
+      fn.impact = fn.overallImpact;
+      fn.timeImpact = normalizeMonotonicTimeImpact(fn.timeImpact || {});
+      const mtpd = calcMtpd(fn.timeImpact);
+      fn.mtpd = mtpd.text; fn.mtpdMinutes = mtpd.minutes;
+      fn.rto = (fn.rtoValue || fn.rtoValue === 0) && fn.rtoValue !== '' ? `${fn.rtoValue}${fn.rtoUnit || '분'}` : '';
+      fn.grade = calcGrade(fn); fn.coreFinal = fn.grade !== '일반';
+    };
 
-      const teamSelect = document.getElementById('teamSelect');
-      const overviewTeamFilter = document.getElementById('overviewTeamFilter');
-      const overviewSort = document.getElementById('overviewSort');
-      const overviewSearch = document.getElementById('overviewSearch');
-      const overviewQuickFilters = document.getElementById('overviewQuickFilters');
-      const overviewTableMount = document.getElementById('overviewTableMount');
-      const globalKpi = document.getElementById('globalKpi');
-      const detailEditor = document.getElementById('detailEditor');
-      const newFunctionName = document.getElementById('newFunctionName');
-      const addFunctionBtn = document.getElementById('addFunctionBtn');
-      const tableMount = document.getElementById('tableMount');
-      const saveBtn = document.getElementById('saveBtn');
-      const resetBtn = document.getElementById('resetBtn');
-      const stickySummaryMount = document.getElementById('stickySummaryMount');
-      const overviewSection = document.getElementById('overviewSection');
-      const quickViewModal = document.getElementById('quickViewModal');
-      const quickViewHead = document.getElementById('quickViewHead');
-      const quickViewBody = document.getElementById('quickViewBody');
-      const quickViewEditBtn = document.getElementById('quickViewEditBtn');
-      const teamMetric = document.getElementById('teamMetric');
-      const countMetric = document.getElementById('countMetric');
-      const importantMetric = document.getElementById('importantMetric');
-      const timeMetric = document.getElementById('timeMetric');
+    const getRtoWarnText = fn => {
+      const rtoMin = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
+      if (rtoMin === null || fn.mtpdMinutes === null) return '';
+      return rtoMin >= fn.mtpdMinutes ? 'RTO는 MTPD보다 짧아야 합니다.' : '';
+    };
 
-      const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
-      const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => (
-        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
-      ));
+    /* ── Data load/save ── */
+    const loadCoreFunctions = () => {
+      if (window.DataStore && DataStore.getAllCoreFunctions) {
+        const byTeam = new Map();
+        DataStore.getAllCoreFunctions().forEach(row => {
+          const team = String(row.teamName || row.team || '').trim();
+          const fn   = String(row.name || row.functionName || row.coreFunction || '').trim();
+          if (!team || !fn) return;
+          if (!byTeam.has(team)) byTeam.set(team, []);
+          byTeam.get(team).push(fn);
+        });
+        return [...byTeam.entries()].map(([team, functions]) => ({ team, functions: uniq(functions) }));
+      }
+      const raw = store.get(CORE_KEY, []);
+      return (Array.isArray(raw) ? raw : [])
+        .map(row => ({
+          team: String(row.team || row.teamName || '').trim(),
+          functions: uniq((row.functions || []).map(f => typeof f === 'string' ? f : (f?.name || f?.functionName || '')).filter(Boolean))
+        }))
+        .filter(row => row.team);
+    };
 
-      const parseRtoString = (rtoRaw) => {
-        const s = String(rtoRaw || '').trim();
-        if (!s) return { value:'', unit:'분' };
+    const loadOrgTeams = () => {
+      if (window.DataStore && DataStore.getAllTeams)
+        return uniq(DataStore.getAllTeams().map(t => t.name).filter(Boolean));
+      const org = store.get(ORG_KEY, { divisions: [] });
+      return uniq((org.divisions || []).flatMap(d => (d.teams || []).map(t => t.name)).filter(Boolean));
+    };
 
-        const n = Number((s.match(/[0-9]+(?:\.[0-9]+)?/) || [])[0] || '');
-        if (!Number.isFinite(n)) return { value:'', unit:'분' };
+    const loadBiaData = () => {
+      if (window.DataStore && DataStore.readBiaRecords) {
+        const byTeam = new Map();
+        DataStore.readBiaRecords().forEach(record => {
+          const team = String(record.teamName || record.team || '').trim();
+          if (!team) return;
+          if (!byTeam.has(team)) byTeam.set(team, []);
+          byTeam.get(team).push(normalizeFunction({
+            id: record.id, biaId: record.biaId || record.id, functionId: record.functionId,
+            name: record.functionName || record.name,
+            importance: record.importance, overallImpact: record.overallImpact,
+            timeImpact: record.timeImpact, rtoValue: record.rtoValue, rtoUnit: record.rtoUnit,
+            grade: record.grade, requiredResources: record.requiredResources,
+            description: record.description, financialImpact: record.financialImpact,
+            operationalImpact: record.operationalImpact, reputationalImpact: record.reputationalImpact,
+            rpoValue: record.rpoValue, rpoUnit: record.rpoUnit, mbco: record.mbco,
+            resourceDetails: record.resourceDetails, relatedRisks: record.relatedRisks
+          }));
+        });
+        return [...byTeam.entries()].map(([team, functions]) => ({ team, functions }));
+      }
+      const raw  = store.get(BIA_KEY, []);
+      const rows = Array.isArray(raw) ? raw : (raw && (raw.team || raw.teamName) ? [raw] : []);
+      return rows.map(row => ({
+        team: String(row.team || row.teamName || '').trim(),
+        functions: (row.functions || []).map(normalizeFunction).filter(f => f.name)
+      })).filter(row => row.team);
+    };
 
-        if (s.includes('일')) return { value:n, unit:'일' };
-        if (s.includes('시간')) return { value:n, unit:'시간' };
-        return { value:n, unit:'분' };
-      };
-
-      const rtoToMinutes = (val, unit) => {
-        const n = Number(val);
-        if (!Number.isFinite(n) || n <= 0) return null;
-        if (unit === '일') return n * 1440;
-        if (unit === '시간') return n * 60;
-        return n;
-      };
-
-      const toDurationText = (mins) => {
-        if (mins === null || mins === undefined) return '-';
-        if (mins >= 1440 && mins % 1440 === 0) return `${mins / 1440}일`;
-        if (mins >= 60 && mins % 60 === 0) return `${mins / 60}시간`;
-        return `${mins}분`;
-      };
-
-      const normalizeMonotonicTimeImpact = (timeImpact) => {
-        const out = {};
-        let prev = 1;
-        for (const key of TIME_KEYS) {
-          const now = clamp(Number(timeImpact?.[key] || 1), 1, 5);
-          const fixed = Math.max(prev, now);
-          out[key] = fixed;
-          prev = fixed;
-        }
-        return out;
-      };
-
-      const enforceMonotonicFrom = (timeImpact, startIdx = 0) => {
-        const out = { ...timeImpact };
-        const begin = Math.max(0, startIdx);
-
-        if (begin > 0) {
-          const prevKey = TIME_KEYS[begin - 1];
-          out[TIME_KEYS[begin]] = Math.max(
-            clamp(Number(out[TIME_KEYS[begin]] || 1), 1, 5),
-            clamp(Number(out[prevKey] || 1), 1, 5)
-          );
-        }
-
-        for (let i = begin + 1; i < TIME_KEYS.length; i++) {
-          const curKey = TIME_KEYS[i];
-          const prevKey = TIME_KEYS[i - 1];
-          const cur = clamp(Number(out[curKey] || 1), 1, 5);
-          const prev = clamp(Number(out[prevKey] || 1), 1, 5);
-          out[curKey] = Math.max(cur, prev);
-        }
-        return out;
-      };
-
-      const calcMtpd = (timeImpact) => {
-        for (const t of TIME_IMPACT_META) {
-          const score = Number(timeImpact?.[t.key] || 1);
-          if (score >= 4) return { text:t.text, minutes:t.minutes };
-        }
-        return { text:'장기 허용', minutes:null };
-      };
-
-      const calcGrade = (fn) => {
-        const mtpd = calcMtpd(fn.timeImpact);
-        const impact = Number(fn.overallImpact || fn.impact || 3);
-        const important = fn.importance === '중요';
-
-        if (important && (impact >= 4 || (mtpd.minutes !== null && mtpd.minutes <= 240))) return '핵심';
-        if (important && (mtpd.minutes !== null && mtpd.minutes <= 1440)) return '주요';
-        return '일반';
-      };
-
-      const makeDefaultTimeImpact = (impact) => ({
-        immediate: Math.max(1, impact - 2),
-        min30: Math.max(1, impact - 1),
-        hour1: impact,
-        hour4: impact,
-        day1: Math.min(5, impact + 1),
-        week1: Math.min(5, impact + 1)
-      });
-
-      const normalizeFunction = (rawFn) => {
-        const name = String(rawFn.name || rawFn.function || '').trim();
-        const impact = clamp(Number(rawFn.impact || rawFn.overallImpact || 3), 1, 5);
-
-        const parsedRto = rawFn.rtoValue !== undefined
-          ? { value:rawFn.rtoValue, unit:rawFn.rtoUnit || '분' }
-          : parseRtoString(rawFn.rto);
-
-        const timeImpactRaw = rawFn.timeImpact || {};
-        const defaults = makeDefaultTimeImpact(impact);
-        const timeImpactSeed = {};
-
-        for (const t of TIME_IMPACT_META) {
-          timeImpactSeed[t.key] = clamp(Number(timeImpactRaw[t.key] || defaults[t.key]), 1, 5);
-        }
-
-        const timeImpact = normalizeMonotonicTimeImpact(timeImpactSeed);
-        const mtpd = calcMtpd(timeImpact);
-
-        const fn = {
-          id: String(rawFn.id || rawFn.biaId || '').trim(),
-          functionId: String(rawFn.functionId || '').trim(),
-          teamId: String(rawFn.teamId || '').trim(),
-          serviceName: String(rawFn.serviceName || rawFn.service || '').trim(),
-          name,
-          importance: rawFn.importance || (rawFn.coreFinal ? '중요' : '일반'),
-          overallImpact: impact,
-          impact,
-          timeImpact,
-          mtpd: mtpd.text,
-          mtpdMinutes: mtpd.minutes,
-          rtoValue: parsedRto.value === '' ? '' : Number(parsedRto.value),
-          rtoUnit: parsedRto.unit || '분',
-          rto: parsedRto.value === '' ? '' : `${parsedRto.value}${parsedRto.unit}`,
-          rtoReason: String(rawFn.rtoReason || rawFn.rtoBasis || ''),
-          grade: rawFn.grade || '일반',
-          coreFinal: !!rawFn.coreFinal,
-          requiredResources: Array.isArray(rawFn.requiredResources)
-            ? rawFn.requiredResources.filter((r) => RESOURCE_OPTIONS.includes(r))
-            : []
-        };
-
-        fn.grade = calcGrade(fn);
-        fn.coreFinal = fn.grade !== '일반';
-        return fn;
-      };
-
-      const loadCoreFunctions = () => {
-        if (window.DataStore && DataStore.getAllCoreFunctions) {
-          const rows = DataStore.getAllCoreFunctions();
-          const byTeam = new Map();
-          rows.forEach((row) => {
-            const team = String(row.teamName || row.team || '').trim();
-            const fnName = String(row.name || row.functionName || row.coreFunction || '').trim();
-            if (!team || !fnName) return;
-            if (!byTeam.has(team)) byTeam.set(team, []);
-            byTeam.get(team).push(fnName);
-          });
-          return [...byTeam.entries()].map(([team, functions]) => ({ team, functions: uniq(functions) }));
-        }
-        const raw = store.get(CORE_KEY, []);
-        const rows = Array.isArray(raw) ? raw : [];
-        return rows
-          .map((row) => ({
-            team: String(row.team || row.teamName || '').trim(),
-            functions: uniq((row.functions || []).map((f) => typeof f === 'string' ? f : (f?.name || f?.functionName || f?.coreFunction)).filter(Boolean))
-          }))
-          .filter((row) => row.team);
-      };
-
-      const loadOrgTeams = () => {
-        if (window.DataStore && DataStore.getAllTeams) {
-          return uniq(DataStore.getAllTeams().map((team) => team.name).filter(Boolean));
-        }
-        const org = store.get(ORG_KEY, { divisions: [] });
-        return uniq(
-          (org.divisions || [])
-            .flatMap((d) => (d.teams || []).map((t) => t.name))
-            .filter(Boolean)
-        );
-      };
-
-      const loadBiaData = () => {
-        if (window.DataStore && DataStore.readBiaRecords) {
-          const records = DataStore.readBiaRecords();
-          const byTeam = new Map();
-          records.forEach((record) => {
-            const team = String(record.teamName || record.team || '').trim();
-            if (!team) return;
-            if (!byTeam.has(team)) byTeam.set(team, []);
-            byTeam.get(team).push(normalizeFunction({
-              id: record.id,
-              functionId: record.functionId,
-              serviceName: record.serviceName,
-              name: record.functionName || record.name,
-              importance: record.importance,
-              overallImpact: record.overallImpact,
-              impact: record.overallImpact,
-              timeImpact: record.timeImpact,
-              mtpdMinutes: record.mtpdMinutes,
-              rtoValue: record.rtoValue,
-              rtoUnit: record.rtoUnit,
-              grade: record.grade,
-              requiredResources: record.requiredResources
+    const saveBiaData = rows => {
+      if (window.DataStore && DataStore.writeBiaRecords && DataStore.normalizeBiaRecord) {
+        const canonical = [];
+        (rows || []).forEach(row => {
+          (row.functions || []).forEach((fn, idx) => {
+            canonical.push(DataStore.normalizeBiaRecord({
+              id: fn.id, biaId: fn.biaId, teamId: fn.teamId,
+              teamName: row.team, functionId: fn.functionId,
+              functionName: fn.name, importance: fn.importance,
+              overallImpact: fn.overallImpact, timeImpact: fn.timeImpact,
+              mtpdMinutes: fn.mtpdMinutes, rtoValue: fn.rtoValue === '' ? null : fn.rtoValue,
+              rtoUnit: fn.rtoUnit || '분', grade: fn.grade,
+              requiredResources: fn.requiredResources,
+              description: fn.description, financialImpact: fn.financialImpact,
+              operationalImpact: fn.operationalImpact, reputationalImpact: fn.reputationalImpact,
+              rpoValue: fn.rpoValue, rpoUnit: fn.rpoUnit, mbco: fn.mbco,
+              resourceDetails: fn.resourceDetails, relatedRisks: fn.relatedRisks,
+              sourceRefId: fn.id || `${row.team}-${fn.name}-${idx}`
             }));
           });
-          return [...byTeam.entries()].map(([team, functions]) => ({ team, functions })).filter((row) => row.team);
-        }
+        });
+        DataStore.writeBiaRecords(canonical);
+        if (DataStore.syncRiskWithBia) DataStore.syncRiskWithBia(canonical);
+        return;
+      }
+      store.set(BIA_KEY, rows);
+    };
 
-        const raw = store.get(BIA_KEY, []);
-        const rows = Array.isArray(raw) ? raw : (raw && (raw.team || raw.teamName) ? [raw] : []);
-        return rows
-          .map((row) => ({
-            team: String(row.team || row.teamName || '').trim(),
-            functions: (row.functions || []).map(normalizeFunction).filter((f) => f.name)
-          }))
-          .filter((row) => row.team);
-      };
+    const ensureTeamRecord = (team) => {
+      let found = biaRows.find(r => r.team === team);
+      const coreFns = coreMap.get(team) || [];
+      if (!found) {
+        found = { team, functions: coreFns.map(name => normalizeFunction({ name })) };
+        biaRows.push(found); return found;
+      }
+      const byName = new Map((found.functions || []).map(fn => [fn.name, normalizeFunction(fn)]));
+      found.functions = uniq([...coreFns, ...(found.functions || []).map(f => f.name)])
+        .map(name => byName.get(name) || normalizeFunction({ name }));
+      return found;
+    };
 
-      const saveBiaData = (rows) => {
-        if (window.DataStore && DataStore.writeBiaRecords && DataStore.syncRiskWithBia) {
-          const canonical = [];
-          (rows || []).forEach((row) => {
-            const teamName = String(row.team || '').trim();
-            (row.functions || []).forEach((fn, idx) => {
-              canonical.push(DataStore.normalizeBiaRecord({
-                id: fn.id,
-                teamId: fn.teamId,
-                teamName,
-                functionId: fn.functionId,
-                functionName: fn.name,
-                serviceName: fn.serviceName || '',
-                importance: fn.importance,
-                overallImpact: fn.overallImpact,
-                timeImpact: fn.timeImpact,
-                mtpdMinutes: fn.mtpdMinutes,
-                rtoValue: fn.rtoValue === '' ? null : fn.rtoValue,
-                rtoUnit: fn.rtoUnit || '분',
-                grade: fn.grade,
-                requiredResources: fn.requiredResources,
-                sourceRefId: fn.id || `${teamName}-${fn.name}-${idx}`
-              }));
-            });
-          });
-          DataStore.writeBiaRecords(canonical);
-          DataStore.syncRiskWithBia(canonical);
-          return;
-        }
-        store.set(BIA_KEY, rows);
-      };
+    /* ── State ── */
+    const coreRows = loadCoreFunctions();
+    const orgTeams = loadOrgTeams();
+    let biaRows = loadBiaData();
+    const allTeams = uniq([
+      ...coreRows.map(r => r.team), ...orgTeams,
+      ...biaRows.map(r => r.team)
+    ].filter(Boolean));
+    const coreMap = new Map();
+    coreRows.forEach(row => {
+      const t = String(row.team || '').trim();
+      if (!t) return;
+      coreMap.set(t, uniq((coreMap.get(t) || []).concat(row.functions || [])));
+    });
+    biaRows.forEach(row => {
+      const t = String(row.team || '').trim();
+      if (!t) return;
+      const names = (row.functions || []).map(fn => String(fn.name || '').trim()).filter(Boolean);
+      coreMap.set(t, uniq((coreMap.get(t) || []).concat(names)));
+    });
 
-      const coreRows = loadCoreFunctions();
-      const orgTeams = loadOrgTeams();
-      const allTeams = uniq([...coreRows.map((r) => r.team), ...orgTeams]);
-      const coreMap = new Map(coreRows.map((r) => [r.team, r.functions]));
-      let biaRows = loadBiaData();
+    const opened = new Set();
+    const scoreGuideOpened = new Set();
+    let dirtyState = false;
+    let panelOpen  = false;
 
-      const ensureTeamRecord = (team, coreMap, rows) => {
-        let found = rows.find((r) => r.team === team);
-        const coreFns = coreMap.get(team) || [];
+    /* ── DOM refs ── */
+    const teamSelect      = document.getElementById('teamSelect');
+    const newFunctionName = document.getElementById('newFunctionName');
+    const addFunctionBtn  = document.getElementById('addFunctionBtn');
+    const tableMount      = document.getElementById('tableMount');
+    const saveBtn         = document.getElementById('saveBtn');
+    const resetBtn        = document.getElementById('resetBtn');
+    const teamMetric      = document.getElementById('teamMetric');
+    const countMetric     = document.getElementById('countMetric');
+    const importantMetric = document.getElementById('importantMetric');
+    const timeMetric      = document.getElementById('timeMetric');
+    const biaListMount    = document.getElementById('biaListMount');
+    const resMount        = document.getElementById('resourceSummaryMount');
+    const entryPanel      = document.getElementById('entryPanel');
+    const toggleEntry     = document.getElementById('toggleEntry');
+    const newFnTeam       = document.getElementById('newFnTeam');
 
-        if (!found) {
-          found = {
-            team,
-            functions: coreFns.map((name) => normalizeFunction({ name }))
-          };
-          rows.push(found);
-          return found;
-        }
+    /* ── Populate selects ── */
+    const teamOptions = allTeams.length
+      ? allTeams.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('')
+      : '<option value="">등록된 팀이 없습니다</option>';
+    teamSelect.innerHTML  = teamOptions;
+    newFnTeam.innerHTML   = teamOptions;
 
-        const byName = new Map((found.functions || []).map((fn) => [fn.name, normalizeFunction(fn)]));
-        found.functions = uniq([
-          ...(coreFns || []),
-          ...(found.functions || []).map((f) => f.name)
-        ]).map((name) => byName.get(name) || normalizeFunction({ name }));
+    /* ── BIA ID generator ── */
+    const genBiaId = (() => {
+      let seq = 1 + biaRows.reduce((acc, r) => acc + (r.functions || []).length, 0);
+      return () => `BIA-${new Date().getFullYear()}-${String(seq++).padStart(3,'0')}`;
+    })();
+    document.getElementById('newBiaId').textContent = genBiaId();
 
-        return found;
-      };
+    /* ── Entry panel toggle ── */
+    toggleEntry.addEventListener('click', () => {
+      panelOpen = !panelOpen;
+      entryPanel.classList.toggle('collapsed', !panelOpen);
+      toggleEntry.textContent = panelOpen ? '▴ 접기' : '▾ 펼치기';
+    });
 
-      const getRtoWarnText = (fn) => {
-        const rtoMin = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
-        if (rtoMin === null || fn.mtpdMinutes === null) return '';
-        if (rtoMin >= fn.mtpdMinutes) {
-          return 'RTO는 MTPD보다 짧아야 합니다. 복구목표시간이 최대허용중단시간을 초과합니다.';
-        }
-        return '';
-      };
+    /* ── Team editor toggle ── */
+    const teamEditorBody   = document.getElementById('teamEditorBody');
+    const teamEditorToggle = document.getElementById('teamEditorToggle');
+    let editorOpen = false;
+    teamEditorToggle.addEventListener('click', () => {
+      editorOpen = !editorOpen;
+      teamEditorBody.classList.toggle('collapsed', !editorOpen);
+      teamEditorToggle.textContent = editorOpen ? '▴ 접기' : '▾ 펼치기';
+      if (editorOpen) renderTeamEditor();
+    });
 
-      const coreRows = loadCoreFunctions();
-      const orgTeams = loadOrgTeams();
-      let biaRows = loadBiaData();
-      const allTeams = uniq([
-        ...coreRows.map((r) => String(r.team || '').trim()),
-        ...orgTeams.map((t) => String(t || '').trim()),
-        ...biaRows.map((r) => String(r.team || '').trim())
-      ].filter(Boolean));
-      const coreMap = new Map();
-      coreRows.forEach((row) => {
-        const team = String(row.team || '').trim();
-        if (!team) return;
-        coreMap.set(team, uniq((coreMap.get(team) || []).concat(row.functions || []).filter(Boolean)));
-      });
-      biaRows.forEach((row) => {
-        const team = String(row.team || '').trim();
-        if (!team) return;
-        const names = (row.functions || []).map((fn) => String(fn.name || '').trim()).filter(Boolean);
-        coreMap.set(team, uniq((coreMap.get(team) || []).concat(names)));
-      });
-      const opened = new Set();
-      const scoreGuideOpened = new Set();
-      const animatedCounts = new Map();
-      const activeByTeam = new Map();
-      let dirtyState = false;
-      let lastSavedAt = null;
-      let overviewQuickMode = 'all';
-      let quickViewTeam = '';
-      let quickViewPrevFocus = null;
+    /* ── Demo banner ── */
+    if (window.BCMSDemoSeed) {
+      window.BCMSDemoSeed.ensureDemoIfEmpty();
+      window.BCMSDemoSeed.mountBanner('.wrap');
+      const banner = document.querySelector('.wrap > div:first-child');
+      if (banner && banner.style.background) {
+        banner.className = 'demoBannerSmall'; banner.style.cssText = '';
+        const msg = banner.querySelector('span');
+        if (msg) msg.style.cssText = 'font-size:12px;font-weight:500;color:var(--text-2)';
+        banner.querySelectorAll('button').forEach(b => {
+          b.style.cssText = 'padding:3px 9px;border-radius:6px;border:0.5px solid var(--border-strong);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2)';
+        });
+      }
+      biaRows = loadBiaData();
+    }
 
-      teamSelect.innerHTML = allTeams.length
-        ? allTeams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('')
-        : '<option value="">등록된 팀이 없습니다</option>';
+    /* ── Impact score update ── */
+    const updateImpactScore = () => {
+      const f = Number(document.getElementById('slFinancial').value);
+      const o = Number(document.getElementById('slOperational').value);
+      const r = Number(document.getElementById('slReputation').value);
+      document.getElementById('slFinancialVal').textContent   = f;
+      document.getElementById('slOperationalVal').textContent  = o;
+      document.getElementById('slReputationVal').textContent   = r;
+      const overall = clamp(Math.round((f + o + r) / 3), 1, 5);
+      document.getElementById('overallImpactNum').textContent  = overall;
+      const band = scoreBand(overall);
+      const badge = document.getElementById('overallImpactBadge');
+      badge.textContent = band.text;
+      badge.className   = `scoreBadge ${band.cls}`;
+    };
+    document.getElementById('slFinancial').addEventListener('input', updateImpactScore);
+    document.getElementById('slOperational').addEventListener('input', updateImpactScore);
+    document.getElementById('slReputation').addEventListener('input', updateImpactScore);
 
+    /* ── MBCO update ── */
+    document.getElementById('newMbco').addEventListener('input', e => {
+      document.getElementById('mbcoVal').textContent = `${e.target.value}%`;
+    });
 
-      const toDurationText = (mins) => {
-        if (mins === null || mins === undefined) return '-';
-        if (mins >= 1440 && mins % 1440 === 0) return `${mins/1440}일`;
-        if (mins >= 60 && mins % 60 === 0) return `${mins/60}시간`;
-        return `${mins}분`;
-      };
+    /* ── RTO vs MTPD warning ── */
+    const checkRtoMtpdWarn = () => {
+      const mtpdV  = Number(document.getElementById('newMtpdVal').value);
+      const mtpdU  = document.getElementById('newMtpdUnit').value;
+      const rtoV   = Number(document.getElementById('newRtoVal').value);
+      const rtoU   = document.getElementById('newRtoUnit').value;
+      const mtpdM  = mtpdV ? (mtpdU === '일' ? mtpdV * 1440 : mtpdV * 60) : null;
+      const rtoM   = rtoToMinutes(rtoV, rtoU);
+      const warn   = document.getElementById('rtoMtpdWarn');
+      warn.style.display = (mtpdM && rtoM && rtoM >= mtpdM) ? 'block' : 'none';
+    };
+    ['newMtpdVal','newMtpdUnit','newRtoVal','newRtoUnit'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', checkRtoMtpdWarn);
+      document.getElementById(id)?.addEventListener('input',  checkRtoMtpdWarn);
+    });
 
-      const scoreGuideTemplate = () => `
-        <div class="scoreGuideInline" aria-label="영향평가 점수 기준">
-          <h3>영향평가 점수 기준</h3>
-          <div class="scoreGuideGrid">
-            <article class="scoreItem"><div class="n">1 경미함</div><ul><li>서비스 영향 거의 없음</li><li>내부 처리 가능</li><li>대외 영향 없음</li></ul></article>
-            <article class="scoreItem"><div class="n">2 작음</div><ul><li>일부 영향 있으나 대부분 수용 가능</li><li>평판/재무 영향 거의 없음</li></ul></article>
-            <article class="scoreItem"><div class="n">3 보통</div><ul><li>고객 불편 또는 민원 가능</li><li>제한적 평판 영향</li><li>감내 가능한 재무 영향</li></ul></article>
-            <article class="scoreItem"><div class="n">4 큼</div><ul><li>서비스 중단 영향이 큼</li><li>계약/법규/평판 영향 우려</li><li>복구 지연 시 수용 어려움</li></ul></article>
-            <article class="scoreItem"><div class="n">5 매우 큼</div><ul><li>핵심 서비스 지속 불가 수준</li><li>중대한 대외 영향</li><li>즉시 복구 필요 수준</li></ul></article>
+    /* ── Resource analysis cards ── */
+    const raMount = document.getElementById('resourceAnalysisMount');
+    raMount.innerHTML = RESOURCE_OPTIONS.map(r => {
+      const safeId = 'res_' + r.replace(/[·\/\s·]/g, '_');
+      return `
+        <div class="resItem" id="${safeId}">
+          <label class="resToggleLabel">
+            <input type="checkbox" data-resource="${r}"/>
+            <span class="rIcon">${RESOURCE_ICONS[r] || ''}</span>
+            <span>${r}</span>
+          </label>
+          <div class="resFields">
+            <div>
+              <div class="resFieldLabel">필요 수량/내용</div>
+              <input type="text" placeholder="예: 5명, 서버실 접근" data-res-desc="${r}"/>
+            </div>
+            <div>
+              <div class="resFieldLabel">대체수단</div>
+              <input type="text" placeholder="예: 원격 접속, 외부 용역" data-res-alt="${r}"/>
+            </div>
           </div>
         </div>`;
+    }).join('');
 
-      const animateCount = (el, target) => {
-        const next = Number(target || 0);
-        const prev = animatedCounts.get(el.id);
-        if (prev === next) {
-          el.textContent = next.toLocaleString('ko-KR');
-          return;
+    raMount.addEventListener('change', e => {
+      if (!e.target.matches('[data-resource]')) return;
+      const r = e.target.getAttribute('data-resource');
+      const itemId = 'res_' + r.replace(/[·\/\s·]/g, '_');
+      document.getElementById(itemId)?.classList.toggle('enabled', e.target.checked);
+      updateAutoRisks();
+    });
+
+    /* ── Auto risks ── */
+    const updateAutoRisks = () => {
+      const selected = [...raMount.querySelectorAll('[data-resource]:checked')].map(cb => cb.getAttribute('data-resource'));
+      const riskList = readRiskList();
+      const autoList = document.getElementById('autoRisksList');
+      if (!selected.length) {
+        autoList.innerHTML = '<div class="relatedRiskEmpty">④에서 소요자원을 선택하면 관련 리스크가 표시됩니다.</div>';
+        return;
+      }
+      const matched = riskList.filter(r => Array.isArray(r.resources) && r.resources.some(res => selected.includes(res)));
+      if (!matched.length) {
+        autoList.innerHTML = '<div class="relatedRiskEmpty">매칭된 리스크가 없습니다. 리스크 평가 페이지에서 먼저 등록하세요.</div>';
+        return;
+      }
+      autoList.innerHTML = matched.map(r => `
+        <label class="relatedRiskItem">
+          <input type="checkbox" class="relatedRiskCheck" data-risk-id="${escHtml(r.id)}" checked/>
+          <span style="font-family:monospace;font-size:10px;font-weight:600">${escHtml(r.id)}</span>
+          <span style="color:var(--text-2);flex:1">${escHtml(r.riskName)}</span>
+          <span class="badge">${escHtml(r.riskType)}</span>
+        </label>`).join('');
+    };
+
+    /* ── Clear form ── */
+    document.getElementById('clearEntryBtn').addEventListener('click', () => {
+      document.getElementById('newBiaId').textContent = genBiaId();
+      document.getElementById('newFnName').value  = '';
+      document.getElementById('newFnDesc').value  = '';
+      document.querySelector('input[name="newImportance"][value="중요"]').checked = true;
+      ['slFinancial','slOperational','slReputation'].forEach(id => { document.getElementById(id).value = 1; });
+      updateImpactScore();
+      ['newMtpdVal','newRtoVal','newRpoVal'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('newMbco').value = 50;
+      document.getElementById('mbcoVal').textContent = '50%';
+      document.getElementById('rtoMtpdWarn').style.display = 'none';
+      raMount.querySelectorAll('[data-resource]').forEach(cb => {
+        cb.checked = false;
+        const itemId = 'res_' + cb.getAttribute('data-resource').replace(/[·\/\s·]/g, '_');
+        document.getElementById(itemId)?.classList.remove('enabled');
+      });
+      raMount.querySelectorAll('[data-res-desc],[data-res-alt]').forEach(inp => { inp.value = ''; });
+      document.getElementById('newRelatedManual').value = '';
+      document.getElementById('autoRisksList').innerHTML = '<div class="relatedRiskEmpty">④에서 소요자원을 선택하면 관련 리스크가 표시됩니다.</div>';
+    });
+
+    /* ── Add BIA entry ── */
+    document.getElementById('addEntryBtn').addEventListener('click', () => {
+      const name = document.getElementById('newFnName').value.trim();
+      if (!name) { alert('업무명칭을 입력하세요.'); return; }
+      const team = document.getElementById('newFnTeam').value;
+      if (!team) { alert('소속 부서/팀을 선택하세요.'); return; }
+
+      const importance = document.querySelector('input[name="newImportance"]:checked')?.value || '일반';
+      const financial   = Number(document.getElementById('slFinancial').value);
+      const operational = Number(document.getElementById('slOperational').value);
+      const reputation  = Number(document.getElementById('slReputation').value);
+      const overallImpact = clamp(Math.round((financial + operational + reputation) / 3), 1, 5);
+
+      const mtpdV  = Number(document.getElementById('newMtpdVal').value) || null;
+      const mtpdU  = document.getElementById('newMtpdUnit').value;
+      const rtoV   = document.getElementById('newRtoVal').value;
+      const rtoU   = document.getElementById('newRtoUnit').value;
+      const rpoV   = document.getElementById('newRpoVal').value;
+      const rpoU   = document.getElementById('newRpoUnit').value;
+      const mbco   = Number(document.getElementById('newMbco').value);
+      const biaId  = document.getElementById('newBiaId').textContent;
+
+      const mtpdMinutes = mtpdV ? (mtpdU === '일' ? mtpdV * 1440 : mtpdV * 60) : null;
+
+      const selectedResources = [];
+      const resourceDetails   = {};
+      RESOURCE_OPTIONS.forEach(r => {
+        const cb = raMount.querySelector(`[data-resource="${r}"]`);
+        if (cb && cb.checked) {
+          selectedResources.push(r);
+          resourceDetails[r] = {
+            required: true,
+            description: raMount.querySelector(`[data-res-desc="${r}"]`)?.value.trim() || '',
+            alternative: raMount.querySelector(`[data-res-alt="${r}"]`)?.value.trim()  || ''
+          };
         }
-        animatedCounts.set(el.id, next);
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          el.textContent = String(next.toLocaleString('ko-KR'));
-          return;
-        }
-        const duration = 450;
-        const start = performance.now();
-        const from = Number(el.dataset.last || 0);
-        const step = (now) => {
-          const progress = Math.min(1, (now - start) / duration);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          const value = Math.round(from + (next - from) * eased);
-          el.textContent = value.toLocaleString('ko-KR');
-          if (progress < 1) requestAnimationFrame(step);
-          else el.dataset.last = String(next);
-        };
-        requestAnimationFrame(step);
-      };
-
-      const computeGlobalMetrics = () => {
-        const teamCount = allTeams.length;
-        const coreCount = coreRows.reduce((acc, row) => acc + (Array.isArray(row.functions) ? row.functions.length : 0), 0);
-        const biaFunctions = biaRows.flatMap((r) => r.functions || []);
-        const importantCount = biaFunctions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length;
-        const biaCount = biaFunctions.length;
-        return { teamCount, coreCount, importantCount, biaCount };
-      };
-
-      const computeOverviewRows = () => allTeams.map((team) => {
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        const functions = row.functions || [];
-        const impacts = functions.filter((fn) => Number(fn.overallImpact || 0) >= 4).length;
-        const mtpd = functions.map((fn) => fn.mtpdMinutes).filter((n) => Number.isFinite(n));
-        const rto = functions.map((fn) => rtoToMinutes(fn.rtoValue, fn.rtoUnit)).filter((n) => Number.isFinite(n));
-        return {
-          team,
-          coreCount: functions.length,
-          importantCount: functions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length,
-          minMtpd: mtpd.length ? Math.min(...mtpd) : null,
-          minRto: rto.length ? Math.min(...rto) : null,
-          highImpact: impacts
-        };
       });
 
-      const renderGlobalMetrics = () => {
-        const m = computeGlobalMetrics();
-        globalKpi.innerHTML = `
-          <article class="kpiCard"><div class="k">전체 부서 수</div><div class="v" id="kpiTeamCount">0</div></article>
-          <article class="kpiCard"><div class="k">전체 핵심업무 수</div><div class="v" id="kpiCoreCount">0</div></article>
-          <article class="kpiCard"><div class="k">전체 중요업무 수</div><div class="v" id="kpiImportantCount">0</div></article>
-          <article class="kpiCard"><div class="k">전체 BIA 등록 업무 수</div><div class="v" id="kpiBiaCount">0</div></article>`;
-        animateCount(document.getElementById('kpiTeamCount'), m.teamCount);
-        animateCount(document.getElementById('kpiCoreCount'), m.coreCount);
-        animateCount(document.getElementById('kpiImportantCount'), m.importantCount);
-        animateCount(document.getElementById('kpiBiaCount'), m.biaCount);
-      };
+      const relatedRisks = [...document.querySelectorAll('.relatedRiskCheck:checked')].map(cb => cb.getAttribute('data-risk-id'));
 
-      const renderOverviewTable = () => {
-        const selectedFilter = overviewTeamFilter.value || '전체';
-        const sortBy = overviewSort.value || 'name';
-        const q = String(overviewSearch?.value || '').trim().toLowerCase();
-        let rows = computeOverviewRows();
-        if (selectedFilter !== '전체') rows = rows.filter((r) => r.team === selectedFilter);
-        if (overviewQuickMode === 'important') rows = rows.filter((r) => r.importantCount > 0);
-        if (overviewQuickMode === 'high') rows = rows.filter((r) => r.highImpact > 0);
-        if (q) rows = rows.filter((r) => r.team.toLowerCase().includes(q));
+      const newFn = normalizeFunction({
+        biaId, name, importance, overallImpact,
+        timeImpact: makeDefaultTimeImpact(overallImpact),
+        rtoValue: rtoV === '' ? '' : Number(rtoV), rtoUnit: rtoU,
+        requiredResources: selectedResources,
+        description: document.getElementById('newFnDesc').value.trim(),
+        financialImpact: financial, operationalImpact: operational, reputationalImpact: reputation,
+        rpoValue: rpoV === '' ? '' : Number(rpoV), rpoUnit: rpoU,
+        mbco, resourceDetails, relatedRisks
+      });
 
-        rows.sort((a,b) => {
-          if (sortBy === 'coreDesc') return b.coreCount - a.coreCount || a.team.localeCompare(b.team, 'ko');
-          if (sortBy === 'importantDesc') return b.importantCount - a.importantCount || a.team.localeCompare(b.team, 'ko');
-          if (sortBy === 'highImpactDesc') return b.highImpact - a.highImpact || a.team.localeCompare(b.team, 'ko');
-          if (sortBy === 'rtoAsc') {
-            const ar = a.minRto ?? Number.MAX_SAFE_INTEGER;
-            const br = b.minRto ?? Number.MAX_SAFE_INTEGER;
-            return ar - br || a.team.localeCompare(b.team, 'ko');
-          }
-          return a.team.localeCompare(b.team, 'ko');
-        });
+      if (mtpdMinutes !== null) {
+        newFn.mtpdMinutes = mtpdMinutes;
+        newFn.mtpd = toDurationText(mtpdMinutes);
+      }
 
-        const maxCore = Math.max(1, ...rows.map((r)=>r.coreCount));
-        const maxImportant = Math.max(1, ...rows.map((r)=>r.importantCount));
-        const maxHigh = Math.max(1, ...rows.map((r)=>r.highImpact));
+      let teamRow = biaRows.find(r => r.team === team);
+      if (!teamRow) { teamRow = { team, functions: [] }; biaRows.push(teamRow); }
+      teamRow.functions.push(newFn);
 
-        const bar = (v, max, warn=false) => `<span class="density ${warn?'warn':''}"><i style="width:${Math.round((v/max)*100)}%"></i></span>`;
+      saveBiaData(biaRows);
+      renderBiaList();
+      renderResourceSummary();
+      renderMetrics();
+      switchTab('biaList');
+      document.getElementById('clearEntryBtn').click();
+    });
 
-        overviewTableMount.innerHTML = rows.length ? `
-          <table class="overviewTable">
-            <thead><tr><th>부서명</th><th>핵심업무 수</th><th>중요업무 수</th><th>최단 MTPD</th><th>최단 RTO</th><th>고영향 업무 수(4↑)</th><th>관리</th></tr></thead>
-            <tbody>
-              ${rows.map((r) => {
-                const selected = teamSelect.value === r.team;
-                const highRisk = r.highImpact >= 3 || (r.minRto !== null && r.minRto <= 240);
-                return `
-                <tr class="clickRow ${selected ? 'active' : ''} ${highRisk ? 'risk-focus' : ''}" data-jump-team="${esc(r.team)}">
+    /* ── BIA list rendering ── */
+    const renderBiaList = () => {
+      const allFns = biaRows.flatMap(row =>
+        (row.functions || []).map((fn, fnIdx) => ({ ...fn, _team: row.team, _fnIdx: fnIdx }))
+      );
+      if (!allFns.length) {
+        biaListMount.innerHTML = '<div class="empty">등록된 BIA가 없습니다. 위 폼에서 등록하거나 팀 편집기를 사용하세요.</div>';
+        return;
+      }
+      biaListMount.innerHTML = `
+        <table>
+          <colgroup>
+            <col style="width:9%"/>  <col style="width:16%"/> <col style="width:9%"/>
+            <col style="width:7%"/>  <col style="width:7%"/>  <col style="width:7%"/>
+            <col style="width:7%"/>  <col style="width:9%"/>  <col style="width:6%"/>
+            <col style="width:11%"/>
+          </colgroup>
+          <thead><tr>
+            <th>BIA-ID</th><th>업무명</th><th>부서</th><th>중요도</th>
+            <th>MTPD</th><th>RTO</th><th>RPO</th><th>종합영향도</th><th>MBCO</th><th>수정/삭제</th>
+          </tr></thead>
+          <tbody>
+            ${allFns.map(fn => {
+              const band       = scoreBand(fn.overallImpact);
+              const impCls     = fn.importance === '핵심' ? 'core' : fn.importance === '중요' ? 'important' : 'general';
+              const rpo        = fn.rpoValue   ? `${fn.rpoValue}${fn.rpoUnit || '분'}` : '-';
+              const mbcoStr    = fn.mbco != null ? `${fn.mbco}%` : '-';
+              return `
+                <tr>
+                  <td style="font-family:monospace;font-size:10px">${escHtml(fn.biaId || fn.id || '-')}</td>
+                  <td class="td-left">${escHtml(fn.name)}</td>
+                  <td>${escHtml(fn._team)}</td>
+                  <td><span class="badge ${impCls}">${escHtml(fn.importance || '일반')}</span></td>
+                  <td>${escHtml(fn.mtpd || '-')}</td>
+                  <td>${escHtml(fn.rto  || '-')}</td>
+                  <td>${escHtml(rpo)}</td>
+                  <td><span class="badge ${band.cls}">${fn.overallImpact} ${band.text}</span></td>
+                  <td>${escHtml(mbcoStr)}</td>
                   <td>
-                    <div class="teamCell">
-                      <div class="teamNameLine"><div class="teamName">${esc(r.team)}</div>${selected ? '<span class="rowFlag current">현재 편집중</span>' : ''}${r.highImpact >= 3 ? '<span class="rowFlag danger">고영향</span>' : (r.highImpact >= 1 ? '<span class="rowFlag warn">주의</span>' : '')}</div>
-                      <div class="teamMeta">등록 ${r.coreCount}건 · 중요 ${r.importantCount}건</div>
+                    <button class="btn" style="font-size:10px;padding:3px 7px;margin-right:3px" type="button"
+                      data-edit-bia="${escHtml(fn._team)}::${fn._fnIdx}">수정</button>
+                    <button class="btn" style="font-size:10px;padding:3px 7px" type="button"
+                      data-delete-bia="${escHtml(fn._team)}::${fn._fnIdx}">삭제</button>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    };
+
+    biaListMount.addEventListener('click', e => {
+      const editKey   = e.target.getAttribute('data-edit-bia');
+      const deleteKey = e.target.getAttribute('data-delete-bia');
+
+      if (deleteKey) {
+        const [team, idxStr] = deleteKey.split('::');
+        const teamRow = biaRows.find(r => r.team === team);
+        if (teamRow) {
+          teamRow.functions.splice(Number(idxStr), 1);
+          saveBiaData(biaRows);
+          renderBiaList(); renderResourceSummary(); renderMetrics();
+        }
+        return;
+      }
+
+      if (editKey) {
+        const [team, idxStr] = editKey.split('::');
+        const teamRow = biaRows.find(r => r.team === team);
+        if (!teamRow) return;
+        const fn = teamRow.functions[Number(idxStr)];
+        if (!fn) return;
+
+        // Pre-fill form
+        document.getElementById('newBiaId').textContent = fn.biaId || fn.id || genBiaId();
+        document.getElementById('newFnName').value      = fn.name;
+        document.getElementById('newFnTeam').value      = team;
+        document.getElementById('newFnDesc').value      = fn.description || '';
+        const impInput = document.querySelector(`input[name="newImportance"][value="${fn.importance}"]`);
+        if (impInput) impInput.checked = true;
+
+        document.getElementById('slFinancial').value   = fn.financialImpact   || fn.overallImpact;
+        document.getElementById('slOperational').value = fn.operationalImpact  || fn.overallImpact;
+        document.getElementById('slReputation').value  = fn.reputationalImpact || fn.overallImpact;
+        updateImpactScore();
+
+        if (fn.mtpdMinutes) {
+          if (fn.mtpdMinutes % 1440 === 0) {
+            document.getElementById('newMtpdVal').value  = fn.mtpdMinutes / 1440;
+            document.getElementById('newMtpdUnit').value = '일';
+          } else {
+            document.getElementById('newMtpdVal').value  = fn.mtpdMinutes / 60;
+            document.getElementById('newMtpdUnit').value = '시간';
+          }
+        }
+        document.getElementById('newRtoVal').value  = fn.rtoValue || '';
+        document.getElementById('newRtoUnit').value = fn.rtoUnit  || '분';
+        document.getElementById('newRpoVal').value  = fn.rpoValue || '';
+        document.getElementById('newRpoUnit').value = fn.rpoUnit  || '분';
+        const mbcoVal = fn.mbco != null ? fn.mbco : 50;
+        document.getElementById('newMbco').value = mbcoVal;
+        document.getElementById('mbcoVal').textContent = `${mbcoVal}%`;
+
+        RESOURCE_OPTIONS.forEach(r => {
+          const cb = raMount.querySelector(`[data-resource="${r}"]`);
+          if (!cb) return;
+          const enabled = fn.requiredResources.includes(r);
+          cb.checked = enabled;
+          document.getElementById('res_' + r.replace(/[·\/\s·]/g, '_'))?.classList.toggle('enabled', enabled);
+          if (fn.resourceDetails && fn.resourceDetails[r]) {
+            const desc = raMount.querySelector(`[data-res-desc="${r}"]`);
+            const alt  = raMount.querySelector(`[data-res-alt="${r}"]`);
+            if (desc) desc.value = fn.resourceDetails[r].description || '';
+            if (alt)  alt.value  = fn.resourceDetails[r].alternative || '';
+          }
+        });
+        updateAutoRisks();
+
+        teamRow.functions.splice(Number(idxStr), 1);
+        saveBiaData(biaRows);
+        renderBiaList(); renderResourceSummary(); renderMetrics();
+
+        if (!panelOpen) {
+          panelOpen = true;
+          entryPanel.classList.remove('collapsed');
+          toggleEntry.textContent = '▴ 접기';
+        }
+        entryPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    /* ── Resource summary ── */
+    const renderResourceSummary = () => {
+      const allFns = biaRows.flatMap(row => (row.functions || []).map(fn => ({ ...fn, _team: row.team })));
+      resMount.innerHTML = `<div class="resourceSummaryGrid">` +
+        RESOURCE_OPTIONS.map(r => {
+          const using = allFns.filter(fn =>
+            (Array.isArray(fn.requiredResources) && fn.requiredResources.includes(r)) ||
+            (fn.resourceDetails && fn.resourceDetails[r]?.required)
+          );
+          const listHtml = using.slice(0, 6).map(fn => {
+            const alt = fn.resourceDetails?.[r]?.alternative;
+            return `<div class="resFnItem">
+              <b>${escHtml(fn._team)}</b> · ${escHtml(fn.name)}
+              ${alt ? `<div style="color:var(--text-3);font-size:10px">대체: ${escHtml(alt)}</div>` : ''}
+            </div>`;
+          }).join('') + (using.length > 6 ? `<div style="font-size:11px;color:var(--text-3)">외 ${using.length - 6}개 업무</div>` : '');
+          return `
+            <div class="resSummaryCard">
+              <div class="rTitle">${RESOURCE_ICONS[r] || ''} ${r}</div>
+              <div class="rCount">${using.length}</div>
+              <div class="resFnList">${using.length ? listHtml : '<div class="resFnItem" style="color:var(--text-3)">해당 없음</div>'}</div>
+            </div>`;
+        }).join('') + `</div>`;
+    };
+
+    /* ── Metrics ── */
+    const renderMetrics = () => {
+      const allFns = biaRows.flatMap(r => r.functions || []);
+      const rtoMins = allFns.map(fn => rtoToMinutes(fn.rtoValue, fn.rtoUnit)).filter(v => v !== null && Number.isFinite(v));
+      document.getElementById('mTeamCount').textContent      = allTeams.length;
+      document.getElementById('mBiaCount').textContent       = allFns.length;
+      document.getElementById('mImportantCount').textContent = allFns.filter(fn => fn.importance !== '일반').length;
+      document.getElementById('mMinRto').textContent         = toDurationText(rtoMins.length ? Math.min(...rtoMins) : null);
+      document.getElementById('mRiskCount').textContent      = readRiskList().length;
+    };
+
+    /* ── Tab switching ── */
+    const switchTab = tab => {
+      const toList = tab === 'biaList';
+      document.getElementById('tabBtnBiaList').classList.toggle('active', toList);
+      document.getElementById('tabBtnResources').classList.toggle('active', !toList);
+      document.getElementById('tabPaneBiaList').classList.toggle('hidden', !toList);
+      document.getElementById('tabPaneResources').classList.toggle('hidden', toList);
+      if (!toList) renderResourceSummary();
+    };
+    document.getElementById('tabBtnBiaList').addEventListener('click', () => switchTab('biaList'));
+    document.getElementById('tabBtnResources').addEventListener('click', () => switchTab('resources'));
+
+    /* ── Team editor score guide ── */
+    const scoreGuideTemplate = () => `
+      <div class="scoreGuideInline">
+        <h3>영향평가 점수 기준</h3>
+        <div class="scoreGuideGrid">
+          <div class="scoreItem"><div class="n">1 경미</div><ul><li>서비스 영향 거의 없음</li><li>내부 처리 가능</li></ul></div>
+          <div class="scoreItem"><div class="n">2 작음</div><ul><li>일부 영향, 대부분 수용</li><li>대외 영향 거의 없음</li></ul></div>
+          <div class="scoreItem"><div class="n">3 보통</div><ul><li>고객 불편 가능</li><li>제한적 평판 영향</li></ul></div>
+          <div class="scoreItem"><div class="n">4 큼</div><ul><li>중단 영향이 큼</li><li>계약·법규 우려</li></ul></div>
+          <div class="scoreItem"><div class="n">5 매우 큼</div><ul><li>즉시 복구 필요 수준</li><li>중대한 대외 영향</li></ul></div>
+        </div>
+      </div>`;
+
+    /* ── Team editor render ── */
+    const renderSummary = (team, functions) => {
+      teamMetric.textContent      = team || '-';
+      countMetric.textContent     = String(functions.length);
+      importantMetric.textContent = String(functions.filter(f => f.importance !== '일반').length);
+      const mtpdMins = functions.map(f => f.mtpdMinutes).filter(v => v !== null && Number.isFinite(v));
+      const rtoMins  = functions.map(f => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter(v => v !== null && Number.isFinite(v));
+      timeMetric.textContent = `${toDurationText(mtpdMins.length ? Math.min(...mtpdMins) : null)} / ${toDurationText(rtoMins.length ? Math.min(...rtoMins) : null)}`;
+    };
+
+    const renderTeamEditor = () => {
+      const team = teamSelect.value;
+      if (!team) {
+        tableMount.innerHTML = '<div class="empty">팀을 선택하세요.</div>';
+        renderSummary('', []);
+        return;
+      }
+      const row = ensureTeamRecord(team);
+      const functions = row.functions || [];
+      renderSummary(team, functions);
+      if (!functions.length) {
+        tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 위에서 업무를 추가하세요.</div>';
+        return;
+      }
+      tableMount.innerHTML = `
+        <table>
+          <colgroup>
+            <col style="width:22%"/> <col style="width:11%"/> <col style="width:11%"/>
+            <col style="width:10%"/> <col style="width:14%"/> <col style="width:10%"/> <col style="width:22%"/>
+          </colgroup>
+          <thead><tr>
+            <th style="text-align:left">핵심업무</th><th>중요업무</th><th>종합영향도</th>
+            <th>MTPD</th><th>RTO</th><th>업무등급</th><th>관리</th>
+          </tr></thead>
+          <tbody>
+            ${functions.map((fn, idx) => {
+              const key  = `${team}__${fn.name}__${idx}`;
+              const open = opened.has(key);
+              const warn = getRtoWarnText(fn);
+              const maxImpact = Math.max(...TIME_KEYS.map(k => Number(fn.timeImpact?.[k] || 1)));
+              const importanceCls = fn.importance === '핵심' ? 'core' : fn.importance === '중요' ? 'important' : 'general';
+              return `
+                <tr data-idx="${idx}">
+                  <td class="td-left">
+                    <div class="functionName">${escHtml(fn.name)}</div>
+                    <div class="fnMuted">${escHtml(team)}</div>
+                  </td>
+                  <td>
+                    <select class="smallSelect" data-field="importance">
+                      <option value="핵심"  ${fn.importance === '핵심'  ? 'selected':''}>핵심</option>
+                      <option value="중요"  ${fn.importance === '중요'  ? 'selected':''}>중요</option>
+                      <option value="일반"  ${fn.importance === '일반'  ? 'selected':''}>일반</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="smallSelect" data-field="overallImpact">
+                      ${[1,2,3,4,5].map(n => `<option value="${n}" ${Number(fn.overallImpact) === n ? 'selected':''}>${n} ${impactLabels[n]}</option>`).join('')}
+                    </select>
+                  </td>
+                  <td><span class="chip">${escHtml(fn.mtpd || '장기 허용')}</span></td>
+                  <td>
+                    <div class="rtoWrap">
+                      <input class="smallInput" type="number" min="1" step="1" data-field="rtoValue" value="${fn.rtoValue ?? ''}" placeholder="수치" style="width:70px"/>
+                      <select class="smallSelect" data-field="rtoUnit">
+                        <option value="분"   ${fn.rtoUnit === '분'   ? 'selected':''}>분</option>
+                        <option value="시간" ${fn.rtoUnit === '시간' ? 'selected':''}>시간</option>
+                        <option value="일"   ${fn.rtoUnit === '일'   ? 'selected':''}>일</option>
+                      </select>
                     </div>
                   </td>
-                  <td><div class="numStrong">${r.coreCount}</div>${bar(r.coreCount,maxCore)}</td>
-                  <td><div class="numStrong">${r.importantCount}</div>${bar(r.importantCount,maxImportant)}</td>
-                  <td><span class="chip">${toDurationText(r.minMtpd)}</span></td>
-                  <td><span class="chip ${r.minRto!==null && r.minRto<=240 ? 'rowFlag warn' : ''}">${toDurationText(r.minRto)}</span></td>
-                  <td><div class="highImpactCell"><div class="numStrong">${r.highImpact}</div><span class="hiBadge ${r.highImpact >= 3 ? 'high' : (r.highImpact >= 1 ? 'low' : '')}">${r.highImpact === 0 ? '안정' : (r.highImpact === 1 ? '주의' : (r.highImpact === 2 ? '우선 확인' : '집중관리'))}</span></div></td>
-                  <td style="display:flex; gap:6px; flex-wrap:wrap;"><button class="btn" type="button" data-quick-view-team="${esc(r.team)}">빠른 보기</button><button class="btn tableActionBtn" type="button" data-jump-team="${esc(r.team)}">상세 편집</button></td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>` : '<div class="empty">조건에 맞는 팀이 없습니다.</div>';
-      };
-
-      const renderOverviewFilters = () => {
-        const teamOpts = ['전체', ...allTeams];
-        const prev = overviewTeamFilter.value || '전체';
-        overviewTeamFilter.innerHTML = teamOpts.map((t) => `<option value="${esc(t)}" ${prev===t?'selected':''}>${esc(t)}</option>`).join('');
-      };
-
-      const goToTeamEditor = (team) => {
-        if (!team) return;
-        teamSelect.value = team;
-        render();
-        detailEditor.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-      };
-
-      const getTeamQuickViewData = (team) => {
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        const functions = [...(row.functions || [])].map((fn) => ({
-          name: fn.name,
-          importance: fn.importance,
-          overallImpact: Number(fn.overallImpact || 0),
-          mtpd: fn.mtpd || '-',
-          rto: fn.rto || '-',
-          grade: fn.grade || '일반',
-          requiredResources: Array.isArray(fn.requiredResources) ? fn.requiredResources : [],
-          hasRtoWarning: !!getRtoWarnText(fn)
-        }));
-        functions.sort((a,b) => {
-          const aw = (a.overallImpact >= 4 ? 4 : 0) + (a.importance === '중요' ? 2 : 0);
-          const bw = (b.overallImpact >= 4 ? 4 : 0) + (b.importance === '중요' ? 2 : 0);
-          return bw - aw || a.name.localeCompare(b.name, 'ko');
-        });
-        const highImpactCount = functions.filter((f)=>f.overallImpact >= 4).length;
-        const importantCount = functions.filter((f)=>f.importance === '중요').length;
-        const coreCount = functions.length;
-        const mtpdMins = (row.functions || []).map((f)=>f.mtpdMinutes).filter((v)=>Number.isFinite(v));
-        const rtoMins = (row.functions || []).map((f)=>rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v)=>Number.isFinite(v));
-        const rtoWarnCount = functions.filter((f)=>f.hasRtoWarning).length;
-        return {
-          team,
-          coreCount,
-          importantCount,
-          highImpactCount,
-          minMtpd: mtpdMins.length ? Math.min(...mtpdMins) : null,
-          minRto: rtoMins.length ? Math.min(...rtoMins) : null,
-          rtoWarnCount,
-          functions
-        };
-      };
-
-      const closeQuickView = () => {
-        if (!quickViewModal) return;
-        quickViewModal.classList.remove('open');
-        quickViewModal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        quickViewTeam = '';
-        if (quickViewPrevFocus && typeof quickViewPrevFocus.focus === 'function') quickViewPrevFocus.focus();
-      };
-
-      const openQuickView = (team, triggerEl = null) => {
-        if (!team || !quickViewModal) return;
-        const data = getTeamQuickViewData(team);
-        quickViewTeam = team;
-        quickViewPrevFocus = triggerEl || document.activeElement;
-        quickViewHead.innerHTML = `<div><h3 class="quickModalTitle" id="quickViewTitle">${esc(data.team)}</h3><div class="quickModalSubtitle">Executive Quick View · 핵심업무 영향 요약</div><div class="quickModalLead">핵심업무 ${data.coreCount}건 기준 보고용 요약 패널</div><div class="quickStatusBar">${data.importantCount > 0 ? '<span class="rowFlag warn">중요업무 있음</span>' : '<span class="rowFlag">중요업무 없음</span>'}${data.highImpactCount > 0 ? '<span class="rowFlag danger">고영향 업무 있음</span>' : '<span class="rowFlag">고영향 없음</span>'}<span class="rowFlag ${data.rtoWarnCount ? 'warn' : ''}">RTO 경고 ${data.rtoWarnCount}건</span></div></div>`;
-        quickViewBody.innerHTML = `
-          <section>
-            <h4 class="quickSectionTitle">요약 KPI</h4>
-            <div class="quickGrid">
-              <article class="quickMetric"><div class="k">핵심업무 수</div><div class="v">${data.coreCount}</div></article>
-              <article class="quickMetric"><div class="k">중요업무 수</div><div class="v">${data.importantCount}</div></article>
-              <article class="quickMetric emphasis"><div class="k">고영향 업무 수</div><div class="v">${data.highImpactCount}</div></article>
-              <article class="quickMetric"><div class="k">최단 MTPD</div><div class="v">${toDurationText(data.minMtpd)}</div></article>
-              <article class="quickMetric caution"><div class="k">최단 RTO</div><div class="v">${toDurationText(data.minRto)}</div></article>
-            </div>
-          </section>
-          <section>
-            <h4 class="quickSectionTitle">핵심업무 목록</h4>
-            <div class="quickList">
-              ${data.functions.length ? data.functions.map((f)=>`<article class="quickItem"><div class="quickItemTop"><div class="quickName">${esc(f.name)}</div><div class="quickBadges"><span class="tag g-${f.grade}">${f.grade}</span>${f.importance === '중요' ? '<span class="rowFlag warn">중요</span>' : ''}${f.overallImpact >= 4 ? '<span class="rowFlag danger">고영향</span>' : ''}${f.hasRtoWarning ? '<span class="rowFlag warn">RTO 경고</span>' : ''}</div></div><div class="quickMetaRow"><span class="quickMeta">영향도 <b>${f.overallImpact}</b></span><span class="quickMeta">MTPD <b>${esc(f.mtpd)}</b></span><span class="quickMeta">RTO <b>${esc(f.rto)}</b></span></div><div class="quickResourceChips">${f.requiredResources.length ? f.requiredResources.map((r)=>`<span class="chip">${esc(r)}</span>`).join('') : '<span class="muted">복구 필요자원 없음</span>'}</div></article>`).join('') : '<div class="empty">등록된 업무가 없습니다.</div>'}
-            </div>
-          </section>`;
-        quickViewModal.classList.add('open');
-        quickViewModal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-      };
-
-      const markDirty = () => { dirtyState = true; };
-      const markSaved = () => { dirtyState = false; lastSavedAt = new Date(); };
-
-      const resolveActiveFunction = (team, functions) => {
-        if (!functions.length) return { fn:null, idx:-1 };
-        const remembered = activeByTeam.get(team);
-        if (Number.isInteger(remembered) && remembered >= 0 && remembered < functions.length) return { fn:functions[remembered], idx:remembered };
-        const recentOpened = [...opened].reverse().find((k) => k.startsWith(`${team}__`));
-        if (recentOpened) {
-          const idx = Number(recentOpened.split('__').pop());
-          if (Number.isInteger(idx) && idx >= 0 && idx < functions.length) {
-            activeByTeam.set(team, idx);
-            return { fn:functions[idx], idx };
-          }
-        }
-        activeByTeam.set(team, 0);
-        return { fn:functions[0], idx:0 };
-      };
-
-      const renderStickySummary = (team, functions) => {
-        if (!stickySummaryMount) return;
-        const highImpact = functions.filter((f) => Number(f.overallImpact || 0) >= 4).length;
-        const minMtpd = functions.map((f) => f.mtpdMinutes).filter((v) => Number.isFinite(v));
-        const minRto = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => Number.isFinite(v));
-        const active = resolveActiveFunction(team, functions);
-        const fn = active.fn;
-        const firstCritical = fn ? TIME_IMPACT_META.find((t) => Number(fn.timeImpact?.[t.key] || 1) >= 4) : null;
-        const maxImpact = fn ? Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1))) : null;
-        const warn = fn ? getRtoWarnText(fn) : '';
-        const saveStatus = dirtyState ? '<span class="statusPill status-dirty">저장 필요</span>' : '<span class="statusPill status-saved">저장 완료</span>';
-        stickySummaryMount.innerHTML = `
-          <article class="stickyPanel">
-            <h3 class="stickyTitle">선택 팀 요약</h3>
-            <div class="kv">
-              <div class="k">팀</div><div><b>${esc(team || '-')}</b></div>
-              <div class="k">핵심업무 수</div><div>${functions.length}</div>
-              <div class="k">중요업무 수</div><div>${functions.filter((f)=>f.importance==='중요').length}</div>
-              <div class="k">고영향 업무 수</div><div>${highImpact}</div>
-              <div class="k">최단 MTPD</div><div>${toDurationText(minMtpd.length ? Math.min(...minMtpd) : null)}</div>
-              <div class="k">최단 RTO</div><div>${toDurationText(minRto.length ? Math.min(...minRto) : null)}</div>
-            </div>
-          </article>
-          <article class="stickyPanel">
-            <h3 class="stickyTitle">현재 선택 업무</h3>
-            ${fn ? `
-              <div class="kv">
-                <div class="k">업무명</div><div><b>${esc(fn.name)}</b></div>
-                <div class="k">중요업무</div><div>${fn.importance}</div>
-                <div class="k">종합 영향도</div><div>${fn.overallImpact} ${impactLabels[Number(fn.overallImpact)] || ''}</div>
-                <div class="k">업무등급</div><div><span class="tag g-${fn.grade}">${fn.grade}</span></div>
-                <div class="k">MTPD / RTO</div><div>${esc(fn.mtpd || '-')} / ${esc(fn.rto || '-')}</div>
-                <div class="k">최고 시간경과 영향</div><div>${maxImpact || '-'} ${maxImpact ? impactLabels[maxImpact] : ''}</div>
-                <div class="k">영향도 4+ 최초 시점</div><div>${firstCritical ? firstCritical.label : '없음'}</div>
-                <div class="k">RTO 경고</div><div>${warn ? '있음' : '없음'}</div>
-              </div>
-              ${warn ? `<div class="warn" style="margin-top:8px;">${warn}</div>` : ''}
-              <div class="chipWrap" style="margin-top:9px;">
-                ${(fn.requiredResources || []).length ? fn.requiredResources.map((r)=>`<span class="chip">${esc(r)}</span>`).join('') : '<span class="muted">복구 필요자원 없음</span>'}
-              </div>
-            ` : '<div class="muted">선택된 업무가 없습니다.</div>'}
-          </article>
-          <article class="stickyPanel">
-            <h3 class="stickyTitle">저장 상태</h3>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${saveStatus}<span class="muted">${lastSavedAt ? `마지막 저장: ${lastSavedAt.toLocaleString('ko-KR', { hour12:false })}` : '아직 저장 이력이 없습니다.'}</span></div>
-            <div class="compactActions">
-              <button class="btn primary" type="button" id="quickSaveBtn">저장</button>
-              <button class="btn" type="button" id="goOverviewBtn">총괄표로 이동</button>
-            </div>
-          </article>`;
-        stickySummaryMount.querySelector('#quickSaveBtn')?.addEventListener('click', () => saveBtn.click());
-        stickySummaryMount.querySelector('#goOverviewBtn')?.addEventListener('click', () => overviewSection?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start' }));
-      };
-
-      const renderStickySummaryOnly = () => {
-        const team = teamSelect.value;
-        if (!team) { renderStickySummary('', []); return; }
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        renderStickySummary(team, row.functions || []);
-      };
-
-      const renderSummary = (team, functions) => {
-        teamMetric.textContent = team || '-';
-        countMetric.textContent = String(functions.length);
-        importantMetric.textContent = String(functions.filter((f) => f.importance === '중요').length);
-
-        if (prev === next) {
-          el.textContent = next.toLocaleString('ko-KR');
-          return;
-        }
-
-        animatedCounts.set(el.id, next);
-
-      const render = () => {
-        renderGlobalMetrics();
-        renderOverviewFilters();
-        renderOverviewTable();
-
-        const team = teamSelect.value;
-        if (!team) {
-          tableMount.innerHTML = '<div class="empty">선택 가능한 팀이 없습니다. 조직 관리 또는 핵심업무 레지스트리를 먼저 확인해 주세요.</div>';
-          renderSummary('', []);
-          renderStickySummary('', []);
-          return;
-        }
-
-        const duration = 450;
-        const start = performance.now();
-        const from = Number(el.dataset.last || 0);
-
-        const step = (now) => {
-          const progress = Math.min(1, (now - start) / duration);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          const value = Math.round(from + (next - from) * eased);
-          el.textContent = value.toLocaleString('ko-KR');
-
-          if (progress < 1) requestAnimationFrame(step);
-          else el.dataset.last = String(next);
-        };
-
-        requestAnimationFrame(step);
-      };
-
-      const computeGlobalMetrics = () => {
-        const teamCount = allTeams.length;
-        const coreCount = coreRows.reduce((acc, row) => acc + (Array.isArray(row.functions) ? row.functions.length : 0), 0);
-        const biaFunctions = biaRows.flatMap((r) => r.functions || []);
-        const importantCount = biaFunctions.filter((fn) => fn.importance === '중요' || fn.coreFinal).length;
-        const biaCount = biaFunctions.length;
-        return { teamCount, coreCount, importantCount, biaCount };
-      };
-
-      const computeOverviewRows = () => allTeams.map((team) => {
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        const functions = row.functions || [];
-        renderSummary(team, functions);
-        renderStickySummary(team, functions);
-
-        if (!functions.length) {
-          tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 아래에서 업무를 추가해 주세요.</div>';
-          return;
-        }
-
-      const renderGlobalMetrics = () => {
-        const m = computeGlobalMetrics();
-
-        globalKpi.innerHTML = `
-          <article class="kpiCard"><div class="k">전체 부서 수</div><div class="v" id="kpiTeamCount">0</div></article>
-          <article class="kpiCard"><div class="k">전체 핵심업무 수</div><div class="v" id="kpiCoreCount">0</div></article>
-          <article class="kpiCard"><div class="k">전체 중요업무 수</div><div class="v" id="kpiImportantCount">0</div></article>
-          <article class="kpiCard"><div class="k">전체 BIA 등록 업무 수</div><div class="v" id="kpiBiaCount">0</div></article>
-        `;
-
-        animateCount(document.getElementById('kpiTeamCount'), m.teamCount);
-        animateCount(document.getElementById('kpiCoreCount'), m.coreCount);
-        animateCount(document.getElementById('kpiImportantCount'), m.importantCount);
-        animateCount(document.getElementById('kpiBiaCount'), m.biaCount);
-      };
-
-      const renderOverviewFilters = () => {
-        const teamOpts = ['전체', ...allTeams];
-        const prev = overviewTeamFilter.value || '전체';
-
-        overviewTeamFilter.innerHTML = teamOpts.map((t) =>
-          `<option value="${esc(t)}" ${prev === t ? 'selected' : ''}>${esc(t)}</option>`
-        ).join('');
-      };
-
-      const renderOverviewTable = () => {
-        const selectedFilter = overviewTeamFilter.value || '전체';
-        const sortBy = overviewSort.value || 'name';
-        const q = String(overviewSearch?.value || '').trim().toLowerCase();
-
-        let rows = computeOverviewRows();
-
-        if (selectedFilter !== '전체') rows = rows.filter((r) => r.team === selectedFilter);
-        if (overviewQuickMode === 'important') rows = rows.filter((r) => r.importantCount > 0);
-        if (overviewQuickMode === 'high') rows = rows.filter((r) => r.highImpact > 0);
-        if (q) rows = rows.filter((r) => r.team.toLowerCase().includes(q));
-
-        rows.sort((a, b) => {
-          if (sortBy === 'coreDesc') return b.coreCount - a.coreCount || a.team.localeCompare(b.team, 'ko');
-          if (sortBy === 'importantDesc') return b.importantCount - a.importantCount || a.team.localeCompare(b.team, 'ko');
-          if (sortBy === 'highImpactDesc') return b.highImpact - a.highImpact || a.team.localeCompare(b.team, 'ko');
-          if (sortBy === 'rtoAsc') {
-            const ar = a.minRto ?? Number.MAX_SAFE_INTEGER;
-            const br = b.minRto ?? Number.MAX_SAFE_INTEGER;
-            return ar - br || a.team.localeCompare(b.team, 'ko');
-          }
-          return a.team.localeCompare(b.team, 'ko');
-        });
-
-        const maxCore = Math.max(1, ...rows.map((r) => r.coreCount));
-        const maxImportant = Math.max(1, ...rows.map((r) => r.importantCount));
-        const maxHigh = Math.max(1, ...rows.map((r) => r.highImpact));
-
-        const bar = (v, max, warn = false) => `
-          <span class="density ${warn ? 'warn' : ''}">
-            <i style="width:${Math.round((v / max) * 100)}%"></i>
-          </span>
-        `;
-
-        overviewTableMount.innerHTML = rows.length ? `
-          <table class="overviewTable">
-            <thead>
-              <tr>
-                <th>부서명</th>
-                <th>핵심업무 수</th>
-                <th>중요업무 수</th>
-                <th>최단 MTPD</th>
-                <th>최단 RTO</th>
-                <th>고영향 업무 수(4↑)</th>
-                <th>관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows.map((r) => {
-                const selected = teamSelect.value === r.team;
-                const highRisk = r.highImpact >= 3 || (r.minRto !== null && r.minRto <= 240);
-
-                return `
-                  <tr class="clickRow ${selected ? 'active' : ''} ${highRisk ? 'risk-focus' : ''}" data-jump-team="${esc(r.team)}">
-                    <td>
-                      <div class="teamCell">
-                        <div class="teamNameLine">
-                          <div class="teamName">${esc(r.team)}</div>
-                          ${selected ? '<span class="rowFlag current">현재 편집중</span>' : ''}
-                          ${r.highImpact >= 3 ? '<span class="rowFlag danger">고영향</span>' : (r.highImpact >= 1 ? '<span class="rowFlag warn">주의</span>' : '')}
-                        </div>
-                        <div class="teamMeta">등록 ${r.coreCount}건 · 중요 ${r.importantCount}건</div>
-                      </div>
-                    </td>
-                    <td><div class="numStrong">${r.coreCount}</div>${bar(r.coreCount, maxCore)}</td>
-                    <td><div class="numStrong">${r.importantCount}</div>${bar(r.importantCount, maxImportant)}</td>
-                    <td><span class="chip">${toDurationText(r.minMtpd)}</span></td>
-                    <td><span class="chip ${r.minRto !== null && r.minRto <= 240 ? 'rowFlag warn' : ''}">${toDurationText(r.minRto)}</span></td>
-                    <td>
-                      <div class="highImpactCell">
-                        <div class="numStrong">${r.highImpact}</div>
-                        <span class="hiBadge ${r.highImpact >= 3 ? 'high' : (r.highImpact >= 1 ? 'low' : '')}">
-                          ${r.highImpact === 0 ? '안정' : (r.highImpact === 1 ? '주의' : (r.highImpact === 2 ? '우선 확인' : '집중관리'))}
-                        </span>
-                      </div>
-                    </td>
-                    <td style="display:flex; gap:6px; flex-wrap:wrap;">
-                      <button class="btn" type="button" data-quick-view-team="${esc(r.team)}">빠른 보기</button>
-                      <button class="btn tableActionBtn" type="button" data-jump-team="${esc(r.team)}">상세 편집</button>
-                    </td>
-                  </tr>
-                  ${open ? `
-                    <tr class="detailRow" data-detail-for="${idx}">
-                      <td colspan="7">
-                        <div class="detailCard">
-                          <div class="detailGrid">
-                            <div>
-                              <div class="subHead">
-                                <h4 class="subTitle">시간경과 영향평가</h4>
-                                <button class="btn" type="button" data-guide-toggle="${idx}">${scoreGuideOpened.has(key) ? '영향도 기준 닫기' : '영향도 기준 보기'}</button>
-                              </div>
-                              <div class="timeGrid">
-                                ${TIME_IMPACT_META.map((t, ti) => {
-                                  const minAllowed = ti===0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti-1]] || 1);
-                                  const currentScore = Number(fn.timeImpact?.[t.key] || 1);
-                                  const firstMtpd = TIME_IMPACT_META.find((x)=>Number(fn.timeImpact?.[x.key]||1)>=4);
-                                  const isMtpdPoint = firstMtpd && firstMtpd.key === t.key;
-                                  return `
-                                    <article class="timeStep">
-                                      <div class="timeStepTop">
-                                        <div class="timeStepLabel">${t.label}</div>
-                                        ${isMtpdPoint ? '<span class="mtpdBadge">MTPD</span>' : ''}
-                                      </div>
-                                      <div class="timeStepValue">현재: ${currentScore} ${impactLabels[currentScore]}</div>
-                                      <div class="scoreBtns" role="group" aria-label="${t.label} 영향도 선택">
-                                        ${[1,2,3,4,5].map((n)=>`<button type="button" class="scoreBtn" data-time-impact-btn="${t.key}" data-idx="${idx}" data-score="${n}" aria-pressed="${currentScore===n?'true':'false'}" ${n<minAllowed?'disabled':''}>${n}</button>`).join('')}
-                                      </div>
-                                      ${minAllowed > 1 ? `<div class="timeHint">이전 시점보다 낮게 설정할 수 없습니다. (최소 ${minAllowed})</div>` : ''}
-                                    </article>
-                                  `;
-                                }).join('')}
-                              </div>
-                              ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
-                              <div class="timeSummaryLine">
-                                <span class="chip">최고 영향 수준: ${Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))} ${impactLabels[Math.max(...TIME_KEYS.map((k)=>Number(fn.timeImpact?.[k]||1)))]}</span>
-                                <span class="chip">최대허용중단시간(MTPD): <b style="margin-left:4px;">${esc(fn.mtpd || '장기 허용')}</b></span>
-                              </div>
-                              <div class="miniHelp">- 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>- 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>- 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.</div>
+                  <td><span class="badge ${importanceCls}">${escHtml(fn.grade)}</span></td>
+                  <td>
+                    <button class="btn" type="button" data-toggle="${idx}" style="font-size:11px;padding:4px 8px">${open ? '닫기' : '상세'}</button>
+                    <button class="btn" type="button" data-delete="${idx}" style="font-size:11px;padding:4px 8px;margin-left:4px">삭제</button>
+                    ${warn ? '<span style="color:#b45309;font-size:10px;display:block;margin-top:3px">⚠ RTO>MTPD</span>' : ''}
+                  </td>
+                </tr>
+                ${open ? `
+                  <tr class="detailRow">
+                    <td colspan="7">
+                      <div class="detailCard">
+                        <div class="detailGrid">
+                          <div>
+                            <div class="subHead">
+                              <div class="subTitle">시간경과 영향평가</div>
+                              <button class="btn" type="button" data-guide-toggle="${idx}" style="font-size:11px;padding:4px 8px">${scoreGuideOpened.has(key) ? '기준 닫기' : '기준 보기'}</button>
                             </div>
-                            <div>
-                              <h4 class="subTitle">RTO 설정 근거</h4>
-                              <textarea class="reasonInput" data-field="rtoReason" data-idx="${idx}" placeholder="고객 영향과 서비스 중단 허용시간을 반영\n대체 운영 가능시간 기준\n규제/계약 요구사항 반영">${esc(fn.rtoReason || '')}</textarea>
-
-                              <h4 class="subTitle" style="margin-top:10px;">복구 필요자원(요약)</h4>
-                              <div class="resourceGrid">
-                                ${RESOURCE_OPTIONS.map((r) => `
-                                  <label class="resourceItem">
-                                    <input type="checkbox" data-resource="${r}" data-idx="${idx}" ${fn.requiredResources.includes(r) ? 'checked' : ''}/>
-                                    <span>${r}</span>
-                                  </label>
-                                `).join('')}
-                              </div>
+                            <div class="timeGrid">
+                              ${TIME_IMPACT_META.map((t, ti) => {
+                                const minAllowed   = ti === 0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti-1]] || 1);
+                                const currentScore = Number(fn.timeImpact?.[t.key] || 1);
+                                const firstMtpd    = TIME_IMPACT_META.find(x => Number(fn.timeImpact?.[x.key] || 1) >= 4);
+                                const isMtpdPoint  = firstMtpd && firstMtpd.key === t.key;
+                                return `
+                                  <div class="timeStep">
+                                    <div class="timeStepTop">
+                                      <span class="timeStepLabel">${t.label}</span>
+                                      ${isMtpdPoint ? '<span class="mtpdBadge">MTPD</span>' : ''}
+                                    </div>
+                                    <div class="timeStepValue">${currentScore} ${impactLabels[currentScore]}</div>
+                                    <div class="scoreBtns">
+                                      ${[1,2,3,4,5].map(n => `
+                                        <button type="button" class="scoreBtn"
+                                          data-time-impact-btn="${t.key}" data-idx="${idx}" data-score="${n}"
+                                          aria-pressed="${currentScore === n ? 'true':'false'}"
+                                          ${n < minAllowed ? 'disabled':''}>${n}</button>
+                                      `).join('')}
+                                    </div>
+                                    ${minAllowed > 1 ? `<div class="timeHint">최소 ${minAllowed}</div>` : ''}
+                                  </div>`;
+                              }).join('')}
                             </div>
+                            ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
+                            <div class="timeSummaryLine">
+                              <span class="chip">최고 영향: ${maxImpact} ${impactLabels[maxImpact]}</span>
+                              <span class="chip">MTPD: <b style="margin-left:3px">${escHtml(fn.mtpd || '장기 허용')}</b></span>
+                            </div>
+                            <div class="miniHelp">시간 경과에 따라 영향도는 낮아질 수 없습니다. 영향도 4 이상이 최초 나타나는 시점이 MTPD입니다.</div>
                           </div>
-                          ${warn ? `<div class="warn">${warn}</div>` : ''}
+                          <div>
+                            <div class="subTitle">RTO 설정 근거</div>
+                            <textarea class="reasonInput" data-field="rtoReason" data-idx="${idx}"
+                              placeholder="고객 영향, 대체 운영 가능시간, 규제 요구사항 등">${escHtml(fn.rtoReason || '')}</textarea>
+                            <div class="subTitle" style="margin-top:12px">복구 필요자원</div>
+                            <div class="resourceGrid">
+                              ${RESOURCE_OPTIONS.map(r => `
+                                <label class="resourceItem">
+                                  <input type="checkbox" data-resource="${r}" data-idx="${idx}" ${fn.requiredResources.includes(r) ? 'checked':''}/>
+                                  <span>${RESOURCE_ICONS[r] || ''} ${r}</span>
+                                </label>`).join('')}
+                            </div>
+                            ${warn ? `<div class="warnBox">${warn}</div>` : ''}
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  ` : ''}
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        ` : '<div class="empty">조건에 맞는 팀이 없습니다.</div>';
-      };
+                      </div>
+                    </td>
+                  </tr>` : ''}`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    };
 
-      const markDirty = () => { dirtyState = true; };
-      const markSaved = () => { dirtyState = false; lastSavedAt = new Date(); };
+    /* ── Team editor field update ── */
+    const updateFnField = (idx, field, value) => {
+      const team = teamSelect.value;
+      const row  = ensureTeamRecord(team);
+      const fn   = row.functions[idx];
+      if (!fn) return;
+      if (field === 'importance')   fn.importance    = value;
+      if (field === 'overallImpact') fn.overallImpact = clamp(Number(value || 3), 1, 5);
+      if (field === 'rtoValue')     fn.rtoValue      = value === '' ? '' : Number(value);
+      if (field === 'rtoUnit')      fn.rtoUnit       = value;
+      if (field === 'rtoReason')    fn.rtoReason     = String(value || '');
+      recalcFunction(fn);
+      dirtyState = true;
+    };
 
-      const resolveActiveFunction = (team, functions) => {
-        if (!functions.length) return { fn:null, idx:-1 };
-
-        const remembered = activeByTeam.get(team);
-        if (Number.isInteger(remembered) && remembered >= 0 && remembered < functions.length) {
-          return { fn:functions[remembered], idx:remembered };
-        }
-
-        const recentOpened = [...opened].reverse().find((k) => k.startsWith(`${team}__`));
-        if (recentOpened) {
-          const idx = Number(recentOpened.split('__').pop());
-          if (Number.isInteger(idx) && idx >= 0 && idx < functions.length) {
-            activeByTeam.set(team, idx);
-            return { fn:functions[idx], idx };
-          }
-        }
-
-        activeByTeam.set(team, 0);
-        return { fn:functions[0], idx:0 };
-      };
-
-      const renderStickySummary = (team, functions) => {
-        if (!stickySummaryMount) return;
-
-        const highImpact = functions.filter((f) => Number(f.overallImpact || 0) >= 4).length;
-        const minMtpd = functions.map((f) => f.mtpdMinutes).filter((v) => Number.isFinite(v));
-        const minRto = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => Number.isFinite(v));
-        const active = resolveActiveFunction(team, functions);
-        const fn = active.fn;
-        const firstCritical = fn ? TIME_IMPACT_META.find((t) => Number(fn.timeImpact?.[t.key] || 1) >= 4) : null;
-        const maxImpact = fn ? Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1))) : null;
-        const warn = fn ? getRtoWarnText(fn) : '';
-        const saveStatus = dirtyState
-          ? '<span class="statusPill status-dirty">저장 필요</span>'
-          : '<span class="statusPill status-saved">저장 완료</span>';
-
-        stickySummaryMount.innerHTML = `
-          <article class="stickyPanel">
-            <h3 class="stickyTitle">선택 팀 요약</h3>
-            <div class="kv">
-              <div class="k">팀</div><div><b>${esc(team || '-')}</b></div>
-              <div class="k">핵심업무 수</div><div>${functions.length}</div>
-              <div class="k">중요업무 수</div><div>${functions.filter((f)=>f.importance === '중요').length}</div>
-              <div class="k">고영향 업무 수</div><div>${highImpact}</div>
-              <div class="k">최단 MTPD</div><div>${toDurationText(minMtpd.length ? Math.min(...minMtpd) : null)}</div>
-              <div class="k">최단 RTO</div><div>${toDurationText(minRto.length ? Math.min(...minRto) : null)}</div>
-            </div>
-          </article>
-
-          <article class="stickyPanel">
-            <h3 class="stickyTitle">현재 선택 업무</h3>
-            ${fn ? `
-              <div class="kv">
-                <div class="k">업무명</div><div><b>${esc(fn.name)}</b></div>
-                <div class="k">중요업무</div><div>${fn.importance}</div>
-                <div class="k">종합 영향도</div><div>${fn.overallImpact} ${impactLabels[Number(fn.overallImpact)] || ''}</div>
-                <div class="k">업무등급</div><div><span class="tag g-${fn.grade}">${fn.grade}</span></div>
-                <div class="k">MTPD / RTO</div><div>${esc(fn.mtpd || '-')} / ${esc(fn.rto || '-')}</div>
-                <div class="k">최고 시간경과 영향</div><div>${maxImpact || '-'} ${maxImpact ? impactLabels[maxImpact] : ''}</div>
-                <div class="k">영향도 4+ 최초 시점</div><div>${firstCritical ? firstCritical.label : '없음'}</div>
-                <div class="k">RTO 경고</div><div>${warn ? '있음' : '없음'}</div>
-              </div>
-              ${warn ? `<div class="warn" style="margin-top:8px;">${warn}</div>` : ''}
-              <div class="chipWrap" style="margin-top:9px;">
-                ${(fn.requiredResources || []).length
-                  ? fn.requiredResources.map((r)=>`<span class="chip">${esc(r)}</span>`).join('')
-                  : '<span class="muted">복구 필요자원 없음</span>'}
-              </div>
-            ` : '<div class="muted">선택된 업무가 없습니다.</div>'}
-          </article>
-
-          <article class="stickyPanel">
-            <h3 class="stickyTitle">저장 상태</h3>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              ${saveStatus}
-              <span class="muted">${lastSavedAt ? `마지막 저장: ${lastSavedAt.toLocaleString('ko-KR', { hour12:false })}` : '아직 저장 이력이 없습니다.'}</span>
-            </div>
-            <div class="compactActions">
-              <button class="btn primary" type="button" id="quickSaveBtn">저장</button>
-              <button class="btn" type="button" id="goOverviewBtn">총괄표로 이동</button>
-            </div>
-          </article>
-        `;
-
-        stickySummaryMount.querySelector('#quickSaveBtn')?.addEventListener('click', () => saveBtn.click());
-        stickySummaryMount.querySelector('#goOverviewBtn')?.addEventListener('click', () => {
-          overviewSection?.scrollIntoView({
-            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-            block:'start'
-          });
-        });
-      };
-
-      const renderSummary = (team, functions) => {
-        teamMetric.textContent = team || '-';
-        countMetric.textContent = String(functions.length);
-        importantMetric.textContent = String(functions.filter((f) => f.importance === '중요').length);
-
-        const mtpdMinutes = functions.map((f) => f.mtpdMinutes).filter((v) => v !== null);
-        const rtoMinutes = functions.map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => v !== null);
-
-        const minMtpd = mtpdMinutes.length ? Math.min(...mtpdMinutes) : null;
-        const minRto = rtoMinutes.length ? Math.min(...rtoMinutes) : null;
-
-        timeMetric.textContent = `${toDurationText(minMtpd)} / ${toDurationText(minRto)}`;
-      };
-
-      const renderSummaryOnly = () => {
+    /* ── Team editor events ── */
+    tableMount.addEventListener('change', e => {
+      const tr    = e.target.closest('tr[data-idx]');
+      const field = e.target.getAttribute('data-field');
+      if (tr && field) { updateFnField(Number(tr.dataset.idx), field, e.target.value); renderTeamEditor(); return; }
+      const res = e.target.getAttribute('data-resource');
+      if (res) {
+        const idx  = Number(e.target.getAttribute('data-idx'));
         const team = teamSelect.value;
-        if (!team) return;
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        renderSummary(team, row.functions || []);
-      };
-
-      const renderStickySummaryOnly = () => {
-        const team = teamSelect.value;
-        if (!team) {
-          renderStickySummary('', []);
-          return;
-        }
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        renderStickySummary(team, row.functions || []);
-      };
-
-        const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
-        if (!detail) return;
-
-        TIME_KEYS.forEach((key, i) => {
-          const minAllowed = i === 0 ? 1 : Number(fn.timeImpact[TIME_KEYS[i-1]] || 1);
-          detail.querySelectorAll(`button[data-time-impact-btn="${key}"]`).forEach((btn) => {
-            const n = Number(btn.getAttribute('data-score'));
-            btn.disabled = n < minAllowed;
-            btn.setAttribute('aria-pressed', String(Number(fn.timeImpact[key] || 1) === n));
-          });
-        });
-
-        const highImpactCount = functions.filter((f) => f.overallImpact >= 4).length;
-        const importantCount = functions.filter((f) => f.importance === '중요').length;
-        const coreCount = functions.length;
-        const mtpdMins = (row.functions || []).map((f) => f.mtpdMinutes).filter((v) => Number.isFinite(v));
-        const rtoMins = (row.functions || []).map((f) => rtoToMinutes(f.rtoValue, f.rtoUnit)).filter((v) => Number.isFinite(v));
-        const rtoWarnCount = functions.filter((f) => f.hasRtoWarning).length;
-
-        return {
-          team,
-          coreCount,
-          importantCount,
-          highImpactCount,
-          minMtpd: mtpdMins.length ? Math.min(...mtpdMins) : null,
-          minRto: rtoMins.length ? Math.min(...rtoMins) : null,
-          rtoWarnCount,
-          functions
-        };
-      };
-
-      const closeQuickView = () => {
-        if (!quickViewModal) return;
-        quickViewModal.classList.remove('open');
-        quickViewModal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        quickViewTeam = '';
-
-        if (quickViewPrevFocus && typeof quickViewPrevFocus.focus === 'function') {
-          quickViewPrevFocus.focus();
-        }
-      };
-
-      const openQuickView = (team, triggerEl = null) => {
-        if (!team || !quickViewModal) return;
-
-        const data = getTeamQuickViewData(team);
-        quickViewTeam = team;
-        quickViewPrevFocus = triggerEl || document.activeElement;
-
-        quickViewHead.innerHTML = `
-          <div>
-            <h3 class="quickModalTitle" id="quickViewTitle">${esc(data.team)}</h3>
-            <div class="quickModalSubtitle">Executive Quick View · 핵심업무 영향 요약</div>
-            <div class="quickStatusBar">
-              ${data.importantCount > 0 ? '<span class="rowFlag warn">중요업무 있음</span>' : '<span class="rowFlag">중요업무 없음</span>'}
-              ${data.highImpactCount > 0 ? '<span class="rowFlag danger">고영향 업무 있음</span>' : '<span class="rowFlag">고영향 없음</span>'}
-              <span class="rowFlag ${data.rtoWarnCount ? 'warn' : ''}">RTO 경고 ${data.rtoWarnCount}건</span>
-            </div>
-          </div>
-        `;
-
-        quickViewBody.innerHTML = `
-          <section>
-            <h4 class="quickSectionTitle">요약 KPI</h4>
-            <div class="quickGrid">
-              <article class="quickMetric"><div class="k">핵심업무 수</div><div class="v">${data.coreCount}</div></article>
-              <article class="quickMetric"><div class="k">중요업무 수</div><div class="v">${data.importantCount}</div></article>
-              <article class="quickMetric emphasis"><div class="k">고영향 업무 수</div><div class="v">${data.highImpactCount}</div></article>
-              <article class="quickMetric"><div class="k">최단 MTPD</div><div class="v">${toDurationText(data.minMtpd)}</div></article>
-              <article class="quickMetric caution"><div class="k">최단 RTO</div><div class="v">${toDurationText(data.minRto)}</div></article>
-            </div>
-          </section>
-
-          <section>
-            <h4 class="quickSectionTitle">핵심업무 목록</h4>
-            <div class="quickList">
-              ${data.functions.length ? data.functions.map((f) => `
-                <article class="quickItem">
-                  <div class="quickItemTop">
-                    <div class="quickName">${esc(f.name)}</div>
-                    <div class="quickBadges">
-                      <span class="tag g-${f.grade}">${f.grade}</span>
-                      ${f.importance === '중요' ? '<span class="rowFlag warn">중요</span>' : ''}
-                      ${f.overallImpact >= 4 ? '<span class="rowFlag danger">고영향</span>' : ''}
-                      ${f.hasRtoWarning ? '<span class="rowFlag warn">RTO 경고</span>' : ''}
-                    </div>
-                  </div>
-                  <div class="quickMetaRow">
-                    <span class="quickMeta">영향도 <b>${f.overallImpact}</b></span>
-                    <span class="quickMeta">MTPD <b>${esc(f.mtpd)}</b></span>
-                    <span class="quickMeta">RTO <b>${esc(f.rto)}</b></span>
-                  </div>
-                  <div class="quickResourceChips">
-                    ${f.requiredResources.length
-                      ? f.requiredResources.map((r) => `<span class="chip">${esc(r)}</span>`).join('')
-                      : '<span class="muted">복구 필요자원 없음</span>'}
-                  </div>
-                </article>
-              `).join('') : '<div class="empty">등록된 업무가 없습니다.</div>'}
-            </div>
-          </section>
-        `;
-
-        quickViewModal.classList.add('open');
-        quickViewModal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-      };
-
-      const recalcFunction = (fn) => {
-        fn.overallImpact = clamp(Number(fn.overallImpact || 3), 1, 5);
-        fn.impact = fn.overallImpact;
-        fn.timeImpact = normalizeMonotonicTimeImpact(fn.timeImpact || {});
-        const mtpd = calcMtpd(fn.timeImpact || {});
-        fn.mtpd = mtpd.text;
-        fn.mtpdMinutes = mtpd.minutes;
-        fn.rto = (fn.rtoValue || fn.rtoValue === 0) && fn.rtoValue !== '' ? `${fn.rtoValue}${fn.rtoUnit || '분'}` : '';
-        fn.grade = calcGrade(fn);
-        fn.coreFinal = fn.grade !== '일반';
-      };
-
-      const refreshRowCells = (idx) => {
-        const team = teamSelect.value;
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        const fn = row.functions[idx];
+        const row  = ensureTeamRecord(team);
+        const fn   = row.functions[idx];
         if (!fn) return;
+        const s = new Set(fn.requiredResources || []);
+        if (e.target.checked) s.add(res); else s.delete(res);
+        fn.requiredResources = [...s];
+        dirtyState = true;
+      }
+    });
 
-        const tr = tableMount.querySelector(`tr[data-idx="${idx}"]`);
-        if (!tr) return;
+    tableMount.addEventListener('input', e => {
+      const field = e.target.getAttribute('data-field');
+      if (field !== 'rtoValue' && field !== 'rtoReason') return;
+      const tr  = e.target.closest('tr[data-idx]');
+      const idx = tr ? Number(tr.dataset.idx) : Number(e.target.getAttribute('data-idx'));
+      if (!Number.isFinite(idx)) return;
+      updateFnField(idx, field, e.target.value);
+    });
 
-        const mtpdTag = tr.children[3]?.querySelector('.tag');
-        const gradeTag = tr.children[5]?.querySelector('.tag');
-
-        if (mtpdTag) mtpdTag.textContent = fn.mtpd || '장기 허용';
-        if (gradeTag) {
-          gradeTag.textContent = fn.grade;
-          gradeTag.className = `tag g-${fn.grade}`;
-        }
-
-        const detail = tableMount.querySelector(`tr[data-detail-for="${idx}"]`);
-        if (detail) {
-          const warnText = getRtoWarnText(fn);
-          let warnEl = detail.querySelector('.warn');
-
-          if (warnText) {
-            if (!warnEl) {
-              warnEl = document.createElement('div');
-              warnEl.className = 'warn';
-              detail.querySelector('.detailCard')?.appendChild(warnEl);
-            }
-            warnEl.textContent = warnText;
-          } else if (warnEl) {
-            warnEl.remove();
-          }
-        }
-      };
-
-      const updateFnField = (idx, field, value, opts = {}) => {
-        const team = teamSelect.value;
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        const fn = row.functions[idx];
+    tableMount.addEventListener('click', e => {
+      const timeKey = e.target.getAttribute('data-time-impact-btn');
+      if (timeKey) {
+        const idx   = Number(e.target.getAttribute('data-idx'));
+        const team  = teamSelect.value;
+        const row   = ensureTeamRecord(team);
+        const fn    = row.functions[idx];
         if (!fn) return;
-
-        if (field === 'importance') fn.importance = value === '중요' ? '중요' : '일반';
-        if (field === 'overallImpact') fn.overallImpact = clamp(Number(value || 3), 1, 5);
-        if (field === 'rtoValue') fn.rtoValue = value === '' ? '' : Number(value);
-        if (field === 'rtoUnit') fn.rtoUnit = value;
-        if (field === 'rtoReason') fn.rtoReason = String(value || '');
-
+        const tIdx  = TIME_KEYS.indexOf(timeKey);
+        const score = clamp(Number(e.target.getAttribute('data-score') || 1), 1, 5);
+        fn.timeImpact[timeKey] = score;
+        fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIdx);
         recalcFunction(fn);
-        markDirty();
-        if (!opts.skipUiUpdate) {
-          refreshRowCells(idx);
-          renderSummaryOnly();
-          renderStickySummaryOnly();
-        }
-      };
-
-      const render = () => {
-        renderGlobalMetrics();
-        renderOverviewFilters();
-        renderOverviewTable();
-
+        dirtyState = true;
+        renderTeamEditor(); return;
+      }
+      const guideIdx = e.target.getAttribute('data-guide-toggle');
+      if (guideIdx != null) {
         const team = teamSelect.value;
+        const row  = ensureTeamRecord(team);
+        const fn   = row.functions[Number(guideIdx)];
+        if (!fn) return;
+        const key  = `${team}__${fn.name}__${guideIdx}`;
+        if (scoreGuideOpened.has(key)) scoreGuideOpened.delete(key); else scoreGuideOpened.add(key);
+        renderTeamEditor(); return;
+      }
+      const toggleIdx = e.target.getAttribute('data-toggle');
+      if (toggleIdx != null) {
+        const team = teamSelect.value;
+        const row  = ensureTeamRecord(team);
+        const fn   = row.functions[Number(toggleIdx)];
+        if (!fn) return;
+        const key  = `${team}__${fn.name}__${toggleIdx}`;
+        if (opened.has(key)) opened.delete(key); else opened.add(key);
+        renderTeamEditor(); return;
+      }
+      const del = e.target.getAttribute('data-delete');
+      if (del != null) {
+        const team = teamSelect.value;
+        const row  = ensureTeamRecord(team);
+        row.functions.splice(Number(del), 1);
+        dirtyState = true;
+        renderTeamEditor(); renderBiaList(); renderResourceSummary(); renderMetrics();
+      }
+    });
 
-        if (!team) {
-          tableMount.innerHTML = '<div class="empty">선택 가능한 팀이 없습니다. 조직 관리 또는 핵심업무 레지스트리를 먼저 확인해 주세요.</div>';
-          renderSummary('', []);
-          renderStickySummary('', []);
-          return;
-        }
+    /* ── Add function (editor) ── */
+    addFunctionBtn.addEventListener('click', () => {
+      const team = teamSelect.value;
+      const name = String(newFunctionName.value || '').trim();
+      if (!team || !name) return;
+      const row = ensureTeamRecord(team);
+      if (row.functions.some(fn => fn.name === name)) { alert('이미 등록된 핵심업무입니다.'); return; }
+      row.functions.push(normalizeFunction({ name }));
+      dirtyState = true;
+      newFunctionName.value = '';
+      renderTeamEditor(); renderBiaList(); renderMetrics();
+    });
 
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        const functions = row.functions || [];
-
-        renderSummary(team, functions);
-        renderStickySummary(team, functions);
-
-        if (!functions.length) {
-          tableMount.innerHTML = '<div class="empty">해당 팀의 핵심업무가 없습니다. 아래에서 업무를 추가해 주세요.</div>';
-          return;
-        }
-
-        tableMount.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th style="width:24%;">핵심업무</th>
-                <th style="width:11%;">중요업무 여부</th>
-                <th style="width:11%;">종합 영향도</th>
-                <th style="width:11%;">MTPD</th>
-                <th style="width:16%;">RTO</th>
-                <th style="width:10%;">업무등급</th>
-                <th style="width:17%;">관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${functions.map((fn, idx) => {
-                const key = `${team}__${fn.name}__${idx}`;
-                const open = opened.has(key);
-                const warn = getRtoWarnText(fn);
-                const maxTimelineImpact = Math.max(...TIME_KEYS.map((k) => Number(fn.timeImpact?.[k] || 1)));
-
-                return `
-                  <tr data-idx="${idx}">
-                    <td>
-                      <div class="functionName">${esc(fn.name)}</div>
-                      <div class="muted">팀: ${esc(team)}</div>
-                    </td>
-                    <td>
-                      <select class="smallSelect" data-field="importance">
-                        <option value="중요" ${fn.importance === '중요' ? 'selected' : ''}>중요</option>
-                        <option value="일반" ${fn.importance === '일반' ? 'selected' : ''}>일반</option>
-                      </select>
-                    </td>
-                    <td>
-                      <select class="smallSelect" data-field="overallImpact">
-                        ${[1,2,3,4,5].map((n) => `
-                          <option value="${n}" ${Number(fn.overallImpact) === n ? 'selected' : ''}>${n} ${impactLabels[n]}</option>
-                        `).join('')}
-                      </select>
-                    </td>
-                    <td><span class="tag">${esc(fn.mtpd || '장기 허용')}</span></td>
-                    <td>
-                      <div class="rtoWrap">
-                        <input class="smallInput" type="number" min="1" step="1" data-field="rtoValue" value="${fn.rtoValue ?? ''}" placeholder="수치"/>
-                        <select class="smallSelect" data-field="rtoUnit">
-                          <option value="분" ${fn.rtoUnit === '분' ? 'selected' : ''}>분</option>
-                          <option value="시간" ${fn.rtoUnit === '시간' ? 'selected' : ''}>시간</option>
-                          <option value="일" ${fn.rtoUnit === '일' ? 'selected' : ''}>일</option>
-                        </select>
-                      </div>
-                    </td>
-                    <td><span class="tag g-${fn.grade}">${fn.grade}</span></td>
-                    <td>
-                      <button class="btn" type="button" data-toggle="${idx}">${open ? '상세 닫기' : '상세 보기'}</button>
-                      <button class="btn" type="button" data-delete="${idx}" style="margin-left:6px;">삭제</button>
-                    </td>
-                  </tr>
-
-                  ${open ? `
-                    <tr class="detailRow" data-detail-for="${idx}">
-                      <td colspan="7">
-                        <div class="detailCard">
-                          <div class="detailGrid">
-                            <div>
-                              <div class="subHead">
-                                <h4 class="subTitle">시간경과 영향평가</h4>
-                                <button class="btn" type="button" data-guide-toggle="${idx}">${scoreGuideOpened.has(key) ? '영향도 기준 닫기' : '영향도 기준 보기'}</button>
-                              </div>
-
-                              <div class="timeGrid">
-                                ${TIME_IMPACT_META.map((t, ti) => {
-                                  const minAllowed = ti === 0 ? 1 : Number(fn.timeImpact?.[TIME_KEYS[ti - 1]] || 1);
-                                  const currentScore = Number(fn.timeImpact?.[t.key] || 1);
-                                  const firstMtpd = TIME_IMPACT_META.find((x) => Number(fn.timeImpact?.[x.key] || 1) >= 4);
-                                  const isMtpdPoint = firstMtpd && firstMtpd.key === t.key;
-
-                                  return `
-                                    <article class="timeStep">
-                                      <div class="timeStepTop">
-                                        <div class="timeStepLabel">${t.label}</div>
-                                        ${isMtpdPoint ? '<span class="mtpdBadge">MTPD</span>' : ''}
-                                      </div>
-                                      <div class="timeStepValue">현재: ${currentScore} ${impactLabels[currentScore]}</div>
-                                      <div class="scoreBtns" role="group" aria-label="${t.label} 영향도 선택">
-                                        ${[1,2,3,4,5].map((n) => `
-                                          <button
-                                            type="button"
-                                            class="scoreBtn"
-                                            data-time-impact-btn="${t.key}"
-                                            data-idx="${idx}"
-                                            data-score="${n}"
-                                            aria-pressed="${currentScore === n ? 'true' : 'false'}"
-                                            ${n < minAllowed ? 'disabled' : ''}
-                                          >${n}</button>
-                                        `).join('')}
-                                      </div>
-                                      ${minAllowed > 1 ? `<div class="timeHint">이전 시점보다 낮게 설정할 수 없습니다. (최소 ${minAllowed})</div>` : ''}
-                                    </article>
-                                  `;
-                                }).join('')}
-                              </div>
-
-                              ${scoreGuideOpened.has(key) ? scoreGuideTemplate() : ''}
-
-                              <div class="timeSummaryLine">
-                                <span class="chip">최고 영향 수준: ${maxTimelineImpact} ${impactLabels[maxTimelineImpact]}</span>
-                                <span class="chip">최대허용중단시간(MTPD): <b style="margin-left:4px;">${esc(fn.mtpd || '장기 허용')}</b></span>
-                              </div>
-
-                              <div class="miniHelp">
-                                - 시간이 경과할수록 영향도는 낮아질 수 없습니다.<br/>
-                                - 뒤 시점의 영향도는 앞 시점 이상으로만 설정됩니다.<br/>
-                                - 영향도 4 이상이 처음 나타나는 시점을 최대허용중단시간(MTPD)으로 계산합니다.
-                              </div>
-                            </div>
-
-                            <div>
-                              <h4 class="subTitle">RTO 설정 근거</h4>
-                              <textarea
-                                class="reasonInput"
-                                data-field="rtoReason"
-                                data-idx="${idx}"
-                                placeholder="고객 영향과 서비스 중단 허용시간을 반영&#10;대체 운영 가능시간 기준&#10;규제/계약 요구사항 반영"
-                              >${esc(fn.rtoReason || '')}</textarea>
-
-                              <h4 class="subTitle" style="margin-top:10px;">복구 필요자원(요약)</h4>
-                              <div class="resourceGrid">
-                                ${RESOURCE_OPTIONS.map((r) => `
-                                  <label class="resourceItem">
-                                    <input type="checkbox" data-resource="${r}" data-idx="${idx}" ${fn.requiredResources.includes(r) ? 'checked' : ''}/>
-                                    <span>${r}</span>
-                                  </label>
-                                `).join('')}
-                              </div>
-                            </div>
-                          </div>
-
-                          ${warn ? `<div class="warn">${warn}</div>` : ''}
-                        </div>
-                      </td>
-                    </tr>
-                  ` : ''}
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        `;
-      };
-
-      let normalizedChanged = false;
-      biaRows.forEach((row) => {
-        row.functions = (row.functions || []).map((fn) => {
-          const before = JSON.stringify(fn.timeImpact || {});
+    /* ── Save / Reset ── */
+    saveBtn.addEventListener('click', () => {
+      biaRows = biaRows.map(row => ({
+        team: row.team,
+        functions: (row.functions || []).map(fn => {
           recalcFunction(fn);
-          const after = JSON.stringify(fn.timeImpact || {});
-          if (before !== after) normalizedChanged = true;
-          return fn;
-        });
+          return {
+            id: fn.id || '', biaId: fn.biaId || '', functionId: fn.functionId || '',
+            teamId: fn.teamId || '', name: fn.name, importance: fn.importance,
+            overallImpact: fn.overallImpact, impact: fn.impact,
+            timeImpact: { immediate:Number(fn.timeImpact?.immediate||1), min30:Number(fn.timeImpact?.min30||1), hour1:Number(fn.timeImpact?.hour1||1), hour4:Number(fn.timeImpact?.hour4||1), day1:Number(fn.timeImpact?.day1||1), week1:Number(fn.timeImpact?.week1||1) },
+            mtpd: fn.mtpd, mtpdMinutes: fn.mtpdMinutes,
+            rtoValue: fn.rtoValue === '' ? '' : Number(fn.rtoValue),
+            rtoUnit: fn.rtoUnit || '분', rto: fn.rto || '', rtoReason: fn.rtoReason || '',
+            grade: fn.grade, coreFinal: !!fn.coreFinal,
+            requiredResources: Array.isArray(fn.requiredResources) ? fn.requiredResources : [],
+            description: fn.description || '', financialImpact: fn.financialImpact,
+            operationalImpact: fn.operationalImpact, reputationalImpact: fn.reputationalImpact,
+            rpoValue: fn.rpoValue, rpoUnit: fn.rpoUnit, mbco: fn.mbco,
+            resourceDetails: fn.resourceDetails || {}, relatedRisks: fn.relatedRisks || []
+          };
+        }).filter(fn => fn.name)
+      })).filter(row => row.team);
+      saveBiaData(biaRows);
+      dirtyState = false;
+      alert('BIA 데이터가 저장되었습니다.');
+      renderBiaList(); renderResourceSummary(); renderMetrics();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      const team = teamSelect.value;
+      if (!team) return;
+      const row = ensureTeamRecord(team);
+      row.functions = (coreMap.get(team) || []).map(name => normalizeFunction({ name }));
+      dirtyState = true;
+      renderTeamEditor(); renderBiaList(); renderMetrics();
+    });
+
+    teamSelect.addEventListener('change', () => { if (editorOpen) renderTeamEditor(); });
+
+    /* ── Init ── */
+    renderMetrics();
+    renderBiaList();
+    renderResourceSummary();
+
+    /* Normalize existing data */
+    let normalizedChanged = false;
+    biaRows.forEach(row => {
+      row.functions = (row.functions || []).map(fn => {
+        const before = JSON.stringify(fn.timeImpact || {});
+        recalcFunction(fn);
+        const after = JSON.stringify(fn.timeImpact || {});
+        if (before !== after) normalizedChanged = true;
+        return fn;
       });
-      if (normalizedChanged) saveBiaData(biaRows);
+    });
+    if (normalizedChanged) saveBiaData(biaRows);
 
-      teamSelect.addEventListener('change', () => render());
-      overviewTeamFilter.addEventListener('change', () => renderOverviewTable());
-      overviewSort.addEventListener('change', () => renderOverviewTable());
-      overviewSearch?.addEventListener('input', () => renderOverviewTable());
-      overviewQuickFilters?.addEventListener('click', (e) => {
-        const mode = e.target.getAttribute('data-quick');
-        if (!mode) return;
-        overviewQuickMode = mode;
-        overviewQuickFilters.querySelectorAll('.quickChip').forEach((x)=>x.classList.toggle('active', x.getAttribute('data-quick')===mode));
-        renderOverviewTable();
-      });
-
-      overviewTableMount.addEventListener('click', (e) => {
-        const quickTeam = e.target.closest('[data-quick-view-team]')?.getAttribute('data-quick-view-team');
-        if (quickTeam) {
-          e.stopPropagation();
-          openQuickView(quickTeam, e.target.closest('[data-quick-view-team]'));
-          return;
-        }
-        const team = e.target.closest('[data-jump-team]')?.getAttribute('data-jump-team');
-        if (!team) return;
-        goToTeamEditor(team);
-      });
-
-      tableMount.addEventListener('change', (e) => {
-        const tr = e.target.closest('tr[data-idx]');
-        const idx = tr ? Number(tr.dataset.idx) : Number(e.target.getAttribute('data-idx'));
-
-        if (e.target.hasAttribute('data-field')) {
-          updateFnField(idx, e.target.getAttribute('data-field'), e.target.value);
-          return;
-        }
-
-        const res = e.target.getAttribute('data-resource');
-        if (res) {
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[idx];
-          if (!fn) return;
-
-          const set = new Set(fn.requiredResources || []);
-          if (e.target.checked) set.add(res);
-          else set.delete(res);
-          fn.requiredResources = [...set];
-          markDirty();
-          renderStickySummaryOnly();
-        }
-      });
-
-      tableMount.addEventListener('input', (e) => {
-        const field = e.target.getAttribute('data-field');
-        if (field !== 'rtoValue' && field !== 'rtoReason') return;
-
-        const tr = e.target.closest('tr[data-idx]');
-        const idx = tr ? Number(tr.dataset.idx) : Number(e.target.getAttribute('data-idx'));
-        if (!Number.isFinite(idx)) return;
-
-        updateFnField(idx, field, e.target.value);
-      });
-
-      tableMount.addEventListener('click', (e) => {
-        const timeKey = e.target.getAttribute('data-time-impact-btn');
-        if (timeKey) {
-          const idx = Number(e.target.getAttribute('data-idx'));
-          if (!Number.isFinite(idx)) return;
-
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[idx];
-          if (!fn) return;
-
-          const tIndex = TIME_KEYS.indexOf(timeKey);
-          const score = clamp(Number(e.target.getAttribute('data-score') || 1), 1, 5);
-
-          fn.timeImpact[timeKey] = score;
-          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
-          recalcFunction(fn);
-          markDirty();
-          render();
-          return;
-        }
-
-        const guideIdx = e.target.getAttribute('data-guide-toggle');
-        if (guideIdx != null) {
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[Number(guideIdx)];
-          if (!fn) return;
-
-          const key = `${team}__${fn.name}__${guideIdx}`;
-          if (scoreGuideOpened.has(key)) scoreGuideOpened.delete(key);
-          else scoreGuideOpened.add(key);
-
-          render();
-          return;
-        }
-
-      tableMount.addEventListener('click', (e) => {
-        const tKeyBtn = e.target.getAttribute('data-time-impact-btn');
-        if (tKeyBtn) {
-          const idx = Number(e.target.getAttribute('data-idx'));
-          if (!Number.isFinite(idx)) return;
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[idx];
-          if (!fn) return;
-          const tIndex = TIME_KEYS.indexOf(tKeyBtn);
-          const score = clamp(Number(e.target.getAttribute('data-score') || 1), 1, 5);
-          fn.timeImpact[tKeyBtn] = score;
-          fn.timeImpact = enforceMonotonicFrom(fn.timeImpact, tIndex);
-          recalcFunction(fn);
-          markDirty();
-          render();
-          return;
-        }
-
-        const guideIdx = e.target.getAttribute('data-guide-toggle');
-        if (guideIdx != null) {
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[Number(guideIdx)];
-          if (!fn) return;
-          const key = `${team}__${fn.name}__${guideIdx}`;
-          if (scoreGuideOpened.has(key)) scoreGuideOpened.delete(key);
-          else scoreGuideOpened.add(key);
-          render();
-          return;
-        }
-
-        const toggleIdx = e.target.getAttribute('data-toggle');
-        if (toggleIdx != null) {
-          const team = teamSelect.value;
-          const row = ensureTeamRecord(team, coreMap, biaRows);
-          const fn = row.functions[Number(toggleIdx)];
-          if (!fn) return;
-
-          const key = `${team}__${fn.name}__${toggleIdx}`;
-          if (opened.has(key)) opened.delete(key);
-          else { opened.add(key); activeByTeam.set(team, Number(toggleIdx)); }
-          render();
-          return;
-        }
-
-        const del = e.target.getAttribute('data-delete');
-        if (del == null) return;
-        const team = teamSelect.value;
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        const delIdx = Number(del);
-        row.functions.splice(delIdx, 1);
-        markDirty();
-        const currentActive = activeByTeam.get(team);
-        if (Number.isInteger(currentActive)) {
-          if (currentActive === delIdx) activeByTeam.delete(team);
-          else if (currentActive > delIdx) activeByTeam.set(team, currentActive - 1);
-        }
-        render();
-      });
-
-      addFunctionBtn.addEventListener('click', () => {
-        const team = teamSelect.value;
-        const name = String(newFunctionName.value || '').trim();
-
-        if (!team || !name) return;
-
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        if (row.functions.some((fn) => fn.name === name)) {
-          alert('이미 등록된 핵심업무입니다.');
-          return;
-        }
-
-        row.functions.push(normalizeFunction({ name }));
-        markDirty();
-        newFunctionName.value = '';
-        render();
-      });
-
-      saveBtn.addEventListener('click', () => {
-        biaRows = biaRows
-          .map((row) => ({
-            team: row.team,
-            functions: (row.functions || []).map((fn) => {
-              recalcFunction(fn);
-              return {
-                id: fn.id || '',
-                functionId: fn.functionId || '',
-                teamId: fn.teamId || '',
-                serviceName: fn.serviceName || '',
-                name: fn.name,
-                importance: fn.importance,
-                overallImpact: fn.overallImpact,
-                impact: fn.impact,
-                timeImpact: {
-                  immediate: Number(fn.timeImpact?.immediate || 1),
-                  min30: Number(fn.timeImpact?.min30 || 1),
-                  hour1: Number(fn.timeImpact?.hour1 || 1),
-                  hour4: Number(fn.timeImpact?.hour4 || 1),
-                  day1: Number(fn.timeImpact?.day1 || 1),
-                  week1: Number(fn.timeImpact?.week1 || 1)
-                },
-                mtpd: fn.mtpd,
-                mtpdMinutes: fn.mtpdMinutes,
-                rtoValue: fn.rtoValue === '' ? '' : Number(fn.rtoValue),
-                rtoUnit: fn.rtoUnit || '분',
-                rto: fn.rto || '',
-                rtoReason: String(fn.rtoReason || ''),
-                grade: fn.grade,
-                coreFinal: !!fn.coreFinal,
-                requiredResources: Array.isArray(fn.requiredResources)
-                  ? fn.requiredResources.filter((r) => RESOURCE_OPTIONS.includes(r))
-                  : []
-              };
-            }).filter((fn) => fn.name)
-          }))
-          .filter((row) => row.team);
-
-        saveBiaData(biaRows);
-        markSaved();
-        alert('BIA 데이터가 저장되었습니다.');
-        render();
-      });
-
-      resetBtn.addEventListener('click', () => {
-        const team = teamSelect.value;
-        if (!team) return;
-
-        const row = ensureTeamRecord(team, coreMap, biaRows);
-        row.functions = (coreMap.get(team) || []).map((name) => normalizeFunction({ name }));
-        markDirty();
-        render();
-      });
-
-      quickViewModal?.addEventListener('click', (e) => {
-        if (e.target.hasAttribute('data-quick-close') || e.target.closest('[data-quick-close]')) closeQuickView();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && quickViewModal?.classList.contains('open')) closeQuickView();
-      });
-      quickViewEditBtn?.addEventListener('click', () => {
-        const team = quickViewTeam;
-        closeQuickView();
-        goToTeamEditor(team);
-      });
-
-      render();
-    })();
+  })();
   </script>
 </body>
 </html>
