@@ -153,6 +153,17 @@
     .actions { margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end; }
     .empty { padding: 32px 16px; text-align: center; color: var(--text-3); font-size: 13px; }
 
+    /* ── Tabs ── */
+    .tabNav { display: flex; gap: 6px; margin-top: 24px; margin-bottom: 0; }
+    #riskTabNav { padding-bottom: 0; }
+    .tabBtn {
+      font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px;
+      border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important;
+      color: var(--text-2) !important; cursor: pointer; transition: all .15s;
+    }
+    .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
+    .tabPane.hidden { display: none; }
+
     /* ── Matrix ── */
     .matrixSection { margin-top: 24px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 16px; }
     .matrixSection h2 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
@@ -182,7 +193,7 @@
 
       <section class="hero">
         <h1>리스크 평가</h1>
-        <p>BIA 저장값(중요업무 여부·업무등급·MTPD·RTO·영향도)을 불러와 중단 리스크를 평가합니다. ISO 22301 기준 위협 유형과 소요자원을 선택하고 발생가능성을 입력하면 위험도가 자동 계산됩니다.</p>
+        <p>BIA 저장값(중요업무 여부·업무등급·MTPD·RTO·영향도)을 불러와 중단 리스크를 평가합니다. ISO 22301 기준 리스크 유형과 소요자원을 선택하고 발생가능성을 입력하면 위험도가 자동 계산됩니다.</p>
       </section>
 
       <!-- 팀 선택 -->
@@ -192,7 +203,7 @@
           <select id="teamSelect"></select>
         </div>
         <div class="field">
-          <label for="quickRisk">공통 중단 리스크 빠른 입력 (Enter)</label>
+          <label for="quickRisk">공통 리스크 빠른 입력 (Enter)</label>
           <input id="quickRisk" type="text" placeholder="예: 외부전력중단, UPS 장애, 네트워크 장애"/>
         </div>
       </div>
@@ -221,7 +232,7 @@
             <div class="riskIdDisplay" id="newRiskId">R-000000-001</div>
           </div>
           <div class="formRow">
-            <label for="newThreatType">위협 유형</label>
+            <label for="newThreatType">리스크 유형</label>
             <select id="newThreatType">
               <option value="자연재해">자연재해 (홍수/태풍/지진/폭설)</option>
               <option value="화재·폭발">화재·폭발</option>
@@ -328,15 +339,30 @@
         </div>
       </div>
 
-      <!-- 리스크 테이블 -->
-      <div class="tableSection">
+      <!-- 리스크 목록 탭 -->
+      <div class="tabNav" id="riskTabNav">
+        <button class="tabBtn active" id="tabBtnList" type="button">리스크 목록</button>
+        <button class="tabBtn" id="tabBtnBia" type="button">업무별 리스크 현황</button>
+      </div>
+
+      <!-- 탭 1: 리스크 목록 (독립 저장) -->
+      <div class="tableSection tabPane" id="tabPaneList" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
         <div class="sectionHeader">
-          <h2>리스크 목록 <span style="font-weight:400;color:var(--text-2);font-size:12px;margin-left:6px">· BIA 연동</span></h2>
+          <h2>리스크 목록</h2>
+        </div>
+        <div id="riskListMount" class="tableWrap"></div>
+      </div>
+
+      <!-- 탭 2: 업무별 리스크 현황 (BIA 연동) -->
+      <div class="tableSection tabPane hidden" id="tabPaneBia" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+        <div class="sectionHeader">
+          <h2>업무별 리스크 현황 <span style="font-weight:400;color:var(--text-2);font-size:12px;margin-left:6px">· BIA 연동</span></h2>
           <span class="sourceChip">BIA</span>
         </div>
         <div id="tableMount" class="tableWrap"></div>
       </div>
-      <div class="actions">
+
+      <div class="actions" id="biaActions" style="display:none;">
         <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
         <button id="saveBtn" class="btn primary" type="button">저장</button>
       </div>
@@ -760,7 +786,7 @@
               <col style="width:6%"/> <!-- MTPD -->
               <col style="width:6%"/> <!-- RTO -->
               <col style="width:9%"/> <!-- 영향도 -->
-              <col style="width:16%"/><!-- 중단리스크 -->
+              <col style="width:16%"/><!-- 리스크명칭 -->
               <col style="width:13%"/><!-- 발생가능성 -->
               <col style="width:5%"/> <!-- 위험도 -->
               <col style="width:7%"/> <!-- 관리등급 -->
@@ -769,7 +795,7 @@
             <thead><tr>
               <th>핵심업무</th><th>중요업무</th><th>업무등급</th>
               <th>MTPD</th><th>RTO</th><th>영향도(BIA)</th>
-              <th>중단 리스크</th><th>발생가능성</th>
+              <th>리스크 명칭</th><th>발생가능성</th>
               <th>위험도</th><th>관리등급</th><th>관리</th>
             </tr></thead>
             <tbody>
@@ -899,25 +925,137 @@
         renderTable();
       });
 
-      /* ── Add new risk from entry form ── */
+      /* ── Standalone risk list (Tab 1) ── */
+      const RISK_LIST_KEY = 'bcmsRiskList';
+      const readRiskList  = () => { try { return JSON.parse(localStorage.getItem(RISK_LIST_KEY) || '[]'); } catch { return []; } };
+      const writeRiskList = (items) => localStorage.setItem(RISK_LIST_KEY, JSON.stringify(items));
+      const riskListMount = document.getElementById('riskListMount');
+
+      const renderRiskList = () => {
+        const items = readRiskList();
+        if (!items.length) {
+          riskListMount.innerHTML = '<div class="empty">등록된 리스크가 없습니다. 위 폼에서 리스크를 추가하세요.</div>';
+          return;
+        }
+        riskListMount.innerHTML = `
+          <table>
+            <colgroup>
+              <col style="width:9%"/>  <col style="width:10%"/> <col style="width:14%"/>
+              <col style="width:14%"/> <col style="width:6%"/>  <col style="width:6%"/>
+              <col style="width:8%"/>  <col style="width:8%"/>  <col style="width:8%"/>
+              <col style="width:9%"/>  <col style="width:8%"/>
+            </colgroup>
+            <thead><tr>
+              <th>리스크ID</th><th>리스크유형</th><th>리스크명칭</th>
+              <th>영향받는소요자원</th><th>발생가능성</th><th>영향도</th>
+              <th>위험도</th><th>잔여위험도</th><th>처리방향</th>
+              <th>등록일</th><th>수정/삭제</th>
+            </tr></thead>
+            <tbody>
+              ${items.map((item, idx) => {
+                const band    = scoreBand(item.riskScore);
+                const resBand = scoreBand(item.residualScore);
+                const res     = Array.isArray(item.resources) ? item.resources.join(', ') : '';
+                return `
+                  <tr>
+                    <td><span style="font-family:monospace;font-size:10px;word-break:break-all">${escHtml(item.id)}</span></td>
+                    <td><span class="badge">${escHtml(item.riskType)}</span></td>
+                    <td>${escHtml(item.riskName)}</td>
+                    <td><span style="font-size:11px;color:var(--text-2)">${escHtml(res)||'-'}</span></td>
+                    <td style="text-align:center">${item.likelihood}</td>
+                    <td style="text-align:center">${item.impact}</td>
+                    <td><span class="badge ${band.cls}">${item.riskScore} ${band.text}</span></td>
+                    <td><span class="badge ${resBand.cls}">${item.residualScore} ${resBand.text}</span></td>
+                    <td><span class="badge">${escHtml(item.treatment)}</span></td>
+                    <td style="font-size:11px;color:var(--text-2)">${escHtml(item.registeredAt||'-')}</td>
+                    <td>
+                      <button class="btn" style="font-size:10px;padding:3px 7px;margin-right:3px" type="button" data-edit-list="${idx}">수정</button>
+                      <button class="btn" style="font-size:10px;padding:3px 7px" type="button" data-delete-list="${idx}">삭제</button>
+                    </td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>`;
+      };
+
+      riskListMount.addEventListener('click', e => {
+        const editIdx   = e.target.getAttribute('data-edit-list');
+        const deleteIdx = e.target.getAttribute('data-delete-list');
+        if (deleteIdx != null) {
+          const items = readRiskList();
+          items.splice(Number(deleteIdx), 1);
+          writeRiskList(items);
+          renderRiskList();
+          return;
+        }
+        if (editIdx != null) {
+          const items = readRiskList();
+          const item  = items[Number(editIdx)];
+          if (!item) return;
+          document.getElementById('newRiskId').textContent       = item.id;
+          document.getElementById('newThreatType').value         = item.riskType;
+          document.getElementById('newRiskName').value           = item.riskName;
+          document.getElementById('newRiskDesc').value           = item.description || '';
+          document.querySelectorAll('input[name="resource"]').forEach(cb => {
+            cb.checked = Array.isArray(item.resources) && item.resources.includes(cb.value);
+          });
+          newLikelihood.value = item.likelihood;
+          newImpact.value     = item.impact;
+          updateNewScore();
+          newResLikelihood.value = item.residualLikelihood || 1;
+          newResImpact.value     = item.residualImpact     || 1;
+          updateResidualScore();
+          const treatmentInput = document.querySelector(`input[name="treatment"][value="${item.treatment}"]`);
+          if (treatmentInput) treatmentInput.checked = true;
+          items.splice(Number(editIdx), 1);
+          writeRiskList(items);
+          renderRiskList();
+          if (!panelOpen) {
+            panelOpen = true;
+            entryPanel.classList.remove('collapsed');
+            toggleEntry.textContent = '▴ 접기';
+          }
+          entryPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+
+      /* ── Tab switching ── */
+      const tabBtnList  = document.getElementById('tabBtnList');
+      const tabBtnBia   = document.getElementById('tabBtnBia');
+      const tabPaneList = document.getElementById('tabPaneList');
+      const tabPaneBia  = document.getElementById('tabPaneBia');
+      const biaActions  = document.getElementById('biaActions');
+
+      const switchTab = (tab) => {
+        const toList = tab === 'list';
+        tabBtnList.classList.toggle('active', toList);
+        tabBtnBia.classList.toggle('active', !toList);
+        tabPaneList.classList.toggle('hidden', !toList);
+        tabPaneBia.classList.toggle('hidden', toList);
+        biaActions.style.display = toList ? 'none' : '';
+      };
+
+      tabBtnList.addEventListener('click', () => switchTab('list'));
+      tabBtnBia.addEventListener('click',  () => switchTab('bia'));
+
+      /* ── Add new risk from entry form → Tab 1 standalone list ── */
       document.getElementById('addEntryBtn').addEventListener('click', () => {
-        const team = teamSelect.value;
-        if (!team) { alert('팀을 먼저 선택하세요.'); return; }
         const name = document.getElementById('newRiskName').value.trim();
         if (!name) { alert('리스크 명칭을 입력하세요.'); return; }
-        const row = ensureTeamRisk(team);
-        const l  = clamp(Number(newLikelihood.value),1,5);
-        const i  = clamp(Number(newImpact.value),1,5);
-        const s  = l * i;
+        const l    = clamp(Number(newLikelihood.value),1,5);
+        const i    = clamp(Number(newImpact.value),1,5);
+        const s    = l * i;
         const resL = clamp(Number(newResLikelihood.value),1,5);
         const resI = clamp(Number(newResImpact.value),1,5);
         const resources = [...document.querySelectorAll('input[name="resource"]:checked')].map(cb=>cb.value);
         const treatment = document.querySelector('input[name="treatment"]:checked')?.value || '완화';
-        row.risks.push({
+        const now = new Date();
+        const registeredAt = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        const items = readRiskList();
+        items.push({
           id:          document.getElementById('newRiskId').textContent,
-          function:    name, functionName: name,
-          risk:        name, threat: name,
-          threatType:  document.getElementById('newThreatType').value,
+          riskType:    document.getElementById('newThreatType').value,
+          riskName:    name,
           resources,
           description: document.getElementById('newRiskDesc').value.trim(),
           treatment,
@@ -925,9 +1063,11 @@
           riskLevel:   scoreBand(s).text,
           residualLikelihood:resL, residualImpact:resI,
           residualScore: resL*resI,
-          source:'Manual', critical:s>=13
+          registeredAt
         });
-        renderTable();
+        writeRiskList(items);
+        renderRiskList();
+        switchTab('list');
         document.getElementById('clearEntryBtn').click();
       });
 
@@ -1011,6 +1151,7 @@
         renderTable();
       });
 
+      renderRiskList();
       renderTable();
       updateNewScore();
       updateResidualScore();
