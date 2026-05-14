@@ -1,527 +1,635 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Priority & Criticality | Risk & BIA</title>
-<link rel="stylesheet" href="../assets/style.css"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>통합 우선순위 | BCMS Portal</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    /* ── Layout ── */
+    .wrap { max-width: 1280px; margin: 0 auto; }
 
-<style>
-  .main { font-size: 17px; }
-  .card { font-size: 17px; }
-  .page-title { font-size: 26px; font-weight: 800; }
-  .card h3 { font-size: 20px; font-weight: 700; }
-  .muted{ color:rgba(15,23,42,.62); font-size:16px; line-height:1.7; margin:6px 0 0 0; }
-
-  .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
-  .controls select, .controls input{
-    height:40px; padding:0 10px; border-radius:10px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    color:#e8eeff; outline:none;
-    font-size:16px; min-width: 220px;
-  }
-  .controls input{ min-width: 280px; }
-  .btn{
-    height:40px; padding:0 12px; border-radius:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    color:#e8eeff; cursor:pointer;
-    font-size:16px;
-  }
-  .btn:hover{ background: rgba(15,23,42,.04); }
-
-  .pillRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-  .pill{
-    display:inline-flex; align-items:center; gap:6px;
-    padding:6px 10px; border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    color:rgba(15,23,42,.62); font-size:14px;
-  }
-  .pill b{ color:#e8eeff; }
-
-  .linkRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-  .linkBtn{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:10px 12px; border-radius:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    color:#60a5fa; text-decoration:none;
-    font-size:16px;
-  }
-  .linkBtn:hover{ background: rgba(15,23,42,.04); }
-
-  .list{
-    margin-top:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:14px;
-    overflow:hidden;
-  }
-  .listHead{
-    padding:12px;
-    border-bottom:1px solid rgba(255,255,255,.10);
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-end;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .listBody{ max-height: 760px; overflow:auto; }
-
-  .rowItem{
-    padding:12px;
-    border-bottom:1px solid rgba(15,23,42,.10);
-    display:flex;
-    justify-content:space-between;
-    gap:12px;
-    align-items:flex-start;
-    cursor:pointer;
-  }
-  .rowItem:hover{ background: rgba(255,255,255,.96); }
-
-  .left{ min-width:0; }
-  .title{ margin:0; font-weight:900; font-size:16px; color:#e8eeff; }
-  .sub{ margin:4px 0 0 0; font-size:14px; color:rgba(15,23,42,.62); line-height:1.5; }
-
-  .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
-  .score{
-    font-size:26px;
-    font-weight:900;
-    color:#e8eeff;
-    min-width: 72px;
-    text-align:right;
-  }
-
-  .tagCore{
-    display:inline-flex; align-items:center;
-    padding:4px 10px; border-radius:999px;
-    border:1px solid rgba(255,255,255,.16);
-    background: rgba(255,90,90,.10);
-    color:#ffb4b4; font-size:13px;
-    white-space:nowrap;
-  }
-  .tagNon{
-    display:inline-flex; align-items:center;
-    padding:4px 10px; border-radius:999px;
-    border:1px solid rgba(15,23,42,.14);
-    background: rgba(255,255,255,.94);
-    color:rgba(15,23,42,.62); font-size:13px;
-    white-space:nowrap;
-  }
-
-  .miniTag{
-    display:inline-flex; align-items:center;
-    padding:4px 10px; border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    color:rgba(15,23,42,.62); font-size:13px;
-    white-space:nowrap;
-  }
-  .riskBonusTag{
-    border-color: rgba(239,68,68,.35) !important;
-    background: rgba(239,68,68,.10) !important;
-    color:#fecaca !important;
-  }
-
-  .empty{
-    padding:16px;
-    border:1px dashed rgba(255,255,255,.18);
-    border-radius:14px;
-    color:rgba(15,23,42,.62);
-    background: rgba(255,255,255,.94);
-    line-height:1.7;
-    font-size:16px;
-    margin:12px;
-  }
-</style>
-</head>
-
-<body>
-<aside id="sidebarMount"></aside>
-
-<div class="main">
-  <div class="page-title">🎯 중요도 / 우선순위 (Priority)</div>
-
-  <div class="card">
-    <h3 style="margin-top:0;">통합 우선순위(심플)</h3>
-    <p class="muted">
-      전 업무를 대상으로 우선순위를 산출하고 <b>CoreFinal</b>을 강조합니다. (MTPD/RTO는 분 기준)<br/>
-      <b>Risk 보정(부서 기준):</b> RiskBonus = min(10, High×2 + Med×1) → 최종점수에 + 적용
-    </p>
-
-    <div class="controls">
-      <select id="deptFilter"><option value="">전체 부서</option></select>
-      <select id="sortMode">
-        <option value="score_desc">우선순위 점수 ↓</option>
-        <option value="mtpd_asc">MTPD ↑(짧은 순)</option>
-        <option value="rto_asc">RTO ↑(짧은 순)</option>
-        <option value="core_first">CoreFinal 먼저</option>
-      </select>
-      <input id="searchInput" placeholder="업무/부서 검색 (예: IDC, 관제, 침해)"/>
-      <button class="btn" id="btnRefresh">새로고침</button>
-    </div>
-
-    <div class="pillRow" id="badgeRow"></div>
-
-    <div class="linkRow">
-      <a class="linkBtn" href="./index.html">→ 대시보드</a>
-      <a class="linkBtn" href="./risk.html">→ Risk</a>
-      <a class="linkBtn" href="./bia.html">→ BIA</a>
-      <a class="linkBtn" href="./dependency.html">→ Dependency</a>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="list">
-      <div class="listHead">
-        <div class="pillRow" style="margin:0;">
-          <span class="pill">전체 <b id="cntTotal">0</b></span>
-          <span class="pill">CoreFinal <b id="cntCore">0</b></span>
-          <span class="pill">RTO 미입력 <b id="cntNoRto">0</b></span>
-          <span class="pill">High Risk(≥16) <b id="cntHighRisk">0</b></span>
-        </div>
-        <div class="pill">점수 = (MTPD+RTO 가중 + Core 보정) + RiskBonus</div>
-      </div>
-      <div class="listBody" id="listBody"></div>
-    </div>
-  </div>
-</div>
-
-<script src="../assets/sidebar.js"></script>
-<script src="../assets/demo-seed.js"></script>
-
-<script>
-  if (window.BCMSDemoSeed) {
-    window.BCMSDemoSeed.ensureDemoIfEmpty();
-    window.BCMSDemoSeed.mountBanner('.main');
-  }
-
-  const $ = (s)=>document.querySelector(s);
-  const esc = (s)=>String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
-  const toNum = (v)=>{ if(v===null||v===undefined||v==="") return null; const x=Number(v); return Number.isFinite(x)?x:null; };
-  const loadJSON = (k, fb)=>{
-    try{
-      const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
-      if(!raw) return fb;
-      return JSON.parse(raw);
-    }catch(e){ return fb; }
-  };
-  const uniq = (arr)=>[...new Set(arr.filter(Boolean))];
-
-  function minText(min){
-    const m = toNum(min);
-    if (m === null) return "-";
-    if (m === 0) return "즉시";
-    return `${m}분`;
-  }
-
-  function toMinutes(v){
-    if(v===null||v===undefined||v==='') return null;
-    if(typeof v==='number' && Number.isFinite(v)) return Math.round(v);
-    const s = String(v).trim();
-    const n = toNum(s);
-    if(n===null) return null;
-    if(s.includes('일')) return Math.round(n*1440);
-    if(s.includes('시간')) return Math.round(n*60);
-    return Math.round(n);
-  }
-
-  /* ===== Risk map ===== */
-  function getRisks(){
-    const modern = loadJSON("bcmsRiskAssessment", null);
-    if (Array.isArray(modern) && modern.length){
-      const out = [];
-      for(const teamBlock of modern){
-        const dept = teamBlock.team || teamBlock.department || teamBlock.dept || "";
-        const risks = Array.isArray(teamBlock.risks) ? teamBlock.risks : [];
-        for(const r of risks){
-          out.push({
-            dept,
-            impact: toNum(r.impact) ?? 1,
-            like: toNum(r.likelihood ?? r.like) ?? 1
-          });
-        }
-      }
-      return out;
+    .demoBannerSmall {
+      margin-bottom: 20px !important; padding: 7px 14px !important;
+      border: 0.5px solid rgba(0,112,243,.18) !important;
+      background: rgba(0,112,243,.04) !important;
+      border-radius: 8px !important; display: flex !important;
+      gap: 10px !important; flex-wrap: wrap !important; align-items: center !important;
     }
 
-    const arr = loadJSON("risks", []);
-    return Array.isArray(arr) ? arr : [];
-  }
+    .hero { padding-bottom: 28px; border-bottom: 0.5px solid var(--border); margin-bottom: 28px; }
+    .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+    .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
 
-  function riskScore(r){
-    return (toNum(r.impact)||1) * (toNum(r.like)||1);
-  }
-  function buildDeptRiskMap(risks){
+    /* ── Metrics strip ── */
+    .metricsStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+    .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
+    .metric .v.word { font-size: 14px; font-family: "Pretendard","Inter",system-ui,sans-serif; letter-spacing: normal; word-break: keep-all; line-height: 1.4; }
+
+    /* ── Control row ── */
+    .controlRow {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--r); padding: 16px 20px;
+      display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .field input  { min-width: 200px; }
+    .field select { min-width: 140px; }
+
+    /* ── Tabs ── */
+    .tabNav { display: flex; gap: 6px; margin-top: 24px; }
+    .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
+    .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
+    .tabPane.hidden { display: none; }
+
+    /* ── Table section ── */
+    .tableSection { margin-top: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 8px; }
+    .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .tableWrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 900px; }
+    th { font-size: 11px; font-weight: 600; padding: 9px 8px; height: 36px; text-align: center; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; overflow: hidden; }
+    td { font-size: 13px; padding: 10px 8px; height: 54px; vertical-align: middle; text-align: center; border-bottom: 0.5px solid var(--border); color: var(--text); overflow: hidden; }
+    tr:last-child td { border-bottom: none; }
+    td.td-left { text-align: left !important; }
+    tr.confirmed td { background: rgba(0,112,243,.03); }
+    tr:hover td { background: var(--surface-hover); }
+    tr.confirmed:hover td { background: rgba(0,112,243,.06); }
+
+    /* ── Grade badges ── */
+    .grade { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px; border: 0.5px solid; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .grade.critical { background: rgba(239,68,68,.1);  color: #dc2626; border-color: rgba(239,68,68,.3); }
+    .grade.high     { background: rgba(249,115,22,.1); color: #ea580c; border-color: rgba(249,115,22,.3); }
+    .grade.medium   { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.3); }
+    .grade.low      { background: rgba(34,197,94,.1);  color: #16a34a; border-color: rgba(34,197,94,.25); }
+
+    /* ── Score ── */
+    .scoreCell { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; }
+    .scoreCell.critical { color: #dc2626; }
+    .scoreCell.high     { color: #ea580c; }
+    .scoreCell.medium   { color: #b45309; }
+    .scoreCell.low      { color: #16a34a; }
+
+    /* ── Toggle switch ── */
+    .toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; gap: 6px; user-select: none; }
+    .toggle input[type="checkbox"] {
+      position: absolute; opacity: 0; width: 0 !important; height: 0 !important;
+      border: none !important; background: none !important; padding: 0 !important;
+      box-shadow: none !important; pointer-events: none;
+    }
+    .toggleTrack {
+      width: 36px; height: 20px; border-radius: 10px; background: var(--border-strong);
+      transition: background .2s; position: relative; flex-shrink: 0;
+    }
+    .toggleKnob {
+      position: absolute; top: 3px; left: 3px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle input:checked ~ .toggleTrack { background: var(--accent); }
+    .toggle input:checked ~ .toggleTrack .toggleKnob { transform: translateX(16px); }
+    .toggleLabel { font-size: 11px; font-weight: 600; color: var(--text-3); white-space: nowrap; min-width: 42px; }
+    .toggle input:checked ~ .toggleLabel { color: var(--accent); }
+
+    /* ── Rank ── */
+    .rank { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text-2); }
+    .rank.top3 { color: var(--accent); }
+
+    /* ── Function name ── */
+    .fnName { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
+    .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; border: 0.5px solid var(--border-strong); font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface); white-space: nowrap; }
+    .badge.core      { background: rgba(239,68,68,.1);  color: #dc2626; border-color: rgba(239,68,68,.25); }
+    .badge.important { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.25); }
+
+    .chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--bg); border: 0.5px solid var(--border); font-size: 12px; font-weight: 600; font-family: "SF Mono","Consolas",monospace; color: var(--text-2); }
+
+    .empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+    /* ── Note input ── */
+    .noteInput {
+      border: 0.5px solid var(--border-strong) !important;
+      border-radius: var(--r-sm) !important;
+      background: transparent !important;
+      color: var(--text) !important;
+      padding: 4px 8px !important;
+      font-size: 11px !important;
+      font-family: inherit !important;
+      width: 100% !important;
+      box-shadow: none !important;
+    }
+    .noteInput:focus { border-color: var(--accent) !important; background: var(--accent-subtle) !important; }
+
+    /* ── Legend ── */
+    .legendBar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .legendItem { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); }
+    .legendDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Scoring formula info ── */
+    .formulaBar {
+      background: var(--accent-subtle); border: 0.5px solid var(--accent-border);
+      border-radius: var(--r-sm); padding: 10px 16px; margin-top: 14px;
+      font-size: 12px; color: var(--text-2); display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    }
+    .formulaBar b { color: var(--text); font-weight: 700; }
+
+    /* ── Scenario ── */
+    .scenarioGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px; }
+    .scenarioCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 14px; }
+    .scenarioTop { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .sIcon { font-size: 18px; }
+    .sTitle { font-size: 12px; font-weight: 700; color: var(--text); }
+    .sCountTag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; border: 0.5px solid; white-space: nowrap; }
+    .sCountTag.has  { background: rgba(239,68,68,.08); color: #dc2626; border-color: rgba(239,68,68,.25); }
+    .sCountTag.none { background: var(--surface); color: var(--text-3); border-color: var(--border); }
+    .scenarioFnList { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+    .scenarioFnItem { font-size: 11px; color: var(--text-2); padding: 4px 7px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 5px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .sfName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; color: var(--text); font-weight: 500; }
+    .moreText { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+    @media (max-width: 960px) {
+      .metricsStrip { grid-template-columns: repeat(2, 1fr); }
+      .scenarioGrid  { grid-template-columns: repeat(2, 1fr); }
+      .controlRow    { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+  <main class="main">
+    <div class="wrap">
+
+      <!-- Hero -->
+      <section class="hero">
+        <h1>통합 우선순위 (ISO 22301)</h1>
+        <p>BIA 업무영향도와 리스크 평가를 연계하여 BCP 수립 대상 업무의 복구 우선순위를 자동 산정합니다.<br>
+          종합점수 = (종합영향도 × 0.4) + (최고위험도 × 0.4) + (RTO긴급도 × 0.2) &nbsp;·&nbsp;
+          소요자원 연계: <b>bcmsBIAData</b> + <b>bcmsRiskList</b></p>
+      </section>
+
+      <!-- Summary metrics -->
+      <div class="metricsStrip">
+        <div class="metric">
+          <div class="k">전체 업무 수</div>
+          <div class="v" id="mTotal">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">우선순위 확정</div>
+          <div class="v" id="mConfirmed" style="color:var(--accent)">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">미확정</div>
+          <div class="v" id="mPending">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">최고위험 업무</div>
+          <div class="v word" id="mTopRisk">-</div>
+        </div>
+      </div>
+
+      <!-- Formula info -->
+      <div class="formulaBar">
+        <span><b>RTO긴급도:</b> ≤1h=5 · ≤4h=4 · ≤8h=3 · ≤24h=2 · 초과=1</span>
+        <span><b>최고위험도:</b> 소요자원 기준 bcmsRiskList 최대 위험도 (1–5 정규화)</span>
+        <span><b>등급:</b> 긴급≥4.0 · 높음≥3.0 · 중간≥2.0 · 낮음&lt;2.0</span>
+      </div>
+
+      <!-- Controls -->
+      <div class="controlRow">
+        <div class="field">
+          <label>부서 필터</label>
+          <select id="deptFilter"><option value="">전체 부서</option></select>
+        </div>
+        <div class="field">
+          <label>등급 필터</label>
+          <select id="gradeFilter">
+            <option value="">전체 등급</option>
+            <option value="critical">긴급 (Critical)</option>
+            <option value="high">높음 (High)</option>
+            <option value="medium">중간 (Medium)</option>
+            <option value="low">낮음 (Low)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>확정 여부</label>
+          <select id="confirmedFilter">
+            <option value="">전체</option>
+            <option value="confirmed">확정됨</option>
+            <option value="pending">미확정</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>업무명 검색</label>
+          <input type="text" id="searchInput" placeholder="업무명 또는 부서"/>
+        </div>
+        <div class="field" style="flex-direction:row;gap:8px">
+          <button class="btn primary" id="btnConfirmAll" type="button">필터 대상 전체 확정</button>
+          <button class="btn" id="btnRefresh" type="button">새로고침</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabNav">
+        <button class="tabBtn active" id="tabBtnList" type="button">우선순위 목록</button>
+        <button class="tabBtn" id="tabBtnScenario" type="button">소요자원 시나리오</button>
+      </div>
+
+      <!-- Tab: 우선순위 목록 -->
+      <div id="tabPaneList">
+        <div class="tableSection">
+          <div class="sectionHeader">
+            <h2>우선순위 목록</h2>
+            <div class="legendBar">
+              <div class="legendItem"><div class="legendDot" style="background:#dc2626"></div>긴급(≥4.0)</div>
+              <div class="legendItem"><div class="legendDot" style="background:#ea580c"></div>높음(≥3.0)</div>
+              <div class="legendItem"><div class="legendDot" style="background:#b45309"></div>중간(≥2.0)</div>
+              <div class="legendItem"><div class="legendDot" style="background:#16a34a"></div>낮음(&lt;2.0)</div>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <colgroup>
+                <col style="width:46px">
+                <col style="width:180px">
+                <col style="width:120px">
+                <col style="width:76px">
+                <col style="width:76px">
+                <col style="width:72px">
+                <col style="width:76px">
+                <col style="width:96px">
+                <col style="width:110px">
+                <col>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>순위</th>
+                  <th style="text-align:left;padding-left:10px">업무명</th>
+                  <th>부서</th>
+                  <th>종합영향도</th>
+                  <th>최고위험도</th>
+                  <th>RTO</th>
+                  <th>종합점수</th>
+                  <th>등급</th>
+                  <th>우선순위 확정</th>
+                  <th style="text-align:left;padding-left:6px">비고</th>
+                </tr>
+              </thead>
+              <tbody id="priorityTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: 소요자원 시나리오 -->
+      <div id="tabPaneScenario" class="tabPane hidden">
+        <div class="tableSection">
+          <div class="sectionHeader">
+            <h2>소요자원 상실 시나리오</h2>
+            <span style="font-size:12px;color:var(--text-3)">자원 유형 상실 시 영향받는 업무 목록 (BIA 소요자원 데이터 기반)</span>
+          </div>
+          <div class="scenarioGrid" id="scenarioMount"></div>
+        </div>
+      </div>
+
+    </div><!-- .wrap -->
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/demo-seed.js"></script>
+  <script>
+  'use strict';
+
+  /* ── Utilities ── */
+  const escHtml = s => String(s ?? '').replace(/[&<>"']/g,
+    m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  const clamp   = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  const loadJSON = (key, fb) => {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; }
+    catch { return fb; }
+  };
+  const saveJSON = (key, val) => {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  };
+
+  /* ── RTO helpers ── */
+  const rtoToMinutes = (value, unit) => {
+    if (value === '' || value == null) return null;
+    const v = Number(value);
+    if (!Number.isFinite(v) || v <= 0) return null;
+    if (unit === '일')  return v * 1440;
+    if (unit === '시간') return v * 60;
+    return v;
+  };
+
+  const rtoUrgency = mins => {
+    if (mins === null) return 1;
+    if (mins <= 60)   return 5;
+    if (mins <= 240)  return 4;
+    if (mins <= 480)  return 3;
+    if (mins <= 1440) return 2;
+    return 1;
+  };
+
+  const rtoDisplayText = (value, unit) => {
+    if (value === '' || value == null) return '-';
+    return `${value}${unit || '분'}`;
+  };
+
+  /* ── Risk score normalization (1–25 → 1–5) ── */
+  const normalizeRisk = score => clamp(Number(score) / 5, 1, 5);
+
+  /* ── Grade ── */
+  const getGrade = score => {
+    if (score >= 4.0) return { label: '긴급', sub: 'Critical', cls: 'critical' };
+    if (score >= 3.0) return { label: '높음', sub: 'High',     cls: 'high'     };
+    if (score >= 2.0) return { label: '중간', sub: 'Medium',   cls: 'medium'   };
+    return              { label: '낮음', sub: 'Low',      cls: 'low'      };
+  };
+
+  /* ── ISO 22301 resource types ── */
+  const RESOURCE_TYPES = [
+    { key: '인원',        icon: '👤' },
+    { key: '시설·작업장', icon: '🏢' },
+    { key: '기술·IT',    icon: '💻' },
+    { key: '정보·문서',   icon: '📄' },
+    { key: '공급망·외주', icon: '🔗' },
+    { key: '유틸리티',    icon: '⚡' },
+    { key: '설비·장비',   icon: '⚙️' },
+    { key: '자금',        icon: '💰' },
+  ];
+
+  /* ── Data sources ── */
+  const loadBIA       = () => loadJSON('bcmsBIAData', []);
+  const loadRisks     = () => loadJSON('bcmsRiskList', []);
+  const loadConfirmed = () => loadJSON('bcmsPriorityConfirmed', {});
+  const saveConfirmed = obj => saveJSON('bcmsPriorityConfirmed', obj);
+
+  /* ── Build resource → max-normalized-risk map ── */
+  const buildResourceRiskMap = risks => {
     const map = new Map();
-    const add = (dept, band)=>{
-      if(!map.has(dept)) map.set(dept, { high:0, med:0, low:0, total:0 });
-      const o = map.get(dept);
-      o.total += 1;
-      if (band==="high") o.high += 1;
-      else if (band==="med") o.med += 1;
-      else o.low += 1;
-    };
-    for (const r of risks){
-      const dept = r.dept || r.department || "";
-      const s = riskScore(r);
-      const band = (s>=16) ? "high" : (s>=8 ? "med" : "low");
-      add(dept, band);
+    for (const r of risks) {
+      const raw   = Number(r.riskScore) || ((Number(r.likelihood) || 1) * (Number(r.impact) || 1));
+      const score = normalizeRisk(raw);
+      for (const res of (r.resources || [])) {
+        if (!map.has(res) || map.get(res) < score) map.set(res, score);
+      }
     }
     return map;
-  }
-  function riskBonusForDept(rm){
-    if (!rm) return 0;
-    return Math.min(10, rm.high*2 + rm.med*1);
-  }
+  };
 
-  /* ===== Data normalize ===== */
-  function normalizeItem(x){
-    const dept = x.dept || x.department || x.org || "";
-    const work = x.work || x.process || x.processName || x.name || "";
+  /* ── Compute all priority items ── */
+  const computeItems = (biaRows, riskMap, confirmed) => {
+    const items = [];
+    for (const block of biaRows) {
+      const team = String(block.team || '').trim();
+      for (const fn of (block.functions || [])) {
+        if (!fn.name) continue;
 
-    const mtpd = toNum(x.mtpd ?? x.mtpdMin ?? x.mtpd_minutes);
-    const rto  = toNum(x.rto  ?? x.rtoMin  ?? x.rto_minutes);
+        const overallImpact = clamp(Number(fn.overallImpact || fn.impact || 3), 1, 5);
 
-    const mtpdText = x.mtpdText || minText(mtpd);
-    const rtoText  = x.rtoText  || minText(rto);
-
-    const coreAuto   = !!(x.coreAuto ?? x.core_auto);
-    const coreManual = !!(x.coreManual ?? x.core_manual);
-    const coreFinal  = !!(x.coreFinal ?? x.core_final ?? (coreAuto || coreManual));
-
-    return { dept, work, mtpd, rto, mtpdText, rtoText, coreAuto, coreManual, coreFinal };
-  }
-
-  function getAll(){
-    const bia = loadJSON("bcmsBIAData", null);
-    if (Array.isArray(bia) && bia.length){
-      const out = [];
-      for(const teamBlock of bia){
-        const dept = teamBlock.team || teamBlock.department || teamBlock.dept || "";
-        const funcs = Array.isArray(teamBlock.functions) ? teamBlock.functions : [];
-        for(const f of funcs){
-          const work = f.name || f.function || f.work || f.process || "";
-          if(!work) continue;
-          const mtpd = toMinutes(f.mtpdMinutes ?? f.mtpd);
-          const rto = toMinutes(f.rtoMinutes ?? f.rto);
-          const coreAuto = !!(f.coreAuto ?? f.core_auto);
-          const coreManual = !!(f.coreManual ?? f.core_manual);
-          const coreFinal = !!((f.coreFinal ?? f.core_final ?? (f.grade === '핵심')) || coreAuto || coreManual);
-          out.push({ dept, work, mtpd, rto, mtpdText:minText(mtpd), rtoText:minText(rto), coreAuto, coreManual, coreFinal });
+        /* 최고위험도: max normalized risk score via shared required resources */
+        let maxRisk = 1;
+        for (const res of (fn.requiredResources || [])) {
+          if (riskMap.has(res)) maxRisk = Math.max(maxRisk, riskMap.get(res));
         }
+
+        const rtomins  = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
+        const urgency  = rtoUrgency(rtomins);
+        const rawScore = (overallImpact * 0.4) + (maxRisk * 0.4) + (urgency * 0.2);
+        const score    = Math.round(rawScore * 10) / 10;
+        const grade    = getGrade(score);
+        const id       = String(fn.biaId || fn.id || `${team}__${fn.name}`);
+
+        items.push({
+          id, team, name: fn.name,
+          importance: fn.importance || '일반',
+          overallImpact,
+          maxRisk: Math.round(maxRisk * 10) / 10,
+          urgency,
+          rtoDisplay: rtoDisplayText(fn.rtoValue, fn.rtoUnit),
+          score, grade,
+          confirmed:         !!confirmed[id],
+          note:              confirmed[id + '_note'] || '',
+          requiredResources: fn.requiredResources || [],
+        });
       }
-      return out;
     }
+    items.sort((a, b) => b.score - a.score);
+    return items;
+  };
 
-    const bcp = loadJSON("bcp_core_processes", null);
-    if (Array.isArray(bcp) && bcp.length) return bcp.map(normalizeItem);
-
-    const procs = loadJSON("processes", []);
-    if (Array.isArray(procs) && procs.length){
-      return procs.map(p=>{
-        const dept = p.department || "";
-        const work = p.name || "";
-        const mtpd = toNum(p.mtpdMinutes);
-        const rto  = toNum(p.rtoMinutes);
-        const coreAuto = !!p.coreAuto;
-        const coreManual = !!p.coreManual;
-        const coreFinal = !!(coreAuto || coreManual);
-        return { dept, work, mtpd, rto, mtpdText:minText(mtpd), rtoText:minText(rto), coreAuto, coreManual, coreFinal };
-      });
-    }
-    return [];
-  }
-
-  /* ===== Base scoring ===== */
-  function mtpdWeight(m){
-    const x = toNum(m);
-    if (x === null) return 0;
-    if (x === 0) return 30;
-    if (x <= 10) return 28;
-    if (x <= 30) return 24;
-    if (x <= 60) return 18;
-    if (x <= 96) return 14;
-    if (x <= 240) return 8;
-    return 2;
-  }
-  function rtoWeight(m){
-    const x = toNum(m);
-    if (x === null) return 0;
-    if (x === 0) return 20;
-    if (x <= 10) return 18;
-    if (x <= 30) return 14;
-    if (x <= 60) return 10;
-    if (x <= 96) return 8;
-    if (x <= 240) return 4;
-    return 1;
-  }
-  function basePriorityScore(p){
-    const base = mtpdWeight(p.mtpd) + rtoWeight(p.rto);
-    const coreBonus = p.coreFinal ? 10 : 0;
-    return Math.round(base + coreBonus);
-  }
-
-  /* ===== Filters (persist) ===== */
-  const KEY_DEPT = "riskBiaPriority_dept";
-  const KEY_SORT = "riskBiaPriority_sort";
-  const KEY_Q    = "riskBiaPriority_q";
-
-  function persist(){
-    sessionStorage.setItem(KEY_DEPT, $("#deptFilter").value || "");
-    sessionStorage.setItem(KEY_SORT, $("#sortMode").value || "score_desc");
-    sessionStorage.setItem(KEY_Q, $("#searchInput").value || "");
-  }
-  function restore(){
-    $("#searchInput").value = sessionStorage.getItem(KEY_Q) || "";
-    $("#sortMode").value = sessionStorage.getItem(KEY_SORT) || "score_desc";
-  }
-
-  function buildDeptOptions(all){
-    const sel = $("#deptFilter");
-    const prev = sessionStorage.getItem(KEY_DEPT) || "";
-    const depts = uniq(all.map(x=>x.dept)).sort((a,b)=>a.localeCompare(b));
-    sel.innerHTML = `<option value="">전체 부서</option>` + depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
-    sel.value = depts.includes(prev) ? prev : "";
-  }
-
-  function applyFilters(items){
-    const dept = $("#deptFilter").value;
-    const q = $("#searchInput").value.trim().toLowerCase();
-    return items.filter(x=>{
-      if (dept && x.dept !== dept) return false;
-      if (q){
-        const hay = `${x.dept} ${x.work}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
+  /* ── Filters ── */
+  const applyFilters = items => {
+    const dept  = document.getElementById('deptFilter').value;
+    const grade = document.getElementById('gradeFilter').value;
+    const conf  = document.getElementById('confirmedFilter').value;
+    const q     = document.getElementById('searchInput').value.trim().toLowerCase();
+    return items.filter(x => {
+      if (dept  && x.team !== dept)           return false;
+      if (grade && x.grade.cls !== grade)     return false;
+      if (conf === 'confirmed' && !x.confirmed) return false;
+      if (conf === 'pending'   &&  x.confirmed) return false;
+      if (q && !`${x.name} ${x.team}`.toLowerCase().includes(q)) return false;
       return true;
     });
-  }
+  };
 
-  function applySort(items){
-    const mode = $("#sortMode").value;
-    const arr = items.slice();
+  /* ── State ── */
+  let ALL_ITEMS = [];
+  let CONFIRMED = {};
 
-    if (mode === "mtpd_asc") return arr.sort((a,b)=> (toNum(a.mtpd) ?? Infinity) - (toNum(b.mtpd) ?? Infinity));
-    if (mode === "rto_asc")  return arr.sort((a,b)=> (toNum(a.rto) ?? Infinity) - (toNum(b.rto) ?? Infinity));
-    if (mode === "core_first") return arr.sort((a,b)=> (b.coreFinal?1:0)-(a.coreFinal?1:0) || b._score-a._score);
-    return arr.sort((a,b)=> b._score - a._score);
-  }
+  /* ── Render metrics ── */
+  const renderMetrics = items => {
+    const total  = items.length;
+    const conf   = items.filter(x => x.confirmed).length;
+    document.getElementById('mTotal').textContent     = total;
+    document.getElementById('mConfirmed').textContent = conf;
+    document.getElementById('mPending').textContent   = total - conf;
+    const top = items[0];
+    document.getElementById('mTopRisk').textContent   = top ? `${top.name} (${top.score})` : '-';
+  };
 
-  /* ===== Render ===== */
-  function renderBadges(scoped, all, riskMap){
-    const total = scoped.length;
-    const core  = scoped.filter(x=>x.coreFinal).length;
-    const noRto = scoped.filter(x=>x.rto === null).length;
+  /* ── Populate dept options ── */
+  const renderDeptOptions = items => {
+    const sel  = document.getElementById('deptFilter');
+    const prev = sel.value;
+    const depts = [...new Set(items.map(x => x.team).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    sel.innerHTML = `<option value="">전체 부서</option>` +
+      depts.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+    if (prev) sel.value = prev;
+  };
 
-    const allTotal = all.length;
-    const allCore = all.filter(x=>x.coreFinal).length;
-
-    let high=0, med=0, low=0;
-    for (const x of scoped){
-      const o = riskMap.get(x.dept);
-      if (!o) continue;
-      high += o.high; med += o.med; low += o.low;
-    }
-
-    $("#badgeRow").innerHTML = `
-      <span class="pill">필터 결과 <b>${total}</b></span>
-      <span class="pill">CoreFinal <b>${core}</b></span>
-      <span class="pill">RTO 미입력 <b>${noRto}</b></span>
-      <span class="pill">부서 High <b>${high}</b></span>
-      <span class="pill">부서 Med <b>${med}</b></span>
-      <span class="pill">부서 Low <b>${low}</b></span>
-      <span class="pill">전체 CoreFinal <b>${allCore}</b> / <b>${allTotal}</b></span>
-    `;
-  }
-
-  function renderCounts(scoped, riskMap){
-    $("#cntTotal").textContent = scoped.length;
-    $("#cntCore").textContent  = scoped.filter(x=>x.coreFinal).length;
-    $("#cntNoRto").textContent = scoped.filter(x=>x.rto === null).length;
-
-    let high=0;
-    for (const x of scoped){
-      const o = riskMap.get(x.dept);
-      if (o) high += o.high;
-    }
-    $("#cntHighRisk").textContent = high;
-  }
-
-  function renderList(items, riskMap){
-    const mount = $("#listBody");
-    if (!items.length){
-      mount.innerHTML = `<div class="empty">표시할 데이터가 없습니다. (BIA 수행 후 확인)</div>`;
+  /* ── Render table ── */
+  const renderTable = filtered => {
+    const tbody = document.getElementById('priorityTableBody');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="10" class="empty">
+        데이터가 없습니다. BIA 업무를 등록하거나 필터 조건을 확인하세요.</td></tr>`;
       return;
     }
 
-    mount.innerHTML = items.map(p=>{
-      const coreTag = p.coreFinal ? `<span class="tagCore">CoreFinal</span>` : `<span class="tagNon">Non-core</span>`;
-      const meta1 = `<span class="miniTag">MTPD ${esc(p.mtpdText)}</span>`;
-      const meta2 = `<span class="miniTag">RTO ${esc(p.rtoText)}</span>`;
-      const meta3 = p.coreManual ? `<span class="miniTag">Manual</span>` : (p.coreAuto ? `<span class="miniTag">Auto</span>` : ``);
+    tbody.innerHTML = filtered.map((x, i) => {
+      const rank    = i + 1;
+      const rankCls = rank <= 3 ? 'rank top3' : 'rank';
+      const ibadge  = x.importance === '핵심'
+        ? `<span class="badge core" style="margin-top:3px">핵심</span>`
+        : x.importance === '중요'
+        ? `<span class="badge important" style="margin-top:3px">중요</span>`
+        : '';
 
-      const rm = riskMap.get(p.dept);
-      const bonus = riskBonusForDept(rm);
-      const riskTag = bonus > 0
-        ? `<span class="miniTag riskBonusTag">Risk +${bonus} (H${rm.high}/M${rm.med})</span>`
-        : `<span class="miniTag">Risk +0</span>`;
+      return `<tr class="${x.confirmed ? 'confirmed' : ''}" data-id="${escHtml(x.id)}">
+        <td><span class="${rankCls}">${rank}</span></td>
+        <td class="td-left" style="padding-left:10px">
+          <span class="fnName">${escHtml(x.name)}</span>
+          ${ibadge}
+        </td>
+        <td style="font-size:12px;color:var(--text-2)">${escHtml(x.team)}</td>
+        <td><span class="chip">${x.overallImpact}</span></td>
+        <td><span class="chip">${x.maxRisk.toFixed(1)}</span></td>
+        <td style="font-size:12px">${escHtml(x.rtoDisplay)}</td>
+        <td><span class="scoreCell ${x.grade.cls}">${x.score}</span></td>
+        <td><span class="grade ${x.grade.cls}">${x.grade.label}</span></td>
+        <td>
+          <label class="toggle">
+            <input type="checkbox" class="confirmToggle" data-id="${escHtml(x.id)}"${x.confirmed ? ' checked' : ''}>
+            <span class="toggleTrack"><span class="toggleKnob"></span></span>
+            <span class="toggleLabel">${x.confirmed ? 'BCP 대상' : '미확정'}</span>
+          </label>
+        </td>
+        <td class="td-left" style="padding:6px 8px">
+          <input class="noteInput" type="text" placeholder="비고 입력"
+            data-note-id="${escHtml(x.id)}" value="${escHtml(x.note)}">
+        </td>
+      </tr>`;
+    }).join('');
+  };
 
-      return `
-        <div class="rowItem" data-open="bia">
-          <div class="left">
-            <p class="title">${esc(p.work || "-")}</p>
-            <p class="sub">${esc(p.dept || "-")}</p>
-            <div class="pillRow" style="margin-top:8px;">${meta1}${meta2}${riskTag}${meta3}${coreTag}</div>
-          </div>
-          <div class="right">
-            <div class="score" title="Priority Score">${p._score}</div>
-          </div>
+  /* ── Render scenario ── */
+  const renderScenario = items => {
+    const mount = document.getElementById('scenarioMount');
+    mount.innerHTML = RESOURCE_TYPES.map(rt => {
+      const affected = items.filter(x => x.requiredResources.includes(rt.key));
+      const count    = affected.length;
+
+      const fnItems = affected.slice(0, 5).map(x =>
+        `<div class="scenarioFnItem">
+          <span class="sfName">${escHtml(x.name)}</span>
+          <span class="grade ${x.grade.cls}" style="padding:1px 6px;font-size:10px">${x.grade.label}</span>
+        </div>`
+      ).join('');
+
+      const more = count > 5
+        ? `<div class="moreText">외 ${count - 5}건 더</div>` : '';
+
+      return `<div class="scenarioCard">
+        <div class="scenarioTop">
+          <span class="sIcon">${rt.icon}</span>
+          <span class="sTitle">${escHtml(rt.key)}</span>
         </div>
-      `;
-    }).join("");
-  }
+        <span class="sCountTag ${count > 0 ? 'has' : 'none'}">
+          ${count > 0 ? `영향업무 ${count}건` : '해당없음'}
+        </span>
+        <div class="scenarioFnList">${fnItems}${more}</div>
+      </div>`;
+    }).join('');
+  };
 
-  /* ===== Main ===== */
-  let ALL = [];
+  /* ── Main render ── */
+  const renderAll = () => {
+    const biaRows  = loadBIA();
+    const risks    = loadRisks();
+    CONFIRMED      = loadConfirmed();
 
-  function renderAll(){
-    const risks = getRisks();
-    const riskMap = buildDeptRiskMap(risks);
+    const riskMap  = buildResourceRiskMap(risks);
+    ALL_ITEMS      = computeItems(biaRows, riskMap, CONFIRMED);
 
-    ALL = getAll().map(x=>{
-      const base = basePriorityScore(x);
-      const bonus = riskBonusForDept(riskMap.get(x.dept));
-      x._base = base;
-      x._riskBonus = bonus;
-      x._score = base + bonus; // ✅ 통합 점수
-      return x;
-    });
+    renderMetrics(ALL_ITEMS);
+    renderDeptOptions(ALL_ITEMS);
 
-    buildDeptOptions(ALL);
-    restore();
+    const filtered = applyFilters(ALL_ITEMS);
+    renderTable(filtered);
+    renderScenario(ALL_ITEMS);
+  };
 
-    const scoped = applyFilters(ALL);
-    const sorted = applySort(scoped);
+  /* ── Filter events ── */
+  ['deptFilter','gradeFilter','confirmedFilter'].forEach(id =>
+    document.getElementById(id).addEventListener('change', renderAll));
+  document.getElementById('searchInput').addEventListener('input', renderAll);
+  document.getElementById('btnRefresh').addEventListener('click', renderAll);
 
-    renderBadges(scoped, ALL, riskMap);
-    renderCounts(scoped, riskMap);
-    renderList(sorted, riskMap);
-  }
-
-  $("#deptFilter").addEventListener("change", ()=>{ persist(); renderAll(); });
-  $("#sortMode").addEventListener("change", ()=>{ persist(); renderAll(); });
-  $("#searchInput").addEventListener("input", ()=>{ persist(); renderAll(); });
-  $("#btnRefresh").addEventListener("click", ()=>{ renderAll(); });
-
-  document.addEventListener("click", (e)=>{
-    const row = e.target.closest(".rowItem[data-open='bia']");
-    if (row) location.href = "./bia.html";
+  /* ── Confirm all (filtered) ── */
+  document.getElementById('btnConfirmAll').addEventListener('click', () => {
+    CONFIRMED = loadConfirmed();
+    applyFilters(ALL_ITEMS).forEach(x => { CONFIRMED[x.id] = true; });
+    saveConfirmed(CONFIRMED);
+    renderAll();
   });
 
+  /* ── Toggle confirm (delegated) ── */
+  document.getElementById('priorityTableBody').addEventListener('change', e => {
+    const toggle = e.target.closest('.confirmToggle');
+    if (!toggle) return;
+    const id    = toggle.getAttribute('data-id');
+    CONFIRMED   = loadConfirmed();
+    CONFIRMED[id] = toggle.checked;
+    saveConfirmed(CONFIRMED);
+
+    const label = toggle.closest('.toggle')?.querySelector('.toggleLabel');
+    if (label) label.textContent = toggle.checked ? 'BCP 대상' : '미확정';
+    toggle.closest('tr')?.classList.toggle('confirmed', toggle.checked);
+
+    /* update metrics without full re-render */
+    const item = ALL_ITEMS.find(x => x.id === id);
+    if (item) item.confirmed = toggle.checked;
+    renderMetrics(ALL_ITEMS);
+  });
+
+  /* ── Note save (debounced) ── */
+  let _noteTimer = null;
+  document.getElementById('priorityTableBody').addEventListener('input', e => {
+    const ni = e.target.closest('.noteInput');
+    if (!ni) return;
+    const id = ni.getAttribute('data-note-id');
+    clearTimeout(_noteTimer);
+    _noteTimer = setTimeout(() => {
+      CONFIRMED = loadConfirmed();
+      CONFIRMED[id + '_note'] = ni.value;
+      saveConfirmed(CONFIRMED);
+    }, 600);
+  });
+
+  /* ── Tab switching ── */
+  const switchTab = tab => {
+    const isList = tab === 'list';
+    document.getElementById('tabBtnList').classList.toggle('active', isList);
+    document.getElementById('tabBtnScenario').classList.toggle('active', !isList);
+    document.getElementById('tabPaneList').classList.toggle('hidden', !isList);
+    document.getElementById('tabPaneScenario').classList.toggle('hidden', isList);
+  };
+  document.getElementById('tabBtnList').addEventListener('click', () => switchTab('list'));
+  document.getElementById('tabBtnScenario').addEventListener('click', () => switchTab('scenario'));
+
+  /* ── Demo seed ── */
+  if (window.BCMSDemoSeed) {
+    window.BCMSDemoSeed.ensureDemoIfEmpty();
+    window.BCMSDemoSeed.mountBanner('.wrap');
+    const banner = document.querySelector('.wrap > div:first-child');
+    if (banner && banner.style.background) {
+      banner.className = 'demoBannerSmall'; banner.style.cssText = '';
+      const msg = banner.querySelector('span');
+      if (msg) msg.style.cssText = 'font-size:12px;font-weight:500;color:var(--text-2)';
+      banner.querySelectorAll('button').forEach(b => {
+        b.style.cssText = 'padding:3px 9px;border-radius:6px;border:0.5px solid var(--border-strong);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2)';
+      });
+    }
+  }
+
   renderAll();
-</script>
+  </script>
 </body>
 </html>
