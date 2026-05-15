@@ -1,12 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Portal - 전략·계획 대시보드</title>
+  <title>BCMS Portal - BCP 전략·계획</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    /* ── Layout ── */
     .wrap { max-width: 1280px; margin: 0 auto; }
 
     .demoBannerSmall {
@@ -17,79 +16,105 @@
       gap: 10px !important; flex-wrap: wrap !important; align-items: center !important;
     }
 
-    /* ── Hero ── */
+    /* Hero */
     .hero { padding-bottom: 24px; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; }
     .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
     .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
 
-    /* ── Metrics strip ── */
+    /* Metrics */
     .metricsStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
     .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
     .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
 
-    /* ── Tab nav ── */
+    /* Tabs */
     .tabNav { display: flex; gap: 6px; margin-top: 24px; }
     .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
     .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
     .tabPane.hidden { display: none; }
 
-    /* ── Control row ── */
+    /* Control row */
     .controlRow { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 14px 18px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-top: 12px; }
     .field { display: flex; flex-direction: column; gap: 5px; }
     .field label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
-    .field select, .field input { min-width: 140px; }
+    .field select { min-width: 140px; }
 
-    /* ── Grade badges ── */
+    /* Grades */
     .grade { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px; border: 0.5px solid; font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     .grade.critical { background: rgba(239,68,68,.1);  color: #dc2626; border-color: rgba(239,68,68,.3); }
     .grade.high     { background: rgba(249,115,22,.1); color: #ea580c; border-color: rgba(249,115,22,.3); }
     .grade.medium   { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.3); }
     .grade.low      { background: rgba(34,197,94,.1);  color: #16a34a; border-color: rgba(34,197,94,.25); }
 
-    /* ── Chip ── */
+    /* Chip */
     .chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--bg); border: 0.5px solid var(--border); font-size: 12px; font-weight: 600; font-family: "SF Mono","Consolas",monospace; color: var(--text-2); white-space: nowrap; flex-shrink: 0; }
 
-    /* ── Toggle switch ── */
+    /* Toggle */
     .toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; gap: 6px; user-select: none; flex-shrink: 0; }
     .toggle input[type="checkbox"] { position: absolute; opacity: 0; width: 0 !important; height: 0 !important; border: none !important; background: none !important; padding: 0 !important; box-shadow: none !important; pointer-events: none; }
     .toggleTrack { width: 36px; height: 20px; border-radius: 10px; background: var(--border-strong); transition: background .2s; position: relative; flex-shrink: 0; }
     .toggleKnob { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
     .toggle input:checked ~ .toggleTrack { background: var(--accent); }
     .toggle input:checked ~ .toggleTrack .toggleKnob { transform: translateX(16px); }
-    .toggleLabel { font-size: 11px; font-weight: 600; color: var(--text-3); white-space: nowrap; min-width: 46px; }
+    .toggleLabel { font-size: 11px; font-weight: 600; color: var(--text-3); white-space: nowrap; min-width: 50px; }
     .toggle input:checked ~ .toggleLabel { color: var(--accent); }
 
-    /* ── Strategy Cards (BCP Tab) ── */
+    /* Cards */
     .cardGrid { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
     .stratCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; transition: border-color .15s; }
-    .stratCard.done { border-color: rgba(0,112,243,.3); }
+    .stratCard.done { border-color: rgba(0,112,243,.35); background: rgba(0,112,243,.015); }
 
     .cardHeader { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
     .cardHeader:hover { background: var(--surface-hover); }
-    .expandIcon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 0.5px solid var(--border-strong); border-radius: 4px; font-size: 9px; color: var(--text-3); background: var(--bg); flex-shrink: 0; }
+
+    .expandIcon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 0.5px solid var(--border-strong); border-radius: 4px; font-size: 9px; color: var(--text-3); background: var(--bg); flex-shrink: 0; transition: transform .15s; }
+    .expandIcon.open { transform: rotate(90deg); }
 
     .fnNameBig { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .teamTag { font-size: 11px; color: var(--text-2); background: var(--bg); border: 0.5px solid var(--border); border-radius: 5px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; }
 
-    .cardBody { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px; border-top: 0.5px solid var(--border); }
+    .saveInd { font-size: 10px; color: var(--accent); opacity: 0; transition: opacity .3s; white-space: nowrap; flex-shrink: 0; }
+    .saveInd.show { opacity: 1; }
+
+    /* Card body */
+    .cardBody { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; border-top: 0.5px solid var(--border); }
     .cardBody.hidden { display: none; }
-    .cardFoot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px; border-top: 0.5px solid var(--border); background: var(--bg); }
-    .cardFoot.hidden { display: none; }
 
-    .fld { display: flex; flex-direction: column; gap: 5px; }
+    .fld { display: flex; flex-direction: column; gap: 6px; }
     .fld.full { grid-column: 1 / -1; }
-    .fld label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
-    .fld textarea { width: 100%; min-height: 68px; resize: vertical; font-family: inherit; font-size: 13px; line-height: 1.5; }
-    .fld select { width: 100%; }
-    .fld input  { width: 100%; }
+    .fld > label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .fld input[type="text"] { width: 100%; }
 
-    .resBadgeRow { display: flex; gap: 5px; flex-wrap: wrap; }
-    .resBadge { font-size: 11px; padding: 2px 8px; border-radius: 5px; background: var(--accent-subtle); border: 0.5px solid var(--accent-border); color: var(--accent); font-weight: 600; }
-    .resBadge.empty-res { background: var(--bg); border-color: var(--border); color: var(--text-3); font-style: italic; }
+    /* Radio strategy type */
+    .radioGroup { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .radioOpt { display: flex; align-items: flex-start; gap: 7px; padding: 8px 10px; border: 0.5px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .radioOpt:hover { background: var(--surface-hover); }
+    .radioOpt input[type="radio"] { flex-shrink: 0; margin-top: 2px; accent-color: var(--accent); }
+    .radioOpt span { font-size: 12px; color: var(--text); font-weight: 500; line-height: 1.4; }
+    .radioOpt.sel { border-color: var(--accent); background: rgba(0,112,243,.07); }
+    .radioOpt.sel span { color: var(--accent); font-weight: 600; }
 
-    /* ── Table section (DRP) ── */
+    /* Step list */
+    .stepList { display: flex; flex-direction: column; gap: 5px; }
+    .stepItem { display: flex; align-items: center; gap: 7px; }
+    .stepNum { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .stepItem input[type="text"] { flex: 1; }
+    .stepDel { width: 24px; height: 24px; border-radius: 4px; border: 0.5px solid var(--border); background: var(--bg); color: var(--text-3); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; line-height: 1; transition: border-color .15s, color .15s; }
+    .stepDel:hover { border-color: rgba(239,68,68,.4); color: #dc2626; }
+    .addStepBtn { font-size: 12px; font-weight: 600; color: var(--accent); border: 0.5px dashed var(--accent-border); background: rgba(0,112,243,.04); border-radius: 6px; padding: 7px 12px; cursor: pointer; text-align: center; margin-top: 2px; transition: background .15s; }
+    .addStepBtn:hover { background: rgba(0,112,243,.09); }
+
+    /* Resource checkboxes */
+    .resGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .resOpt { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border: 0.5px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .resOpt:hover { background: var(--surface-hover); }
+    .resOpt input[type="checkbox"] { flex-shrink: 0; accent-color: var(--accent); }
+    .resOpt span { font-size: 12px; color: var(--text); font-weight: 500; }
+    .resOpt.chk { border-color: var(--accent); background: rgba(0,112,243,.07); }
+    .resOpt.chk span { color: var(--accent); font-weight: 600; }
+
+    /* DRP table */
     .tableSection { margin-top: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
     .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 8px; }
     .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
@@ -100,38 +125,21 @@
     tr:last-child td { border-bottom: none; }
     td input, td select { width: 100%; min-width: 70px; }
 
-    /* DRP mode badge */
-    .modeBadge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 5px; border: 0.5px solid; font-size: 11px; font-weight: 700; }
-    .hot  { background: rgba(239,68,68,.08);  color: #dc2626; border-color: rgba(239,68,68,.25); }
-    .warm { background: rgba(245,158,11,.08); color: #b45309; border-color: rgba(245,158,11,.25); }
-    .cold { background: rgba(34,197,94,.08);  color: #16a34a; border-color: rgba(34,197,94,.25); }
-
-    /* ── Matrix ── */
-    .matrixScroll { overflow-x: auto; }
-    .matTbl { border-collapse: collapse; font-size: 11px; min-width: 800px; }
-    .matTbl th { font-size: 10px; font-weight: 600; padding: 8px 10px; background: var(--surface-hover); border: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; text-align: center; }
-    .matTbl th.rhd { text-align: left; min-width: 160px; }
-    .matTbl td { padding: 7px 10px; border: 0.5px solid var(--border); vertical-align: top; min-width: 110px; }
-    .matTbl td.rhd { background: var(--surface-hover); font-weight: 600; font-size: 12px; color: var(--text); min-width: 160px; }
-    .matTbl td .sub { font-size: 10px; color: var(--text-3); font-weight: 400; margin-top: 1px; }
-
-    .mcell { font-size: 11px; line-height: 1.4; }
-    .mcell.filled { color: var(--text); background: rgba(0,112,243,.05); border-radius: 4px; padding: 4px 6px; }
-    .mcell.nodata { color: var(--text-3); font-size: 10px; }
-    .mcell.nores  { color: var(--border-strong); font-size: 12px; text-align: center; }
-
-    /* ── Empty ── */
     .empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
 
     @media (max-width: 960px) {
       .metricsStrip { grid-template-columns: repeat(2, 1fr); }
       .cardBody { grid-template-columns: 1fr; }
       .cardBody .fld.full { grid-column: 1; }
+      .radioGroup { grid-template-columns: repeat(2, 1fr); }
+      .resGrid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 640px) {
       .metricsStrip { grid-template-columns: 1fr 1fr; }
       .tabNav { flex-wrap: wrap; }
       .cardHeader { flex-wrap: wrap; }
+      .radioGroup { grid-template-columns: 1fr 1fr; }
+      .resGrid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -143,14 +151,14 @@
       <!-- Hero -->
       <section class="hero">
         <h1>BCP 전략·계획 (ISO 22301)</h1>
-        <p>우선순위 확정 핵심업무 기반 복구전략을 수립하고, IT 재해복구계획(DRP) 및 전략 매트릭스를 관리합니다.<br>
-          연동 데이터: <b>bcmsPriorityConfirmed</b> · <b>bcmsBIAData</b> · <b>bcmsBCPStrategy</b> · <b>bcmsDRPData</b></p>
+        <p>우선순위 확정 핵심업무 기반 복구전략을 수립하고, IT 재해복구계획(DRP)을 관리합니다.<br>
+          연동 데이터: <b>bcmsPriorityConfirmed</b> · <b>bcmsBIAData</b> → 저장: <b>bcmsBCPStrategy</b> · <b>bcmsDRPData</b></p>
       </section>
 
-      <!-- Summary metrics -->
+      <!-- Metrics -->
       <div class="metricsStrip">
         <div class="metric">
-          <div class="k">BCP 수립 대상 업무</div>
+          <div class="k">BCP 수립 대상</div>
           <div class="v" id="mTarget">0</div>
         </div>
         <div class="metric">
@@ -162,21 +170,20 @@
           <div class="v" id="mPending">0</div>
         </div>
         <div class="metric">
-          <div class="k">DRP 연계 수</div>
+          <div class="k">DRP 시스템 수</div>
           <div class="v" id="mDrp">0</div>
         </div>
       </div>
 
-      <!-- Tab navigation -->
+      <!-- Tab nav -->
       <div class="tabNav">
-        <button class="tabBtn active" id="tabBcp"    type="button">BCP 전략 목록</button>
-        <button class="tabBtn"        id="tabDrp"    type="button">DRP (재해복구계획)</button>
-        <button class="tabBtn"        id="tabMatrix" type="button">전략 매트릭스</button>
+        <button class="tabBtn active" id="tabBcp" type="button">BCP 전략 목록</button>
+        <button class="tabBtn"        id="tabDrp" type="button">DRP (재해복구계획)</button>
       </div>
 
-      <!-- ═══════════════════════════════════════
+      <!-- ══════════════════════════════
            Tab 1: BCP 전략 목록
-      ═══════════════════════════════════════ -->
+      ══════════════════════════════ -->
       <div id="paneBcp">
         <div class="controlRow">
           <div class="field">
@@ -201,16 +208,13 @@
               <option value="no">미완료</option>
             </select>
           </div>
-          <div style="margin-left:auto;">
-            <button class="btn primary" id="bcpSaveAll" type="button">전체 저장</button>
-          </div>
         </div>
         <div class="cardGrid" id="bcpCardGrid"></div>
       </div>
 
-      <!-- ═══════════════════════════════════════
+      <!-- ══════════════════════════════
            Tab 2: DRP
-      ═══════════════════════════════════════ -->
+      ══════════════════════════════ -->
       <div id="paneDrp" class="tabPane hidden">
         <div class="tableSection">
           <div class="sectionHeader">
@@ -250,23 +254,6 @@
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════
-           Tab 3: 전략 매트릭스
-      ═══════════════════════════════════════ -->
-      <div id="paneMatrix" class="tabPane hidden">
-        <div class="tableSection">
-          <div class="sectionHeader">
-            <h2>핵심업무 × 소요자원 복구전략 매트릭스</h2>
-            <span style="font-size:12px;color:var(--text-3)">BCP 전략 기반 자동 생성 · ISO 22301 소요자원 8개 유형</span>
-          </div>
-          <div style="padding:16px">
-            <div class="matrixScroll" id="matrixMount">
-              <div class="empty">탭을 클릭하면 매트릭스가 생성됩니다.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div><!-- .wrap -->
   </main>
 
@@ -275,7 +262,7 @@
   <script>
   'use strict';
 
-  /* ─── Utilities ─── */
+  /* ── Utilities ── */
   const esc = s => String(s ?? '').replace(/[&<>"']/g,
     m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
@@ -287,7 +274,7 @@
     try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
   };
 
-  /* ─── Constants ─── */
+  /* ── Constants ── */
   const STRATEGY_TYPES = [
     '대체 수작업 절차',
     '대체 시스템/장비 활용',
@@ -305,7 +292,7 @@
   const RECOVERY_MODES = ['Hot site', 'Warm site', 'Cold site'];
   const DRP_STATUS     = ['초안', '검토중', '확정'];
 
-  /* ─── RTO / score helpers ─── */
+  /* ── RTO helpers ── */
   const rtoToMins = (value, unit) => {
     if (value === '' || value == null) return null;
     const v = Number(value);
@@ -314,7 +301,6 @@
     if (unit === '시간') return v * 60;
     return v;
   };
-
   const rtoUrgency = m => {
     if (m === null) return 1;
     if (m <= 60)   return 5;
@@ -323,9 +309,7 @@
     if (m <= 1440) return 2;
     return 1;
   };
-
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-
   const getGrade = score => {
     if (score >= 4.0) return { label: '긴급', cls: 'critical' };
     if (score >= 3.0) return { label: '높음', cls: 'high'     };
@@ -333,13 +317,12 @@
     return              { label: '낮음', cls: 'low'      };
   };
 
-  /* ─── Load confirmed functions from BIA + Priority ─── */
+  /* ── Load confirmed functions ── */
   const loadConfirmedFunctions = () => {
     const confirmed = loadJSON('bcmsPriorityConfirmed', {});
     const biaRows   = loadJSON('bcmsBIAData', []);
     const risks     = loadJSON('bcmsRiskList', []);
 
-    /* resource → max normalized risk score */
     const riskMap = new Map();
     for (const r of risks) {
       const raw   = Number(r.riskScore) || ((Number(r.likelihood) || 1) * (Number(r.impact) || 1));
@@ -362,56 +345,86 @@
         for (const res of (fn.requiredResources || [])) {
           if (riskMap.has(res)) maxRisk = Math.max(maxRisk, riskMap.get(res));
         }
-
         const mins    = rtoToMins(fn.rtoValue, fn.rtoUnit);
         const urgency = rtoUrgency(mins);
         const raw     = (overallImpact * 0.4) + (maxRisk * 0.4) + (urgency * 0.2);
         const score   = Math.round(raw * 10) / 10;
-        const grade   = getGrade(score);
         const rtoDisp = fn.rtoValue ? `${fn.rtoValue}${fn.rtoUnit || '분'}` : '-';
 
         fns.push({
-          id, team, name: fn.name, grade, rtoDisp, score,
-          requiredResources: fn.requiredResources || [],
+          id, team, name: fn.name,
+          grade: getGrade(score), rtoDisp, score,
+          biaResources: fn.requiredResources || [],
         });
       }
     }
-
     return fns.sort((a, b) => b.score - a.score);
   };
 
-  /* ─── BCP Strategy state ─── */
-  let bcpMap = new Map(); /* id → {id, strategyType, strategyText, owner, contact, completed} */
+  /* ── BCP state ── */
+  let bcpMap = new Map();
 
   const loadBcp = () => {
     const arr = loadJSON('bcmsBCPStrategy', []);
     bcpMap = new Map(arr.map(x => [String(x.id), x]));
   };
-
   const saveBcp = () => saveJSON('bcmsBCPStrategy', [...bcpMap.values()]);
-
-  const getBcp = id => bcpMap.get(id) || {};
-
+  const getBcp  = id => bcpMap.get(id) || {};
   const patchBcp = (id, patch) => {
     const cur = bcpMap.get(id) || { id };
     bcpMap.set(id, Object.assign(cur, { id }, patch));
   };
 
-  /* ─── DRP state ─── */
+  /* ── DRP state ── */
   let drpRows = [];
   let drpSeq  = 1;
-
   const loadDrp = () => {
     drpRows = loadJSON('bcmsDRPData', []);
     drpSeq  = drpRows.reduce((m, r) => Math.max(m, r._seq || 0), 0) + 1;
   };
-
   const saveDrp = () => saveJSON('bcmsDRPData', drpRows);
 
-  /* ─── App state ─── */
+  /* ── App state ── */
   let ALL_FNS = [];
 
-  /* ─── Metrics ─── */
+  /* ── Auto-save (debounced per card) ── */
+  const _timers = new Map();
+  const DEBOUNCE = 700;
+
+  const flashSaved = (card) => {
+    const ind = card.querySelector('.saveInd');
+    if (!ind) return;
+    ind.textContent = '저장됨 ✓';
+    ind.classList.add('show');
+    clearTimeout(ind._t);
+    ind._t = setTimeout(() => ind.classList.remove('show'), 1600);
+  };
+
+  const readCard = (card) => {
+    const id        = card.getAttribute('data-fn-id');
+    const sTypeEl   = card.querySelector('.sType:checked');
+    const strategyType = sTypeEl ? sTypeEl.value : '';
+    const steps     = [...card.querySelectorAll('.stepInput')].map(i => i.value);
+    const resources = [...card.querySelectorAll('.resCheck:checked')].map(c => c.value);
+    const owner     = card.querySelector('.sOwner')?.value   || '';
+    const contact   = card.querySelector('.sContact')?.value || '';
+    return { id, strategyType, steps, resources, owner, contact };
+  };
+
+  const autoSave = (card) => {
+    const id = card.getAttribute('data-fn-id');
+    clearTimeout(_timers.get(id));
+    _timers.set(id, setTimeout(() => {
+      const data = readCard(card);
+      patchBcp(id, data);
+      saveBcp();
+      flashSaved(card);
+      renderMetrics();
+      _timers.delete(id);
+    }, DEBOUNCE));
+  };
+
+  /* ── Metrics ── */
   const renderMetrics = () => {
     const total = ALL_FNS.length;
     const done  = ALL_FNS.filter(f => !!getBcp(f.id).completed).length;
@@ -421,7 +434,7 @@
     document.getElementById('mDrp').textContent       = drpRows.length;
   };
 
-  /* ─── Dept filter options ─── */
+  /* ── Dept filter ── */
   const populateDeptFilter = () => {
     const sel   = document.getElementById('bcpDeptFilter');
     const prev  = sel.value;
@@ -431,7 +444,18 @@
     if (prev) sel.value = prev;
   };
 
-  /* ─── BCP card renderer ─── */
+  /* ── Step HTML builder ── */
+  const buildStepItems = (steps) =>
+    steps.length === 0
+      ? ''
+      : steps.map((s, i) => `
+<div class="stepItem">
+  <span class="stepNum">${i + 1}</span>
+  <input type="text" class="stepInput" value="${esc(s)}" placeholder="복구 절차를 입력하세요">
+  <button class="stepDel" type="button" data-del-step title="삭제">×</button>
+</div>`).join('');
+
+  /* ── BCP card renderer ── */
   const renderBcpCards = () => {
     const dept  = document.getElementById('bcpDeptFilter').value;
     const grade = document.getElementById('bcpGradeFilter').value;
@@ -456,15 +480,30 @@
     grid.innerHTML = filtered.map(f => {
       const s    = getBcp(f.id);
       const done = !!s.completed;
-      const res  = f.requiredResources;
 
-      const resHtml = res.length
-        ? res.map(r => `<span class="resBadge">${esc(r)}</span>`).join('')
-        : `<span class="resBadge empty-res">BIA 소요자원 없음</span>`;
+      /* strategy type radios */
+      const radioHtml = STRATEGY_TYPES.map(t => {
+        const sel = s.strategyType === t;
+        return `<label class="radioOpt${sel ? ' sel' : ''}">
+  <input type="radio" class="sType" name="stype_${esc(f.id)}" value="${esc(t)}"${sel ? ' checked' : ''}>
+  <span>${esc(t)}</span>
+</label>`;
+      }).join('');
 
-      const typeOptions = STRATEGY_TYPES.map(t =>
-        `<option value="${esc(t)}"${s.strategyType === t ? ' selected' : ''}>${esc(t)}</option>`
-      ).join('');
+      /* steps */
+      const savedSteps = Array.isArray(s.steps) ? s.steps : [];
+      const stepHtml   = buildStepItems(savedSteps);
+
+      /* resource checkboxes — default to BIA resources if no saved data */
+      const savedRes    = Array.isArray(s.resources) ? s.resources : null;
+      const activeRes   = savedRes !== null ? savedRes : f.biaResources;
+      const resHtml = RESOURCE_TYPES.map(r => {
+        const chk = activeRes.includes(r);
+        return `<label class="resOpt${chk ? ' chk' : ''}">
+  <input type="checkbox" class="resCheck" value="${esc(r)}"${chk ? ' checked' : ''}>
+  <span>${esc(r)}</span>
+</label>`;
+      }).join('');
 
       return `
 <div class="stratCard${done ? ' done' : ''}" data-fn-id="${esc(f.id)}">
@@ -474,24 +513,31 @@
     <span class="teamTag">${esc(f.team)}</span>
     <span class="chip">RTO ${esc(f.rtoDisp)}</span>
     <span class="grade ${f.grade.cls}">${f.grade.label}</span>
+    <span class="saveInd"></span>
     <label class="toggle" onclick="event.stopPropagation()">
       <input type="checkbox" class="doneToggle" data-fn-id="${esc(f.id)}"${done ? ' checked' : ''}>
       <span class="toggleTrack"><span class="toggleKnob"></span></span>
-      <span class="toggleLabel">${done ? '전략 완료' : '미완료'}</span>
+      <span class="toggleLabel">${done ? '완료' : '미완료'}</span>
     </label>
   </div>
   <div class="cardBody hidden" data-body>
+    <!-- 복구전략유형 -->
     <div class="fld full">
       <label>복구전략 유형</label>
-      <select class="sType">
-        <option value="">선택하세요</option>
-        ${typeOptions}
-      </select>
+      <div class="radioGroup">${radioHtml}</div>
     </div>
+    <!-- 단계별 복구절차 -->
     <div class="fld full">
-      <label>복구 절차 요약</label>
-      <textarea class="sText" placeholder="업무 중단 시 복구 절차를 요약 입력하세요">${esc(s.strategyText || '')}</textarea>
+      <label>단계별 복구 절차</label>
+      <div class="stepList" data-steps>${stepHtml}</div>
+      <button class="addStepBtn" type="button" data-add-step>+ 절차 단계 추가</button>
     </div>
+    <!-- 소요자원 -->
+    <div class="fld full">
+      <label>소요자원 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3)">(8가지 · BIA 연동 기본값)</span></label>
+      <div class="resGrid">${resHtml}</div>
+    </div>
+    <!-- 담당자 / 연락처 -->
     <div class="fld">
       <label>담당자</label>
       <input type="text" class="sOwner" value="${esc(s.owner || '')}" placeholder="담당자 이름">
@@ -500,114 +546,138 @@
       <label>비상연락처</label>
       <input type="text" class="sContact" value="${esc(s.contact || '')}" placeholder="전화번호 / 이메일">
     </div>
-    <div class="fld full">
-      <label>필요 소요자원 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3)">(BIA 연동)</span></label>
-      <div class="resBadgeRow">${resHtml}</div>
-    </div>
-  </div>
-  <div class="cardFoot hidden" data-foot>
-    <button class="btn" type="button" data-save>저장</button>
   </div>
 </div>`;
     }).join('');
   };
 
-  /* ─── BCP card interactions (delegated) ─── */
-  document.getElementById('bcpCardGrid').addEventListener('click', e => {
-    /* expand / collapse */
+  /* ── Step renumbering ── */
+  const renumberSteps = (stepList) => {
+    stepList.querySelectorAll('.stepNum').forEach((el, i) => { el.textContent = i + 1; });
+  };
+
+  /* ── Card grid event delegation ── */
+  const grid = document.getElementById('bcpCardGrid');
+
+  /* expand / collapse */
+  grid.addEventListener('click', e => {
+    /* add step */
+    if (e.target.closest('[data-add-step]')) {
+      const card     = e.target.closest('.stratCard');
+      const stepList = card.querySelector('[data-steps]');
+      const idx      = stepList.querySelectorAll('.stepItem').length;
+      const div      = document.createElement('div');
+      div.className  = 'stepItem';
+      div.innerHTML  = `<span class="stepNum">${idx + 1}</span>
+<input type="text" class="stepInput" placeholder="복구 절차를 입력하세요">
+<button class="stepDel" type="button" data-del-step title="삭제">×</button>`;
+      stepList.appendChild(div);
+      div.querySelector('input').focus();
+      autoSave(card);
+      return;
+    }
+
+    /* delete step */
+    if (e.target.closest('[data-del-step]')) {
+      const btn      = e.target.closest('[data-del-step]');
+      const stepItem = btn.closest('.stepItem');
+      const stepList = stepItem.closest('[data-steps]');
+      const card     = stepItem.closest('.stratCard');
+      stepItem.remove();
+      renumberSteps(stepList);
+      autoSave(card);
+      return;
+    }
+
+    /* expand/collapse header */
     const header = e.target.closest('[data-toggle]');
     if (header && !e.target.closest('label') && !e.target.closest('button')) {
       const card = header.closest('.stratCard');
       const body = card.querySelector('[data-body]');
-      const foot = card.querySelector('[data-foot]');
       const icon = card.querySelector('[data-icon]');
       const open = !body.classList.contains('hidden');
       body.classList.toggle('hidden', open);
-      foot.classList.toggle('hidden', open);
-      icon.textContent = open ? '▶' : '▼';
+      icon.classList.toggle('open', !open);
+      return;
+    }
+  });
+
+  /* radio label click — update sel class */
+  grid.addEventListener('change', e => {
+    /* done toggle */
+    if (e.target.classList.contains('doneToggle')) {
+      const toggle = e.target;
+      const id     = toggle.getAttribute('data-fn-id');
+      const done   = toggle.checked;
+      patchBcp(id, { completed: done });
+      saveBcp();
+      const card  = toggle.closest('.stratCard');
+      const label = toggle.closest('.toggle')?.querySelector('.toggleLabel');
+      if (label) label.textContent = done ? '완료' : '미완료';
+      card.classList.toggle('done', done);
+      renderMetrics();
       return;
     }
 
-    /* save card */
-    const saveBtn = e.target.closest('[data-save]');
-    if (saveBtn) {
-      const card = saveBtn.closest('.stratCard');
-      const id   = card.getAttribute('data-fn-id');
-      patchBcp(id, {
-        strategyType: card.querySelector('.sType')?.value   || '',
-        strategyText: card.querySelector('.sText')?.value   || '',
-        owner:        card.querySelector('.sOwner')?.value  || '',
-        contact:      card.querySelector('.sContact')?.value || '',
+    /* radio strategy type → update sel class */
+    if (e.target.classList.contains('sType')) {
+      const card = e.target.closest('.stratCard');
+      card.querySelectorAll('.radioOpt').forEach(opt => {
+        opt.classList.toggle('sel', opt.querySelector('input')?.checked || false);
+        if (opt.querySelector('input')?.checked) {
+          opt.querySelector('span').style.color = '';
+        }
       });
-      saveBcp();
-      saveBtn.textContent = '저장됨';
-      setTimeout(() => { saveBtn.textContent = '저장'; }, 900);
-      renderMetrics();
+      autoSave(card);
+      return;
+    }
+
+    /* resource checkbox → update chk class */
+    if (e.target.classList.contains('resCheck')) {
+      const opt = e.target.closest('.resOpt');
+      opt.classList.toggle('chk', e.target.checked);
+      autoSave(e.target.closest('.stratCard'));
+      return;
     }
   });
 
-  /* ─── Done toggle ─── */
-  document.getElementById('bcpCardGrid').addEventListener('change', e => {
-    const toggle = e.target.closest('.doneToggle');
-    if (!toggle) return;
-    const id   = toggle.getAttribute('data-fn-id');
-    const done = toggle.checked;
-    patchBcp(id, { completed: done });
-    saveBcp();
-    const card  = toggle.closest('.stratCard');
-    const label = toggle.closest('.toggle')?.querySelector('.toggleLabel');
-    if (label) label.textContent = done ? '전략 완료' : '미완료';
-    if (card)  card.classList.toggle('done', done);
-    renderMetrics();
+  /* input events for text fields and step inputs */
+  grid.addEventListener('input', e => {
+    const card = e.target.closest('.stratCard');
+    if (!card) return;
+    if (
+      e.target.classList.contains('sOwner') ||
+      e.target.classList.contains('sContact') ||
+      e.target.classList.contains('stepInput')
+    ) {
+      autoSave(card);
+    }
   });
 
-  /* ─── Save all BCP ─── */
-  document.getElementById('bcpSaveAll').addEventListener('click', () => {
-    document.querySelectorAll('.stratCard[data-fn-id]').forEach(card => {
-      const id = card.getAttribute('data-fn-id');
-      if (!id) return;
-      patchBcp(id, {
-        strategyType: card.querySelector('.sType')?.value    || '',
-        strategyText: card.querySelector('.sText')?.value    || '',
-        owner:        card.querySelector('.sOwner')?.value   || '',
-        contact:      card.querySelector('.sContact')?.value || '',
-      });
-    });
-    saveBcp();
-    renderMetrics();
-    const btn = document.getElementById('bcpSaveAll');
-    btn.textContent = '저장됨';
-    setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
-  });
-
-  /* ─── BCP filter events ─── */
+  /* ── BCP filter events ── */
   ['bcpDeptFilter', 'bcpGradeFilter', 'bcpCompletedFilter'].forEach(id => {
     document.getElementById(id).addEventListener('change', renderBcpCards);
   });
 
-  /* ─── DRP renderer ─── */
+  /* ── DRP renderer ── */
   const renderDrpTable = () => {
     const tbody = document.getElementById('drpTableBody');
-
     if (!drpRows.length) {
       tbody.innerHTML = `<tr><td colspan="8" class="empty">DRP 항목이 없습니다. "+ 시스템 추가" 버튼으로 추가하세요.</td></tr>`;
       return;
     }
-
-    const modeClass = m => m === 'Hot site' ? 'hot' : m === 'Warm site' ? 'warm' : 'cold';
-
     tbody.innerHTML = drpRows.map((row, i) => `
 <tr data-drp-idx="${i}">
-  <td><input type="text"  class="drpF" data-f="systemName"    value="${esc(row.systemName    || '')}" placeholder="시스템명"></td>
-  <td><input type="text"  class="drpF" data-f="rto"           value="${esc(row.rto           || '')}" placeholder="예: 4시간"></td>
-  <td><input type="text"  class="drpF" data-f="rpo"           value="${esc(row.rpo           || '')}" placeholder="예: 1시간"></td>
+  <td><input type="text" class="drpF" data-f="systemName"    value="${esc(row.systemName    || '')}" placeholder="시스템명"></td>
+  <td><input type="text" class="drpF" data-f="rto"           value="${esc(row.rto           || '')}" placeholder="예: 4시간"></td>
+  <td><input type="text" class="drpF" data-f="rpo"           value="${esc(row.rpo           || '')}" placeholder="예: 1시간"></td>
   <td>
     <select class="drpF" data-f="recoveryMode">
       ${RECOVERY_MODES.map(m => `<option value="${esc(m)}"${row.recoveryMode === m ? ' selected' : ''}>${esc(m)}</option>`).join('')}
     </select>
   </td>
-  <td><input type="text"  class="drpF" data-f="backupLocation" value="${esc(row.backupLocation || '')}" placeholder="백업 위치"></td>
-  <td><input type="text"  class="drpF" data-f="owner"          value="${esc(row.owner          || '')}" placeholder="담당자"></td>
+  <td><input type="text" class="drpF" data-f="backupLocation" value="${esc(row.backupLocation || '')}" placeholder="백업 위치"></td>
+  <td><input type="text" class="drpF" data-f="owner"          value="${esc(row.owner          || '')}" placeholder="담당자"></td>
   <td>
     <select class="drpF" data-f="status">
       ${DRP_STATUS.map(s => `<option value="${esc(s)}"${row.status === s ? ' selected' : ''}>${esc(s)}</option>`).join('')}
@@ -619,44 +689,37 @@
 </tr>`).join('');
   };
 
-  /* ─── DRP: add row ─── */
   document.getElementById('drpAddRow').addEventListener('click', () => {
     drpRows.push({ _seq: drpSeq++, systemName: '', rto: '', rpo: '', recoveryMode: 'Warm site', backupLocation: '', owner: '', status: '초안' });
     renderDrpTable();
     renderMetrics();
   });
 
-  /* ─── DRP: inline edit ─── */
   const drpBody = document.getElementById('drpTableBody');
 
   drpBody.addEventListener('input', e => {
     const tr  = e.target.closest('tr[data-drp-idx]');
     const fld = e.target.getAttribute('data-f');
     if (!tr || !fld) return;
-    const idx = Number(tr.getAttribute('data-drp-idx'));
-    if (drpRows[idx]) drpRows[idx][fld] = e.target.value;
+    drpRows[Number(tr.getAttribute('data-drp-idx'))][fld] = e.target.value;
   });
 
   drpBody.addEventListener('change', e => {
     const tr  = e.target.closest('tr[data-drp-idx]');
     const fld = e.target.getAttribute('data-f');
     if (!tr || !fld) return;
-    const idx = Number(tr.getAttribute('data-drp-idx'));
-    if (drpRows[idx]) drpRows[idx][fld] = e.target.value;
+    drpRows[Number(tr.getAttribute('data-drp-idx'))][fld] = e.target.value;
   });
 
-  /* ─── DRP: delete row ─── */
   drpBody.addEventListener('click', e => {
     const btn = e.target.closest('[data-del-drp]');
     if (!btn) return;
-    const idx = Number(btn.getAttribute('data-del-drp'));
-    drpRows.splice(idx, 1);
+    drpRows.splice(Number(btn.getAttribute('data-del-drp')), 1);
     saveDrp();
     renderDrpTable();
     renderMetrics();
   });
 
-  /* ─── DRP: save all ─── */
   document.getElementById('drpSaveAll').addEventListener('click', () => {
     saveDrp();
     renderMetrics();
@@ -665,75 +728,21 @@
     setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
   });
 
-  /* ─── Matrix renderer ─── */
-  const renderMatrix = () => {
-    const mount = document.getElementById('matrixMount');
-
-    if (!ALL_FNS.length) {
-      mount.innerHTML = `<div class="empty">BCP 수립 대상 업무가 없습니다.<br>우선순위 페이지에서 업무를 확정 처리해 주세요.</div>`;
-      return;
-    }
-
-    const cols = RESOURCE_TYPES;
-
-    const headerCells = cols.map(c => `<th>${esc(c)}</th>`).join('');
-
-    const bodyRows = ALL_FNS.map(f => {
-      const s         = getBcp(f.id);
-      const typeShort = s.strategyType || '';
-      const textClip  = s.strategyText
-        ? (s.strategyText.length > 28 ? s.strategyText.slice(0, 28) + '…' : s.strategyText)
-        : '';
-      const summary   = typeShort
-        ? (textClip ? `${typeShort}<br><span style="font-size:10px;color:var(--text-3)">${esc(textClip)}</span>` : esc(typeShort))
-        : '';
-
-      const cells = cols.map(c => {
-        const hasRes = f.requiredResources.includes(c);
-        if (!hasRes) return `<td><span class="mcell nores">·</span></td>`;
-        if (summary) return `<td><span class="mcell filled">${summary}</span></td>`;
-        return `<td><span class="mcell nodata">전략 미입력</span></td>`;
-      }).join('');
-
-      return `<tr>
-        <td class="rhd">
-          <div>${esc(f.name)}</div>
-          <div class="sub">${esc(f.team)} · ${esc(f.rtoDisp)}</div>
-        </td>
-        ${cells}
-      </tr>`;
-    }).join('');
-
-    mount.innerHTML = `
-<table class="matTbl" style="width:100%">
-  <thead>
-    <tr>
-      <th class="rhd">핵심업무 / 소요자원</th>
-      ${headerCells}
-    </tr>
-  </thead>
-  <tbody>${bodyRows}</tbody>
-</table>`;
-  };
-
-  /* ─── Tab switching ─── */
+  /* ── Tab switching ── */
   const TABS = [
-    { btn: 'tabBcp',    pane: 'paneBcp'    },
-    { btn: 'tabDrp',    pane: 'paneDrp'    },
-    { btn: 'tabMatrix', pane: 'paneMatrix' },
+    { btn: 'tabBcp', pane: 'paneBcp' },
+    { btn: 'tabDrp', pane: 'paneDrp' },
   ];
-
   TABS.forEach(({ btn, pane }) => {
     document.getElementById(btn).addEventListener('click', () => {
       TABS.forEach(t => {
-        document.getElementById(t.btn).classList.toggle('active',  t.btn === btn);
+        document.getElementById(t.btn).classList.toggle('active', t.btn === btn);
         document.getElementById(t.pane).classList.toggle('hidden', t.pane !== pane);
       });
-      if (pane === 'paneMatrix') renderMatrix();
     });
   });
 
-  /* ─── Demo seed ─── */
+  /* ── Demo seed ── */
   if (window.BCMSDemoSeed) {
     window.BCMSDemoSeed.ensureDemoIfEmpty();
     window.BCMSDemoSeed.mountBanner('.wrap');
@@ -749,7 +758,7 @@
     }
   }
 
-  /* ─── Init ─── */
+  /* ── Init ── */
   const init = () => {
     ALL_FNS = loadConfirmedFunctions();
     loadBcp();
