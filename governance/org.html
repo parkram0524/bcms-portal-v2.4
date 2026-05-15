@@ -307,7 +307,37 @@ window.ORG = (() => {
 
   /* ── Element builders ─────────────────────────────────────────── */
   function buildNormal(ind) {
-    const s = SAMPLES[ind] || SAMPLES['제조업'];
+    const s = SAMPLES[ind];
+    if (!s) {
+      // Default: hardcoded 공공기관 sample with exact IDs
+      return [
+        { data: { id:'ceo',  label:'(공공기관명)\n기관장',  type:'ceo'      } },
+        { data: { id:'div1', label:'기획조정실',            type:'division' } },
+        { data: { id:'div2', label:'행정지원본부',          type:'division' } },
+        { data: { id:'div3', label:'IT본부',                type:'division' } },
+        { data: { id:'div4', label:'민원서비스본부',        type:'division' } },
+        { data: { id:'t1',   label:'기획팀',                type:'team'     } },
+        { data: { id:'t2',   label:'예산팀',                type:'team'     } },
+        { data: { id:'t3',   label:'행정팀',                type:'team'     } },
+        { data: { id:'t4',   label:'인사팀',                type:'team'     } },
+        { data: { id:'t5',   label:'정보화팀',              type:'team'     } },
+        { data: { id:'t6',   label:'정보보호팀',            type:'team'     } },
+        { data: { id:'t7',   label:'민원팀',                type:'team'     } },
+        { data: { id:'t8',   label:'대민서비스팀',          type:'team'     } },
+        { data: { id:'e-ceo-div1', source:'ceo',  target:'div1' } },
+        { data: { id:'e-ceo-div2', source:'ceo',  target:'div2' } },
+        { data: { id:'e-ceo-div3', source:'ceo',  target:'div3' } },
+        { data: { id:'e-ceo-div4', source:'ceo',  target:'div4' } },
+        { data: { id:'e-div1-t1',  source:'div1', target:'t1'   } },
+        { data: { id:'e-div1-t2',  source:'div1', target:'t2'   } },
+        { data: { id:'e-div2-t3',  source:'div2', target:'t3'   } },
+        { data: { id:'e-div2-t4',  source:'div2', target:'t4'   } },
+        { data: { id:'e-div3-t5',  source:'div3', target:'t5'   } },
+        { data: { id:'e-div3-t6',  source:'div3', target:'t6'   } },
+        { data: { id:'e-div4-t7',  source:'div4', target:'t7'   } },
+        { data: { id:'e-div4-t8',  source:'div4', target:'t8'   } },
+      ];
+    }
     const els = [];
     els.push({ data: { id:'ceo', label:`${s.company}\n${s.root}`, type:'ceo' } });
     s.divs.forEach((d, di) => {
@@ -324,35 +354,42 @@ window.ORG = (() => {
   }
 
   function buildEOP() {
-    // 계층 구조: 재난대책본부(최상위) → 초동 4개 반 + 업무연속성대응본부
-    //            업무연속성대응본부 → BCP 5개 반 (조건부 가동 조직)
-    const s1names = ['재난상황반','초동대응반','복구지원반','대외협력반'];
-    const s2names = ['업무환경반','IT복구반','업무재개반','자원지원반','대내외소통반'];
-    const els = [];
+    // Preset positions: explicit coordinates so nodes don't collapse into a line
+    return [
+      // ── Root ──
+      { data: { id:'eop-root', label:'재난대책본부\n(본부장/CEO)', type:'eop-root' },
+        position: { x:400, y:100 } },
 
-    // Root: 재난대책본부
-    els.push({ data: { id:'s1', label:'재난대책본부\n(본부장/CEO)', type:'eop-root' } });
+      // ── Stage-1: 재난대책본부 산하 4개 반 ──
+      { data: { id:'s1u0', label:'재난상황반', type:'eop-unit' }, position: { x:100, y:280 } },
+      { data: { id:'s1u1', label:'초동대응반', type:'eop-unit' }, position: { x:280, y:280 } },
+      { data: { id:'s1u2', label:'복구지원반', type:'eop-unit' }, position: { x:460, y:280 } },
+      { data: { id:'s1u3', label:'대외협력반', type:'eop-unit' }, position: { x:640, y:280 } },
 
-    // 초동 4개 반 (s1의 직계 자식)
-    s1names.forEach((n, i) => {
-      const id = `s1u${i}`;
-      els.push({ data: { id, label:n, type:'eop-unit' } });
-      els.push({ data: { id:`es1-${id}`, source:'s1', target:id } });
-    });
+      // ── BCP root (조건부 가동) ──
+      { data: { id:'bcp-root', label:'업무연속성대응본부\n(BCP대응본부)', type:'eop-stage' },
+        position: { x:900, y:280 } },
 
-    // 업무연속성대응본부: 재난대책본부 산하, 점선 엣지로 "조건부 가동" 표시
-    els.push({ data: { id:'s2', label:'업무연속성대응본부\n(BCP대응본부)', type:'eop-stage' } });
-    els.push({ data: { id:'e-bcp', source:'s1', target:'s2',
-      label:'업무중단 발생 시 가동', dashed:true } });
+      // ── Stage-2: BCP 대응본부 산하 5개 반 ──
+      { data: { id:'s2u0', label:'업무환경반',   type:'eop-unit' }, position: { x:680,  y:460 } },
+      { data: { id:'s2u1', label:'IT복구반',     type:'eop-unit' }, position: { x:820,  y:460 } },
+      { data: { id:'s2u2', label:'업무재개반',   type:'eop-unit' }, position: { x:960,  y:460 } },
+      { data: { id:'s2u3', label:'자원지원반',   type:'eop-unit' }, position: { x:1100, y:460 } },
+      { data: { id:'s2u4', label:'대내외소통반', type:'eop-unit' }, position: { x:1240, y:460 } },
 
-    // BCP 5개 반 (s2의 자식)
-    s2names.forEach((n, i) => {
-      const id = `s2u${i}`;
-      els.push({ data: { id, label:n, type:'eop-unit' } });
-      els.push({ data: { id:`es2-${id}`, source:'s2', target:id } });
-    });
-
-    return els;
+      // ── Edges ──
+      { data: { id:'es1-s1u0', source:'eop-root', target:'s1u0' } },
+      { data: { id:'es1-s1u1', source:'eop-root', target:'s1u1' } },
+      { data: { id:'es1-s1u2', source:'eop-root', target:'s1u2' } },
+      { data: { id:'es1-s1u3', source:'eop-root', target:'s1u3' } },
+      { data: { id:'e-bcp',    source:'eop-root', target:'bcp-root',
+        label:'업무중단 발생 시 가동', dashed:true } },
+      { data: { id:'es2-s2u0', source:'bcp-root', target:'s2u0' } },
+      { data: { id:'es2-s2u1', source:'bcp-root', target:'s2u1' } },
+      { data: { id:'es2-s2u2', source:'bcp-root', target:'s2u2' } },
+      { data: { id:'es2-s2u3', source:'bcp-root', target:'s2u3' } },
+      { data: { id:'es2-s2u4', source:'bcp-root', target:'s2u4' } },
+    ];
   }
 
   /* ── Cytoscape style ──────────────────────────────────────────── */
@@ -739,11 +776,24 @@ window.ORG = (() => {
   }
 
   function autoLayout() {
+    if (mode === 'emergency') {
+      // Reset to hardcoded preset positions
+      const presetEls = buildEOP();
+      const positions = {};
+      presetEls.forEach(el => {
+        if (el.position && el.data && el.data.id) positions[el.data.id] = el.position;
+      });
+      cy.layout({
+        name: 'preset',
+        positions: (node) => positions[node.id()] || undefined,
+        fit: true, padding: 60,
+        animate: true, animationDuration: 500,
+      }).run();
+      return;
+    }
     cy.layout({
-      name:'breadthfirst', directed:true,
-      padding: mode === 'emergency' ? 60 : 55,
-      spacingFactor:1.35,
-      animate:true, animationDuration:500,
+      name: 'breadthfirst', directed: true, padding: 55, spacingFactor: 1.35,
+      animate: true, animationDuration: 500,
       roots: cy.nodes().filter(n => n.indegree() === 0),
     }).run();
   }
@@ -762,7 +812,7 @@ window.ORG = (() => {
       try { initCy(Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])]); return; } catch {}
     }
     const ind = (localStorage.getItem(KEY_IND)||'').trim();
-    initCy(mode === 'normal' ? buildNormal(SAMPLES[ind] ? ind : '제조업') : buildEOP());
+    initCy(mode === 'normal' ? buildNormal(ind) : buildEOP());
   }
 
   function resetToSample() {
