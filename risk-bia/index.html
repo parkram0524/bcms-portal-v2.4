@@ -79,8 +79,9 @@
   <div class="card">
     <h3 style="margin-top:0;">핵심 KPI</h3>
     <p class="muted">
-      데이터는 1) <b>sessionStorage.bcp_core_processes</b> 우선, 없으면 2) <b>risk-bia-data.js</b>의 BIA 데이터(세션)를 읽습니다.
-      (Tier III 단일사고 MBCO: <b>1.6h (96분)</b>)
+      <b>localStorage · bcmsBIAData</b>에서 실시간으로 읽습니다.
+      리스크는 <b>bcmsRiskList</b>와 연동됩니다.
+      (단일사고 허용한계 MBCO: <b>1.6h = 96분</b>)
     </p>
 
     <div class="rowControls">
@@ -157,128 +158,131 @@
 </div>
 
 <script src="../assets/sidebar.js"></script>
-<script src="./risk-bia-data.js"></script>
 
 <script>
-  const MBCO_MIN = 96;
+  const BIA_KEY  = 'bcmsBIAData';
+  const RISK_KEY = 'bcmsRiskList';
+  const MBCO_MIN   = 96;
   const MBCO_HOURS = 1.6;
-  const TOP_N = 10;
+  const TOP_N      = 10;
 
-  const $ = (s)=>document.querySelector(s);
-  const esc = (s)=>String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
-  const toNum = (v)=>{ if(v===null||v===undefined||v==="") return null; const x=Number(v); return Number.isFinite(x)?x:null; };
-  function minText(min){ const m=toNum(min); if(m===null) return "-"; if(m===0) return "즉시"; return `${m}분`; }
-  function loadJSON(key, fallback){ try{ const raw=sessionStorage.getItem(key); if(!raw) return fallback; return JSON.parse(raw);}catch(e){return fallback;} }
-  function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
-  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+  const toNum = (v) => { if (v === null || v === undefined || v === "") return null; const x = Number(v); return Number.isFinite(x) ? x : null; };
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+  const uniq = (arr) => [...new Set(arr.filter(Boolean))];
 
-  function normalizeItem(x){
-    const dept = x.dept || x.department || x.org || "";
-    const work = x.work || x.process || x.processName || x.name || "";
-    const impact = toNum(x.impact ?? x.impactScore ?? x.impact_score);
-    const mtpd = toNum(x.mtpd ?? x.mtpdMin ?? x.mtpd_minutes);
-    const rto  = toNum(x.rto  ?? x.rtoMin  ?? x.rto_minutes);
-    const mtpdText = x.mtpdText || minText(mtpd);
-    const rtoText  = x.rtoText  || minText(rto);
-    const coreAuto   = !!(x.coreAuto ?? x.core_auto);
-    const coreManual = !!(x.coreManual ?? x.core_manual);
-    const coreFinal  = !!(x.coreFinal ?? x.core_final ?? (coreAuto || coreManual));
-    const resources = x.resources ?? x.resourceSummary ?? x.resource_summary ?? "";
-    const done = (mtpd !== null) && (rto !== null);
-    return { dept, work, impact, mtpd, rto, mtpdText, rtoText, coreAuto, coreManual, coreFinal, resources, done };
+  function safeParse(raw, fallback) {
+    try { return JSON.parse(raw) ?? fallback; } catch { return fallback; }
   }
 
-  function getAllItems(){
-    const bcp = loadJSON("bcp_core_processes", null);
-    if (Array.isArray(bcp) && bcp.length) return bcp.map(normalizeItem);
+  function minText(min) {
+    const m = toNum(min);
+    if (m === null) return "-";
+    if (m === 0) return "즉시";
+    if (m < 60) return `${m}분`;
+    const h = Math.floor(m / 60);
+    const rem = m % 60;
+    return rem ? `${h}h ${rem}분` : `${h}h`;
+  }
 
-    if (window.RiskBiaData){
-      try{
-        if (typeof window.RiskBiaData.getAll === "function"){
-          const arr = window.RiskBiaData.getAll();
-          if (Array.isArray(arr)) return arr.map(normalizeItem);
-        }
-      }catch(e){}
+  function rtoToMin(val, unit) {
+    const v = toNum(val);
+    if (v === null) return null;
+    const u = (unit || "분").trim();
+    if (u === "시간" || u === "h") return v * 60;
+    if (u === "일" || u === "day") return v * 1440;
+    return v;
+  }
+
+  function calcImpactPct(fn) {
+    const fields = ["immediate", "min30", "hour1", "hour4", "day1", "week1"];
+    const scores = fields.map(f => toNum(fn[f])).filter(v => v !== null);
+    if (!scores.length) return null;
+    return Math.round(scores.reduce((a, b) => a + b, 0) / (scores.length * 5) * 100);
+  }
+
+  function getAllItems() {
+    const biaData = safeParse(localStorage.getItem(BIA_KEY), []);
+    if (!Array.isArray(biaData) || !biaData.length) return [];
+
+    const items = [];
+    for (const row of biaData) {
+      const dept = row.team || row.department || row.dept || "";
+      const fns = Array.isArray(row.functions) ? row.functions : [];
+      for (const fn of fns) {
+        const fnObj = typeof fn === "string" ? { name: fn } : fn;
+        const name  = fnObj.name || fnObj.functionName || "";
+        const impact = calcImpactPct(fnObj);
+        const mtpd   = toNum(fnObj.mtpdMinutes ?? fnObj.mtpd ?? fnObj.mtpd_minutes);
+        const rto    = rtoToMin(fnObj.rtoValue ?? fnObj.rto, fnObj.rtoUnit);
+        const coreAuto   = impact !== null && impact >= 60 && mtpd !== null && mtpd <= MBCO_MIN;
+        const coreManual = fnObj.importance === "핵심";
+        const coreFinal  = coreAuto || coreManual;
+        const done = mtpd !== null && rto !== null;
+        items.push({ dept, work: name, impact, mtpd, rto, mtpdText: minText(mtpd), rtoText: minText(rto), coreAuto, coreManual, coreFinal, done });
+      }
     }
-    const guessKeys = ["bia_processes","risk_bia_processes","riskBiaProcesses","biaRecords"];
-    for (const k of guessKeys){
-      const v = loadJSON(k, null);
-      if (Array.isArray(v) && v.length) return v.map(normalizeItem);
-    }
-    return [];
+    return items;
   }
 
-  const KEY_DEPT = "riskBiaDash_dept";
-  const KEY_Q = "riskBiaDash_q";
-
-  function persist(){
-    sessionStorage.setItem(KEY_DEPT, $("#deptFilter").value || "");
-    sessionStorage.setItem(KEY_Q, $("#searchInput").value || "");
+  function getRiskCount() {
+    const arr = safeParse(localStorage.getItem(RISK_KEY), []);
+    return Array.isArray(arr) ? arr.length : 0;
   }
-  function restore(){ $("#searchInput").value = sessionStorage.getItem(KEY_Q) || ""; }
 
-  function buildDeptFilter(all){
+  function buildDeptFilter(all) {
     const sel = $("#deptFilter");
-    const prev = sessionStorage.getItem(KEY_DEPT) || "";
-    const depts = uniq(all.map(x=>x.dept)).sort((a,b)=>a.localeCompare(b));
-    sel.innerHTML = `<option value="">전체 부서</option>` + depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+    const prev = sel.value || "";
+    const depts = uniq(all.map(x => x.dept)).sort((a, b) => a.localeCompare(b));
+    sel.innerHTML = `<option value="">전체 부서</option>` + depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join("");
     sel.value = depts.includes(prev) ? prev : "";
   }
 
-  function applyFilters(items){
+  function applyFilters(items) {
     const dept = $("#deptFilter").value;
-    const q = $("#searchInput").value.trim().toLowerCase();
-    return items.filter(x=>{
+    const q    = $("#searchInput").value.trim().toLowerCase();
+    return items.filter(x => {
       if (dept && x.dept !== dept) return false;
-      if (q){
-        const hay = `${x.dept} ${x.work}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
+      if (q && !`${x.dept} ${x.work}`.toLowerCase().includes(q)) return false;
       return true;
     });
   }
 
-  function renderBadges(scoped, all){
-    const total = scoped.length;
-    const coreFinal = scoped.filter(x=>x.coreFinal).length;
-    const coreAuto = scoped.filter(x=>x.coreAuto).length;
-    const done = scoped.filter(x=>x.done).length;
-    const allTotal = all.length;
-    const allCoreFinal = all.filter(x=>x.coreFinal).length;
-
+  function renderBadges(scoped, all) {
+    const riskCnt = getRiskCount();
     $("#badgeRow").innerHTML = `
-      <span class="pill">필터 결과 <b>${coreFinal}</b> / <b>${total}</b> CoreFinal/Total</span>
-      <span class="pill">CoreAuto <b>${coreAuto}</b></span>
-      <span class="pill">분석 완료 <b>${done}</b></span>
-      <span class="pill">전체 <b>${allCoreFinal}</b> / <b>${allTotal}</b></span>
+      <span class="pill">필터 결과 <b>${scoped.filter(x=>x.coreFinal).length}</b> / <b>${scoped.length}</b> CoreFinal/Total</span>
+      <span class="pill">CoreAuto <b>${scoped.filter(x=>x.coreAuto).length}</b></span>
+      <span class="pill">분석 완료 <b>${scoped.filter(x=>x.done).length}</b></span>
+      <span class="pill">전체 <b>${all.filter(x=>x.coreFinal).length}</b> / <b>${all.length}</b></span>
       <span class="pill">MBCO <b>${MBCO_HOURS}h (${MBCO_MIN}분)</b></span>
+      <span class="pill">등록 리스크 <b>${riskCnt}</b>건</span>
     `;
   }
 
-  function renderKPIs(items){
-    $("#kpiCoreFinal").textContent = items.filter(x=>x.coreFinal).length;
-    $("#kpiCoreAuto").textContent  = items.filter(x=>x.coreAuto).length;
-    $("#kpiDone").textContent      = items.filter(x=>x.done).length;
-    $("#kpiMtpd96").textContent    = items.filter(x=>x.mtpd!==null && x.mtpd<=MBCO_MIN).length;
+  function renderKPIs(items) {
+    $("#kpiCoreFinal").textContent = items.filter(x => x.coreFinal).length;
+    $("#kpiCoreAuto").textContent  = items.filter(x => x.coreAuto).length;
+    $("#kpiDone").textContent      = items.filter(x => x.done).length;
+    $("#kpiMtpd96").textContent    = items.filter(x => x.mtpd !== null && x.mtpd <= MBCO_MIN).length;
   }
 
-  function renderTopImpact(items){
-    const top = items.slice().sort((a,b)=> (toNum(b.impact) ?? -Infinity) - (toNum(a.impact) ?? -Infinity)).slice(0, TOP_N);
+  function renderTopImpact(items) {
+    const top  = items.slice().sort((a, b) => (b.impact ?? -Infinity) - (a.impact ?? -Infinity)).slice(0, TOP_N);
     const body = $("#topImpactBody");
-
-    if (!top.length){
-      body.innerHTML = `<tr><td colspan="7" class="muted">표시할 데이터가 없습니다. (BIA 수행 후 확인)</td></tr>`;
+    if (!top.length) {
+      body.innerHTML = `<tr><td colspan="7" class="muted" style="text-align:center;padding:24px;">표시할 데이터가 없습니다.</td></tr>`;
       return;
     }
-
-    body.innerHTML = top.map((x,i)=>{
+    body.innerHTML = top.map((x, i) => {
       const coreTxt = x.coreFinal ? "Core" : (x.coreAuto ? "Auto" : (x.coreManual ? "Manual" : "-"));
       return `
         <tr>
-          <td>${i+1}</td>
-          <td>${esc(x.dept||"-")}</td>
-          <td>${esc(x.work||"-")}</td>
-          <td><b>${x.impact ?? "-"}</b></td>
+          <td>${i + 1}</td>
+          <td>${esc(x.dept || "-")}</td>
+          <td>${esc(x.work || "-")}</td>
+          <td><b>${x.impact !== null ? x.impact + "%" : "-"}</b></td>
           <td>${esc(x.mtpdText)}</td>
           <td>${esc(x.rtoText)}</td>
           <td>${esc(coreTxt)}</td>
@@ -287,21 +291,20 @@
     }).join("");
   }
 
-  function renderMtpdDistribution(items){
+  function renderMtpdDistribution(items) {
     const buckets = [
-      { label:"≤ 30",  test:(m)=> m!==null && m<=30 },
-      { label:"31–60", test:(m)=> m!==null && m>=31 && m<=60 },
-      { label:"61–96", test:(m)=> m!==null && m>=61 && m<=96 },
-      { label:"97–240",test:(m)=> m!==null && m>=97 && m<=240 },
-      { label:"> 240", test:(m)=> m!==null && m>240 },
-      { label:"미정",  test:(m)=> m===null },
+      { label: "≤ 30",   test: (m) => m !== null && m <= 30 },
+      { label: "31–60",  test: (m) => m !== null && m >= 31 && m <= 60 },
+      { label: "61–96",  test: (m) => m !== null && m >= 61 && m <= 96 },
+      { label: "97–240", test: (m) => m !== null && m >= 97 && m <= 240 },
+      { label: "> 240",  test: (m) => m !== null && m > 240 },
+      { label: "미정",   test: (m) => m === null },
     ];
-    const counts = buckets.map(b=> items.filter(x=>b.test(x.mtpd)).length);
+    const counts = buckets.map(b => items.filter(x => b.test(x.mtpd)).length);
     const max = Math.max(1, ...counts);
-
-    $("#mtpdBars").innerHTML = buckets.map((b,idx)=>{
+    $("#mtpdBars").innerHTML = buckets.map((b, idx) => {
       const c = counts[idx];
-      const w = clamp01(c/max)*100;
+      const w = clamp01(c / max) * 100;
       return `
         <div class="barRow">
           <div class="barLabel">${esc(b.label)} 분</div>
@@ -312,20 +315,17 @@
     }).join("");
   }
 
-  function renderDeptCore(items){
+  function renderDeptCore(items) {
     const map = new Map();
-    for (const x of items){
+    for (const x of items) {
       const k = x.dept || "미분류";
-      if (!map.has(k)) map.set(k, { dept:k, total:0, core:0 });
-      const o = map.get(k);
-      o.total += 1;
-      if (x.coreFinal) o.core += 1;
+      if (!map.has(k)) map.set(k, { dept: k, total: 0, core: 0 });
+      const o = map.get(k); o.total++; if (x.coreFinal) o.core++;
     }
-    const rows = Array.from(map.values()).sort((a,b)=> b.core - a.core || b.total - a.total || a.dept.localeCompare(b.dept));
-    const max = Math.max(1, ...rows.map(r=>r.core));
-
-    $("#deptCoreBars").innerHTML = rows.length ? rows.map(r=>{
-      const w = clamp01(r.core/max)*100;
+    const rows = Array.from(map.values()).sort((a, b) => b.core - a.core || b.total - a.total || a.dept.localeCompare(b.dept));
+    const max  = Math.max(1, ...rows.map(r => r.core));
+    $("#deptCoreBars").innerHTML = rows.length ? rows.map(r => {
+      const w = clamp01(r.core / max) * 100;
       return `
         <div class="barRow">
           <div class="barLabel">${esc(r.dept)}</div>
@@ -336,10 +336,21 @@
     }).join("") : `<div class="muted">표시할 데이터가 없습니다.</div>`;
   }
 
-  function renderAll(){
+  function showEmptyState() {
+    const link = `<a href="./bia.html" style="color:#60a5fa;margin-left:8px;">→ BIA 수행하기</a>`;
+    $("#kpiCoreFinal").textContent = "0";
+    $("#kpiCoreAuto").textContent  = "0";
+    $("#kpiDone").textContent      = "0";
+    $("#kpiMtpd96").textContent    = "0";
+    $("#topImpactBody").innerHTML  = `<tr><td colspan="7" style="text-align:center;padding:32px;color:rgba(15,23,42,.62);">BIA 등록 후 확인 가능합니다.${link}</td></tr>`;
+    $("#mtpdBars").innerHTML       = `<div class="muted" style="padding:20px 0;">BIA 데이터가 없습니다.${link}</div>`;
+    $("#deptCoreBars").innerHTML   = `<div class="muted" style="padding:20px 0;">BIA 데이터가 없습니다.${link}</div>`;
+  }
+
+  function renderAll() {
     const all = getAllItems();
     buildDeptFilter(all);
-    restore();
+    if (!all.length) { renderBadges([], []); showEmptyState(); return; }
     const scoped = applyFilters(all);
     renderBadges(scoped, all);
     renderKPIs(scoped);
@@ -348,8 +359,12 @@
     renderDeptCore(scoped);
   }
 
-  $("#deptFilter").addEventListener("change", ()=>{ persist(); renderAll(); });
-  $("#searchInput").addEventListener("input", ()=>{ persist(); renderAll(); });
+  $("#deptFilter").addEventListener("change", renderAll);
+  $("#searchInput").addEventListener("input",  renderAll);
+
+  window.addEventListener("storage", (e) => {
+    if (e.key === BIA_KEY || e.key === RISK_KEY) renderAll();
+  });
 
   renderAll();
 </script>
