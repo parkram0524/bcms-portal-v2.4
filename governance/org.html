@@ -6,688 +6,793 @@
 <title>BCMS Portal - 조직도</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-  .wrap { max-width: 1280px; margin: 0 auto; }
+  body { overflow: hidden; }
 
-  /* ── Top bar ── */
-  .topBar {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    gap: 12px; margin-bottom: 22px; flex-wrap: wrap;
+  .pageWrap {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+    height: 100vh; overflow: hidden;
   }
-  .heroTitle { font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin: 0; }
-  .heroDesc  { font-size: 13px; color: var(--text-2); margin-top: 5px; }
 
-  /* ── Mode toggle pill ── */
+  /* ── Controls bar ── */
+  .ctrlBar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px; gap: 8px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0; height: 50px;
+  }
+  .ctrlLeft, .ctrlRight { display: flex; align-items: center; gap: 6px; }
+
   .modeToggle {
-    display: inline-flex; align-items: center;
-    background: var(--surface); border: 0.5px solid var(--border-strong);
-    border-radius: 999px; padding: 3px; gap: 2px;
+    display: inline-flex; background: var(--bg);
+    border: 0.5px solid var(--border-strong); border-radius: 999px; padding: 2px;
   }
   .modeBtn {
-    font-size: 13px; font-weight: 600; padding: 7px 20px; border-radius: 999px;
-    border: none; cursor: pointer; transition: background .2s, color .2s;
+    font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 999px;
+    border: none; cursor: pointer; transition: all .2s;
     background: transparent; color: var(--text-2);
   }
-  .modeBtn.normal.active  { background: #2563eb; color: #fff; }
+  .modeBtn.normal.active    { background: #2563eb; color: #fff; }
   .modeBtn.emergency.active { background: #dc2626; color: #fff; }
 
-  /* ── Action buttons ── */
-  .actions { display: flex; gap: 8px; align-items: center; }
-  .btn {
-    font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: var(--r-sm);
+  .cBtn {
+    font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: var(--r-sm);
     border: 0.5px solid var(--border-strong); background: var(--surface);
-    color: var(--text); cursor: pointer; transition: background .15s;
+    color: var(--text); cursor: pointer; transition: all .15s; white-space: nowrap;
   }
-  .btn:hover { background: var(--surface-hover); }
-  .btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
-  .btn.primary:hover { background: var(--accent-hover); }
-  .btn.danger  { background: #dc2626; color: #fff; border-color: transparent; }
-  .btn.danger:hover { background: #b91c1c; }
+  .cBtn:hover    { background: var(--surface-hover); }
+  .cBtn.active   { background: var(--accent); color: #fff; border-color: transparent; }
+  .cBtn.danger   { background: #dc2626; color: #fff; border-color: transparent; }
+  .cBtn.success  { background: #16a34a; color: #fff; border-color: transparent; }
+  .cBtn.locked   { background: #7c3aed; color: #fff; border-color: transparent; }
+  .cBtn.warn     { background: #d97706; color: #fff; border-color: transparent; }
 
-  /* ── View panels ── */
-  .orgView { animation: fadeIn .2s ease; }
-  .orgView.hidden { display: none !important; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  /* ── Canvas ── */
+  .canvasWrap { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+  #cy { width: 100%; height: 100%; }
+  .edgeModeCursor #cy { cursor: crosshair !important; }
 
-  /* ── Industry badge ── */
-  .indBadge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 5px;
-    background: var(--accent-subtle); color: var(--accent);
-    border: 0.5px solid var(--accent-border); margin-bottom: 14px;
+  /* ── Canvas badges ── */
+  .canvasBadge {
+    position: absolute; top: 10px; left: 10px; z-index: 50;
+    border-radius: 999px; padding: 4px 12px;
+    font-size: 12px; font-weight: 600; display: none; pointer-events: none;
   }
+  .editBadge { background: rgba(245,158,11,.1); border: 0.5px solid rgba(245,158,11,.35); color: #b45309; }
+  .edgeBadge { background: rgba(37,99,235,.1); border: 0.5px solid rgba(37,99,235,.35); color: #1d4ed8; }
+  body.isEditMode .editBadge { display: block; }
+  body.isEdgeMode .edgeBadge { display: block; top: 38px; }
 
-  /* ── CEO card ── */
-  .ceoRow { display: flex; justify-content: center; margin-bottom: 6px; }
-  .ceoConnector { display: flex; justify-content: center; height: 20px; }
-  .ceoConnector::after { content:''; width:2px; background: var(--border-strong); }
-  .ceoCard {
-    background: #0f172a; color: #fff; border-radius: var(--r);
-    padding: 14px 36px; text-align: center; min-width: 240px;
+  /* ── Inline label editor ── */
+  #lblEditor {
+    position: absolute; display: none; z-index: 300;
+    text-align: center; border: 2px solid var(--accent); border-radius: 6px;
+    outline: none; resize: none; overflow: hidden;
+    font-family: inherit; background: var(--surface); color: var(--text);
+    padding: 4px; line-height: 1.4; font-weight: 600;
   }
-  [data-theme="dark"] .ceoCard { background: #1e293b; border: 0.5px solid var(--border-strong); }
-  .ceoLabel { font-size: 10px; font-weight: 600; opacity: .55; text-transform: uppercase; letter-spacing: .07em; }
-  .ceoName  { font-size: 16px; font-weight: 700; margin-top: 5px; }
-  .ceoTitle { font-size: 13px; opacity: .75; margin-top: 2px; }
+  #lblEditor.show { display: block; }
 
-  /* ── Division grid ── */
-  .divGrid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    gap: 10px;
+  /* ── Detail panel ── */
+  #panel {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 290px;
+    background: var(--surface); border-left: 0.5px solid var(--border);
+    transform: translateX(100%); transition: transform .25s ease;
+    z-index: 200; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 11px;
   }
-  .divCard {
-    border: 0.5px solid var(--border-strong); border-radius: var(--r);
-    overflow: hidden; background: var(--surface);
-  }
-  .divHeader {
-    background: #1d4f89; color: #fff; padding: 10px 12px;
-    font-size: 13px; font-weight: 700;
-    display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  }
-  [data-theme="dark"] .divHeader { background: #1e3a5f; }
-  .divBody  { padding: 8px; background: rgba(37,99,235,.04); min-height: 42px; }
-  [data-theme="dark"] .divBody { background: rgba(37,99,235,.07); }
+  #panel.open { transform: translateX(0); }
 
-  .teamRow {
-    display: flex; align-items: center; justify-content: space-between; gap: 6px;
-    background: var(--surface); border: 0.5px solid var(--border);
-    border-radius: var(--r-sm); padding: 6px 10px;
-    margin-bottom: 5px; font-size: 13px;
+  .pHead {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
   }
-  .teamRow:last-of-type { margin-bottom: 0; }
+  .pTitle { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; flex: 1; min-width: 0; word-break: break-all; }
+  .pClose { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-2); line-height: 1; padding: 2px; }
+  .pClose:hover { color: var(--text); }
 
-  /* ── BIA warning ── */
-  .biaWarn {
-    margin-top: 14px; padding: 10px 14px; border-radius: var(--r);
-    background: rgba(245,158,11,.07); border: 0.5px solid rgba(245,158,11,.3);
-    color: #b45309; font-size: 13px; font-weight: 600; line-height: 2;
+  .pField { display: flex; flex-direction: column; gap: 4px; }
+  .pLbl {
+    font-size: 10px; font-weight: 600; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: .05em;
   }
-  .biaTag {
-    display: inline-flex; align-items: center;
-    background: rgba(245,158,11,.1); border: 0.5px solid rgba(245,158,11,.3);
-    color: #b45309; border-radius: 999px; font-size: 12px; font-weight: 700;
-    padding: 2px 10px; margin: 2px 4px 2px 0;
+  .pInp, .pSel, .pTxt {
+    font-size: 13px; padding: 7px 9px;
+    border: 0.5px solid var(--border-strong); border-radius: var(--r-sm);
+    background: var(--surface); color: var(--text); width: 100%; outline: none;
+    font-family: inherit;
   }
+  .pInp:focus, .pSel:focus, .pTxt:focus { border-color: var(--accent); }
+  .pTxt { resize: vertical; min-height: 70px; line-height: 1.5; }
+  .pContactRow { display: none; }
+  body.isEditMode .pContactRow { display: flex; }
+  .pBtns { display: flex; gap: 8px; }
+  .pBtn { flex: 1; font-size: 12px; font-weight: 600; padding: 7px; border-radius: var(--r-sm); border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text); cursor: pointer; }
+  .pBtn.primary { background: var(--accent); color: #fff; border-color: transparent; }
 
-  /* ── Emergency org ── */
-  .eopTopRow   { display: flex; justify-content: center; margin-bottom: 6px; }
-  .eopTeamRow  { display: flex; justify-content: center; margin-bottom: 10px; }
-  .eopTopCard  {
-    background: #7f1d1d; color: #fff; border-radius: var(--r);
-    padding: 14px 32px; text-align: center; min-width: 220px;
+  .colorGridWrap { display: flex; flex-direction: column; gap: 6px; }
+  .colorGrid { display: grid; grid-template-columns: repeat(6, 26px); gap: 4px; }
+  .colorSwatch {
+    width: 26px; height: 26px; border-radius: 5px; cursor: pointer;
+    border: 1.5px solid var(--border); transition: transform .1s;
   }
-  .eopTeamCard {
-    background: #991b1b; color: #fff; border-radius: var(--r);
-    padding: 12px 28px; text-align: center; min-width: 200px;
-  }
-  [data-theme="dark"] .eopTopCard  { border: 0.5px solid var(--border); }
-  [data-theme="dark"] .eopTeamCard { border: 0.5px solid var(--border); }
-  .eopTopLabel { font-size: 10px; opacity: .6; text-transform: uppercase; letter-spacing: .07em; }
-  .eopTopName  { font-size: 15px; font-weight: 700; margin-top: 5px; }
-  .eopTopRole  { font-size: 12px; opacity: .8; margin-top: 2px; }
-  .eopPhone    { font-size: 12px; opacity: .75; margin-top: 4px; display: none; }
-  body.editMode .eopPhone { display: block; }
+  .colorSwatch:hover { transform: scale(1.2); border-color: var(--text); }
 
-  .eopGrid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 10px;
+  /* ── Context menu ── */
+  #ctxMenu {
+    position: fixed; z-index: 9999; display: none;
+    background: var(--surface); border: 0.5px solid var(--border-strong);
+    border-radius: var(--r-sm); box-shadow: var(--shadow); min-width: 164px; overflow: hidden;
   }
-  .eopCard {
-    border: 0.5px solid var(--border-strong); border-radius: var(--r);
-    background: var(--surface); overflow: hidden;
+  #ctxMenu.show { display: block; }
+  .ctxItem {
+    padding: 8px 13px; font-size: 13px; font-weight: 500; color: var(--text);
+    cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;
   }
-  .eopHead {
-    background: #b91c1c; color: #fff; padding: 10px 14px;
-    font-size: 13px; font-weight: 700;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  [data-theme="dark"] .eopHead { background: #7f1d1d; }
-  .eopBody { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-  .eopField { display: flex; flex-direction: column; gap: 2px; }
-  .eopFieldLabel { font-size: 10px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
-  .eopFieldVal   { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.5; }
-  .contactField  { display: none; }
-  body.editMode .contactField { display: flex; }
-
-  /* ── Inline editing ── */
-  .ei, .eil {
-    outline: none; min-width: 20px; display: inline-block;
-    border-bottom: 1px dashed transparent;
-  }
-  .ei:empty::before  { content: attr(data-ph); opacity: .4; }
-  .eil:empty::before { content: attr(data-ph); opacity: .4; }
-  body.editMode .ei  { border-bottom-color: rgba(255,255,255,.45); }
-  body.editMode .ei:focus  { border-bottom-color: rgba(255,255,255,.9); }
-  body.editMode .eil { border-bottom-color: var(--border-strong); }
-  body.editMode .eil:focus { border-bottom-color: var(--accent); }
-
-  /* ── Delete / add buttons ── */
-  .delBtn {
-    font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
-    border: 0.5px solid rgba(220,38,38,.35); background: rgba(220,38,38,.14);
-    color: #dc2626; cursor: pointer; flex-shrink: 0; line-height: 1.5;
-    display: none;
-  }
-  body.editMode .delBtn { display: inline-flex; align-items: center; }
-
-  .addTeamBtn {
-    width: 100%; font-size: 12px; font-weight: 700; padding: 5px 8px;
-    border-radius: var(--r-sm); border: 0.5px dashed var(--border-strong);
-    background: transparent; color: var(--text-2); cursor: pointer;
-    margin-top: 6px; display: none; transition: all .15s;
-  }
-  .addTeamBtn:hover { background: var(--surface-hover); color: var(--text); }
-  body.editMode .addTeamBtn { display: block; }
-
-  .addDivCard {
-    display: none; align-items: center; justify-content: center;
-    border: 1px dashed var(--border-strong); border-radius: var(--r);
-    min-height: 80px; cursor: pointer; font-size: 13px; font-weight: 600;
-    color: var(--text-2); background: transparent; transition: all .15s;
-  }
-  .addDivCard:hover { background: var(--surface-hover); color: var(--text); }
-  body.editMode .addDivCard { display: flex; }
-
-  .addUnitCard {
-    display: none; align-items: center; justify-content: center;
-    border: 1px dashed var(--border-strong); border-radius: var(--r);
-    min-height: 80px; cursor: pointer; font-size: 13px; font-weight: 600;
-    color: var(--text-2); background: transparent; transition: all .15s;
-  }
-  .addUnitCard:hover { background: var(--surface-hover); color: var(--text); }
-  body.editMode .addUnitCard { display: flex; }
-
-  /* ── Edit mode banner ── */
-  .editBanner {
-    display: none; align-items: center; gap: 8px;
-    background: rgba(245,158,11,.08); border: 0.5px solid rgba(245,158,11,.3);
-    border-radius: var(--r-sm); padding: 8px 14px; margin-bottom: 14px;
-    font-size: 13px; font-weight: 600; color: #b45309;
-  }
-  body.editMode .editBanner { display: flex; }
+  .ctxItem:hover { background: var(--surface-hover); }
+  .ctxItem.del { color: #dc2626; }
+  .ctxSep { height: 0.5px; background: var(--border); margin: 2px 0; }
 
   /* ── Toast ── */
   .toast {
     position: fixed; bottom: 28px; left: 50%;
     transform: translateX(-50%) translateY(40px);
     background: #0f172a; color: #fff; font-size: 13px; font-weight: 600;
-    padding: 10px 22px; border-radius: 999px; opacity: 0;
+    padding: 9px 20px; border-radius: 999px; opacity: 0;
     transition: all .25s; pointer-events: none; z-index: 9999;
-    white-space: nowrap;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   [data-theme="dark"] .toast { background: #f8fafc; color: #0f172a; }
-
-  @media (max-width: 900px) {
-    .divGrid  { grid-template-columns: repeat(2, 1fr); }
-    .eopGrid  { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 600px) {
-    .divGrid  { grid-template-columns: 1fr; }
-    .eopGrid  { grid-template-columns: 1fr; }
-    .topBar   { flex-direction: column; align-items: flex-start; }
-  }
 </style>
 </head>
 <body>
 <aside id="sidebarMount"></aside>
-<main class="main">
-<div class="wrap">
 
-  <div class="topBar">
-    <div>
-      <h1 class="heroTitle" id="heroTitle">평상시 조직도</h1>
-      <p class="heroDesc"  id="heroDesc">bcmsIndustry 기반 샘플 자동 로드 · 저장된 데이터 우선 적용</p>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+<div class="pageWrap">
+  <!-- Controls -->
+  <div class="ctrlBar">
+    <div class="ctrlLeft">
       <div class="modeToggle">
         <button class="modeBtn normal active"    id="btnNormal"    onclick="ORG.switchMode('normal')">평상시 조직</button>
         <button class="modeBtn emergency"        id="btnEmergency" onclick="ORG.switchMode('emergency')">비상대응 조직</button>
       </div>
-      <div class="actions">
-        <button class="btn"         id="btnEdit" onclick="ORG.toggleEdit()">편집 모드</button>
-        <button class="btn primary" id="btnSave" onclick="ORG.saveAll()" style="display:none">저장</button>
-      </div>
+    </div>
+    <div class="ctrlRight">
+      <button class="cBtn"         id="btnAddNode"  onclick="ORG.addNode()">+ 노드 추가</button>
+      <button class="cBtn"         id="btnAddEdge"  onclick="ORG.toggleEdgeMode()">연결선 추가</button>
+      <button class="cBtn danger"  id="btnDel"      onclick="ORG.deleteSelected()">선택 삭제</button>
+      <button class="cBtn"         id="btnLayout"   onclick="ORG.autoLayout()">자동 정렬</button>
+      <button class="cBtn success" id="btnSave"     onclick="ORG.save()">저장</button>
+      <button class="cBtn warn"    id="btnReset"    onclick="ORG.resetToSample()">초기화</button>
+      <button class="cBtn"         id="btnLock"     onclick="ORG.toggleLock()">편집 잠금</button>
     </div>
   </div>
 
-  <div class="editBanner">✏️ 편집 모드 — 항목을 클릭해 직접 수정하세요. 저장 버튼으로 확정합니다.</div>
+  <!-- Canvas -->
+  <div class="canvasWrap" id="canvasWrap">
+    <div id="cy"></div>
+    <div class="canvasBadge editBadge">✏️ 편집 모드</div>
+    <div class="canvasBadge edgeBadge">🔗 연결할 대상 노드를 클릭하세요</div>
+    <textarea id="lblEditor" rows="2"></textarea>
 
-  <!-- Normal org -->
-  <div class="orgView" id="viewNormal">
-    <div id="normalOrg"></div>
+    <!-- Detail panel -->
+    <div id="panel">
+      <div class="pHead">
+        <p class="pTitle" id="pTitle">노드 정보</p>
+        <button class="pClose" onclick="ORG.closePanel()">×</button>
+      </div>
+      <div class="pField">
+        <label class="pLbl">노드명</label>
+        <textarea class="pTxt" id="pName" rows="2" placeholder="노드 이름 (여러 줄 가능)"></textarea>
+      </div>
+      <div class="pField">
+        <label class="pLbl">유형</label>
+        <select class="pSel" id="pType">
+          <option value="ceo">최상위 (CEO / 기관장)</option>
+          <option value="division">본부 / 실 / 부</option>
+          <option value="team">팀 / 센터</option>
+          <option value="eop-root">비상대응 총괄 본부</option>
+          <option value="eop-stage">비상대응 2단계 본부</option>
+          <option value="eop-unit">반 (EOP 단위 조직)</option>
+        </select>
+      </div>
+      <div class="pField">
+        <label class="pLbl">담당자 / 반장</label>
+        <input class="pInp" id="pPerson" type="text" placeholder="담당자 성명"/>
+      </div>
+      <div class="pField">
+        <label class="pLbl">직책 / 평시 소속</label>
+        <input class="pInp" id="pTitle2" type="text" placeholder="직책 또는 평시 소속"/>
+      </div>
+      <div class="pField pContactRow">
+        <label class="pLbl">🔒 비상연락처 (편집 모드)</label>
+        <input class="pInp" id="pContact" type="text" placeholder="010-0000-0000"/>
+      </div>
+      <div class="pField">
+        <label class="pLbl">주요 역할 / 담당업무</label>
+        <textarea class="pTxt" id="pRole" rows="3" placeholder="주요 역할 또는 담당업무..."></textarea>
+      </div>
+      <div class="pBtns">
+        <button class="pBtn primary" onclick="ORG.savePanel()">저장</button>
+        <button class="pBtn"         onclick="ORG.closePanel()">닫기</button>
+      </div>
+      <div class="colorGridWrap">
+        <span class="pLbl">노드 색상</span>
+        <div class="colorGrid" id="panelColors"></div>
+      </div>
+    </div>
   </div>
-
-  <!-- Emergency org -->
-  <div class="orgView hidden" id="viewEmergency">
-    <div id="emergencyOrg"></div>
-  </div>
-
 </div>
-</main>
+
+<!-- Context menu -->
+<div id="ctxMenu">
+  <div class="ctxItem" id="ctx-edit"     onclick="ORG.ctxEdit()">✏️ 이름 편집</div>
+  <div class="ctxItem" id="ctx-child"    onclick="ORG.ctxAddChild()">➕ 하위 노드 추가</div>
+  <div class="ctxItem" id="ctx-edge"     onclick="ORG.ctxStartEdge()">🔗 연결선 추가</div>
+  <div class="ctxSep"></div>
+  <div class="ctxItem" id="ctx-color"    onclick="ORG.ctxColorPanel()">🎨 색상 변경</div>
+  <div class="ctxSep"></div>
+  <div class="ctxItem del" id="ctx-del"  onclick="ORG.ctxDelete()">🗑 삭제</div>
+</div>
 
 <div class="toast" id="toast"></div>
 
 <script src="../assets/sidebar.js"></script>
-<script src="../assets/demo-seed.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 <script>
+'use strict';
 window.ORG = (() => {
-  'use strict';
 
-  /* ─── Constants ─────────────────────────────────────────────────── */
+  /* ── Constants ────────────────────────────────────────────────── */
   const KEY_ORG = 'bcmsOrgChart';
   const KEY_EOP = 'bcmsEOPOrg';
   const KEY_IND = 'bcmsIndustry';
-  const KEY_BIA = 'bcmsBIAData';
 
-  /* ─── Industry sample data ──────────────────────────────────────── */
+  const COLORS = [
+    {bg:'#0f172a',fg:'#fff'},{bg:'#1e40af',fg:'#fff'},{bg:'#2563eb',fg:'#fff'},
+    {bg:'#0891b2',fg:'#fff'},{bg:'#047857',fg:'#fff'},{bg:'#d97706',fg:'#fff'},
+    {bg:'#dc2626',fg:'#fff'},{bg:'#7c3aed',fg:'#fff'},{bg:'#be185d',fg:'#fff'},
+    {bg:'#f1f5f9',fg:'#0f172a'},{bg:'#fef3c7',fg:'#92400e'},{bg:'#d1fae5',fg:'#065f46'},
+  ];
+
+  /* ── Industry samples ─────────────────────────────────────────── */
   const SAMPLES = {
-    '제조업': {
-      ceoTitle: '대표이사', companyName: '(주)회사명',
-      divisions: [
-        { id:'mfg-prod',  name:'생산본부',    teams:['생산팀','품질팀','생산관리팀'] },
-        { id:'mfg-tech',  name:'기술본부',    teams:['설비유지팀','기술개발팀'] },
-        { id:'mfg-mgmt',  name:'경영지원본부', teams:['구매팀','물류팀','인사팀','재무팀'] },
-        { id:'mfg-it',    name:'IT본부',      teams:['IT인프라팀','시스템운영팀'] },
-        { id:'mfg-sales', name:'영업본부',    teams:['영업팀','고객관리팀'] },
-      ]
-    },
-    '금융': {
-      ceoTitle: '대표이사/행장', companyName: '(주)금융회사',
-      divisions: [
-        { id:'fin-it',    name:'IT본부',      teams:['IT인프라팀','시스템운영팀','정보보호팀'] },
-        { id:'fin-sales', name:'영업본부',    teams:['수신팀','여신팀','고객서비스팀'] },
-        { id:'fin-fund',  name:'자금본부',    teams:['자금팀','결제팀'] },
-        { id:'fin-compl', name:'준법감시본부', teams:['준법감시팀','감사팀'] },
-        { id:'fin-mgmt',  name:'경영지원본부', teams:['인사팀','재무팀'] },
-      ]
-    },
-    '공공기관': {
-      ceoTitle: '기관장', companyName: '(공공기관명)',
-      divisions: [
-        { id:'pub-plan',  name:'기획조정실',    teams:['기획팀','예산팀'] },
-        { id:'pub-admin', name:'행정지원본부',   teams:['행정팀','인사팀','재무회계팀'] },
-        { id:'pub-it',    name:'IT본부',        teams:['정보화팀','정보보호팀'] },
-        { id:'pub-civil', name:'민원서비스본부', teams:['민원팀','대민서비스팀'] },
-        { id:'pub-audit', name:'감사실',        teams:['감사팀','컴플라이언스팀'] },
-      ]
-    },
-    '고속도로': {
-      ceoTitle: '사장/본부장', companyName: '(고속도로운영사)',
-      divisions: [
-        { id:'hwy-ctrl',  name:'관제본부',    teams:['교통관제팀','CCTV운영팀'] },
-        { id:'hwy-facil', name:'시설본부',    teams:['전기팀','기계(냉각)팀','방재·소방팀'] },
-        { id:'hwy-it',    name:'IT본부',      teams:['IT인프라팀','ETC운영팀','네트워크팀'] },
-        { id:'hwy-ops',   name:'운영본부',    teams:['순찰팀','유지보수팀','DC운영(NOC/관제)팀'] },
-        { id:'hwy-mgmt',  name:'경영지원본부', teams:['인사팀','재무팀','고객지원팀'] },
-      ]
-    },
-    '통신': {
-      ceoTitle: '대표이사', companyName: '(통신회사)',
-      divisions: [
-        { id:'tel-net',  name:'네트워크본부',  teams:['코어네트워크팀','무선팀','교환팀'] },
-        { id:'tel-it',   name:'IT본부',       teams:['IT인프라팀','시스템운영팀'] },
-        { id:'tel-svc',  name:'서비스본부',   teams:['인터넷서비스팀','기업서비스팀'] },
-        { id:'tel-cs',   name:'고객지원본부', teams:['고객센터팀','장애접수팀'] },
-        { id:'tel-mgmt', name:'경영지원본부', teams:['인사팀','재무팀'] },
-      ]
-    },
-    'IDC': {
-      ceoTitle: '대표이사/센터장', companyName: '(IDC운영사)',
-      divisions: [
-        { id:'idc-facil', name:'시설본부',    teams:['전기팀','기계(냉각)팀','방재·소방팀'] },
-        { id:'idc-it',    name:'IT운영본부',  teams:['서버운영팀','네트워크팀','스토리지팀'] },
-        { id:'idc-sec',   name:'보안본부',    teams:['물리보안팀','정보보호팀'] },
-        { id:'idc-svc',   name:'서비스본부',  teams:['고객지원팀','서비스품질팀'] },
-        { id:'idc-mgmt',  name:'경영지원본부', teams:['인사총무팀','재무회계팀','구매·자산관리팀'] },
-      ]
-    }
+    '제조업':  { root:'대표이사', company:'(주)회사명', divs:[
+      {n:'생산본부',   t:['생산팀','품질팀','생산관리팀']},
+      {n:'기술본부',   t:['설비유지팀','기술개발팀']},
+      {n:'경영지원본부',t:['구매팀','물류팀','인사팀','재무팀']},
+      {n:'IT본부',     t:['IT인프라팀','시스템운영팀']},
+      {n:'영업본부',   t:['영업팀','고객관리팀']},
+    ]},
+    '금융': { root:'대표이사/행장', company:'(주)금융회사', divs:[
+      {n:'IT본부',      t:['IT인프라팀','시스템운영팀','정보보호팀']},
+      {n:'영업본부',    t:['수신팀','여신팀','고객서비스팀']},
+      {n:'자금본부',    t:['자금팀','결제팀']},
+      {n:'준법감시본부', t:['준법감시팀','감사팀']},
+      {n:'경영지원본부', t:['인사팀','재무팀']},
+    ]},
+    '공공기관': { root:'기관장', company:'(공공기관명)', divs:[
+      {n:'기획조정실',    t:['기획팀','예산팀']},
+      {n:'행정지원본부',  t:['행정팀','인사팀','재무회계팀']},
+      {n:'IT본부',        t:['정보화팀','정보보호팀']},
+      {n:'민원서비스본부', t:['민원팀','대민서비스팀']},
+      {n:'감사실',        t:['감사팀','컴플라이언스팀']},
+    ]},
+    '고속도로': { root:'사장/본부장', company:'(고속도로운영사)', divs:[
+      {n:'관제본부',    t:['교통관제팀','CCTV운영팀']},
+      {n:'시설본부',    t:['전기팀','기계(냉각)팀','방재·소방팀']},
+      {n:'IT본부',      t:['IT인프라팀','ETC운영팀','네트워크팀']},
+      {n:'운영본부',    t:['순찰팀','유지보수팀','DC운영(NOC)팀']},
+      {n:'경영지원본부', t:['인사팀','재무팀','고객지원팀']},
+    ]},
+    '통신': { root:'대표이사', company:'(통신회사)', divs:[
+      {n:'네트워크본부',  t:['코어네트워크팀','무선팀','교환팀']},
+      {n:'IT본부',        t:['IT인프라팀','시스템운영팀']},
+      {n:'서비스본부',    t:['인터넷서비스팀','기업서비스팀']},
+      {n:'고객지원본부',  t:['고객센터팀','장애접수팀']},
+      {n:'경영지원본부',  t:['인사팀','재무팀']},
+    ]},
+    'IDC': { root:'대표이사/센터장', company:'(IDC운영사)', divs:[
+      {n:'시설본부',    t:['전기팀','기계(냉각)팀','방재·소방팀']},
+      {n:'IT운영본부',  t:['서버운영팀','네트워크팀','스토리지팀']},
+      {n:'보안본부',    t:['물리보안팀','정보보호팀']},
+      {n:'서비스본부',  t:['고객지원팀','서비스품질팀']},
+      {n:'경영지원본부', t:['인사총무팀','재무회계팀','구매·자산관리팀']},
+    ]},
   };
 
-  const EOP_SAMPLE = {
-    commander: { name:'대표이사', role:'비상대응 총괄', contact:'010-0000-0001' },
-    leader:    { name:'BCMS 담당임원', role:'비상대응팀장', contact:'010-0000-0002' },
-    units: [
-      { id:'u-cmd', name:'지휘통제반', leader:'반장 성명', contact:'010-0000-0011', duty:'전체 대응 지휘·통제, 상황 보고' },
-      { id:'u-it',  name:'IT복구반',  leader:'반장 성명', contact:'010-0000-0012', duty:'IT 시스템 복구, 데이터 복원' },
-      { id:'u-biz', name:'업무복구반', leader:'반장 성명', contact:'010-0000-0013', duty:'핵심업무 대체 수행·복구' },
-      { id:'u-ext', name:'대외협력반', leader:'반장 성명', contact:'010-0000-0014', duty:'언론 대응, 관계기관 협조' },
-      { id:'u-adm', name:'행정지원반', leader:'반장 성명', contact:'010-0000-0015', duty:'인원 파악, 물자·예산 지원' },
-    ]
-  };
+  /* ── Element builders ─────────────────────────────────────────── */
+  function buildNormal(ind) {
+    const s = SAMPLES[ind] || SAMPLES['제조업'];
+    const els = [];
+    els.push({ data: { id:'ceo', label:`${s.company}\n${s.root}`, type:'ceo' } });
+    s.divs.forEach((d, di) => {
+      const did = `d${di}`;
+      els.push({ data: { id:did, label:d.n, type:'division' } });
+      els.push({ data: { id:`e-c-${did}`, source:'ceo', target:did } });
+      d.t.forEach((t, ti) => {
+        const tid = `t${di}-${ti}`;
+        els.push({ data: { id:tid, label:t, type:'team' } });
+        els.push({ data: { id:`e-${did}-${tid}`, source:did, target:tid } });
+      });
+    });
+    return els;
+  }
 
-  /* ─── State ─────────────────────────────────────────────────────── */
-  let mode     = 'normal';
-  let editMode = false;
-  let orgData  = null;
-  let eopData  = null;
+  function buildEOP() {
+    // Fixed positions for two-column layout
+    const S1X = 290, S2X = 870;
+    const ROOT_Y = 80, UNIT_Y = 240;
+    const s1names = ['재난상황반','초동대응반','복구지원반','대외협력반'];
+    const s2names = ['업무환경반','IT복구반','업무재개반','자원지원반','대내외소통반'];
 
-  /* ─── Utilities ─────────────────────────────────────────────────── */
-  const loadJ = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch { return fb; } };
-  const saveJ = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-  const esc   = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const uid   = () => `id-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+    const s1span = (s1names.length - 1) * 140;
+    const s2span = (s2names.length - 1) * 130;
+    const els = [];
 
-  function toast(msg, ms = 2200) {
+    // Stage 1
+    els.push({ data: { id:'s1', label:'재난대책본부\n(본부장/CEO)', type:'eop-root' },
+               position: { x:S1X, y:ROOT_Y } });
+    s1names.forEach((n, i) => {
+      const id = `s1u${i}`;
+      els.push({ data: { id, label:n, type:'eop-unit' },
+                 position: { x: S1X - s1span/2 + i*140, y:UNIT_Y } });
+      els.push({ data: { id:`es1-${id}`, source:'s1', target:id } });
+    });
+
+    // Stage 2
+    els.push({ data: { id:'s2', label:'업무연속성대응본부\n(BCP대응본부)', type:'eop-stage' },
+               position: { x:S2X, y:ROOT_Y } });
+    s2names.forEach((n, i) => {
+      const id = `s2u${i}`;
+      els.push({ data: { id, label:n, type:'eop-unit' },
+                 position: { x: S2X - s2span/2 + i*130, y:UNIT_Y } });
+      els.push({ data: { id:`es2-${id}`, source:'s2', target:id } });
+    });
+
+    // Dashed BCP trigger edge
+    els.push({ data: { id:'e-bcp', source:'s1', target:'s2',
+      label:'업무중단 발생 시 BCP 가동', dashed:true } });
+
+    return els;
+  }
+
+  /* ── Cytoscape style ──────────────────────────────────────────── */
+  function mkStyle() {
+    const dk = document.documentElement.getAttribute('data-theme') === 'dark';
+    const surf  = dk ? '#111' : '#fff';
+    const txt   = dk ? '#ededed' : '#0f172a';
+    const edge  = dk ? 'rgba(255,255,255,.22)' : 'rgba(15,23,42,.22)';
+    const bord  = dk ? 'rgba(255,255,255,.18)' : 'rgba(15,23,42,.18)';
+    const blue  = 'rgba(37,99,235,.38)';
+    const red   = 'rgba(220,38,38,.38)';
+
+    return [
+      { selector:'node', style:{
+          label:'data(label)', 'text-valign':'center', 'text-halign':'center',
+          'font-family':'"Pretendard","Inter",system-ui,sans-serif',
+          'font-size':'12px', 'font-weight':'600',
+          'text-wrap':'wrap', 'text-max-width':'130px',
+          shape:'round-rectangle',
+          'background-color': surf, color: txt,
+          'border-color': bord, 'border-width':'1.5px',
+          width:'120px', height:'44px',
+      }},
+      { selector:'node[type="ceo"]', style:{
+          'background-color':'#0f172a', color:'#fff',
+          'border-width':'0', width:'155px', height:'58px',
+          'font-size':'13px', 'font-weight':'700',
+      }},
+      { selector:'node[type="division"]', style:{
+          'background-color':'#1d4f89', color:'#fff',
+          'border-width':'0', width:'140px', height:'50px', 'font-size':'12.5px',
+      }},
+      { selector:'node[type="team"]', style:{
+          'background-color': surf, color: txt,
+          'border-color': blue, 'border-width':'1.5px',
+          width:'115px', height:'40px',
+      }},
+      { selector:'node[type="eop-root"]', style:{
+          'background-color':'#7f1d1d', color:'#fff',
+          'border-width':'0', width:'158px', height:'58px',
+          'font-size':'12.5px', 'font-weight':'700',
+      }},
+      { selector:'node[type="eop-stage"]', style:{
+          'background-color':'#991b1b', color:'#fff',
+          'border-width':'0', width:'165px', height:'58px',
+          'font-size':'12px', 'font-weight':'700',
+      }},
+      { selector:'node[type="eop-unit"]', style:{
+          'background-color': surf, color: txt,
+          'border-color': red, 'border-width':'1.5px',
+          width:'118px', height:'42px',
+      }},
+      // Custom color override
+      { selector:'node[bgColor]', style:{
+          'background-color':'data(bgColor)', color:'data(fgColor)',
+      }},
+      { selector:'node:selected', style:{
+          'border-color':'#0070f3', 'border-width':'2.5px',
+          'overlay-color':'#0070f3', 'overlay-padding':'3px', 'overlay-opacity':0.08,
+      }},
+      { selector:'.edgeSrc', style:{
+          'border-color':'#f59e0b', 'border-width':'3px',
+          'overlay-color':'#f59e0b', 'overlay-padding':'4px', 'overlay-opacity':0.15,
+      }},
+      // Edges
+      { selector:'edge', style:{
+          'curve-style':'bezier',
+          'target-arrow-shape':'triangle',
+          'arrow-scale':1.0,
+          'line-color': edge, 'target-arrow-color': edge, width:1.5,
+      }},
+      { selector:'edge[?dashed]', style:{
+          'line-style':'dashed', 'line-dash-pattern':[8,4],
+          'line-color':'rgba(245,158,11,.5)', 'target-arrow-color':'rgba(245,158,11,.5)',
+          width:2.0, 'curve-style':'straight',
+          label:'data(label)',
+          'font-size':'11px', 'font-weight':'600', color:'#b45309',
+          'text-background-opacity':1, 'text-background-color': surf,
+          'text-background-padding':'4px', 'text-background-shape':'roundrectangle',
+          'text-border-opacity':0.3, 'text-border-width':0.5, 'text-border-color':'rgba(245,158,11,.4)',
+      }},
+      { selector:'edge:selected', style:{
+          'line-color':'#0070f3', 'target-arrow-color':'#0070f3',
+      }},
+    ];
+  }
+
+  /* ── State ────────────────────────────────────────────────────── */
+  let cy        = null;
+  let mode      = 'normal';
+  let editMode  = true;
+  let edgeMode  = false;
+  let edgeSrc   = null;
+  let ctxTarget = null;
+  let panelNode = null;
+  const uid = () => `n${Date.now()}${Math.random().toString(36).slice(2,5)}`;
+
+  /* ── Utilities ────────────────────────────────────────────────── */
+  const loadJ = (k,fb) => { try{const r=localStorage.getItem(k);return r?JSON.parse(r):fb;}catch{return fb;} };
+  const saveJ = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+
+  function toast(msg, ms=2200) {
     const el = document.getElementById('toast');
     el.textContent = msg; el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), ms);
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), ms);
   }
 
-  /* ─── Data loading ───────────────────────────────────────────────── */
-  function getIndustry() {
-    const v = (localStorage.getItem(KEY_IND) || '').trim();
-    return SAMPLES[v] ? v : '제조업';
+  /* ── Init Cytoscape ───────────────────────────────────────────── */
+  function initCy(elements) {
+    if (cy) { cy.destroy(); cy = null; }
+    const hasPos = elements.some(e => e.position && e.position.x != null);
+
+    cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements,
+      style: mkStyle(),
+      layout: hasPos
+        ? { name:'preset', fit:true, padding:60 }
+        : { name:'breadthfirst', directed:true, padding:55, spacingFactor:1.35,
+            roots: elements.filter(e => !e.data.source && e.data.type === 'ceo').map(e => '#'+e.data.id) },
+      minZoom: 0.15, maxZoom: 3,
+      wheelSensitivity: 0.3,
+    });
+
+    bindCyEvents();
+    applyLockState();
   }
 
-  function loadOrgData() {
-    const saved = loadJ(KEY_ORG, null);
-    if (saved && Array.isArray(saved.divisions) && saved.divisions.length) return saved;
-    const ind = getIndustry();
-    const s = SAMPLES[ind];
-    return { ceoTitle: s.ceoTitle, companyName: s.companyName,
-             divisions: s.divisions.map(d => ({ ...d, teams: [...d.teams] })) };
+  function bindCyEvents() {
+    cy.on('dblclick', 'node', e => { if (editMode) startLabelEdit(e.target); });
+
+    cy.on('tap', 'node', e => {
+      hideCtxMenu();
+      if (edgeMode) { handleEdgeTap(e.target); return; }
+      openPanel(e.target);
+    });
+
+    cy.on('tap', e => {
+      if (e.target === cy) { hideCtxMenu(); }
+    });
+
+    cy.on('cxttap', 'node', e => {
+      if (!editMode) return;
+      ctxTarget = e.target;
+      document.getElementById('ctx-edit').style.display  = '';
+      document.getElementById('ctx-child').style.display = '';
+      document.getElementById('ctx-edge').style.display  = '';
+      document.getElementById('ctx-color').style.display = '';
+      document.getElementById('ctx-del').textContent = '🗑 노드 삭제';
+      const oe = e.originalEvent;
+      showCtxMenu(oe.clientX, oe.clientY);
+    });
+
+    cy.on('cxttap', 'edge', e => {
+      if (!editMode) return;
+      ctxTarget = e.target;
+      document.getElementById('ctx-edit').style.display  = 'none';
+      document.getElementById('ctx-child').style.display = 'none';
+      document.getElementById('ctx-edge').style.display  = 'none';
+      document.getElementById('ctx-color').style.display = 'none';
+      document.getElementById('ctx-del').textContent = '🗑 연결선 삭제';
+      const oe = e.originalEvent;
+      showCtxMenu(oe.clientX, oe.clientY);
+    });
+
+    cy.on('cxttap', e => { if (e.target === cy) hideCtxMenu(); });
   }
 
-  function loadEOPData() {
-    const saved = loadJ(KEY_EOP, null);
-    if (saved && Array.isArray(saved.units) && saved.units.length) return saved;
-    return JSON.parse(JSON.stringify(EOP_SAMPLE));
-  }
+  /* ── Label editor ─────────────────────────────────────────────── */
+  const lblEd = document.getElementById('lblEditor');
+  let lblNode = null;
 
-  function getBiaTeams() {
-    const bia = loadJ(KEY_BIA, []);
-    const teams = new Set();
-    for (const block of (Array.isArray(bia) ? bia : [])) {
-      if (block.team) teams.add(block.team.trim());
-    }
-    return teams;
+  function startLabelEdit(node) {
+    lblNode = node;
+    const rp = node.renderedPosition();
+    const rw = node.renderedWidth();
+    const rh = node.renderedHeight();
+    lblEd.value = node.data('label');
+    lblEd.style.left      = `${rp.x - rw/2}px`;
+    lblEd.style.top       = `${rp.y - rh/2}px`;
+    lblEd.style.width     = `${rw}px`;
+    lblEd.style.minHeight = `${rh}px`;
+    lblEd.style.fontSize  = `${node.numericStyle('font-size')}px`;
+    lblEd.classList.add('show');
+    lblEd.focus(); lblEd.select();
   }
-
-  function getMissingBiaTeams(od) {
-    const biaTeams = getBiaTeams();
-    if (!biaTeams.size) return [];
-    const orgTeams = new Set();
-    for (const div of (od.divisions || [])) {
-      for (const t of (div.teams || [])) orgTeams.add(String(t).trim());
-    }
-    return [...biaTeams].filter(t => !orgTeams.has(t));
+  function finishLabelEdit() {
+    if (!lblNode) return;
+    const v = lblEd.value.trim();
+    if (v) { lblNode.data('label', v); if (panelNode && panelNode.id() === lblNode.id()) document.getElementById('pName').value = v; }
+    lblEd.classList.remove('show'); lblNode = null;
   }
+  lblEd.addEventListener('blur', finishLabelEdit);
+  lblEd.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishLabelEdit(); }
+    if (e.key === 'Escape') { lblEd.classList.remove('show'); lblNode = null; }
+  });
 
-  /* ─── Mode & edit toggle ─────────────────────────────────────────── */
-  function switchMode(m) {
-    if (editMode) { toast('저장 또는 편집 취소 후 전환하세요'); return; }
-    mode = m;
-    document.getElementById('viewNormal').classList.toggle('hidden', m !== 'normal');
-    document.getElementById('viewEmergency').classList.toggle('hidden', m !== 'emergency');
-    document.getElementById('btnNormal').classList.toggle('active', m === 'normal');
-    document.getElementById('btnEmergency').classList.toggle('active', m === 'emergency');
-    document.getElementById('heroTitle').textContent = m === 'normal' ? '평상시 조직도' : '비상대응 조직도';
-    document.getElementById('heroDesc').textContent  = m === 'normal'
-      ? 'bcmsIndustry 기반 샘플 자동 로드 · 저장된 데이터 우선 적용'
-      : '비상 상황 발생 시 적용되는 지휘 체계 · bcmsEOPOrg 저장';
-  }
-
-  function toggleEdit() {
-    if (editMode) {
-      editMode = false;
-      document.body.classList.remove('editMode');
-      document.getElementById('btnEdit').textContent = '편집 모드';
-      document.getElementById('btnEdit').classList.remove('danger');
-      document.getElementById('btnSave').style.display = 'none';
-      renderAll(); // discard changes
+  /* ── Edge mode ────────────────────────────────────────────────── */
+  function handleEdgeTap(node) {
+    if (!edgeSrc) {
+      edgeSrc = node; node.addClass('edgeSrc');
     } else {
-      editMode = true;
-      document.body.classList.add('editMode');
-      document.getElementById('btnEdit').textContent = '편집 취소';
-      document.getElementById('btnEdit').classList.add('danger');
-      document.getElementById('btnSave').style.display = '';
-      renderCurrent();
+      if (node.id() !== edgeSrc.id()) {
+        cy.add({ group:'edges', data:{ id:`e${uid()}`, source:edgeSrc.id(), target:node.id() } });
+      }
+      edgeSrc.removeClass('edgeSrc'); edgeSrc = null;
+      setEdgeMode(false);
     }
   }
 
-  function saveAll() {
-    if (mode === 'normal')    saveNormal();
-    else                      saveEmergency();
-    editMode = false;
-    document.body.classList.remove('editMode');
-    document.getElementById('btnEdit').textContent = '편집 모드';
-    document.getElementById('btnEdit').classList.remove('danger');
-    document.getElementById('btnSave').style.display = 'none';
-    renderAll();
+  function setEdgeMode(on) {
+    edgeMode = on;
+    if (!on && edgeSrc) { edgeSrc.removeClass('edgeSrc'); edgeSrc = null; }
+    document.getElementById('btnAddEdge').classList.toggle('active', on);
+    document.getElementById('canvasWrap').classList.toggle('edgeModeCursor', on);
+    document.body.classList.toggle('isEdgeMode', on);
+    cy.userPanningEnabled(!on);
+  }
+
+  /* ── Context menu ─────────────────────────────────────────────── */
+  const ctxMenu = document.getElementById('ctxMenu');
+
+  function showCtxMenu(x, y) {
+    ctxMenu.style.left = `${Math.min(x, window.innerWidth  - 175)}px`;
+    ctxMenu.style.top  = `${Math.min(y, window.innerHeight - 200)}px`;
+    ctxMenu.classList.add('show');
+  }
+  function hideCtxMenu() { ctxMenu.classList.remove('show'); }
+
+  document.addEventListener('click', e => {
+    if (!ctxMenu.contains(e.target)) hideCtxMenu();
+  });
+
+  function ctxEdit() {
+    hideCtxMenu();
+    if (ctxTarget && ctxTarget.isNode()) startLabelEdit(ctxTarget);
+  }
+  function ctxAddChild() {
+    hideCtxMenu();
+    if (!ctxTarget || !ctxTarget.isNode()) return;
+    const pt = ctxTarget.data('type');
+    const ct = pt === 'ceo' ? 'division' : (pt === 'eop-root' || pt === 'eop-stage') ? 'eop-unit' : 'team';
+    const id  = uid();
+    const pp  = ctxTarget.position();
+    cy.add([
+      { group:'nodes', data:{ id, label:'신규 노드', type:ct }, position:{ x:pp.x+20, y:pp.y+120 } },
+      { group:'edges', data:{ id:'e'+uid(), source:ctxTarget.id(), target:id } },
+    ]);
+    toast('하위 노드가 추가되었습니다');
+  }
+  function ctxStartEdge() {
+    hideCtxMenu();
+    if (!ctxTarget || !ctxTarget.isNode()) return;
+    edgeSrc = ctxTarget; ctxTarget.addClass('edgeSrc');
+    setEdgeMode(true);
+  }
+  function ctxColorPanel() {
+    hideCtxMenu();
+    if (ctxTarget && ctxTarget.isNode()) openPanel(ctxTarget);
+  }
+  function ctxDelete() {
+    hideCtxMenu();
+    if (!ctxTarget) return;
+    cy.remove(ctxTarget);
+    if (panelNode && ctxTarget.isNode() && panelNode.id() === ctxTarget.id()) closePanel();
+  }
+
+  /* ── Detail panel ─────────────────────────────────────────────── */
+  function openPanel(node) {
+    panelNode = node;
+    document.getElementById('pTitle').textContent  = node.data('label').replace(/\n/g,' ');
+    document.getElementById('pName').value         = node.data('label');
+    document.getElementById('pType').value         = node.data('type') || 'team';
+    document.getElementById('pPerson').value       = node.data('person') || '';
+    document.getElementById('pTitle2').value       = node.data('jobTitle') || '';
+    document.getElementById('pContact').value      = node.data('contact') || '';
+    document.getElementById('pRole').value         = node.data('role') || '';
+    document.getElementById('panel').classList.add('open');
+  }
+  function savePanel() {
+    if (!panelNode) return;
+    const lbl = document.getElementById('pName').value.trim();
+    if (lbl) { panelNode.data('label', lbl); document.getElementById('pTitle').textContent = lbl.replace(/\n/g,' '); }
+    panelNode.data('type',     document.getElementById('pType').value);
+    panelNode.data('person',   document.getElementById('pPerson').value.trim());
+    panelNode.data('jobTitle', document.getElementById('pTitle2').value.trim());
+    panelNode.data('contact',  document.getElementById('pContact').value.trim());
+    panelNode.data('role',     document.getElementById('pRole').value.trim());
+    toast('저장되었습니다 ✓');
+  }
+  function closePanel() {
+    document.getElementById('panel').classList.remove('open');
+    panelNode = null;
+  }
+
+  /* ── Color swatches ───────────────────────────────────────────── */
+  function buildSwatches() {
+    document.getElementById('panelColors').innerHTML = COLORS.map(c =>
+      `<div class="colorSwatch" style="background:${c.bg};border-color:${c.bg === '#f1f5f9' || c.bg === '#fef3c7' || c.bg === '#d1fae5' ? '#ccc' : c.bg};"
+            onclick="ORG.applyColor('${c.bg}','${c.fg}')"></div>`
+    ).join('');
+  }
+  function applyColor(bg, fg) {
+    if (!panelNode) return;
+    panelNode.data('bgColor', bg); panelNode.data('fgColor', fg);
+    toast('색상이 변경되었습니다');
+  }
+
+  /* ── Mode switch ──────────────────────────────────────────────── */
+  function switchMode(m) {
+    if (m === mode) return;
+    if (edgeMode) setEdgeMode(false);
+    mode = m;
+    document.getElementById('btnNormal').classList.toggle('active',    m === 'normal');
+    document.getElementById('btnEmergency').classList.toggle('active', m === 'emergency');
+    closePanel();
+    loadMode();
+  }
+
+  /* ── Lock ─────────────────────────────────────────────────────── */
+  function toggleLock() {
+    editMode = !editMode;
+    applyLockState();
+    if (!editMode && edgeMode) setEdgeMode(false);
+  }
+  function applyLockState() {
+    document.body.classList.toggle('isEditMode', editMode);
+    cy.autoungrabify(!editMode);
+    const btn = document.getElementById('btnLock');
+    btn.textContent = editMode ? '편집 잠금' : '🔒 잠금 해제';
+    btn.className   = editMode ? 'cBtn' : 'cBtn locked';
+  }
+
+  /* ── Toolbar actions ──────────────────────────────────────────── */
+  function addNode() {
+    if (!editMode) { toast('편집 모드를 활성화하세요'); return; }
+    const id  = uid();
+    const ext = cy.extent();
+    const cx  = (ext.x1 + ext.x2) / 2;
+    const cy2 = (ext.y1 + ext.y2) / 2;
+    const t   = mode === 'emergency' ? 'eop-unit' : 'team';
+    cy.add({ group:'nodes', data:{ id, label:'신규 노드', type:t }, position:{ x:cx, y:cy2 } });
+    cy.getElementById(id).select();
+    toast('노드가 추가되었습니다');
+  }
+
+  function toggleEdgeMode() {
+    if (!editMode) { toast('편집 모드를 활성화하세요'); return; }
+    setEdgeMode(!edgeMode);
+    if (edgeMode) toast('첫 번째 노드를 클릭하세요');
+  }
+
+  function deleteSelected() {
+    if (!editMode) return;
+    const sel = cy.$(':selected');
+    if (!sel.length) { toast('삭제할 항목을 선택하세요'); return; }
+    if (panelNode && sel.some(e => e.isNode() && e.id() === panelNode.id())) closePanel();
+    cy.remove(sel);
+  }
+
+  function autoLayout() {
+    // For EOP, temporarily remove the dashed edge to get two independent trees
+    if (mode === 'emergency') {
+      const bcp = cy.getElementById('e-bcp');
+      const hasBcp = bcp.length > 0;
+      const bcpData = hasBcp ? bcp.data() : null;
+      if (hasBcp) cy.remove(bcp);
+
+      cy.layout({
+        name:'breadthfirst', directed:true, padding:60, spacingFactor:1.3,
+        animate:true, animationDuration:500,
+        roots: cy.nodes().filter(n => n.indegree() === 0),
+      }).run();
+
+      if (hasBcp) {
+        setTimeout(() => {
+          cy.add({ group:'edges', data: bcpData });
+        }, 550);
+      }
+    } else {
+      cy.layout({
+        name:'breadthfirst', directed:true, padding:55, spacingFactor:1.35,
+        animate:true, animationDuration:500,
+        roots: cy.nodes().filter(n => n.indegree() === 0),
+      }).run();
+    }
+  }
+
+  /* ── Save / Load ──────────────────────────────────────────────── */
+  function save() {
+    const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
+    saveJ(key, cy.json().elements);
     toast('저장되었습니다 ✓');
   }
 
-  /* ─── Normal org render ──────────────────────────────────────────── */
-  function renderNormal() {
-    orgData = loadOrgData();
-    const missing = getMissingBiaTeams(orgData);
-    const industry = getIndustry();
-    const ed = editMode;
-
-    const indBadge = `<div><span class="indBadge">업종: ${esc(industry)}</span></div>`;
-
-    const ceoHtml = `
-      <div class="ceoRow">
-        <div class="ceoCard">
-          <div class="ceoLabel">최상위</div>
-          <div class="ceoName"
-               id="ceoCompany"
-               ${ed ? 'contenteditable="true"' : ''}
-               class="ceoName ei"
-               data-ph="회사명">${esc(orgData.companyName)}</div>
-          <div id="ceoTitleEl"
-               ${ed ? 'contenteditable="true"' : ''}
-               class="ceoTitle ei"
-               data-ph="직위">${esc(orgData.ceoTitle)}</div>
-        </div>
-      </div>
-      <div class="ceoConnector"></div>`;
-
-    const divsHtml = orgData.divisions.map((div, di) => {
-      const teamsHtml = (div.teams || []).map((team, ti) => `
-        <div class="teamRow">
-          <span class="eil teamName"
-                data-di="${di}" data-ti="${ti}"
-                ${ed ? 'contenteditable="true"' : ''}
-                data-ph="팀명">${esc(String(team))}</span>
-          <button class="delBtn" onclick="ORG.delTeam(${di},${ti})">×</button>
-        </div>`).join('');
-
-      return `
-        <div class="divCard" data-di="${di}">
-          <div class="divHeader">
-            <span class="ei divName"
-                  data-di="${di}"
-                  ${ed ? 'contenteditable="true"' : ''}
-                  data-ph="본부명">${esc(div.name)}</span>
-            <button class="delBtn" onclick="ORG.delDiv(${di})">×</button>
-          </div>
-          <div class="divBody">
-            ${teamsHtml}
-            <button class="addTeamBtn" onclick="ORG.addTeam(${di})">+ 팀 추가</button>
-          </div>
-        </div>`;
-    }).join('');
-
-    const missingHtml = missing.length ? `
-      <div class="biaWarn">
-        ⚠ BIA에 등록된 팀이지만 조직도에 없음:
-        ${missing.map(t => `<span class="biaTag">${esc(t)}</span>`).join('')}
-      </div>` : '';
-
-    document.getElementById('normalOrg').innerHTML = `
-      ${indBadge}
-      ${ceoHtml}
-      <div class="divGrid" id="divGrid">
-        ${divsHtml}
-        <button class="addDivCard" onclick="ORG.addDiv()">+ 본부 추가</button>
-      </div>
-      ${missingHtml}`;
-  }
-
-  function collectNormalFromDOM() {
-    const res = { ...orgData };
-    const cn = document.getElementById('ceoCompany');
-    const ct = document.getElementById('ceoTitleEl');
-    if (cn) res.companyName = cn.textContent.trim();
-    if (ct) res.ceoTitle    = ct.textContent.trim();
-
-    res.divisions = [];
-    document.querySelectorAll('#divGrid .divCard').forEach((card, di) => {
-      const nameEl = card.querySelector('.divName');
-      const name   = nameEl ? nameEl.textContent.trim() : `본부${di+1}`;
-      const teams  = [...card.querySelectorAll('.teamName')].map(e => e.textContent.trim()).filter(Boolean);
-      const orig   = (orgData.divisions || [])[di] || {};
-      res.divisions.push({ id: orig.id || uid(), name, teams });
-    });
-    return res;
-  }
-
-  function saveNormal() {
-    orgData = collectNormalFromDOM();
-    saveJ(KEY_ORG, orgData);
-  }
-
-  /* ─── Normal CRUD ────────────────────────────────────────────────── */
-  function addDiv() {
-    orgData = collectNormalFromDOM();
-    orgData.divisions.push({ id: uid(), name: '신규 본부', teams: ['신규 팀'] });
-    renderNormal();
-  }
-  function delDiv(di) {
-    orgData = collectNormalFromDOM();
-    orgData.divisions.splice(di, 1);
-    renderNormal();
-  }
-  function addTeam(di) {
-    orgData = collectNormalFromDOM();
-    if (orgData.divisions[di]) orgData.divisions[di].teams.push('신규 팀');
-    renderNormal();
-  }
-  function delTeam(di, ti) {
-    orgData = collectNormalFromDOM();
-    if (orgData.divisions[di]) orgData.divisions[di].teams.splice(ti, 1);
-    renderNormal();
-  }
-
-  /* ─── Emergency org render ───────────────────────────────────────── */
-  function renderEmergency() {
-    eopData = loadEOPData();
-    const ed = editMode;
-
-    const topHtml = `
-      <div class="eopTopRow">
-        <div class="eopTopCard">
-          <div class="eopTopLabel">비상대응 총괄</div>
-          <div class="eopTopName"><span class="ei eopCmdName" ${ed?'contenteditable="true"':''} data-ph="성명">${esc(eopData.commander.name)}</span></div>
-          <div class="eopTopRole"><span class="ei eopCmdRole" ${ed?'contenteditable="true"':''} data-ph="직위">${esc(eopData.commander.role)}</span></div>
-          <div class="eopPhone">📞 <span class="ei eopCmdContact" ${ed?'contenteditable="true"':''} data-ph="010-0000-0000">${esc(eopData.commander.contact)}</span></div>
-        </div>
-      </div>
-      <div class="eopTeamRow">
-        <div class="eopTeamCard">
-          <div class="eopTopLabel">비상대응팀장</div>
-          <div class="eopTopName"><span class="ei eopLdrName" ${ed?'contenteditable="true"':''} data-ph="성명">${esc(eopData.leader.name)}</span></div>
-          <div class="eopTopRole"><span class="ei eopLdrRole" ${ed?'contenteditable="true"':''} data-ph="직위">${esc(eopData.leader.role)}</span></div>
-          <div class="eopPhone">📞 <span class="ei eopLdrContact" ${ed?'contenteditable="true"':''} data-ph="010-0000-0000">${esc(eopData.leader.contact)}</span></div>
-        </div>
-      </div>`;
-
-    const unitsHtml = (eopData.units || []).map((u, ui) => `
-      <div class="eopCard" data-ui="${ui}">
-        <div class="eopHead">
-          <span class="ei eopUnitName" data-ui="${ui}" ${ed?'contenteditable="true"':''} data-ph="반 이름">${esc(u.name)}</span>
-          <button class="delBtn" onclick="ORG.delUnit(${ui})">×</button>
-        </div>
-        <div class="eopBody">
-          <div class="eopField">
-            <span class="eopFieldLabel">반장</span>
-            <span class="eopFieldVal eil eopUnitLeader" data-ui="${ui}" ${ed?'contenteditable="true"':''} data-ph="반장 성명">${esc(u.leader)}</span>
-          </div>
-          <div class="eopField contactField">
-            <span class="eopFieldLabel">비상연락처</span>
-            <span class="eopFieldVal eil eopUnitContact" data-ui="${ui}" ${ed?'contenteditable="true"':''} data-ph="010-0000-0000" style="font-family:monospace;">${esc(u.contact)}</span>
-          </div>
-          <div class="eopField">
-            <span class="eopFieldLabel">담당업무</span>
-            <span class="eopFieldVal eil eopUnitDuty" data-ui="${ui}" ${ed?'contenteditable="true"':''} data-ph="담당 업무 설명" style="font-size:12px;line-height:1.5;">${esc(u.duty)}</span>
-          </div>
-        </div>
-      </div>`).join('');
-
-    document.getElementById('emergencyOrg').innerHTML = `
-      ${topHtml}
-      <div class="eopGrid" id="eopGrid">
-        ${unitsHtml}
-        <button class="addUnitCard" onclick="ORG.addUnit()">+ 반 추가</button>
-      </div>`;
-  }
-
-  function collectEOPFromDOM() {
-    const res = JSON.parse(JSON.stringify(eopData));
-    const g = sel => { const e = document.querySelector(sel); return e ? e.textContent.trim() : ''; };
-    res.commander.name    = g('.eopCmdName');
-    res.commander.role    = g('.eopCmdRole');
-    res.commander.contact = g('.eopCmdContact');
-    res.leader.name       = g('.eopLdrName');
-    res.leader.role       = g('.eopLdrRole');
-    res.leader.contact    = g('.eopLdrContact');
-
-    res.units = [];
-    document.querySelectorAll('#eopGrid .eopCard').forEach((card, ui) => {
-      const orig = (eopData.units || [])[ui] || {};
-      const t = sel => { const e = card.querySelector(sel); return e ? e.textContent.trim() : ''; };
-      res.units.push({
-        id:      orig.id || uid(),
-        name:    t('.eopUnitName'),
-        leader:  t('.eopUnitLeader'),
-        contact: t('.eopUnitContact'),
-        duty:    t('.eopUnitDuty'),
-      });
-    });
-    return res;
-  }
-
-  function saveEmergency() {
-    eopData = collectEOPFromDOM();
-    saveJ(KEY_EOP, eopData);
-  }
-
-  /* ─── Emergency CRUD ─────────────────────────────────────────────── */
-  function addUnit() {
-    eopData = collectEOPFromDOM();
-    eopData.units.push({ id: uid(), name:'신규 반', leader:'반장 성명', contact:'010-0000-0000', duty:'담당 업무 입력' });
-    renderEmergency();
-  }
-  function delUnit(ui) {
-    eopData = collectEOPFromDOM();
-    eopData.units.splice(ui, 1);
-    renderEmergency();
-  }
-
-  /* ─── Render helpers ─────────────────────────────────────────────── */
-  function renderCurrent() {
-    if (mode === 'normal') renderNormal();
-    else                   renderEmergency();
-  }
-  function renderAll() {
-    renderNormal();
-    renderEmergency();
-  }
-
-  /* ─── Init ───────────────────────────────────────────────────────── */
-  function init() {
-    if (window.BCMSDemoSeed) {
-      window.BCMSDemoSeed.ensureDemoIfEmpty();
-      window.BCMSDemoSeed.mountBanner('.wrap');
+  function loadMode() {
+    const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
+    const raw = loadJ(key, null);
+    if (raw && (Array.isArray(raw) ? raw.length : Object.keys(raw).length)) {
+      try { initCy(Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])]); return; } catch {}
     }
-    // URL hash: #emergency → start in emergency mode
-    if (location.hash === '#emergency') switchMode('emergency');
-    renderAll();
+    const ind = (localStorage.getItem(KEY_IND)||'').trim();
+    initCy(mode === 'normal' ? buildNormal(SAMPLES[ind] ? ind : '제조업') : buildEOP());
   }
 
-  // Expose public API
-  return { switchMode, toggleEdit, saveAll, addDiv, delDiv, addTeam, delTeam, addUnit, delUnit, init };
+  function resetToSample() {
+    if (!confirm('샘플 데이터로 초기화하시겠습니까? 현재 레이아웃이 삭제됩니다.')) return;
+    const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
+    localStorage.removeItem(key);
+    loadMode();
+    closePanel();
+    toast('초기화되었습니다');
+  }
+
+  /* ── Dark mode sync ───────────────────────────────────────────── */
+  new MutationObserver(() => { if (cy) cy.style(mkStyle()); })
+    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+
+  /* ── Init ─────────────────────────────────────────────────────── */
+  function init() {
+    buildSwatches();
+    if (location.hash === '#emergency') {
+      mode = 'emergency';
+      document.getElementById('btnNormal').classList.remove('active');
+      document.getElementById('btnEmergency').classList.add('active');
+    }
+    loadMode();
+  }
+
+  return {
+    switchMode, toggleLock, addNode, toggleEdgeMode, deleteSelected,
+    autoLayout, save, resetToSample,
+    savePanel, closePanel, applyColor,
+    ctxEdit, ctxAddChild, ctxStartEdge, ctxColorPanel, ctxDelete,
+    init,
+  };
 })();
 
 ORG.init();
