@@ -6,6 +6,8 @@
   <title>BCMS Portal - BCP 전략·계획</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
+    html, body { overflow-x: hidden; max-width: 100%; }
+    .main { overflow-x: hidden; }
     .wrap { max-width: 1280px; margin: 0 auto; overflow-x: hidden; }
 
     .demoBannerSmall {
@@ -65,7 +67,7 @@
     .stratCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; transition: border-color .15s; }
     .stratCard.done { border-color: rgba(0,112,243,.35); background: rgba(0,112,243,.015); }
 
-    .cardHeader { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
+    .cardHeader { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; overflow: hidden; }
     .cardHeader:hover { background: var(--surface-hover); }
 
     .expandIcon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 0.5px solid var(--border-strong); border-radius: 4px; font-size: 9px; color: var(--text-3); background: var(--bg); flex-shrink: 0; transition: transform .15s; }
