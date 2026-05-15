@@ -6,7 +6,8 @@
       "PowerShell(\\(Get-Content \"C:\\\\Users\\\\sj88h\\\\OneDrive\\\\바탕 화면\\\\bcms-portal-v2.4-clone\\\\training\\\\index.html\" | Measure-Object -Line\\).Lines)",
       "PowerShell(\\(Get-Content \"C:\\\\Users\\\\sj88h\\\\OneDrive\\\\바탕 화면\\\\bcms-portal-v2.4-clone\\\\audit\\\\index.html\" | Measure-Object -Line\\).Lines)",
       "PowerShell(git add *)",
-      "PowerShell(git push *)"
+      "PowerShell(git push *)",
+      "PowerShell(git *)"
     ]
   }
 }
