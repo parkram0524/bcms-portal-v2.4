@@ -324,39 +324,33 @@ window.ORG = (() => {
   }
 
   function buildEOP() {
-    // Fixed positions for two-column layout
-    const S1X = 290, S2X = 870;
-    const ROOT_Y = 80, UNIT_Y = 240;
+    // 계층 구조: 재난대책본부(최상위) → 초동 4개 반 + 업무연속성대응본부
+    //            업무연속성대응본부 → BCP 5개 반 (조건부 가동 조직)
     const s1names = ['재난상황반','초동대응반','복구지원반','대외협력반'];
     const s2names = ['업무환경반','IT복구반','업무재개반','자원지원반','대내외소통반'];
-
-    const s1span = (s1names.length - 1) * 140;
-    const s2span = (s2names.length - 1) * 130;
     const els = [];
 
-    // Stage 1
-    els.push({ data: { id:'s1', label:'재난대책본부\n(본부장/CEO)', type:'eop-root' },
-               position: { x:S1X, y:ROOT_Y } });
+    // Root: 재난대책본부
+    els.push({ data: { id:'s1', label:'재난대책본부\n(본부장/CEO)', type:'eop-root' } });
+
+    // 초동 4개 반 (s1의 직계 자식)
     s1names.forEach((n, i) => {
       const id = `s1u${i}`;
-      els.push({ data: { id, label:n, type:'eop-unit' },
-                 position: { x: S1X - s1span/2 + i*140, y:UNIT_Y } });
+      els.push({ data: { id, label:n, type:'eop-unit' } });
       els.push({ data: { id:`es1-${id}`, source:'s1', target:id } });
     });
 
-    // Stage 2
-    els.push({ data: { id:'s2', label:'업무연속성대응본부\n(BCP대응본부)', type:'eop-stage' },
-               position: { x:S2X, y:ROOT_Y } });
+    // 업무연속성대응본부: 재난대책본부 산하, 점선 엣지로 "조건부 가동" 표시
+    els.push({ data: { id:'s2', label:'업무연속성대응본부\n(BCP대응본부)', type:'eop-stage' } });
+    els.push({ data: { id:'e-bcp', source:'s1', target:'s2',
+      label:'업무중단 발생 시 가동', dashed:true } });
+
+    // BCP 5개 반 (s2의 자식)
     s2names.forEach((n, i) => {
       const id = `s2u${i}`;
-      els.push({ data: { id, label:n, type:'eop-unit' },
-                 position: { x: S2X - s2span/2 + i*130, y:UNIT_Y } });
+      els.push({ data: { id, label:n, type:'eop-unit' } });
       els.push({ data: { id:`es2-${id}`, source:'s2', target:id } });
     });
-
-    // Dashed BCP trigger edge
-    els.push({ data: { id:'e-bcp', source:'s1', target:'s2',
-      label:'업무중단 발생 시 BCP 가동', dashed:true } });
 
     return els;
   }
@@ -402,8 +396,9 @@ window.ORG = (() => {
           'font-size':'12.5px', 'font-weight':'700',
       }},
       { selector:'node[type="eop-stage"]', style:{
-          'background-color':'#991b1b', color:'#fff',
-          'border-width':'0', width:'165px', height:'58px',
+          'background-color':'#92400e', color:'#fff',
+          'border-color':'rgba(251,191,36,.7)', 'border-width':'2.5px', 'border-style':'dashed',
+          width:'165px', height:'60px',
           'font-size':'12px', 'font-weight':'700',
       }},
       { selector:'node[type="eop-unit"]', style:{
@@ -744,31 +739,13 @@ window.ORG = (() => {
   }
 
   function autoLayout() {
-    // For EOP, temporarily remove the dashed edge to get two independent trees
-    if (mode === 'emergency') {
-      const bcp = cy.getElementById('e-bcp');
-      const hasBcp = bcp.length > 0;
-      const bcpData = hasBcp ? bcp.data() : null;
-      if (hasBcp) cy.remove(bcp);
-
-      cy.layout({
-        name:'breadthfirst', directed:true, padding:60, spacingFactor:1.3,
-        animate:true, animationDuration:500,
-        roots: cy.nodes().filter(n => n.indegree() === 0),
-      }).run();
-
-      if (hasBcp) {
-        setTimeout(() => {
-          cy.add({ group:'edges', data: bcpData });
-        }, 550);
-      }
-    } else {
-      cy.layout({
-        name:'breadthfirst', directed:true, padding:55, spacingFactor:1.35,
-        animate:true, animationDuration:500,
-        roots: cy.nodes().filter(n => n.indegree() === 0),
-      }).run();
-    }
+    cy.layout({
+      name:'breadthfirst', directed:true,
+      padding: mode === 'emergency' ? 60 : 55,
+      spacingFactor:1.35,
+      animate:true, animationDuration:500,
+      roots: cy.nodes().filter(n => n.indegree() === 0),
+    }).run();
   }
 
   /* ── Save / Load ──────────────────────────────────────────────── */
