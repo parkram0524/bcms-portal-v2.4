@@ -1,633 +1,782 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="ko" data-theme="light">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Portal - 서비스 레지스트리</title>
-  <link rel="stylesheet" href="../assets/style.css"/>
-  <style>
-    .layout-grid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:14px; }
-    .form-card{ grid-column: span 12; }
-    .list-card{ grid-column: span 12; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>서비스 레지스트리 | BCMS Portal</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+/* ── Summary Grid ── */
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.5rem}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.25rem;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:.25rem}
+.summary-card.danger{border-left:3px solid #dc2626}
+.summary-card.accent{border-left:3px solid #7c3aed}
+.summary-val{font-size:1.875rem;font-weight:700;color:var(--text);line-height:1}
+.summary-val.red{color:#dc2626}
+.summary-val.purple{color:#7c3aed}
+.summary-lbl{font-size:.8125rem;color:var(--text-2)}
+@media(max-width:800px){.summary-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.summary-grid{grid-template-columns:1fr 1fr}}
 
-    .form-grid{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:12px; }
-    .col-6{ grid-column: span 6; }
-    .col-4{ grid-column: span 4; }
-    .col-3{ grid-column: span 3; }
-    .col-12{ grid-column: span 12; }
+/* ── Form Panel ── */
+.form-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;margin-bottom:1.25rem;box-shadow:var(--shadow);overflow:hidden}
+.form-panel-hd{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;cursor:pointer;user-select:none;border-bottom:1px solid transparent;
+  transition:border-color .15s}
+.form-panel-hd.open{border-bottom-color:var(--border)}
+.form-panel-hd-left{display:flex;align-items:center;gap:.625rem}
+.form-panel-title{font-size:.9375rem;font-weight:700;color:var(--text)}
+.form-panel-sub{font-size:.75rem;color:var(--text-2)}
+.form-toggle-btn{padding:.3rem .8rem;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text-2);font-size:.8125rem;cursor:pointer;
+  transition:background .15s,color .15s;white-space:nowrap}
+.form-toggle-btn:hover{background:var(--surface-hover);color:var(--text)}
+.form-body{display:none;padding:1.25rem}
+.form-body.open{display:block}
 
-    .field label{ display:block; font-size:13px; font-weight:800; margin-bottom:6px; }
-    .field input, .field select, .field textarea{ width:100%; padding:10px 12px; }
-    .field textarea{ min-height:88px; resize:vertical; }
+/* ── Form Fields ── */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.field-row.cols3{grid-template-columns:1fr 1fr 1fr}
+.field-row.col1{grid-template-columns:1fr}
+.field-group{display:flex;flex-direction:column;gap:.3125rem}
+.field-label{font-size:.8125rem;font-weight:600;color:var(--text)}
+.field-label span{font-weight:400;color:var(--text-2);margin-left:.25rem}
+.field-input,.field-select,.field-textarea{
+  width:100%;padding:.5rem .75rem;border:1px solid var(--border);
+  border-radius:8px;background:var(--bg);color:var(--text);
+  font-size:.875rem;outline:none;box-sizing:border-box;
+  transition:border-color .15s,box-shadow .15s;font-family:inherit}
+.field-input:focus,.field-select:focus,.field-textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,112,243,.1)}
+.field-input[readonly]{background:var(--bg);color:var(--text-2);cursor:default}
+@media(max-width:640px){.field-row,.field-row.cols3{grid-template-columns:1fr}}
 
-    .inline-split{ display:grid; grid-template-columns: 1fr 110px; gap:8px; }
-    .actions-row{ display:flex; flex-wrap:wrap; gap:8px; }
-    .hint-line{ margin-top:8px; font-size:13px; }
+/* Multi-selector */
+.multi-selector{border:1px solid var(--border);border-radius:8px;padding:.5rem;
+  max-height:110px;overflow-y:auto;background:var(--bg)}
+.multi-item{display:flex;align-items:center;gap:.5rem;padding:.25rem .375rem;
+  border-radius:5px;cursor:pointer;font-size:.8125rem;color:var(--text)}
+.multi-item:hover{background:var(--surface-hover)}
+.multi-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.multi-empty{font-size:.8125rem;color:var(--text-2);padding:.25rem .375rem}
+.sel-count{display:inline-block;padding:.175rem .5rem;background:#dbeafe;color:#1d4ed8;
+  border-radius:99px;font-size:.6875rem;font-weight:600;margin-left:.375rem}
+[data-theme=dark] .sel-count{background:#1e3a5f;color:#93c5fd}
 
-    .dept-picker{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
-    .org-warning{ margin-top:8px; padding:10px 12px; border:1px solid var(--lineStrong); border-radius:10px; background:#f8fafc; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .org-warning strong{ font-size:13px; color:var(--mutedStrong); }
+/* Form Actions */
+.form-actions{display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap;
+  margin-top:1rem;padding-top:.875rem;border-top:1px solid var(--border)}
 
-    .toolbar{ display:grid; grid-template-columns: 1fr 220px; gap:10px; margin-bottom:12px; }
-    .tableWrap{ overflow:auto; }
-    table{ width:100%; min-width:980px; }
-    th, td{ padding:10px 12px; font-size:14px; text-align:left; }
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.4375rem .875rem;
+  border:1px solid var(--border);border-radius:8px;background:var(--surface);
+  color:var(--text);font-size:.8125rem;font-weight:500;cursor:pointer;
+  transition:background .15s,box-shadow .15s,color .15s;white-space:nowrap}
+.btn:hover{background:var(--surface-hover)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{opacity:.92}
+.btn-danger{color:#dc2626;border-color:#fecaca;background:#fef2f2}
+.btn-danger:hover{background:#fee2e2}
+.btn-ghost{background:transparent;border-color:var(--border)}
+[data-theme=dark] .btn-danger{color:#f87171;border-color:#7f1d1d;background:#450a0a}
+[data-theme=dark] .btn-danger:hover{background:#7f1d1d}
 
-    .ownerCell{ line-height:1.3; }
-    .ownerCell .division{ font-size:12px; color:var(--mutedStrong); font-weight:700; }
-    .ownerCell .team{ font-size:13px; color:var(--ink); font-weight:800; }
-    .ownerCell .deleted{ color:#991b1b; }
+/* ── List Panel ── */
+.list-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;box-shadow:var(--shadow)}
+.list-hd{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.list-hd-left{display:flex;align-items:center;gap:.625rem}
+.list-title{font-size:.9375rem;font-weight:700;color:var(--text)}
+.list-count{font-size:.8125rem;color:var(--text-2)}
+.list-hd-right{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.search-input{padding:.4375rem .75rem;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text);font-size:.8125rem;outline:none;width:200px;
+  transition:border-color .15s}
+.search-input:focus{border-color:var(--accent)}
 
-    .importance{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; border:1px solid var(--lineStrong); font-size:12px; font-weight:800; }
-    .imp-low{ background:rgba(34,197,94,.10); color:#166534; border-color:rgba(34,197,94,.32); }
-    .imp-mid{ background:rgba(234,179,8,.16); color:#854d0e; border-color:rgba(234,179,8,.34); }
-    .imp-high{ background:rgba(249,115,22,.14); color:#9a3412; border-color:rgba(249,115,22,.34); }
-    .imp-critical{ background:rgba(239,68,68,.12); color:#991b1b; border-color:rgba(239,68,68,.34); }
+/* Type filter chips */
+.filter-bar{display:flex;gap:.375rem;padding:.625rem 1.25rem;
+  border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center}
+.filter-lbl{font-size:.75rem;color:var(--text-2);margin-right:.125rem}
+.filter-chip{padding:.25rem .625rem;border:1px solid var(--border);border-radius:99px;
+  background:var(--bg);color:var(--text-2);font-size:.75rem;cursor:pointer;
+  transition:background .12s,border-color .12s,color .12s;white-space:nowrap}
+.filter-chip:hover{background:var(--surface-hover);color:var(--text)}
+.filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-    .table-actions{ display:flex; gap:6px; }
-    .empty{ padding:16px 12px; text-align:center; color:var(--muted); }
-    .focusRow td{ background:rgba(37,99,235,.08); }
-    .focusName{ display:inline-flex; align-items:center; gap:6px; font-weight:900; }
-    .focusBadge{ display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(37,99,235,.35); background:rgba(37,99,235,.12); color:#1d4ed8; font-size:11px; font-weight:900; padding:3px 8px; }
+/* ── Table ── */
+.table-wrap{overflow-x:auto;padding:.25rem 0}
+table{width:100%;border-collapse:collapse;font-size:.8125rem;table-layout:fixed}
+th{padding:.625rem 1rem;text-align:left;font-size:.75rem;font-weight:600;
+  color:var(--text-2);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg)}
+td{padding:.625rem 1rem;border-bottom:1px solid var(--border);vertical-align:middle;
+  color:var(--text);line-height:1.45}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface-hover)}
+th:nth-child(1),td:nth-child(1){width:10%}
+th:nth-child(2),td:nth-child(2){width:18%}
+th:nth-child(3),td:nth-child(3){width:8%}
+th:nth-child(4),td:nth-child(4){width:10%}
+th:nth-child(5),td:nth-child(5){width:8%}
+th:nth-child(6),td:nth-child(6){width:13%}
+th:nth-child(7),td:nth-child(7){width:7%;text-align:center}
+th:nth-child(8),td:nth-child(8){width:6%;text-align:center}
+th:nth-child(9),td:nth-child(9){width:20%;text-align:right}
+.empty-row td{text-align:center;color:var(--text-2);padding:2rem 1rem;font-size:.875rem}
 
-    @media (max-width: 980px){
-      .toolbar{ grid-template-columns: 1fr; }
-      .dept-picker{ grid-template-columns: 1fr; }
-      .col-6, .col-4, .col-3{ grid-column: span 12; }
-      .inline-split{ grid-template-columns: 1fr; }
-    }
-  </style>
+/* Type badges */
+.type-badge{display:inline-block;padding:.175rem .55rem;border-radius:6px;
+  font-size:.6875rem;font-weight:600;white-space:nowrap}
+.type-internal{background:#dbeafe;color:#1d4ed8}
+.type-external{background:#fff7ed;color:#ea580c}
+.type-cloud   {background:#ede9fe;color:#6d28d9}
+.type-outsrc  {background:#ccfbf1;color:#0f766e}
+[data-theme=dark] .type-internal{background:#1e3a5f;color:#93c5fd}
+[data-theme=dark] .type-external{background:#431407;color:#fb923c}
+[data-theme=dark] .type-cloud   {background:#2e1065;color:#c4b5fd}
+[data-theme=dark] .type-outsrc  {background:#042f2e;color:#5eead4}
+
+/* Criticality badges */
+.crit-badge{display:inline-flex;align-items:center;padding:.175rem .55rem;
+  border-radius:6px;font-size:.6875rem;font-weight:700;white-space:nowrap}
+.crit-critical{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.crit-high    {background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.crit-medium  {background:#fefce8;color:#ca8a04;border:1px solid #fef08a}
+.crit-low     {background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+[data-theme=dark] .crit-critical{background:#450a0a;color:#f87171;border-color:#7f1d1d}
+[data-theme=dark] .crit-high    {background:#431407;color:#fb923c;border-color:#9a3412}
+[data-theme=dark] .crit-medium  {background:#422006;color:#fcd34d;border-color:#78350f}
+[data-theme=dark] .crit-low     {background:#052e16;color:#86efac;border-color:#14532d}
+
+/* Link count badges */
+.link-badge{display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;border-radius:99px;font-size:.75rem;font-weight:700}
+.link-badge.has{background:#dbeafe;color:#1d4ed8}
+.link-badge.none{background:var(--border-strong);color:var(--text-2)}
+[data-theme=dark] .link-badge.has{background:#1e3a5f;color:#93c5fd}
+
+/* Row actions */
+.row-actions{display:flex;gap:.375rem;justify-content:flex-end;flex-wrap:wrap}
+
+/* Export bar */
+.export-bar{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.export-note{font-size:.75rem;color:var(--text-2)}
+
+/* Toast */
+.toast{position:fixed;right:1rem;bottom:1rem;max-width:340px;padding:.625rem 1rem;
+  border-radius:10px;background:var(--text);color:var(--bg);font-size:.8125rem;font-weight:500;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);
+  pointer-events:none;transition:.2s ease;z-index:9999}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* Edit banner */
+.edit-banner{display:none;padding:.5rem 1rem;background:#dbeafe;color:#1d4ed8;
+  border-radius:8px;font-size:.8125rem;font-weight:500;margin-bottom:.75rem;
+  align-items:center;justify-content:space-between;gap:.5rem}
+.edit-banner.show{display:flex}
+[data-theme=dark] .edit-banner{background:#1e3a5f;color:#93c5fd}
+</style>
 </head>
 <body>
-  <aside id="sidebarMount"></aside>
+<aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-  <main class="main">
-    <div class="wrap">
-      <h1 class="page-title">🗂️ Service Registry (서비스 레지스트리)</h1>
+  <h2 class="page-title" style="margin:0 0 .25rem">서비스 레지스트리 (Service Registry)</h2>
+  <p style="font-size:.875rem;color:var(--text-2);margin:0 0 1.5rem">
+    BCMS 관리 대상 서비스·API·외부 의존성을 등록하고 SLA·BIA 연계를 관리합니다.
+    <code style="font-size:.75rem;background:var(--border-strong);padding:.1rem .35rem;border-radius:4px">bcmsServiceRegistry</code>
+  </p>
 
-      <section class="layout-grid">
-        <article class="card form-card">
-          <h3>서비스 등록 / 수정</h3>
-          <p class="hint">BCMS 관리 대상 서비스를 등록하고 RTO/RPO를 유지 관리합니다.</p>
-
-          <form id="serviceForm" class="form-grid">
-            <input type="hidden" id="serviceId"/>
-
-            <div class="field col-6">
-              <label for="serviceName">서비스명 *</label>
-              <input id="serviceName" type="text" required placeholder="예: 결제 API"/>
-            </div>
-
-            <div class="field col-6">
-              <label for="divisionSelect">담당부서 *</label>
-              <div class="dept-picker">
-                <select id="divisionSelect" required>
-                  <option value="">본부 선택</option>
-                </select>
-                <select id="teamSelect" required>
-                  <option value="">팀 선택</option>
-                </select>
-              </div>
-              <div id="orgWarning" class="org-warning" hidden>
-                <strong>조직 정보가 없습니다. 거버넌스 &gt; 조직 관리에서 먼저 등록해 주세요.</strong>
-                <a class="btn" href="./org-registry.html">조직 관리로 이동</a>
-              </div>
-            </div>
-
-            <div class="field col-4">
-              <label for="importance">중요도 *</label>
-              <select id="importance" required>
-                <option value="낮음">낮음</option>
-                <option value="보통" selected>보통</option>
-                <option value="높음">높음</option>
-                <option value="매우높음">매우높음</option>
-              </select>
-            </div>
-
-            <div class="field col-4">
-              <label for="rtoValue">RTO (복구목표시간)</label>
-              <div class="inline-split">
-                <input id="rtoValue" type="number" min="0" step="1" placeholder="예: 4"/>
-                <select id="rtoUnit">
-                  <option value="분">분</option>
-                  <option value="시간" selected>시간</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="field col-4">
-              <label for="rpoValue">RPO (복구목표시점)</label>
-              <div class="inline-split">
-                <input id="rpoValue" type="number" min="0" step="1" placeholder="예: 30"/>
-                <select id="rpoUnit">
-                  <option value="분" selected>분</option>
-                  <option value="시간">시간</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="field col-12">
-              <label for="note">비고</label>
-              <textarea id="note" placeholder="선택 입력"></textarea>
-            </div>
-
-            <div class="col-12 actions-row">
-              <button class="btn" id="saveBtn" type="submit">저장</button>
-              <button class="btn" id="cancelEditBtn" type="button">입력 초기화</button>
-            </div>
-          </form>
-          <p class="hint-line">저장 키: <strong>bcms_service_registry_v1</strong></p>
-        </article>
-
-        <article class="card list-card">
-          <h3>서비스 목록</h3>
-          <div class="toolbar">
-            <input id="searchInput" type="search" placeholder="서비스명/담당부서 검색"/>
-            <select id="importanceFilter">
-              <option value="전체">전체 중요도</option>
-              <option value="낮음">낮음</option>
-              <option value="보통">보통</option>
-              <option value="높음">높음</option>
-              <option value="매우높음">매우높음</option>
-            </select>
-          </div>
-
-          <div class="tableWrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>서비스명</th>
-                  <th>담당부서</th>
-                  <th>중요도</th>
-                  <th>RTO</th>
-                  <th>RPO</th>
-                  <th>수정일시</th>
-                  <th>관리</th>
-                </tr>
-              </thead>
-              <tbody id="registryBody"></tbody>
-            </table>
-          </div>
-        </article>
-      </section>
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-val" id="statTotal">0</div>
+      <div class="summary-lbl">전체 서비스</div>
     </div>
-  </main>
+    <div class="summary-card danger">
+      <div class="summary-val red" id="statCritical">0</div>
+      <div class="summary-lbl">Critical 서비스</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val" id="statExternal">0</div>
+      <div class="summary-lbl">외부 의존 서비스</div>
+    </div>
+    <div class="summary-card accent">
+      <div class="summary-val purple" id="statBIA">0</div>
+      <div class="summary-lbl">BIA 연계 서비스</div>
+    </div>
+  </div>
 
-  <script src="../assets/sidebar.js"></script>
-  <script src="../assets/data-store.js"></script>
-  <script>
-    (() => {
-      const STORAGE_KEY = (window.DataStore && DataStore.KEY_SERVICE_REGISTRY) || 'bcms_service_registry_v1';
-      const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
-      const SELECTED_SERVICE_KEY = 'bcms_selected_service';
+  <!-- Form Panel -->
+  <div class="form-panel">
+    <div class="form-panel-hd" id="formPanelHd">
+      <div class="form-panel-hd-left">
+        <span class="form-panel-title">➕ 서비스 등록 / 수정</span>
+        <span class="form-panel-sub" id="formPanelSub">클릭하여 펼치기</span>
+      </div>
+      <button class="form-toggle-btn" id="formToggleBtn">▼ 펼치기</button>
+    </div>
 
-      const fallbackStore = {
-        get:(k, fallback)=>{ try{ const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; } },
-        set:(k, value)=>localStorage.setItem(k, JSON.stringify(value)),
-        update:(k, updater)=>{ const next = updater(fallbackStore.get(k, null)); fallbackStore.set(k, next); return next; },
-        uid:()=>`svc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        nowISO:()=>new Date().toISOString(),
-      };
-      const store = (window.DataStore && DataStore.get && DataStore.set && DataStore.update) ? DataStore : fallbackStore;
+    <div class="form-body" id="formBody">
+      <div class="edit-banner" id="editBanner">
+        <span>✏️ 수정 모드 — <span id="editingLabel"></span></span>
+        <button class="btn btn-ghost" style="font-size:.75rem;padding:.25rem .6rem"
+          onclick="cancelEdit()">취소</button>
+      </div>
 
-      const makeUid = () => (store.uid ? store.uid('svc') : fallbackStore.uid());
-      const nowISO = () => (store.nowISO ? store.nowISO() : fallbackStore.nowISO());
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">서비스 ID <span>자동 생성 (SVC-YYYY-NNN)</span></label>
+          <input class="field-input" id="f_id" readonly
+            placeholder="저장 시 자동 생성됩니다"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">서비스명 <span>*</span></label>
+          <input class="field-input" id="f_name" placeholder="예: 결제 API, AWS S3, SAP ERP"/>
+        </div>
+      </div>
 
-      const serviceForm = document.getElementById('serviceForm');
-      const serviceId = document.getElementById('serviceId');
-      const serviceName = document.getElementById('serviceName');
-      const divisionSelect = document.getElementById('divisionSelect');
-      const teamSelect = document.getElementById('teamSelect');
-      const orgWarning = document.getElementById('orgWarning');
-      const importance = document.getElementById('importance');
-      const rtoValue = document.getElementById('rtoValue');
-      const rtoUnit = document.getElementById('rtoUnit');
-      const rpoValue = document.getElementById('rpoValue');
-      const rpoUnit = document.getElementById('rpoUnit');
-      const note = document.getElementById('note');
-      const searchInput = document.getElementById('searchInput');
-      const importanceFilter = document.getElementById('importanceFilter');
-      const registryBody = document.getElementById('registryBody');
-      const query = new URLSearchParams(location.search);
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">서비스 유형 <span>*</span></label>
+          <select class="field-select" id="f_type" onchange="onTypeChange()">
+            <option value="내부">내부 서비스 (Internal)</option>
+            <option value="외부">외부 서비스 (External)</option>
+            <option value="클라우드">클라우드 서비스 (Cloud)</option>
+            <option value="아웃소싱">아웃소싱 (Outsourcing)</option>
+          </select>
+        </div>
+        <div class="field-group" id="providerRow">
+          <label class="field-label">제공 업체 <span>외부·클라우드·아웃소싱</span></label>
+          <input class="field-input" id="f_provider" placeholder="예: AWS, SAP Korea, KT"/>
+        </div>
+      </div>
 
-      const readSelectedService = () => {
-        const fromQuery = (query.get('q') || '').trim();
-        let fromStorage = '';
-        try {
-          const parsed = JSON.parse(localStorage.getItem(SELECTED_SERVICE_KEY) || 'null');
-          fromStorage = (parsed?.serviceName || '').trim();
-        } catch {
-          fromStorage = '';
-        }
-        localStorage.removeItem(SELECTED_SERVICE_KEY);
-        return fromQuery || fromStorage;
-      };
-      const selectedServiceName = readSelectedService();
-      let focusDone = false;
+      <div class="field-row cols3">
+        <div class="field-group">
+          <label class="field-label">중요도 <span>*</span></label>
+          <select class="field-select" id="f_criticality">
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">담당 부서 <span>*</span></label>
+          <input class="field-input" id="f_dept"
+            placeholder="예: IT서비스운영본부 / 애플리케이션팀"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">SLA 목표 <span>가용성 %</span></label>
+          <input class="field-input" id="f_sla" type="number"
+            min="0" max="100" step="0.001" placeholder="예: 99.9"/>
+        </div>
+      </div>
 
-      const toDisplayDate = (isoString) => {
-        if (!isoString) return '-';
-        const d = new Date(isoString);
-        if (Number.isNaN(d.getTime())) return '-';
-        return d.toLocaleString('ko-KR', { hour12: false });
-      };
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">의존 시스템 <span>system-registry 연동</span>
+            <span class="sel-count" id="sysSelCount" style="display:none">0</span>
+          </label>
+          <div class="multi-selector" id="sysCheckboxes">
+            <div class="multi-empty">시스템 레지스트리 데이터 로딩 중…</div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">의존 핵심업무 <span>BIA 연동</span>
+            <span class="sel-count" id="biaSelCount" style="display:none">0</span>
+          </label>
+          <div class="multi-selector" id="biaCheckboxes">
+            <div class="multi-empty">BIA 데이터 로딩 중…</div>
+          </div>
+        </div>
+      </div>
 
-      const formatObjective = (value, unit) => {
-        if (value === '' || value === null || value === undefined) return '-';
-        return `${value}${unit || ''}`;
-      };
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">비상 연락처</label>
+          <input class="field-input" id="f_contact"
+            placeholder="예: 홍길동 010-0000-0000"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">대체 서비스 / 수단</label>
+          <input class="field-input" id="f_alt"
+            placeholder="예: 수동 처리, 백업 시스템 B"/>
+        </div>
+      </div>
 
-      const importanceClass = (level) => {
-        if (level === '낮음') return 'imp-low';
-        if (level === '높음') return 'imp-high';
-        if (level === '매우높음') return 'imp-critical';
-        return 'imp-mid';
-      };
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="resetForm()">초기화</button>
+        <button class="btn btn-primary" id="btnSave" onclick="saveItem()">💾 저장</button>
+      </div>
+    </div>
+  </div>
 
-      const sampleData = () => ([
-        { id: makeUid(), name: '결제 API', divisionId: 'it', divisionName: 'IT서비스운영본부', teamId: 'app', teamName: '애플리케이션운영팀', dept: 'IT서비스운영본부 / 애플리케이션운영팀', importance: '매우높음', rtoValue: 1, rtoUnit: '시간', rpoValue: 10, rpoUnit: '분', note: 'PG 연동 핵심', updatedAt: nowISO() },
-        { id: makeUid(), name: '인증 서비스', divisionId: 'risk', divisionName: '리스크·컴플라이언스본부', teamId: 'security', teamName: '정보보호팀', dept: '리스크·컴플라이언스본부 / 정보보호팀', importance: '매우높음', rtoValue: 30, rtoUnit: '분', rpoValue: 5, rpoUnit: '분', note: 'SSO/OAuth', updatedAt: nowISO() },
-        { id: makeUid(), name: '모니터링', divisionId: 'it', divisionName: 'IT서비스운영본부', teamId: 'sre', teamName: 'SRE/플랫폼운영팀', dept: 'IT서비스운영본부 / SRE/플랫폼운영팀', importance: '높음', rtoValue: 2, rtoUnit: '시간', rpoValue: 15, rpoUnit: '분', note: '관제 대시보드', updatedAt: nowISO() },
-      ]);
+  <!-- List Panel -->
+  <div class="list-panel">
+    <div class="list-hd">
+      <div class="list-hd-left">
+        <span class="list-title">서비스 목록</span>
+        <span class="list-count" id="listCount">0개</span>
+      </div>
+      <div class="list-hd-right">
+        <input class="search-input" id="q" placeholder="🔍 이름·ID·부서·업체 검색"/>
+        <select class="field-select" id="critFilter"
+          style="width:auto;font-size:.8125rem;padding:.4375rem .75rem"
+          onchange="renderTable()">
+          <option value="">전체 중요도</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+    </div>
 
-      const getOrgDivisions = () => {
-        const org = store.get(ORG_KEY, { divisions: [] });
-        return Array.isArray(org?.divisions) ? org.divisions : [];
-      };
+    <div class="filter-bar">
+      <span class="filter-lbl">유형:</span>
+      <button class="filter-chip active" data-filter="전체">전체</button>
+      <button class="filter-chip" data-filter="내부">내부</button>
+      <button class="filter-chip" data-filter="외부">외부</button>
+      <button class="filter-chip" data-filter="클라우드">클라우드</button>
+      <button class="filter-chip" data-filter="아웃소싱">아웃소싱</button>
+    </div>
 
-      const buildOrgIndex = () => {
-        if (window.DataStore && DataStore.getAllTeams) {
-          const teams = DataStore.getAllTeams();
-          const divisionMap = new Map();
-          const teamMap = new Map();
-          teams.forEach((team) => {
-            const divisionId = String(team.division || '기타');
-            if (!divisionMap.has(divisionId)) divisionMap.set(divisionId, { id: divisionId, name: team.division || '기타', teams: [] });
-            const division = divisionMap.get(divisionId);
-            const safeTeam = { id: team.id, name: team.name, divisionId, divisionName: division.name };
-            division.teams.push(safeTeam);
-            teamMap.set(safeTeam.id, safeTeam);
-          });
-          return { divisions: [...divisionMap.values()], divisionMap, teamMap };
-        }
-        const divisions = getOrgDivisions();
-        const divisionMap = new Map();
-        const teamMap = new Map();
-        divisions.forEach((division) => {
-          if (!division || !division.id) return;
-          const safeDivision = {
-            id: division.id,
-            name: division.name || '미지정 본부',
-            teams: Array.isArray(division.teams) ? division.teams : [],
-          };
-          divisionMap.set(safeDivision.id, safeDivision);
-          safeDivision.teams.forEach((team) => {
-            if (!team || !team.id) return;
-            teamMap.set(team.id, {
-              id: team.id,
-              name: team.name || '미지정 팀',
-              divisionId: safeDivision.id,
-              divisionName: safeDivision.name,
-            });
-          });
-        });
-        return { divisions, divisionMap, teamMap };
-      };
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>서비스 ID</th>
+            <th>서비스명</th>
+            <th>유형</th>
+            <th>제공업체</th>
+            <th>중요도</th>
+            <th>담당부서</th>
+            <th style="text-align:center">SLA</th>
+            <th style="text-align:center">BIA</th>
+            <th style="text-align:right">관리</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
 
-      const loadItems = () => {
-        if (window.DataStore && DataStore.getAllServices) {
-          const rows = DataStore.getAllServices();
-          if (rows.length) {
-            return rows.map((item) => ({
-              id: item.id,
-              name: item.name,
-              divisionId: '',
-              divisionName: '',
-              teamId: item.ownerTeamId || '',
-              teamName: item.ownerTeamName || '',
-              dept: item.ownerTeamName || '',
-              importance: item.criticality || '보통',
-              rtoValue: '',
-              rtoUnit: '시간',
-              rpoValue: '',
-              rpoUnit: '분',
-              note: item.description || '',
-              active: item.active !== false,
-              updatedAt: item.updatedAt || nowISO()
-            }));
-          }
-        }
-        const items = store.get(STORAGE_KEY, null);
-        if (!Array.isArray(items) || !items.length) {
-          const seeds = sampleData();
-          store.set(STORAGE_KEY, seeds);
-          return seeds;
-        }
-        return items;
-      };
+    <div class="export-bar">
+      <span class="export-note">
+        ※ Critical 서비스가 상단에 정렬됩니다 · 수정 클릭 시 위 폼에 로드됩니다
+      </span>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn" onclick="exportJSON()">JSON</button>
+        <button class="btn btn-primary" onclick="exportCSV()">⬇ CSV 다운로드</button>
+      </div>
+    </div>
+  </div>
 
-      let rows = loadItems();
-      let currentOrg = buildOrgIndex();
+</div>
+</main>
 
-      const hasOrgData = () => currentOrg.divisions.some((d) => Array.isArray(d.teams) && d.teams.length);
+<div class="toast" id="toast"></div>
+<button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
-      const setOrgWarning = () => {
-        const empty = !hasOrgData();
-        orgWarning.hidden = !empty;
-        divisionSelect.disabled = empty;
-        teamSelect.disabled = empty;
-      };
+<script src="../assets/sidebar.js"></script>
+<script>
+(function () {
+'use strict';
 
-      const renderDivisionOptions = () => {
-        const previous = divisionSelect.value;
-        divisionSelect.innerHTML = '<option value="">본부 선택</option>';
-        currentOrg.divisions.forEach((division) => {
-          const opt = document.createElement('option');
-          opt.value = division.id;
-          opt.textContent = division.name || '미지정 본부';
-          divisionSelect.appendChild(opt);
-        });
-        if (previous && currentOrg.divisionMap.has(previous)) divisionSelect.value = previous;
-      };
+const KEY     = 'bcmsServiceRegistry';
+const SYS_KEY = 'bcms_system_registry_v1';
+const BIA_KEY = 'bcmsBIAData';
 
-      const renderTeamOptions = (divisionId, preferredTeamId = '') => {
-        teamSelect.innerHTML = '<option value="">팀 선택</option>';
-        if (!divisionId || !currentOrg.divisionMap.has(divisionId)) return;
-        const division = currentOrg.divisionMap.get(divisionId);
-        (division.teams || []).forEach((team) => {
-          const opt = document.createElement('option');
-          opt.value = team.id;
-          opt.textContent = team.name || '미지정 팀';
-          teamSelect.appendChild(opt);
-        });
-        if (preferredTeamId && currentOrg.teamMap.has(preferredTeamId)) {
-          teamSelect.value = preferredTeamId;
-        }
-      };
+let editingId    = null;
+let activeFilter = '전체';
 
-      const resolveOwner = (item) => {
-        if (item.teamId && currentOrg.teamMap.has(item.teamId)) {
-          const team = currentOrg.teamMap.get(item.teamId);
-          return {
-            divisionName: team.divisionName,
-            teamName: team.name,
-            status: 'active',
-          };
-        }
+/* ── Utils ── */
+function $(s)  { return document.querySelector(s); }
+function $$(s) { return document.querySelectorAll(s); }
 
-        if (item.teamId) {
-          return {
-            divisionName: item.divisionName || '삭제된 조직',
-            teamName: item.teamName || '삭제된 조직',
-            status: 'deleted',
-          };
-        }
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+}
 
-        if (item.dept) {
-          return {
-            divisionName: item.dept,
-            teamName: '-',
-            status: 'legacy',
-          };
-        }
+function safeParse(v, fb) { try { return JSON.parse(v); } catch { return fb; } }
 
-        return {
-          divisionName: '미지정',
-          teamName: '미지정',
-          status: 'deleted',
-        };
-      };
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
 
-      const ownerSearchText = (item) => {
-        const owner = resolveOwner(item);
-        return `${owner.divisionName} ${owner.teamName}`.toLowerCase();
-      };
+/* ── Storage ── */
+function loadAll() {
+  const a = safeParse(localStorage.getItem(KEY) || '[]', []);
+  return Array.isArray(a) ? a : [];
+}
+function saveAll(a) { localStorage.setItem(KEY, JSON.stringify(a)); }
 
-      const reconcileRowsWithOrg = () => {
-        let changed = false;
-        rows = rows.map((item) => {
-          if (!item.teamId || !currentOrg.teamMap.has(item.teamId)) return item;
-          const team = currentOrg.teamMap.get(item.teamId);
-          const next = {
-            ...item,
-            divisionId: team.divisionId,
-            divisionName: team.divisionName,
-            teamName: team.name,
-            dept: `${team.divisionName} / ${team.name}`,
-          };
-          if (next.divisionName !== item.divisionName || next.teamName !== item.teamName || next.dept !== item.dept || next.divisionId !== item.divisionId) {
-            changed = true;
-          }
-          return next;
-        });
-        if (changed) saveRows();
-      };
+/* ── Auto ID generation ── */
+function genId() {
+  const year   = new Date().getFullYear();
+  const prefix = `SVC-${year}-`;
+  const nums   = loadAll()
+    .map(x => x.svcId || '')
+    .filter(id => id.startsWith(prefix))
+    .map(id => parseInt(id.slice(prefix.length), 10))
+    .filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return prefix + String(next).padStart(3, '0');
+}
 
-      const resetForm = () => {
-        serviceForm.reset();
-        serviceId.value = '';
-        importance.value = '보통';
-        rtoUnit.value = '시간';
-        rpoUnit.value = '분';
-        renderDivisionOptions();
-        renderTeamOptions(divisionSelect.value);
-      };
+/* ── Type badges ── */
+const TYPE_CLASS = {
+  '내부':    'type-internal',
+  '외부':    'type-external',
+  '클라우드': 'type-cloud',
+  '아웃소싱': 'type-outsrc',
+};
+function typeBadge(t) {
+  return `<span class="type-badge ${TYPE_CLASS[t] || 'type-internal'}">${esc(t || '내부')}</span>`;
+}
 
-      const saveRows = () => {
-        if (window.DataStore && DataStore.writeServices) {
-          DataStore.writeServices(rows.map((item) => ({
-            id: item.id,
-            name: item.name,
-            ownerTeamId: item.teamId,
-            ownerTeamName: item.teamName,
-            criticality: item.importance,
-            description: item.note,
-            active: item.active !== false,
-            updatedAt: item.updatedAt || nowISO()
-          })));
-          rows = loadItems();
-          return;
-        }
-        rows = store.update(STORAGE_KEY, () => rows);
-      };
+/* ── Criticality badges ── */
+const CRIT_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+function critBadge(c) {
+  const cls = { Critical:'crit-critical', High:'crit-high', Medium:'crit-medium', Low:'crit-low' }[c] || '';
+  return `<span class="crit-badge ${cls}">${esc(c || '—')}</span>`;
+}
 
-      const filteredRows = () => {
-        const q = (searchInput.value || '').trim().toLowerCase();
-        const filter = importanceFilter.value;
-        return rows.filter((item) => {
-          const name = (item.name || '').toLowerCase();
-          const dept = ownerSearchText(item);
-          const matchKeyword = !q || name.includes(q) || dept.includes(q);
-          const matchImportance = filter === '전체' || item.importance === filter;
-          return matchKeyword && matchImportance;
-        });
-      };
+/* ── Provider row toggle ── */
+function onTypeChange() {
+  const t   = $('#f_type').value;
+  const row = $('#providerRow');
+  row.style.visibility = t === '내부' ? 'hidden' : 'visible';
+}
 
-      const renderTable = () => {
-        const view = filteredRows();
-        registryBody.innerHTML = '';
+/* ── Multi-selector helpers ── */
+function updateCount(boxId, countId) {
+  const n     = $$(`#${boxId} input[type=checkbox]:checked`).length;
+  const badge = $(`#${countId}`);
+  if (!badge) return;
+  badge.textContent    = n;
+  badge.style.display  = n ? 'inline-block' : 'none';
+}
 
-        if (!view.length) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = '<td class="empty" colspan="7">조건에 맞는 서비스가 없습니다.</td>';
-          registryBody.appendChild(tr);
-          return;
-        }
+function getLinks(boxId, name) {
+  return [...$$(`#${boxId} input[name=${name}]:checked`)].map(el => el.value);
+}
 
-        view.forEach((item) => {
-          const owner = resolveOwner(item);
-          const ownerDeletedClass = owner.status === 'deleted' ? 'deleted' : '';
+function setLinks(boxId, name, countId, vals) {
+  $$(`#${boxId} input[name=${name}]`).forEach(el => {
+    el.checked = (vals || []).includes(el.value);
+  });
+  updateCount(boxId, countId);
+}
 
-          const tr = document.createElement('tr');
-          const isFocus = selectedServiceName && item.name === selectedServiceName;
-          tr.dataset.serviceName = item.name || '';
-          if (isFocus) tr.classList.add('focusRow');
-          tr.innerHTML = `
-            <td><span class="focusName">${item.name}${isFocus ? '<span class="focusBadge">선택됨</span>' : ''}</span></td>
-            <td>
-              <div class="ownerCell ${ownerDeletedClass}">
-                <div class="division">${owner.divisionName}</div>
-                <div class="team ${ownerDeletedClass}">${owner.teamName}</div>
-              </div>
-            </td>
-            <td><span class="importance ${importanceClass(item.importance)}">${item.importance}</span></td>
-            <td>${formatObjective(item.rtoValue, item.rtoUnit)}</td>
-            <td>${formatObjective(item.rpoValue, item.rpoUnit)}</td>
-            <td>${toDisplayDate(item.updatedAt)}</td>
-            <td>
-              <div class="table-actions">
-                <button type="button" class="btn" data-edit="${item.id}">수정</button>
-                <button type="button" class="btn" data-delete="${item.id}">삭제</button>
-              </div>
-            </td>
-          `;
-          registryBody.appendChild(tr);
-        });
+function loadSysSelector() {
+  const all = safeParse(localStorage.getItem(SYS_KEY) || '[]', []);
+  const box = $('#sysCheckboxes');
+  if (!box) return;
+  if (!all.length) {
+    box.innerHTML = `<div class="multi-empty">시스템 데이터 없음 ·
+      <a href="./system-registry.html" style="color:var(--accent)">시스템 레지스트리</a>에서 등록하세요.</div>`;
+    return;
+  }
+  box.innerHTML = all.map(x => {
+    const label = `[${esc(x.systemId || '?')}] ${esc(x.displayName || x.name || x.id || '?')}`;
+    return `<label class="multi-item">
+      <input type="checkbox" name="sysLink" value="${esc(x.id || x.systemId)}"
+        onchange="updateCount('sysCheckboxes','sysSelCount')"/>
+      <span>${label}</span>
+    </label>`;
+  }).join('');
+}
 
-        if (selectedServiceName && !focusDone) {
-          const row = registryBody.querySelector(`tr[data-service-name="${CSS.escape(selectedServiceName)}"]`);
-          if (row) {
-            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            focusDone = true;
-          }
-        }
-      };
+function loadBIASelector() {
+  const all = safeParse(localStorage.getItem(BIA_KEY) || '[]', []);
+  const box = $('#biaCheckboxes');
+  if (!box) return;
+  if (!all.length) {
+    box.innerHTML = `<div class="multi-empty">BIA 데이터 없음 ·
+      <a href="../risk-bia/bia.html" style="color:var(--accent)">BIA 페이지</a>에서 등록하세요.</div>`;
+    return;
+  }
+  box.innerHTML = all.map(x => {
+    const name = x.process || x.name || x.displayName || x.function || x.id || '(이름 없음)';
+    return `<label class="multi-item">
+      <input type="checkbox" name="biaLink" value="${esc(x.id)}"
+        onchange="updateCount('biaCheckboxes','biaSelCount')"/>
+      <span>${esc(name)}</span>
+    </label>`;
+  }).join('');
+}
 
-      serviceForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+/* ── Form Toggle ── */
+function toggleForm() {
+  const body = $('#formBody'), hd = $('#formPanelHd');
+  const btn  = $('#formToggleBtn'), sub = $('#formPanelSub');
+  const open = body.classList.toggle('open');
+  hd.classList.toggle('open', open);
+  btn.textContent = open ? '▲ 접기' : '▼ 펼치기';
+  sub.textContent = open ? '' : '클릭하여 펼치기';
+  if (open) { loadSysSelector(); loadBIASelector(); }
+}
+$('#formPanelHd').addEventListener('click', toggleForm);
 
-        if (!hasOrgData()) {
-          window.alert('조직 정보가 없습니다. 거버넌스 > 조직 관리에서 먼저 등록해 주세요.');
-          return;
-        }
+/* ── Form Reset / Cancel ── */
+function resetForm() {
+  editingId = null;
+  $('#f_id').value          = '';
+  $('#f_name').value        = '';
+  $('#f_type').value        = '내부';
+  $('#f_provider').value    = '';
+  $('#f_criticality').value = 'Medium';
+  $('#f_dept').value        = '';
+  $('#f_sla').value         = '';
+  $('#f_contact').value     = '';
+  $('#f_alt').value         = '';
+  setLinks('sysCheckboxes', 'sysLink', 'sysSelCount', []);
+  setLinks('biaCheckboxes', 'biaLink', 'biaSelCount', []);
+  onTypeChange();
+  $('#btnSave').textContent = '💾 저장';
+  $('#editBanner').classList.remove('show');
+}
+function cancelEdit() { resetForm(); toast('수정 취소'); }
 
-        const divisionId = divisionSelect.value;
-        const teamId = teamSelect.value;
-        if (!divisionId || !teamId || !currentOrg.teamMap.has(teamId)) {
-          window.alert('담당 본부/팀을 선택해 주세요.');
-          return;
-        }
+/* ── Save ── */
+function saveItem() {
+  const name        = ($('#f_name').value     || '').trim();
+  const type        = $('#f_type').value;
+  const provider    = ($('#f_provider').value || '').trim();
+  const criticality = $('#f_criticality').value;
+  const dept        = ($('#f_dept').value     || '').trim();
+  const sla         = ($('#f_sla').value      || '').trim();
+  const contact     = ($('#f_contact').value  || '').trim();
+  const alt         = ($('#f_alt').value      || '').trim();
+  const sysLinks    = getLinks('sysCheckboxes', 'sysLink');
+  const biaLinks    = getLinks('biaCheckboxes', 'biaLink');
 
-        const team = currentOrg.teamMap.get(teamId);
+  if (!name) { toast('⚠ 서비스명은 필수입니다.'); return; }
+  if (!dept) { toast('⚠ 담당 부서는 필수입니다.'); return; }
 
-        const payload = {
-          id: serviceId.value || makeUid(),
-          name: serviceName.value.trim(),
-          divisionId,
-          divisionName: team.divisionName,
-          teamId,
-          teamName: team.name,
-          dept: `${team.divisionName} / ${team.name}`,
-          importance: importance.value,
-          rtoValue: rtoValue.value === '' ? '' : Number(rtoValue.value),
-          rtoUnit: rtoUnit.value,
-          rpoValue: rpoValue.value === '' ? '' : Number(rpoValue.value),
-          rpoUnit: rpoUnit.value,
-          note: note.value.trim(),
-          updatedAt: nowISO(),
-        };
+  const now = new Date().toISOString();
+  const all = loadAll();
 
-        if (!payload.name) {
-          window.alert('서비스명은 필수 입력입니다.');
-          return;
-        }
+  if (editingId) {
+    const idx = all.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], name, type, provider, criticality, dept, sla, contact, alt, sysLinks, biaLinks, updatedAt: now };
+    }
+  } else {
+    const svcId = genId();
+    all.unshift({
+      id: 'SVCREG-' + Date.now(),
+      svcId, name, type, provider, criticality, dept, sla, contact, alt,
+      sysLinks, biaLinks, createdAt: now, updatedAt: now,
+    });
+  }
 
-        const idx = rows.findIndex((item) => item.id === payload.id);
-        if (idx >= 0) rows[idx] = payload;
-        else rows.unshift(payload);
+  saveAll(all);
+  toast(editingId ? '✅ 수정 완료' : '✅ 등록 완료');
+  resetForm();
+  renderAll();
+}
 
-        saveRows();
-        resetForm();
-        renderTable();
-      });
+/* ── Edit ── */
+function editItem(id) {
+  const item = loadAll().find(x => x.id === id);
+  if (!item) return;
 
-      document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+  if (!$('#formBody').classList.contains('open')) toggleForm();
 
-      divisionSelect.addEventListener('change', () => {
-        renderTeamOptions(divisionSelect.value);
-      });
+  editingId                 = id;
+  $('#f_id').value          = item.svcId       || '';
+  $('#f_name').value        = item.name         || '';
+  $('#f_type').value        = item.type         || '내부';
+  $('#f_provider').value    = item.provider     || '';
+  $('#f_criticality').value = item.criticality  || 'Medium';
+  $('#f_dept').value        = item.dept         || '';
+  $('#f_sla').value         = item.sla          || '';
+  $('#f_contact').value     = item.contact      || '';
+  $('#f_alt').value         = item.alt          || '';
+  setLinks('sysCheckboxes', 'sysLink', 'sysSelCount', item.sysLinks || []);
+  setLinks('biaCheckboxes', 'biaLink', 'biaSelCount', item.biaLinks || []);
+  onTypeChange();
 
-      registryBody.addEventListener('click', (e) => {
-        const editId = e.target.getAttribute('data-edit');
-        const deleteId = e.target.getAttribute('data-delete');
+  $('#btnSave').textContent = '✅ 수정 저장';
+  $('#editingLabel').textContent = item.name;
+  const banner = $('#editBanner');
+  banner.classList.add('show');
+  banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  toast('수정 모드: ' + item.name);
+}
 
-        if (editId) {
-          const found = rows.find((item) => item.id === editId);
-          if (!found) return;
+/* ── Delete ── */
+function deleteItem(id) {
+  const item = loadAll().find(x => x.id === id);
+  if (!confirm(`"${item?.name || id}" 을(를) 삭제할까요?`)) return;
+  saveAll(loadAll().filter(x => x.id !== id));
+  if (editingId === id) resetForm();
+  toast('🗑 삭제 완료');
+  renderAll();
+}
 
-          serviceId.value = found.id;
-          serviceName.value = found.name;
-          const editableDivisionId = currentOrg.divisionMap.has(found.divisionId) ? found.divisionId : '';
-          const editableTeamId = currentOrg.teamMap.has(found.teamId) ? found.teamId : '';
-          divisionSelect.value = editableDivisionId;
-          renderTeamOptions(editableDivisionId, editableTeamId);
-          importance.value = found.importance;
-          rtoValue.value = found.rtoValue;
-          rtoUnit.value = found.rtoUnit || '시간';
-          rpoValue.value = found.rpoValue;
-          rpoUnit.value = found.rpoUnit || '분';
-          note.value = found.note || '';
+/* ── Stats ── */
+function renderStats(all) {
+  $('#statTotal').textContent    = all.length;
+  $('#statCritical').textContent = all.filter(x => x.criticality === 'Critical').length;
+  $('#statExternal').textContent = all.filter(x => x.type && x.type !== '내부').length;
+  $('#statBIA').textContent      = all.filter(x => (x.biaLinks || []).length > 0).length;
+}
 
-          if (!editableTeamId && found.teamId) {
-            window.alert('이 서비스에 연결된 팀이 조직 레지스트리에서 삭제되었습니다. 담당부서를 다시 지정해 주세요.');
-          }
+/* ── Table ── */
+function renderTable() {
+  const all  = loadAll();
+  const q    = ($('#q').value || '').trim().toLowerCase();
+  const crit = $('#critFilter').value;
 
-          serviceName.focus();
-          return;
-        }
+  let filtered = all;
+  if (activeFilter !== '전체') filtered = filtered.filter(x => x.type === activeFilter);
+  if (crit) filtered = filtered.filter(x => x.criticality === crit);
+  if (q) filtered = filtered.filter(x => {
+    const hay = [x.svcId, x.name, x.dept, x.provider, x.type, x.contact, x.alt]
+      .join(' ').toLowerCase();
+    return hay.includes(q);
+  });
 
-        if (deleteId) {
-          const target = rows.find((item) => item.id === deleteId);
-          if (!target) return;
-          if (!window.confirm(`'${target.name}' 서비스를 삭제하시겠습니까?`)) return;
+  filtered.sort((a, b) =>
+    (CRIT_ORDER[a.criticality] ?? 4) - (CRIT_ORDER[b.criticality] ?? 4));
 
-          rows = rows.filter((item) => item.id !== deleteId);
-          saveRows();
-          renderTable();
-        }
-      });
+  const tbody = $('#tbody');
+  $('#listCount').textContent = filtered.length + '개';
 
-      const refreshOrgBindings = () => {
-        currentOrg = buildOrgIndex();
-        setOrgWarning();
-        renderDivisionOptions();
-        renderTeamOptions(divisionSelect.value, teamSelect.value);
-        reconcileRowsWithOrg();
-        renderTable();
-      };
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">
+      ${all.length ? '검색 결과가 없습니다.' : '등록된 서비스가 없습니다. 위 폼에서 추가하세요.'}
+    </td></tr>`;
+    return;
+  }
 
-      searchInput.addEventListener('input', renderTable);
-      importanceFilter.addEventListener('change', renderTable);
-      window.addEventListener('storage', (e) => {
-        if (e.key === ORG_KEY) refreshOrgBindings();
-      });
+  tbody.innerHTML = filtered.map(x => {
+    const biaCount = (x.biaLinks || []).length;
+    const slaLabel = x.sla ? `${x.sla}%` : '—';
+    return `<tr>
+      <td style="font-family:monospace;font-size:.75rem;color:var(--text-2)">${esc(x.svcId || '—')}</td>
+      <td>
+        <div style="font-weight:500">${esc(x.name || '—')}</div>
+        ${x.alt ? `<div style="font-size:.7rem;color:var(--text-2);margin-top:2px">대체: ${esc(x.alt)}</div>` : ''}
+      </td>
+      <td>${typeBadge(x.type)}</td>
+      <td style="font-size:.8rem;color:var(--text-2)">${esc(x.provider || '—')}</td>
+      <td>${critBadge(x.criticality)}</td>
+      <td style="font-size:.8rem">${esc(x.dept || '—')}</td>
+      <td style="text-align:center;font-size:.8rem;font-weight:600;color:var(--text-2)">${esc(slaLabel)}</td>
+      <td style="text-align:center">
+        <span class="link-badge ${biaCount > 0 ? 'has' : 'none'}"
+          title="${biaCount > 0 ? 'BIA 연계: ' + (x.biaLinks || []).join(', ') : 'BIA 미연계'}">
+          ${biaCount > 0 ? biaCount : '—'}
+        </span>
+      </td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-ghost" style="font-size:.75rem;padding:.3rem .625rem"
+            onclick="editItem('${esc(x.id)}')">✏ 수정</button>
+          <button class="btn btn-danger" style="font-size:.75rem;padding:.3rem .625rem"
+            onclick="deleteItem('${esc(x.id)}')">삭제</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
 
-      resetForm();
-      if (selectedServiceName && !searchInput.value.trim()) searchInput.value = selectedServiceName;
-      refreshOrgBindings();
-    })();
-  </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+function renderAll() { const all = loadAll(); renderStats(all); renderTable(); }
+
+/* ── Filter chips ── */
+$$('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    $$('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    renderTable();
+  });
+});
+
+/* ── Search ── */
+$('#q').addEventListener('input', () => {
+  clearTimeout(window.__qt);
+  window.__qt = setTimeout(renderTable, 140);
+});
+
+/* ── Export ── */
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON() {
+  const all = loadAll();
+  if (!all.length) { toast('내보낼 데이터가 없습니다.'); return; }
+  downloadBlob(JSON.stringify(all, null, 2), 'bcms_service_registry.json', 'application/json');
+  toast('JSON 내보내기 완료');
+}
+
+function exportCSV() {
+  const all = loadAll();
+  if (!all.length) { toast('내보낼 데이터가 없습니다.'); return; }
+  const cols = ['svcId','name','type','provider','criticality','dept','sla','contact','alt','sysLinks','biaLinks','createdAt','updatedAt'];
+  const hdrs = ['서비스ID','서비스명','유형','제공업체','중요도','담당부서','SLA(%)','비상연락처','대체서비스','의존시스템','BIA연계','등록일','수정일'];
+  const csvQ = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = [hdrs, ...all.map(x => cols.map(c => {
+    const v = x[c]; return csvQ(Array.isArray(v) ? v.join(';') : v);
+  }))];
+  downloadBlob('﻿' + rows.map(r => r.join(',')).join('\r\n'),
+    `bcms_service_registry_${new Date().toISOString().slice(0, 10)}.csv`,
+    'text/csv;charset=utf-8;');
+  toast('CSV 다운로드 완료');
+}
+
+/* ── Theme Toggle ── */
+(function () {
+  const root  = document.documentElement;
+  const btn   = $('#themeToggle');
+  const saved = localStorage.getItem('bcmsTheme') || 'light';
+  root.setAttribute('data-theme', saved);
+  if (btn) {
+    btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+    btn.addEventListener('click', () => {
+      const n = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', n);
+      btn.textContent = n === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('bcmsTheme', n);
+    });
+  }
+})();
+
+/* ── Expose globals for inline handlers ── */
+window.saveItem    = saveItem;
+window.editItem    = editItem;
+window.deleteItem  = deleteItem;
+window.resetForm   = resetForm;
+window.cancelEdit  = cancelEdit;
+window.onTypeChange = onTypeChange;
+window.updateCount = updateCount;
+window.exportJSON  = exportJSON;
+window.exportCSV   = exportCSV;
+
+/* ── Init ── */
+renderAll();
+})();
+</script>
 </body>
 </html>
