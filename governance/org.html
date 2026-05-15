@@ -503,40 +503,34 @@ window.ORG = (() => {
   function initCy(elements) {
     if (cy) { cy.destroy(); cy = null; }
 
-    // Guard: must have at least one node
-    const nodeEls = elements.filter(e => e.data && !e.data.source && !e.data.target);
-    if (!nodeEls.length) {
-      // Fallback: show a placeholder CEO node
-      elements = [{ data: { id:'ceo', label:'대표이사', type:'ceo' } }];
-    }
-
-    const hasPos = elements.some(e => e.position && e.position.x != null);
-
-    // Determine breadthfirst roots: prefer type=ceo/eop-root, fallback to any source-less node
-    const rootIds = (() => {
-      const byType = elements
-        .filter(e => !e.data.source && (e.data.type === 'ceo' || e.data.type === 'eop-root'))
-        .map(e => '#' + e.data.id);
-      if (byType.length) return byType;
-      return elements
-        .filter(e => !e.data.source && !e.data.target)
-        .map(e => '#' + e.data.id);
-    })();
-
+    // Create instance with no elements; add explicitly so layout call is separate
     cy = cytoscape({
       container: document.getElementById('cy'),
-      elements,
+      elements: [],
       style: mkStyle(),
-      layout: hasPos
-        ? { name:'preset', fit:true, padding:60 }
-        : { name:'breadthfirst', directed:true, padding:55, spacingFactor:1.35,
-            fit:true, roots: rootIds.length ? rootIds : undefined },
       minZoom: 0.15, maxZoom: 3,
       wheelSensitivity: 0.3,
     });
 
-    // Ensure fit after layout (guards against 0-size container on first paint)
-    cy.one('layoutstop', () => { cy.fit(undefined, 50); });
+    const addEls = (elements && elements.length)
+      ? elements
+      : [{ data: { id:'ceo', label:'기관장', type:'ceo' } }];
+
+    cy.add(addEls);
+
+    const hasPos = addEls.some(e => e.position && e.position.x != null);
+    if (hasPos) {
+      cy.layout({ name:'preset', fit:true, padding:60 }).run();
+    } else {
+      const roots = cy.nodes().filter(n =>
+        n.data('type') === 'ceo' || n.data('type') === 'eop-root'
+      );
+      cy.layout({
+        name:'breadthfirst', directed:true, padding:50, spacingFactor:1.35, fit:true,
+        roots: roots.length ? roots : undefined,
+      }).run();
+    }
+    cy.fit(undefined, 50);
 
     bindCyEvents();
     applyLockState();
@@ -806,13 +800,30 @@ window.ORG = (() => {
   }
 
   function loadMode() {
-    const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
-    const raw = loadJ(key, null);
-    if (raw && (Array.isArray(raw) ? raw.length : Object.keys(raw).length)) {
-      try { initCy(Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])]); return; } catch {}
+    if (mode === 'normal') {
+      // Accept saved data only when it contains >= 2 nodes; a single-node save
+      // (leftover from an earlier broken session) is treated as empty.
+      const raw = loadJ(KEY_ORG, null);
+      let els = null;
+      if (raw) {
+        const arr = Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])];
+        const nodeCount = arr.filter(e => e.data && !e.data.source).length;
+        if (nodeCount >= 2) els = arr;
+      }
+      if (!els) {
+        const ind = (localStorage.getItem(KEY_IND)||'').trim();
+        els = buildNormal(ind);   // returns hardcoded 공공기관 when ind is unknown
+      }
+      initCy(els);
+    } else {
+      const raw = loadJ(KEY_EOP, null);
+      let els = null;
+      if (raw) {
+        const arr = Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])];
+        if (arr.length) els = arr;
+      }
+      initCy(els || buildEOP());
     }
-    const ind = (localStorage.getItem(KEY_IND)||'').trim();
-    initCy(mode === 'normal' ? buildNormal(ind) : buildEOP());
   }
 
   function resetToSample() {
