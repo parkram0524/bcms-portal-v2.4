@@ -1,244 +1,796 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="ko" data-theme="light">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Portal - 조직 관리</title>
-  <link rel="stylesheet" href="../assets/style.css"/>
-  <style>
-    .grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; }
-    .card12{ grid-column:span 12; }
-    .formRow{ display:grid; grid-template-columns:2fr 1fr auto; gap:8px; }
-    .tableWrap{ overflow:auto; }
-    table{ width:100%; min-width:980px; }
-    th,td{ padding:10px 12px; font-size:14px; text-align:left; }
-    .actions{ display:flex; gap:6px; flex-wrap:wrap; }
-    .sub{ font-size:12px; color:var(--muted); }
-    .mappingGrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    .roleBox{ border:1px solid var(--line); border-radius:12px; padding:10px; background:#fff; }
-    .roleBox h4{ margin:0 0 8px; font-size:14px; }
-    .checks{ display:flex; flex-wrap:wrap; gap:8px; }
-    .checks label{ display:flex; gap:6px; align-items:center; font-size:12px; border:1px solid var(--lineStrong); border-radius:999px; padding:4px 8px; }
-    @media(max-width:900px){ .formRow{ grid-template-columns:1fr; } .mappingGrid{ grid-template-columns:1fr; } }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>조직 관리 | BCMS Portal</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+/* ── Summary ── */
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.5rem}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.25rem;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:.25rem}
+.summary-card.accent{border-left:3px solid var(--accent)}
+.summary-card.success{border-left:3px solid #16a34a}
+.summary-val{font-size:1.875rem;font-weight:700;color:var(--text);line-height:1}
+.summary-val.blue{color:var(--accent)}
+.summary-val.green{color:#16a34a}
+.summary-lbl{font-size:.8125rem;color:var(--text-2)}
+@media(max-width:800px){.summary-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.summary-grid{grid-template-columns:1fr 1fr}}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:1.25rem;gap:0}
+.tab-btn{padding:.625rem 1.25rem;background:none;border:none;border-bottom:2px solid transparent;
+  margin-bottom:-2px;font-size:.875rem;font-weight:500;color:var(--text-2);cursor:pointer;
+  transition:color .15s,border-color .15s;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── Form Panel ── */
+.form-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;margin-bottom:1.25rem;box-shadow:var(--shadow);overflow:hidden}
+.form-panel-hd{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;cursor:pointer;user-select:none;border-bottom:1px solid transparent;
+  transition:border-color .15s}
+.form-panel-hd.open{border-bottom-color:var(--border)}
+.form-panel-hd-left{display:flex;align-items:center;gap:.625rem}
+.form-panel-title{font-size:.9375rem;font-weight:700;color:var(--text)}
+.form-panel-sub{font-size:.75rem;color:var(--text-2)}
+.form-toggle-btn{padding:.3rem .8rem;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text-2);font-size:.8125rem;cursor:pointer;
+  transition:background .15s,color .15s;white-space:nowrap}
+.form-toggle-btn:hover{background:var(--surface-hover);color:var(--text)}
+.form-body{display:none;padding:1.25rem}
+.form-body.open{display:block}
+
+/* ── Form Fields ── */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.field-row.cols3{grid-template-columns:1fr 1fr 1fr}
+.field-row.col1{grid-template-columns:1fr}
+.field-group{display:flex;flex-direction:column;gap:.3125rem}
+.field-label{font-size:.8125rem;font-weight:600;color:var(--text)}
+.field-label span{font-weight:400;color:var(--text-2);margin-left:.25rem}
+.field-input,.field-select{
+  width:100%;padding:.5rem .75rem;border:1px solid var(--border);
+  border-radius:8px;background:var(--bg);color:var(--text);
+  font-size:.875rem;outline:none;box-sizing:border-box;
+  transition:border-color .15s,box-shadow .15s;font-family:inherit}
+.field-input:focus,.field-select:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,112,243,.1)}
+@media(max-width:640px){.field-row,.field-row.cols3{grid-template-columns:1fr}}
+
+/* ── Role Checkboxes ── */
+.roles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+.role-check-lbl{display:flex;align-items:center;gap:.375rem;padding:.375rem .625rem;
+  border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.8125rem;
+  background:var(--bg);color:var(--text);transition:background .12s,border-color .12s}
+.role-check-lbl:hover{background:var(--surface-hover)}
+.role-check-lbl input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.role-check-lbl.checked{background:var(--accent-subtle);border-color:var(--accent-border);color:var(--accent)}
+@media(max-width:640px){.roles-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ── Form Actions ── */
+.form-actions{display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap;
+  margin-top:1rem;padding-top:.875rem;border-top:1px solid var(--border)}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.4375rem .875rem;
+  border:1px solid var(--border);border-radius:8px;background:var(--surface);
+  color:var(--text);font-size:.8125rem;font-weight:500;cursor:pointer;
+  transition:background .15s,color .15s;white-space:nowrap}
+.btn:hover{background:var(--surface-hover)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{opacity:.92}
+.btn-danger{color:#dc2626;border-color:#fecaca;background:#fef2f2}
+.btn-danger:hover{background:#fee2e2}
+.btn-ghost{background:transparent;border-color:var(--border)}
+[data-theme=dark] .btn-danger{color:#f87171;border-color:#7f1d1d;background:#450a0a}
+[data-theme=dark] .btn-danger:hover{background:#7f1d1d}
+
+/* ── List Panel (Tab 1) ── */
+.list-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;box-shadow:var(--shadow)}
+.list-hd{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.list-hd-left{display:flex;align-items:center;gap:.625rem}
+.list-title{font-size:.9375rem;font-weight:700;color:var(--text)}
+.list-count{font-size:.8125rem;color:var(--text-2)}
+.list-hd-right{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.search-input{padding:.4375rem .75rem;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text);font-size:.8125rem;outline:none;width:200px;
+  transition:border-color .15s}
+.search-input:focus{border-color:var(--accent)}
+
+/* ── Person Cards ── */
+.person-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+  gap:.875rem;padding:1.25rem}
+.person-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:1rem;display:flex;flex-direction:column;gap:.625rem;
+  transition:box-shadow .15s}
+.person-card:hover{box-shadow:var(--shadow)}
+.person-card-top{display:flex;align-items:flex-start;gap:.75rem}
+.person-avatar{width:44px;height:44px;border-radius:50%;background:var(--accent);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:1.125rem;font-weight:700;flex-shrink:0}
+.person-info{flex:1;min-width:0}
+.person-name{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.2}
+.person-pos{font-size:.8rem;color:var(--text-2);margin-top:.125rem}
+.person-dept{font-size:.75rem;color:var(--text-3);margin-top:.125rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person-roles{display:flex;flex-wrap:wrap;gap:.25rem}
+.person-contact{display:flex;flex-direction:column;gap:.25rem;
+  padding:.625rem .75rem;background:var(--surface);border-radius:8px;
+  border:1px solid var(--border)}
+.person-contact-row{display:flex;align-items:center;gap:.5rem;font-size:.8rem}
+.person-contact-icon{color:var(--text-2);font-size:.875rem;flex-shrink:0}
+.person-contact-val{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person-alt{font-size:.75rem;color:var(--text-2);padding:.25rem 0 0}
+.person-actions{display:flex;gap:.375rem;justify-content:flex-end}
+.person-empty{padding:2.5rem 1.25rem;text-align:center;color:var(--text-2);
+  font-size:.875rem;grid-column:1/-1}
+
+/* ── Role Badges ── */
+.role-badge{display:inline-block;padding:.15rem .45rem;border-radius:99px;
+  font-size:.65rem;font-weight:600;white-space:nowrap}
+.role-chief{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.role-mgr  {background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe}
+.role-bia  {background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.role-risk {background:#fefce8;color:#ca8a04;border:1px solid #fef08a}
+.role-bcp  {background:#ede9fe;color:#6d28d9;border:1px solid #ddd6fe}
+.role-drill{background:#ccfbf1;color:#0f766e;border:1px solid #99f6e4}
+.role-audit{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.role-dept {background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+[data-theme=dark] .role-chief{background:#450a0a;color:#f87171;border-color:#7f1d1d}
+[data-theme=dark] .role-mgr  {background:#1e3a5f;color:#93c5fd;border-color:#1e40af}
+[data-theme=dark] .role-bia  {background:#431407;color:#fb923c;border-color:#9a3412}
+[data-theme=dark] .role-risk {background:#422006;color:#fcd34d;border-color:#78350f}
+[data-theme=dark] .role-bcp  {background:#2e1065;color:#c4b5fd;border-color:#4c1d95}
+[data-theme=dark] .role-drill{background:#042f2e;color:#5eead4;border-color:#134e4a}
+[data-theme=dark] .role-audit{background:#052e16;color:#86efac;border-color:#14532d}
+[data-theme=dark] .role-dept {background:#1f2937;color:#9ca3af;border-color:#374151}
+
+/* ── Tab 2 Table ── */
+.table-wrap{overflow-x:auto;padding:.25rem 0}
+table{width:100%;border-collapse:collapse;font-size:.8125rem}
+th{padding:.625rem 1rem;text-align:left;font-size:.75rem;font-weight:600;
+  color:var(--text-2);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg)}
+td{padding:.625rem 1rem;border-bottom:1px solid var(--border);vertical-align:middle;
+  color:var(--text);line-height:1.45}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface-hover)}
+.empty-row td{text-align:center;color:var(--text-2);padding:2rem 1rem;font-size:.875rem}
+
+/* Status badges */
+.status-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;
+  border-radius:99px;font-size:.75rem;font-weight:600}
+.status-ok  {background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.status-warn{background:#fefce8;color:#ca8a04;border:1px solid #fef08a}
+.status-none{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+[data-theme=dark] .status-ok  {background:#052e16;color:#86efac;border-color:#14532d}
+[data-theme=dark] .status-warn{background:#422006;color:#fcd34d;border-color:#78350f}
+[data-theme=dark] .status-none{background:#450a0a;color:#f87171;border-color:#7f1d1d}
+
+/* Number badge */
+.num-badge{display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;border-radius:99px;font-size:.75rem;font-weight:700;
+  background:#dbeafe;color:#1d4ed8}
+.num-badge.zero{background:var(--border-strong);color:var(--text-2)}
+[data-theme=dark] .num-badge{background:#1e3a5f;color:#93c5fd}
+
+/* Edit banner */
+.edit-banner{display:none;padding:.5rem 1rem;background:#dbeafe;color:#1d4ed8;
+  border-radius:8px;font-size:.8125rem;font-weight:500;margin-bottom:.75rem;
+  align-items:center;justify-content:space-between;gap:.5rem}
+.edit-banner.show{display:flex}
+[data-theme=dark] .edit-banner{background:#1e3a5f;color:#93c5fd}
+
+/* Toast */
+.toast{position:fixed;right:1rem;bottom:1rem;max-width:340px;padding:.625rem 1rem;
+  border-radius:10px;background:var(--text);color:var(--bg);font-size:.8125rem;font-weight:500;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);
+  pointer-events:none;transition:.2s ease;z-index:9999}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
 </head>
 <body>
-  <aside id="sidebarMount"></aside>
-  <main class="main"><div class="wrap">
-    <h1 class="page-title">🏢 조직 관리 (Organization Registry)</h1>
+<aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-    <section class="grid">
-      <article class="card card12">
-        <h3>본부 관리</h3>
-        <div class="formRow">
-          <input id="divisionName" placeholder="본부명 입력"/>
-          <input id="divisionId" placeholder="본부 ID (예: risk)"/>
-          <button class="btn" id="addDivisionBtn" type="button">본부 추가</button>
+  <h2 class="page-title" style="margin:0 0 .25rem">조직 관리 (Organization Registry)</h2>
+  <p style="font-size:.875rem;color:var(--text-2);margin:0 0 1.5rem">
+    BCMS 담당 조직 및 역할을 등록하고 비상연락처·BIA 연계를 관리합니다.
+    <code style="font-size:.75rem;background:var(--border-strong);padding:.1rem .35rem;border-radius:4px">bcmsOrgRegistry</code>
+  </p>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-val" id="statTotal">0</div>
+      <div class="summary-lbl">등록된 인원</div>
+    </div>
+    <div class="summary-card accent">
+      <div class="summary-val blue" id="statBcms">0</div>
+      <div class="summary-lbl">BCMS 담당자</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val" id="statDepts">0</div>
+      <div class="summary-lbl">등록 부서</div>
+    </div>
+    <div class="summary-card success">
+      <div class="summary-val green" id="statContact">0%</div>
+      <div class="summary-lbl">비상연락처 등록율</div>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="tab1">👤 BCMS 담당자 관리</button>
+    <button class="tab-btn" data-tab="tab2">🏢 부서별 담당 업무</button>
+  </div>
+
+  <!-- ════════════════════ Tab 1 ════════════════════ -->
+  <div class="tab-pane active" id="tab1">
+
+    <!-- Form Panel -->
+    <div class="form-panel">
+      <div class="form-panel-hd" id="formPanelHd">
+        <div class="form-panel-hd-left">
+          <span class="form-panel-title">➕ 담당자 등록 / 수정</span>
+          <span class="form-panel-sub" id="formPanelSub">클릭하여 펼치기</span>
         </div>
-        <p class="sub">본부명, ID를 입력한 뒤 추가하세요.</p>
-      </article>
+        <button class="form-toggle-btn" id="formToggleBtn">▼ 펼치기</button>
+      </div>
 
-      <article class="card card12">
-        <h3>팀 관리</h3>
-        <div class="formRow">
-          <select id="teamDivisionSelect"></select>
-          <input id="teamName" placeholder="팀명 입력"/>
-          <button class="btn" id="addTeamBtn" type="button">팀 추가</button>
+      <div class="form-body" id="formBody">
+        <div class="edit-banner" id="editBanner">
+          <span>✏️ 수정 모드 — <span id="editingLabel"></span></span>
+          <button class="btn btn-ghost" style="font-size:.75rem;padding:.25rem .6rem"
+            onclick="cancelEdit()">취소</button>
         </div>
-        <div class="formRow" style="margin-top:8px;">
-          <input id="teamId" placeholder="팀 ID (예: bcm)"/>
-          <input id="teamSearch" placeholder="팀명 검색"/>
-          <button class="btn" id="resetTemplateBtn" type="button">기본 조직 템플릿 초기화</button>
+
+        <div class="field-row cols3">
+          <div class="field-group">
+            <label class="field-label">이름 <span>*</span></label>
+            <input class="field-input" id="f_name" placeholder="예: 홍길동"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">직책 / 직급</label>
+            <input class="field-input" id="f_position" placeholder="예: 팀장, 책임, 주임"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">소속 부서 <span>*</span></label>
+            <input class="field-input" id="f_dept" placeholder="예: 재난안전(BCM)팀"/>
+          </div>
         </div>
-      </article>
 
-      <article class="card card12">
-        <h3>조직 레지스트리 목록</h3>
-        <div class="tableWrap">
-          <table>
-            <thead><tr><th>본부 ID</th><th>본부명</th><th>팀 목록</th><th>작업</th></tr></thead>
-            <tbody id="orgBody"></tbody>
-          </table>
+        <div class="field-group" style="margin-bottom:.75rem">
+          <label class="field-label">BCMS 역할 <span>다중 선택 가능</span></label>
+          <div class="roles-grid" id="rolesGrid"></div>
         </div>
-      </article>
 
-      <article class="card card12">
-        <h3>비상대응 역할 매핑</h3>
-        <p class="sub">각 역할에 연결할 팀을 선택하세요. 저장 키: <b>bcms_eop_role_mapping_v1</b></p>
-        <div id="mappingGrid" class="mappingGrid"></div>
-        <div class="actions" style="margin-top:10px;">
-          <button class="btn" id="saveMappingBtn" type="button">매핑 저장</button>
-          <button class="btn" id="resetMappingBtn" type="button">기본 매핑 복원</button>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">회사 이메일</label>
+            <input class="field-input" id="f_email" type="email" placeholder="예: hong@company.com"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">비상연락처 <span>휴대폰</span></label>
+            <input class="field-input" id="f_mobile" type="tel" placeholder="예: 010-0000-0000"/>
+          </div>
         </div>
-      </article>
-    </section>
-  </div></main>
 
-  <script src="../assets/sidebar.js"></script>
-  <script src="../assets/data-store.js"></script>
-  <script>
-    (() => {
-      const KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
-      const MAP_KEY = (window.DataStore && DataStore.KEY_EOP_ROLE_MAPPING) || 'bcms_eop_role_mapping_v1';
-      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
-        get:(k,f)=>{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} },
-        set:(k,v)=>localStorage.setItem(k, JSON.stringify(v))
-      };
-      const uid = (p='id') => (window.DataStore && DataStore.uid) ? DataStore.uid(p).toLowerCase() : `${p}-${Date.now()}`;
+        <div class="field-row col1">
+          <div class="field-group">
+            <label class="field-label">대체 담당자 <span>본인 부재 시 대신 연락할 인원</span></label>
+            <select class="field-select" id="f_altId">
+              <option value="">(없음)</option>
+            </select>
+          </div>
+        </div>
 
-      const template = () => ({
-        companyName: 'Apex Digital',
-        divisions: [
-          { id:'risk', name:'리스크·컴플라이언스본부', teams:[{id:'bcm',name:'재난안전(BCM)팀'},{id:'security',name:'정보보호팀'},{id:'audit',name:'감사·컴플라이언스팀'}]},
-          { id:'it', name:'IT서비스운영본부', teams:[{id:'sre',name:'SRE/플랫폼운영팀'},{id:'app',name:'애플리케이션운영팀'},{id:'db',name:'데이터/DB운영팀'},{id:'network',name:'네트워크운영팀'}]},
-          { id:'dc', name:'IDC운영본부', teams:[{id:'power',name:'전기팀'},{id:'hvac',name:'기계(냉각)팀'},{id:'fire',name:'방재·소방팀'},{id:'noc',name:'DC운영(NOC/관제)팀'}]},
-          { id:'customer', name:'고객서비스본부', teams:[{id:'cs',name:'고객지원팀'},{id:'quality',name:'서비스품질팀'}]},
-          { id:'management', name:'경영지원본부', teams:[{id:'hr',name:'인사총무팀'},{id:'finance',name:'재무회계팀'},{id:'procurement',name:'구매·자산관리팀'}]},
-        ]
-      });
+        <div class="form-actions">
+          <button class="btn btn-ghost" onclick="resetForm()">초기화</button>
+          <button class="btn btn-primary" id="btnSave" onclick="saveItem()">💾 저장</button>
+        </div>
+      </div>
+    </div>
 
-      const roleDefs = [
-        { key:'incidentCommander', label:'본부장' },
-        { key:'situation', label:'상황관리' },
-        { key:'techRecovery', label:'기술복구' },
-        { key:'facility', label:'시설지원(IDC)' },
-        { key:'security', label:'보안대응' },
-        { key:'communication', label:'대외커뮤니케이션' },
-        { key:'record', label:'기록·증적' },
-        { key:'bcpWorkEnv', label:'BCP 업무환경팀' },
-        { key:'bcpPeople', label:'BCP 인력지원팀' },
-        { key:'bcpSupply', label:'BCP 물자·구매지원팀' },
-        { key:'bcpAdmin', label:'BCP 총무지원팀' },
-      ];
+    <!-- Person List -->
+    <div class="list-panel">
+      <div class="list-hd">
+        <div class="list-hd-left">
+          <span class="list-title">담당자 목록</span>
+          <span class="list-count" id="personCount">0명</span>
+        </div>
+        <div class="list-hd-right">
+          <input class="search-input" id="q" placeholder="🔍 이름·부서·역할 검색"/>
+          <select class="field-select" id="roleFilter"
+            style="width:auto;font-size:.8125rem;padding:.4375rem .75rem"
+            onchange="renderPersonGrid()">
+            <option value="">전체 역할</option>
+            <option value="BCMS 총괄책임자">BCMS 총괄책임자</option>
+            <option value="BCMS 관리자">BCMS 관리자</option>
+            <option value="BIA 담당자">BIA 담당자</option>
+            <option value="리스크 담당자">리스크 담당자</option>
+            <option value="BCP 담당자">BCP 담당자</option>
+            <option value="훈련 담당자">훈련 담당자</option>
+            <option value="내부심사원">내부심사원</option>
+            <option value="부서 담당자">부서 담당자</option>
+          </select>
+        </div>
+      </div>
+      <div class="person-grid" id="personGrid">
+        <div class="person-empty">등록된 담당자가 없습니다. 위 폼에서 추가하세요.</div>
+      </div>
+    </div>
 
-      const defaultMapping = () => ({
-        incidentCommander: ['재난안전(BCM)팀'],
-        situation: ['DC운영(NOC/관제)팀'],
-        techRecovery: ['SRE/플랫폼운영팀','애플리케이션운영팀','데이터/DB운영팀','네트워크운영팀'],
-        facility: ['전기팀','기계(냉각)팀','방재·소방팀'],
-        security: ['정보보호팀'],
-        communication: ['고객지원팀','서비스품질팀'],
-        record: ['감사·컴플라이언스팀','재난안전(BCM)팀'],
-        bcpWorkEnv: ['인사총무팀','SRE/플랫폼운영팀'],
-        bcpPeople: ['인사총무팀'],
-        bcpSupply: ['구매·자산관리팀'],
-        bcpAdmin: ['인사총무팀'],
-      });
+  </div><!-- /tab1 -->
 
-      let data = store.get(KEY, null);
-      if (!data || !Array.isArray(data.divisions)) { data = template(); store.set(KEY, data); }
-      let roleMapping = store.get(MAP_KEY, null) || defaultMapping();
+  <!-- ════════════════════ Tab 2 ════════════════════ -->
+  <div class="tab-pane" id="tab2">
+    <div class="list-panel">
+      <div class="list-hd">
+        <div class="list-hd-left">
+          <span class="list-title">부서별 담당 업무</span>
+          <span class="list-count" id="deptCount">0개 부서</span>
+        </div>
+        <div class="list-hd-right">
+          <input class="search-input" id="deptQ" placeholder="🔍 부서명 검색"
+            oninput="renderDeptTable()"/>
+          <button class="btn" onclick="renderDeptTable()" title="새로고침">↻ 새로고침</button>
+        </div>
+      </div>
 
-      const orgBody=document.getElementById('orgBody');
-      const teamDivisionSelect=document.getElementById('teamDivisionSelect');
-      const teamSearch=document.getElementById('teamSearch');
-      const mappingGrid=document.getElementById('mappingGrid');
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:20%">부서명</th>
+              <th style="width:10%;text-align:center">핵심업무 수</th>
+              <th style="width:22%">BCMS 담당자</th>
+              <th style="width:18%">비상연락처</th>
+              <th style="width:15%">대체 담당자</th>
+              <th style="width:15%;text-align:center">상태</th>
+            </tr>
+          </thead>
+          <tbody id="deptTbody"></tbody>
+        </table>
+      </div>
 
-      const getAllTeamNames = () => data.divisions.flatMap((d) => d.teams || []).map((t) => t.name);
-      const save = ()=>store.set(KEY, data);
+      <div style="padding:.875rem 1.25rem;border-top:1px solid var(--border)">
+        <span style="font-size:.75rem;color:var(--text-2)">
+          ※ BIA 데이터(<code>bcmsBIAData</code>)와 담당자 등록 정보를 자동 매핑합니다.
+          BIA가 없는 부서도 담당자가 등록된 경우 표시됩니다.
+        </span>
+      </div>
+    </div>
+  </div><!-- /tab2 -->
 
-      const renderDivisionSelect = () => {
-        teamDivisionSelect.innerHTML = '';
-        data.divisions.forEach((d)=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.name; teamDivisionSelect.appendChild(o); });
-      };
+</div>
+</main>
 
-      const renderMapping = () => {
-        const teams = getAllTeamNames();
-        mappingGrid.innerHTML = roleDefs.map((role) => {
-          const checks = teams.map((name) => {
-            const checked = (roleMapping[role.key] || []).includes(name) ? 'checked' : '';
-            return `<label><input type="checkbox" data-role="${role.key}" value="${name}" ${checked}/> ${name}</label>`;
-          }).join('');
-          return `<section class="roleBox"><h4>${role.label}</h4><div class="checks">${checks || '<span class="sub">팀 없음</span>'}</div></section>`;
-        }).join('');
-      };
+<div class="toast" id="toast"></div>
+<button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
-      const render = () => {
-        const q=(teamSearch.value||'').trim().toLowerCase();
-        orgBody.innerHTML='';
-        data.divisions.forEach((d)=>{
-          const teams = (d.teams||[]).filter((t)=>!q || t.name.toLowerCase().includes(q));
-          const tr=document.createElement('tr');
-          tr.innerHTML=`<td>${d.id}</td><td>${d.name}</td><td>${teams.map((t)=>`<span class='chip'>${t.name} <button type='button' data-team-del='${d.id}::${t.id}'>×</button></span>`).join(' ') || '-'}</td><td class='actions'><button class='btn' data-div-edit='${d.id}' type='button'>본부수정</button><button class='btn' data-div-del='${d.id}' type='button'>본부삭제</button><button class='btn' data-team-edit='${d.id}' type='button'>팀수정</button></td>`;
-          orgBody.appendChild(tr);
-        });
-      };
+<script src="../assets/sidebar.js"></script>
+<script>
+(function () {
+'use strict';
 
-      document.getElementById('addDivisionBtn').addEventListener('click',()=>{
-        const name=document.getElementById('divisionName').value.trim();
-        const id=(document.getElementById('divisionId').value.trim() || uid('div')).toLowerCase();
-        if(!name) return;
-        if(data.divisions.some((d)=>d.id===id)) return alert('이미 존재하는 본부 ID입니다.');
-        data.divisions.push({id,name,teams:[]}); save(); renderDivisionSelect(); render(); renderMapping();
-        document.getElementById('divisionName').value=''; document.getElementById('divisionId').value='';
-      });
+const KEY     = 'bcmsOrgRegistry';
+const BIA_KEY = 'bcmsBIAData';
 
-      document.getElementById('addTeamBtn').addEventListener('click',()=>{
-        const divId=teamDivisionSelect.value;
-        const name=document.getElementById('teamName').value.trim();
-        const id=(document.getElementById('teamId').value.trim() || uid('team')).toLowerCase();
-        if(!divId || !name) return;
-        const div=data.divisions.find((d)=>d.id===divId); if(!div) return;
-        if((div.teams||[]).some((t)=>t.id===id)) return alert('이미 존재하는 팀 ID입니다.');
-        div.teams = div.teams || []; div.teams.push({id,name}); save(); render(); renderMapping();
-        document.getElementById('teamName').value=''; document.getElementById('teamId').value='';
-      });
+let editingId = null;
 
-      orgBody.addEventListener('click',(e)=>{
-        const divEdit=e.target.getAttribute('data-div-edit');
-        const divDel=e.target.getAttribute('data-div-del');
-        const teamEdit=e.target.getAttribute('data-team-edit');
-        const teamDel=e.target.getAttribute('data-team-del');
+const BCMS_ROLES = [
+  'BCMS 총괄책임자',
+  'BCMS 관리자',
+  'BIA 담당자',
+  '리스크 담당자',
+  'BCP 담당자',
+  '훈련 담당자',
+  '내부심사원',
+  '부서 담당자',
+];
 
-        if(divEdit){
-          const d=data.divisions.find((x)=>x.id===divEdit); if(!d) return;
-          const next=prompt('본부명 수정', d.name); if(!next) return;
-          d.name=next.trim(); save(); renderDivisionSelect(); render(); return;
-        }
-        if(divDel){
-          data.divisions=data.divisions.filter((d)=>d.id!==divDel); save(); renderDivisionSelect(); render(); renderMapping(); return;
-        }
-        if(teamEdit){
-          const d=data.divisions.find((x)=>x.id===teamEdit); if(!d) return;
-          const old=prompt('수정할 팀 ID 입력', d.teams?.[0]?.id || ''); if(!old) return;
-          const t=d.teams.find((x)=>x.id===old); if(!t) return alert('팀 ID를 찾을 수 없습니다.');
-          const nn=prompt('팀명 수정', t.name); if(!nn) return;
-          t.name=nn.trim(); save(); render(); renderMapping(); return;
-        }
-        if(teamDel){
-          const [did,tid]=teamDel.split('::');
-          const d=data.divisions.find((x)=>x.id===did); if(!d) return;
-          d.teams=(d.teams||[]).filter((t)=>t.id!==tid); save(); render(); renderMapping();
-        }
-      });
+const ROLE_CLS = {
+  'BCMS 총괄책임자': 'role-chief',
+  'BCMS 관리자':    'role-mgr',
+  'BIA 담당자':     'role-bia',
+  '리스크 담당자':  'role-risk',
+  'BCP 담당자':     'role-bcp',
+  '훈련 담당자':    'role-drill',
+  '내부심사원':     'role-audit',
+  '부서 담당자':    'role-dept',
+};
 
-      teamSearch.addEventListener('input', render);
-      document.getElementById('resetTemplateBtn').addEventListener('click',()=>{ data=template(); save(); roleMapping = defaultMapping(); store.set(MAP_KEY, roleMapping); renderDivisionSelect(); render(); renderMapping(); });
+/* ── Utils ── */
+function $(s)  { return document.querySelector(s); }
+function $$(s) { return document.querySelectorAll(s); }
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+}
+function safeParse(v, fb) { try { return JSON.parse(v); } catch { return fb; } }
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function avatarColor(name) {
+  const colors = ['#2563eb','#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777'];
+  const code = [...(name || 'X')].reduce((s, c) => s + c.charCodeAt(0), 0);
+  return colors[code % colors.length];
+}
 
-      mappingGrid.addEventListener('change', (e) => {
-        if (!e.target.matches('input[type="checkbox"][data-role]')) return;
-        const role = e.target.getAttribute('data-role');
-        const selected = [...mappingGrid.querySelectorAll(`input[data-role="${role}"]:checked`)].map((el) => el.value);
-        roleMapping[role] = selected;
-      });
+/* ── Storage ── */
+function loadAll() {
+  const a = safeParse(localStorage.getItem(KEY) || '[]', []);
+  return Array.isArray(a) ? a : [];
+}
+function saveAll(a) { localStorage.setItem(KEY, JSON.stringify(a)); }
 
-      document.getElementById('saveMappingBtn').addEventListener('click', () => {
-        store.set(MAP_KEY, roleMapping);
-        alert('역할 매핑이 저장되었습니다.');
-      });
+/* ── Roles grid (form) ── */
+function buildRolesGrid() {
+  const grid = $('#rolesGrid');
+  grid.innerHTML = BCMS_ROLES.map(role => `
+    <label class="role-check-lbl" id="lbl_${esc(role)}">
+      <input type="checkbox" name="bcmsRole" value="${esc(role)}"
+        onchange="syncRoleLabel('${esc(role)}')"/>
+      ${esc(role)}
+    </label>`).join('');
+}
+function syncRoleLabel(role) {
+  const lbl = $(`#lbl_${CSS.escape(role)}`);
+  if (!lbl) return;
+  const checked = lbl.querySelector('input').checked;
+  lbl.classList.toggle('checked', checked);
+}
+function getRoles() {
+  return [...$$('#rolesGrid input[name=bcmsRole]:checked')].map(el => el.value);
+}
+function setRoles(vals) {
+  $$('#rolesGrid input[name=bcmsRole]').forEach(el => {
+    el.checked = (vals || []).includes(el.value);
+    syncRoleLabel(el.value);
+  });
+}
 
-      document.getElementById('resetMappingBtn').addEventListener('click', () => {
-        roleMapping = defaultMapping();
-        store.set(MAP_KEY, roleMapping);
-        renderMapping();
-      });
+/* ── Alt person select ── */
+function refreshAltSelect(excludeId = '') {
+  const sel  = $('#f_altId');
+  const prev = sel.value;
+  const all  = loadAll();
+  sel.innerHTML = '<option value="">(없음)</option>';
+  all.filter(p => p.id !== excludeId).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value       = p.id;
+    opt.textContent = `${p.name}${p.position ? ' · ' + p.position : ''}${p.dept ? ' (' + p.dept + ')' : ''}`;
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
 
-      renderDivisionSelect();
-      render();
-      renderMapping();
-    })();
-  </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+/* ── Form Toggle ── */
+function toggleForm() {
+  const body = $('#formBody'), hd = $('#formPanelHd');
+  const btn  = $('#formToggleBtn'), sub = $('#formPanelSub');
+  const open = body.classList.toggle('open');
+  hd.classList.toggle('open', open);
+  btn.textContent = open ? '▲ 접기' : '▼ 펼치기';
+  sub.textContent = open ? '' : '클릭하여 펼치기';
+}
+$('#formPanelHd').addEventListener('click', toggleForm);
+
+/* ── Reset / Cancel ── */
+function resetForm() {
+  editingId = null;
+  $('#f_name').value     = '';
+  $('#f_position').value = '';
+  $('#f_dept').value     = '';
+  $('#f_email').value    = '';
+  $('#f_mobile').value   = '';
+  setRoles([]);
+  refreshAltSelect();
+  $('#f_altId').value = '';
+  $('#btnSave').textContent = '💾 저장';
+  $('#editBanner').classList.remove('show');
+}
+function cancelEdit() { resetForm(); toast('수정 취소'); }
+
+/* ── Save ── */
+function saveItem() {
+  const name     = ($('#f_name').value     || '').trim();
+  const position = ($('#f_position').value || '').trim();
+  const dept     = ($('#f_dept').value     || '').trim();
+  const email    = ($('#f_email').value    || '').trim();
+  const mobile   = ($('#f_mobile').value   || '').trim();
+  const roles    = getRoles();
+  const altId    = $('#f_altId').value || '';
+
+  if (!name) { toast('⚠ 이름은 필수입니다.'); return; }
+  if (!dept) { toast('⚠ 소속 부서는 필수입니다.'); return; }
+
+  const now = new Date().toISOString();
+  const all = loadAll();
+
+  if (editingId) {
+    const idx = all.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], name, position, dept, email, mobile, roles, altId, updatedAt: now };
+    }
+  } else {
+    all.unshift({
+      id: 'ORG-' + Date.now(),
+      name, position, dept, email, mobile, roles, altId,
+      createdAt: now, updatedAt: now,
+    });
+  }
+
+  saveAll(all);
+  toast(editingId ? '✅ 수정 완료' : '✅ 등록 완료');
+  resetForm();
+  renderAll();
+}
+
+/* ── Edit ── */
+function editItem(id) {
+  const item = loadAll().find(x => x.id === id);
+  if (!item) return;
+  if (!$('#formBody').classList.contains('open')) toggleForm();
+
+  editingId = id;
+  $('#f_name').value     = item.name      || '';
+  $('#f_position').value = item.position  || '';
+  $('#f_dept').value     = item.dept      || '';
+  $('#f_email').value    = item.email     || '';
+  $('#f_mobile').value   = item.mobile    || '';
+  setRoles(item.roles || []);
+  refreshAltSelect(id);
+  $('#f_altId').value = item.altId || '';
+
+  $('#btnSave').textContent = '✅ 수정 저장';
+  $('#editingLabel').textContent = item.name;
+  const banner = $('#editBanner');
+  banner.classList.add('show');
+  banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  toast('수정 모드: ' + item.name);
+}
+
+/* ── Delete ── */
+function deleteItem(id) {
+  const item = loadAll().find(x => x.id === id);
+  if (!confirm(`"${item?.name || id}" 을(를) 삭제할까요?`)) return;
+  saveAll(loadAll().filter(x => x.id !== id));
+  if (editingId === id) resetForm();
+  toast('🗑 삭제 완료');
+  renderAll();
+}
+
+/* ── Stats ── */
+function renderStats(all) {
+  const total   = all.length;
+  const bcms    = all.filter(x => (x.roles || []).length > 0).length;
+  const depts   = new Set(all.map(x => x.dept).filter(Boolean)).size;
+  const withMob = all.filter(x => (x.mobile || '').trim()).length;
+  const rate    = total ? Math.round(withMob / total * 100) : 0;
+
+  $('#statTotal').textContent   = total;
+  $('#statBcms').textContent    = bcms;
+  $('#statDepts').textContent   = depts;
+  $('#statContact').textContent = rate + '%';
+}
+
+/* ── Role Badge HTML ── */
+function roleBadgeHtml(role) {
+  return `<span class="role-badge ${ROLE_CLS[role] || 'role-dept'}">${esc(role)}</span>`;
+}
+
+/* ── Person Grid (Tab 1) ── */
+function renderPersonGrid() {
+  const all      = loadAll();
+  const q        = ($('#q').value || '').trim().toLowerCase();
+  const roleF    = $('#roleFilter').value;
+  const personMap = new Map(all.map(p => [p.id, p]));
+
+  let filtered = all;
+  if (q) filtered = filtered.filter(p => {
+    const hay = [p.name, p.position, p.dept, ...(p.roles || [])].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  if (roleF) filtered = filtered.filter(p => (p.roles || []).includes(roleF));
+
+  const grid = $('#personGrid');
+  $('#personCount').textContent = filtered.length + '명';
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="person-empty">${
+      all.length ? '검색 조건에 맞는 담당자가 없습니다.' : '등록된 담당자가 없습니다. 위 폼에서 추가하세요.'
+    }</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const initial   = (p.name || '?')[0];
+    const color     = avatarColor(p.name);
+    const roleHtml  = (p.roles || []).map(roleBadgeHtml).join('') || '<span style="font-size:.75rem;color:var(--text-2)">역할 미지정</span>';
+    const altPerson = p.altId ? personMap.get(p.altId) : null;
+
+    return `<div class="person-card">
+      <div class="person-card-top">
+        <div class="person-avatar" style="background:${color}">${esc(initial)}</div>
+        <div class="person-info">
+          <div class="person-name">${esc(p.name)}</div>
+          ${p.position ? `<div class="person-pos">${esc(p.position)}</div>` : ''}
+          <div class="person-dept">${esc(p.dept || '부서 미지정')}</div>
+        </div>
+      </div>
+      <div class="person-roles">${roleHtml}</div>
+      <div class="person-contact">
+        <div class="person-contact-row">
+          <span class="person-contact-icon">✉</span>
+          <span class="person-contact-val" style="${!p.email ? 'color:var(--text-3)' : ''}">
+            ${p.email ? esc(p.email) : '이메일 미등록'}
+          </span>
+        </div>
+        <div class="person-contact-row">
+          <span class="person-contact-icon">📱</span>
+          <span class="person-contact-val" style="${!p.mobile ? 'color:var(--text-3)' : 'font-weight:600'}">
+            ${p.mobile ? esc(p.mobile) : '비상연락처 미등록'}
+          </span>
+        </div>
+      </div>
+      ${altPerson ? `<div class="person-alt">대체 담당자: <strong>${esc(altPerson.name)}</strong>${altPerson.mobile ? ' · ' + esc(altPerson.mobile) : ''}</div>` : ''}
+      <div class="person-actions">
+        <button class="btn btn-ghost" style="font-size:.75rem;padding:.3rem .625rem"
+          onclick="editItem('${esc(p.id)}')">✏ 수정</button>
+        <button class="btn btn-danger" style="font-size:.75rem;padding:.3rem .625rem"
+          onclick="deleteItem('${esc(p.id)}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Dept Table (Tab 2) ── */
+function renderDeptTable() {
+  const persons  = loadAll();
+  const biaData  = safeParse(localStorage.getItem(BIA_KEY) || '[]', []);
+  const q        = ($('#deptQ').value || '').trim().toLowerCase();
+  const personMap = new Map(persons.map(p => [p.id, p]));
+
+  /* Group BIA by department */
+  const biaDeptMap = new Map();
+  biaData.forEach(item => {
+    const dept = (item.department || item.dept || item.division || item.ownerDept || '미지정').trim();
+    if (!biaDeptMap.has(dept)) biaDeptMap.set(dept, []);
+    biaDeptMap.get(dept).push(item);
+  });
+
+  /* All unique depts from both sources */
+  const allDepts = new Set([
+    ...persons.map(p => p.dept).filter(Boolean),
+    ...biaDeptMap.keys(),
+  ]);
+
+  let rows = [...allDepts].sort().map(dept => ({
+    dept,
+    processes: biaDeptMap.get(dept) || [],
+    persons:   persons.filter(p => p.dept === dept),
+  }));
+
+  if (q) rows = rows.filter(r => r.dept.toLowerCase().includes(q));
+
+  const tbody = $('#deptTbody');
+  $('#deptCount').textContent = rows.length + '개 부서';
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">
+      ${allDepts.size ? '검색 결과가 없습니다.' : '등록된 부서 정보가 없습니다. BIA 데이터 또는 담당자를 먼저 등록하세요.'}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const repPerson = r.persons[0] || null;
+    const altPerson = repPerson?.altId ? personMap.get(repPerson.altId) : null;
+    const hasMobile = r.persons.some(p => p.mobile);
+
+    let statusClass, statusText;
+    if (!repPerson) {
+      statusClass = 'status-none'; statusText = '❌ 담당자 없음';
+    } else if (!hasMobile) {
+      statusClass = 'status-warn'; statusText = '⚠ 연락처 없음';
+    } else {
+      statusClass = 'status-ok'; statusText = '✅ 정상';
+    }
+
+    const personList = r.persons.length
+      ? r.persons.map(p =>
+          `<div style="font-size:.8rem">${esc(p.name)}${p.position ? ' <span style="color:var(--text-2)">· ' + esc(p.position) + '</span>' : ''}</div>`
+        ).join('')
+      : '<span style="color:var(--text-2);font-size:.8rem">미지정</span>';
+
+    const mobileList = r.persons.filter(p => p.mobile).length
+      ? r.persons.filter(p => p.mobile).map(p =>
+          `<div style="font-size:.8rem;font-weight:600">${esc(p.mobile)}</div>`
+        ).join('')
+      : '<span style="color:var(--text-2);font-size:.8rem">—</span>';
+
+    const procCount = r.processes.length;
+
+    return `<tr>
+      <td style="font-weight:500">${esc(r.dept)}</td>
+      <td style="text-align:center">
+        <span class="num-badge${procCount === 0 ? ' zero' : ''}">${procCount}</span>
+      </td>
+      <td>${personList}</td>
+      <td>${mobileList}</td>
+      <td style="font-size:.8rem;color:var(--text-2)">${altPerson ? esc(altPerson.name) + (altPerson.mobile ? ' · ' + esc(altPerson.mobile) : '') : '—'}</td>
+      <td style="text-align:center">
+        <span class="status-badge ${statusClass}">${statusText}</span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAll() {
+  const all = loadAll();
+  renderStats(all);
+  renderPersonGrid();
+  renderDeptTable();
+  refreshAltSelect(editingId || '');
+}
+
+/* ── Tab switching ── */
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.tab-btn').forEach(b => b.classList.remove('active'));
+    $$('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.tab;
+    $(`#${target}`).classList.add('active');
+    if (target === 'tab2') renderDeptTable();
+  });
+});
+
+/* ── Search ── */
+$('#q').addEventListener('input', () => {
+  clearTimeout(window.__qt);
+  window.__qt = setTimeout(renderPersonGrid, 140);
+});
+
+/* ── Theme Toggle ── */
+(function () {
+  const root  = document.documentElement;
+  const btn   = $('#themeToggle');
+  const saved = localStorage.getItem('bcmsTheme') || 'light';
+  root.setAttribute('data-theme', saved);
+  if (btn) {
+    btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+    btn.addEventListener('click', () => {
+      const n = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', n);
+      btn.textContent = n === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('bcmsTheme', n);
+    });
+  }
+})();
+
+/* ── Expose globals ── */
+window.saveItem   = saveItem;
+window.editItem   = editItem;
+window.deleteItem = deleteItem;
+window.resetForm  = resetForm;
+window.cancelEdit = cancelEdit;
+
+/* ── Init ── */
+buildRolesGrid();
+renderAll();
+})();
+</script>
 </body>
 </html>
