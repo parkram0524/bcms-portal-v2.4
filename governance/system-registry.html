@@ -1,205 +1,284 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="ko" data-theme="light">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BCMS Portal - 업무 시스템 목록</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>업무 시스템 목록 | BCMS Portal</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-  .mini{ opacity:.85; font-size:14px; line-height:1.6; }
-  .hint{ opacity:.85; font-size:15px; line-height:1.6; }
-  .page-title{ font-size:24px; }
+/* ── Summary Grid ── */
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.5rem}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.25rem;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:.25rem}
+.summary-card.danger{border-left:3px solid #dc2626}
+.summary-val{font-size:1.875rem;font-weight:700;color:var(--text);line-height:1}
+.summary-val.red{color:#dc2626}
+.summary-lbl{font-size:.8125rem;color:var(--text-2)}
+@media(max-width:800px){.summary-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.summary-grid{grid-template-columns:1fr 1fr}}
 
-  .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
-  .row > *{ flex: 1 1 220px; }
+/* ── Form Panel ── */
+.form-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;margin-bottom:1.25rem;box-shadow:var(--shadow);overflow:hidden}
+.form-panel-hd{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;cursor:pointer;user-select:none;border-bottom:1px solid transparent;
+  transition:border-color .15s}
+.form-panel-hd.open{border-bottom-color:var(--border)}
+.form-panel-hd-left{display:flex;align-items:center;gap:.625rem}
+.form-panel-title{font-size:.9375rem;font-weight:700;color:var(--text)}
+.form-panel-sub{font-size:.75rem;color:var(--text-2)}
+.form-toggle-btn{padding:.3rem .8rem;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text-2);font-size:.8125rem;cursor:pointer;
+  transition:background .15s,color .15s;white-space:nowrap}
+.form-toggle-btn:hover{background:var(--surface-hover);color:var(--text)}
+.form-body{display:none;padding:1.25rem}
+.form-body.open{display:block}
 
-  input, select, textarea{
-    width:100%;
-    padding:10px 12px;
-    border-radius:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background:#ffffff;
-    color:#0f172a;
-    outline:none;
-    font-size:16px;
-  }
-  textarea{ min-height:90px; resize:vertical; }
+/* ── Form Fields ── */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.field-row.cols3{grid-template-columns:1fr 1fr 1fr}
+.field-row.col1{grid-template-columns:1fr}
+.field-group{display:flex;flex-direction:column;gap:.3125rem}
+.field-label{font-size:.8125rem;font-weight:600;color:var(--text)}
+.field-label span{font-weight:400;color:var(--text-2);margin-left:.25rem}
+.field-input,.field-select,.field-textarea{
+  width:100%;padding:.5rem .75rem;border:1px solid var(--border);
+  border-radius:8px;background:var(--bg);color:var(--text);
+  font-size:.875rem;outline:none;box-sizing:border-box;
+  transition:border-color .15s,box-shadow .15s;font-family:inherit}
+.field-input:focus,.field-select:focus,.field-textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,112,243,.1)}
+.field-textarea{min-height:72px;resize:vertical;line-height:1.5}
+@media(max-width:640px){.field-row,.field-row.cols3{grid-template-columns:1fr}}
 
-  label{ font-size:14px; font-weight:900; opacity:.9; display:block; margin-bottom:6px; }
+/* BIA selector */
+.bia-selector{border:1px solid var(--border);border-radius:8px;padding:.5rem;
+  max-height:110px;overflow-y:auto;background:var(--bg)}
+.bia-item{display:flex;align-items:center;gap:.5rem;padding:.25rem .375rem;
+  border-radius:5px;cursor:pointer;font-size:.8125rem;color:var(--text)}
+.bia-item:hover{background:var(--surface-hover)}
+.bia-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.bia-empty{font-size:.8125rem;color:var(--text-2);padding:.25rem .375rem}
+.bia-count{display:inline-block;padding:.175rem .5rem;background:#dbeafe;color:#1d4ed8;
+  border-radius:99px;font-size:.6875rem;font-weight:600;margin-left:.375rem}
+[data-theme=dark] .bia-count{background:#1e3a5f;color:#93c5fd}
 
-  .btn{
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(15,23,42,.04);
-    color:rgba(15,23,42,.88);
-    padding: 10px 14px;
-    border-radius: 12px;
-    cursor:pointer;
-    font-size:16px;
-    font-weight:900;
-    white-space:nowrap;
-  }
-  .btn:hover{ filter:brightness(1.08); }
-  .btn.primary{ background:#60a5fa; color:#0b1220; border-color: rgba(96,165,250,.6); }
-  .btn.danger{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); color:#fecaca; }
-  .btn.ghost{ background: rgba(255,255,255,.96); border-color: rgba(255,255,255,.12); color:#0f172a; }
+/* Form Actions */
+.form-actions{display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap;margin-top:1rem;padding-top:.875rem;border-top:1px solid var(--border)}
 
-  .pill{
-    display:inline-block;
-    padding:6px 10px;
-    border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    font-size:13px;
-    color:rgba(15,23,42,.72);
-    margin-right:8px;
-    margin-bottom:8px;
-    white-space:nowrap;
-  }
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.4375rem .875rem;
+  border:1px solid var(--border);border-radius:8px;background:var(--surface);
+  color:var(--text);font-size:.8125rem;font-weight:500;cursor:pointer;
+  transition:background .15s,box-shadow .15s,color .15s;white-space:nowrap}
+.btn:hover{background:var(--surface-hover)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{opacity:.92}
+.btn-danger{color:#dc2626;border-color:#fecaca;background:#fef2f2}
+.btn-danger:hover{background:#fee2e2}
+.btn-ghost{background:transparent;border-color:var(--border)}
+[data-theme=dark] .btn-danger{color:#f87171;border-color:#7f1d1d;background:#450a0a}
+[data-theme=dark] .btn-danger:hover{background:#7f1d1d}
 
-  .grid2{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:12px;
-    margin-top:12px;
-  }
-  @media (max-width: 1100px){
-    .grid2{ grid-template-columns: 1fr; }
-  }
+/* ── List Section ── */
+.list-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;box-shadow:var(--shadow)}
+.list-hd{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.list-hd-left{display:flex;align-items:center;gap:.625rem}
+.list-title{font-size:.9375rem;font-weight:700;color:var(--text)}
+.list-count{font-size:.8125rem;color:var(--text-2)}
+.list-hd-right{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.search-input{padding:.4375rem .75rem;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text);font-size:.8125rem;outline:none;width:220px;
+  transition:border-color .15s}
+.search-input:focus{border-color:var(--accent)}
 
-  table{
-    width:100%;
-    border-collapse: collapse;
-    overflow:hidden;
-    border-radius: 14px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(15,23,42,.03);
-    table-layout: fixed;
-    font-size:15px;
-  }
-  th, td{
-    padding:10px 10px;
-    border-bottom:1px solid rgba(15,23,42,.10);
-    vertical-align: top;
-    line-height:1.5;
-  }
-  th{ text-align:left; color:rgba(15,23,42,.62); font-weight:900; font-size:14px; }
-  tr:last-child td{ border-bottom:none; }
+/* Category filter chips */
+.filter-bar{display:flex;gap:.375rem;padding:.625rem 1.25rem;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;align-items:center}
+.filter-lbl{font-size:.75rem;color:var(--text-2);margin-right:.125rem}
+.filter-chip{padding:.25rem .625rem;border:1px solid var(--border);border-radius:99px;
+  background:var(--bg);color:var(--text-2);font-size:.75rem;cursor:pointer;
+  transition:background .12s,border-color .12s,color .12s;white-space:nowrap}
+.filter-chip:hover{background:var(--surface-hover);color:var(--text)}
+.filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-  table thead th:nth-child(1), table tbody td:nth-child(1){ width: 16%; }
-  table thead th:nth-child(2), table tbody td:nth-child(2){ width: 18%; }
-  table thead th:nth-child(3), table tbody td:nth-child(3){ width: 24%; }
-  table thead th:nth-child(4), table tbody td:nth-child(4){ width: 18%; }
-  table thead th:nth-child(5), table tbody td:nth-child(5){ width: 10%; }
-  table thead th:nth-child(6), table tbody td:nth-child(6){ width: 14%; }
+/* ── Table ── */
+.table-wrap{overflow-x:auto;padding:.25rem 0}
+table{width:100%;border-collapse:collapse;font-size:.8125rem;table-layout:fixed}
+th{padding:.625rem 1rem;text-align:left;font-size:.75rem;font-weight:600;
+  color:var(--text-2);border-bottom:1px solid var(--border);white-space:nowrap;
+  background:var(--bg)}
+td{padding:.625rem 1rem;border-bottom:1px solid var(--border);vertical-align:middle;
+  color:var(--text);line-height:1.45}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface-hover)}
+th:nth-child(1),td:nth-child(1){width:14%}  /* 카테고리 */
+th:nth-child(2),td:nth-child(2){width:14%}  /* 시스템ID */
+th:nth-child(3),td:nth-child(3){width:22%}  /* 표시명 */
+th:nth-child(4),td:nth-child(4){width:12%}  /* 소유부서 */
+th:nth-child(5),td:nth-child(5){width:10%}  /* 중요도 */
+th:nth-child(6),td:nth-child(6){width:9%;text-align:center} /* BIA연계 */
+th:nth-child(7),td:nth-child(7){width:19%;text-align:right} /* 액션 */
+td:nth-child(2){font-family:monospace;font-size:.8rem}
+.empty-row td{text-align:center;color:var(--text-2);padding:2rem 1rem;font-size:.875rem}
 
-  td:nth-child(2), td:nth-child(5){ white-space:nowrap; }
-  td:nth-child(3){ word-break: break-word; }
-  td:nth-child(6){ white-space:nowrap; }
+/* Category badges */
+.cat-badge{display:inline-block;padding:.175rem .55rem;border-radius:6px;
+  font-size:.6875rem;font-weight:600;white-space:nowrap}
+.cat-it   {background:#dbeafe;color:#1d4ed8}
+.cat-power{background:#fef9c3;color:#92400e}
+.cat-net  {background:#ede9fe;color:#6d28d9}
+.cat-sec  {background:#fee2e2;color:#991b1b}
+.cat-fac  {background:#ffedd5;color:#9a3412}
+.cat-app  {background:#dcfce7;color:#166534}
+.cat-data {background:#ccfbf1;color:#134e4a}
+.cat-other{background:#f3f4f6;color:#374151}
+[data-theme=dark] .cat-it   {background:#1e3a5f;color:#93c5fd}
+[data-theme=dark] .cat-power{background:#422006;color:#fde68a}
+[data-theme=dark] .cat-net  {background:#2e1065;color:#c4b5fd}
+[data-theme=dark] .cat-sec  {background:#450a0a;color:#fca5a5}
+[data-theme=dark] .cat-fac  {background:#431407;color:#fdba74}
+[data-theme=dark] .cat-app  {background:#052e16;color:#86efac}
+[data-theme=dark] .cat-data {background:#042f2e;color:#5eead4}
+[data-theme=dark] .cat-other{background:#1f2937;color:#9ca3af}
 
-  .actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+/* Criticality badges */
+.crit-badge{display:inline-flex;align-items:center;padding:.175rem .55rem;
+  border-radius:6px;font-size:.6875rem;font-weight:700;white-space:nowrap}
+.crit-critical{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.crit-high    {background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.crit-medium  {background:#fefce8;color:#ca8a04;border:1px solid #fef08a}
+.crit-low     {background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+[data-theme=dark] .crit-critical{background:#450a0a;color:#f87171;border-color:#7f1d1d}
+[data-theme=dark] .crit-high    {background:#431407;color:#fb923c;border-color:#9a3412}
+[data-theme=dark] .crit-medium  {background:#422006;color:#fcd34d;border-color:#78350f}
+[data-theme=dark] .crit-low     {background:#052e16;color:#86efac;border-color:#14532d}
 
-  .tag{
-    display:inline-flex; align-items:center; gap:6px;
-    font-size: 13px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border:1px solid rgba(15,23,42,.14);
-    color:rgba(15,23,42,.88);
-    background: rgba(255,255,255,.96);
-    white-space:nowrap;
-  }
-  .critical { border-color: rgba(255,80,80,.55); background: rgba(255,80,80,.10); color:#fecaca; }
-  .high { border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
-  .medium { border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
-  .low { border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color:#bbf7d0; }
+/* BIA count cell */
+.bia-link-badge{display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;border-radius:99px;font-size:.75rem;font-weight:700}
+.bia-link-badge.has{background:#dbeafe;color:#1d4ed8}
+.bia-link-badge.none{background:var(--border-strong);color:var(--text-2)}
+[data-theme=dark] .bia-link-badge.has{background:#1e3a5f;color:#93c5fd}
 
-  .toast{
-    position: fixed;
-    right: 14px;
-    bottom: 14px;
-    max-width: 420px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.98);
-    color:rgba(15,23,42,.88);
-    padding: 10px 12px;
-    border-radius: 12px;
-    box-shadow: 0 10px 26px rgba(0,0,0,.35);
-    opacity: 0;
-    transform: translateY(8px);
-    pointer-events:none;
-    transition: .2s ease;
-    z-index: 9999;
-    font-size: 13px;
-  }
-  .toast.on{ opacity:1; transform: translateY(0); }
+/* Row actions */
+.row-actions{display:flex;gap:.375rem;justify-content:flex-end;flex-wrap:wrap}
+
+/* ── Bottom Export Bar ── */
+.export-bar{display:flex;justify-content:space-between;align-items:center;
+  padding:.875rem 1.25rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.export-note{font-size:.75rem;color:var(--text-2)}
+
+/* ── Toast ── */
+.toast{position:fixed;right:1rem;bottom:1rem;max-width:340px;padding:.625rem 1rem;
+  border-radius:10px;background:var(--text);color:var(--bg);font-size:.8125rem;font-weight:500;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);
+  pointer-events:none;transition:.2s ease;z-index:9999}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── Edit Mode Banner ── */
+.edit-banner{display:none;padding:.5rem 1rem;background:#dbeafe;color:#1d4ed8;
+  border-radius:8px;font-size:.8125rem;font-weight:500;margin-bottom:.75rem;
+  align-items:center;justify-content:space-between;gap:.5rem}
+.edit-banner.show{display:flex}
+[data-theme=dark] .edit-banner{background:#1e3a5f;color:#93c5fd}
 </style>
 </head>
-
 <body>
 <aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-<div class="main">
-  <div class="page-title">📘 System Registry (업무 시스템 목록)</div>
+  <h2 class="page-title" style="margin:0 0 .25rem">업무 시스템 목록 (System Registry)</h2>
+  <p style="font-size:.875rem;color:var(--text-2);margin:0 0 1.5rem">
+    DRP·EOP·감사에서 사용하는 표준 시스템·설비 목록을 관리합니다.
+    <code style="font-size:.75rem;background:var(--border-strong);padding:.1rem .35rem;border-radius:4px">bcms_system_registry_v1</code>
+  </p>
 
-  <div class="card">
-    <div class="hint">
-      목적: DRP/EOP/Training/Audit에서 동일한 시스템/설비 명칭을 쓰도록 “표준 목록 + 용어 정의”를 관리합니다.<br/>
-      저장 키: <b>localStorage["bcms_system_registry_v1"]</b>
+  <!-- ── Summary Cards ── -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-val" id="statTotal">0</div>
+      <div class="summary-lbl">전체 시스템</div>
     </div>
-
-    <div style="margin-top:12px;">
-      <span class="pill">표준 시스템명</span>
-      <span class="pill">설비/장비</span>
-      <span class="pill">소유부서</span>
-      <span class="pill">중요도</span>
-      <span class="pill">용어정의</span>
-      <span class="pill">유형/위치(설비형 EOP 연동)</span>
+    <div class="summary-card danger">
+      <div class="summary-val red" id="statCritical">0</div>
+      <div class="summary-lbl">Critical 시스템</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val" id="statDepts">0</div>
+      <div class="summary-lbl">담당 부서</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val" id="statBIA">0</div>
+      <div class="summary-lbl">BIA 연계</div>
     </div>
   </div>
 
-  <div class="grid2">
-    <div class="card">
-      <h3 style="margin:0;">등록/수정</h3>
-      <div class="mini" style="margin-top:8px;">
-        • 표시명: 화면에 보여줄 이름 (예: UPS (무정전전원장치))<br/>
-        • 시스템ID: 내부 식별자 (예: UPS-ROOM-01)<br/>
-        • 유형/위치: EOP(설비형) 매칭 정확도 향상용(없어도 동작은 함)
+  <!-- ── Form Panel ── -->
+  <div class="form-panel">
+    <div class="form-panel-hd" id="formPanelHd">
+      <div class="form-panel-hd-left">
+        <span class="form-panel-title">➕ 시스템 등록 / 수정</span>
+        <span class="form-panel-sub" id="formPanelSub">클릭하여 펼치기</span>
+      </div>
+      <button class="form-toggle-btn" id="formToggleBtn">▼ 펼치기</button>
+    </div>
+
+    <div class="form-body" id="formBody">
+
+      <!-- Edit mode banner -->
+      <div class="edit-banner" id="editBanner">
+        <span>✏️ 수정 모드 — <span id="editingLabel"></span></span>
+        <button class="btn btn-ghost" style="font-size:.75rem;padding:.25rem .6rem" onclick="cancelEdit()">취소</button>
       </div>
 
-      <div class="row" style="margin-top:12px;">
-        <div>
-          <label>카테고리 (Category)</label>
-          <select id="f_category">
-            <option value="IT Service (IT 서비스)">IT Service (IT 서비스)</option>
-            <option value="Security (보안)">Security (보안)</option>
-            <option value="Power (전력)">Power (전력)</option>
-            <option value="Cooling (냉각)">Cooling (냉각)</option>
-            <option value="Network (네트워크)">Network (네트워크)</option>
-            <option value="Facility (시설)">Facility (시설)</option>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">카테고리 <span>*</span></label>
+          <select class="field-select" id="f_category">
+            <option value="IT 서비스">IT 서비스 (IT Service)</option>
+            <option value="전력·유틸리티">전력·유틸리티 (Power/Utility)</option>
+            <option value="통신·네트워크">통신·네트워크 (Network)</option>
+            <option value="보안">보안 (Security)</option>
+            <option value="생산·설비">생산·설비 (Facility)</option>
+            <option value="업무 애플리케이션">업무 애플리케이션 (Business App)</option>
+            <option value="데이터·백업">데이터·백업 (Data/Backup)</option>
+            <option value="기타">기타</option>
           </select>
         </div>
-        <div>
-          <label>시스템ID (System ID)</label>
-          <input id="f_systemId" placeholder="예: UPS-ROOM-01" />
+        <div class="field-group">
+          <label class="field-label">시스템 ID <span>* 예: PWR-UPS-01</span></label>
+          <input class="field-input" id="f_systemId" placeholder="예: PWR-UPS-01"/>
         </div>
       </div>
 
-      <div class="row" style="margin-top:12px;">
-        <div>
-          <label>표시명 (Display Name)</label>
-          <input id="f_displayName" placeholder="예: UPS (무정전전원장치)" />
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">표시명 (Display Name) <span>*</span></label>
+          <input class="field-input" id="f_displayName" placeholder="예: UPS 시스템 A"/>
         </div>
-        <div>
-          <label>소유부서 (Owner Dept)</label>
-          <input id="f_ownerDept" placeholder="예: IT인프라팀 / 시설팀" />
+        <div class="field-group">
+          <label class="field-label">소유 부서</label>
+          <input class="field-input" id="f_ownerDept" placeholder="예: 시설팀 / IT팀"/>
         </div>
       </div>
 
-      <!-- ✅ 신규: 유형/위치 -->
-      <div class="row" style="margin-top:12px;">
-        <div>
-          <label>유형 (Type, 선택)</label>
-          <select id="f_type">
+      <div class="field-row cols3">
+        <div class="field-group">
+          <label class="field-label">중요도</label>
+          <select class="field-select" id="f_criticality">
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">유형 (Type)</label>
+          <select class="field-select" id="f_type">
             <option value="">(미지정)</option>
             <option value="UPS">UPS</option>
             <option value="Generator">Generator</option>
@@ -210,343 +289,531 @@
             <option value="Chiller">Chiller</option>
             <option value="Network/Core">Network/Core</option>
             <option value="Security/System">Security/System</option>
+            <option value="Application">Application</option>
+            <option value="Database">Database</option>
+            <option value="Backup/Storage">Backup/Storage</option>
           </select>
         </div>
-        <div>
-          <label>위치 (Location, 선택)</label>
-          <input id="f_location" placeholder="예: UPS Room / Electrical Room / IDC 3F" />
+        <div class="field-group">
+          <label class="field-label">위치 (Location)</label>
+          <input class="field-input" id="f_location" placeholder="예: IDC 3F / UPS Room"/>
         </div>
       </div>
 
-      <div class="row" style="margin-top:12px;">
-        <div>
-          <label>중요도 (Criticality)</label>
-          <select id="f_criticality">
-            <option value="Critical">Critical</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">태그 <span>콤마(,)로 구분</span></label>
+          <input class="field-input" id="f_tags" placeholder="예: UPS, Power, Battery"/>
         </div>
-        <div>
-          <label>태그 (Tags)</label>
-          <input id="f_tags" placeholder="예: UPS, Power, Battery, EPMS (콤마)" />
-        </div>
-      </div>
-
-      <div class="field" style="margin-top:12px;">
-        <label>용어 정의/설명 (Definition)</label>
-        <textarea id="f_definition" placeholder="예: 상용전원 장애 시 부하에 안정적 전원을 공급"></textarea>
-      </div>
-
-      <div class="actions" style="margin-top:12px;">
-        <button class="btn ghost" onclick="resetForm()">입력 초기화</button>
-        <button class="btn primary" id="btnSave" onclick="saveItem()">저장</button>
-        <button class="btn danger" onclick="seedDemo()">데모 시드</button>
-        <button class="btn" onclick="exportRegistry()">Export</button>
-      </div>
-
-      <div class="mini" style="margin-top:10px; opacity:.8;">
-        Tip: Power/Facility 설비 항목(UPS/발전기/수전/배전/절체)을 등록하면 EOP에서 드롭다운 연동이 바로 됩니다.
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="toolbarRow" style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;">
-        <h3 style="margin:0;">목록</h3>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-          <input id="q" placeholder="검색: 이름/ID/태그/설명/유형/위치" style="max-width:320px;" />
-          <button class="btn" onclick="renderTable()">검색</button>
-          <button class="btn danger" onclick="resetAll()">전체 삭제</button>
+        <div class="field-group">
+          <label class="field-label">이 시스템에 의존하는 핵심업무 (BIA 연계)
+            <span class="bia-count" id="biaSelectedCount" style="display:none">0</span>
+          </label>
+          <div class="bia-selector" id="biaCheckboxes">
+            <div class="bia-empty">BIA 데이터 로딩 중…</div>
+          </div>
         </div>
       </div>
 
-      <div style="margin-top:12px; overflow:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>카테고리</th>
-              <th>시스템ID</th>
-              <th>표시명</th>
-              <th>소유부서</th>
-              <th>중요도</th>
-              <th style="text-align:right;">액션</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
+      <div class="field-group" style="margin-top:.25rem">
+        <label class="field-label">용어 정의 / 설명</label>
+        <textarea class="field-textarea" id="f_definition" placeholder="예: 상용전원 장애 시 부하에 안정적인 전원을 공급하는 장치"></textarea>
       </div>
 
-      <div class="mini" style="margin-top:10px; opacity:.8;">
-        • “수정” 클릭 시 왼쪽 폼에 로드됩니다.<br/>
-        • 유형/위치는 표에서 생략했지만 Export 및 EOP 연동에서 사용됩니다.
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="resetForm()">초기화</button>
+        <button class="btn" onclick="seedDemo()" title="업종 기반 샘플 데이터 추가">🌱 샘플 데이터</button>
+        <button class="btn btn-primary" id="btnSave" onclick="saveItem()">💾 저장</button>
       </div>
     </div>
   </div>
+
+  <!-- ── List Panel ── -->
+  <div class="list-panel">
+    <div class="list-hd">
+      <div class="list-hd-left">
+        <span class="list-title">시스템 목록</span>
+        <span class="list-count" id="listCount">0개</span>
+      </div>
+      <div class="list-hd-right">
+        <input class="search-input" id="q" placeholder="🔍 이름·ID·부서·태그 검색"/>
+        <button class="btn btn-danger" onclick="resetAll()">전체 삭제</button>
+      </div>
+    </div>
+
+    <!-- Category filter -->
+    <div class="filter-bar">
+      <span class="filter-lbl">필터:</span>
+      <button class="filter-chip active" data-filter="전체">전체</button>
+      <button class="filter-chip" data-filter="IT 서비스">IT 서비스</button>
+      <button class="filter-chip" data-filter="전력·유틸리티">전력·유틸리티</button>
+      <button class="filter-chip" data-filter="통신·네트워크">통신·네트워크</button>
+      <button class="filter-chip" data-filter="보안">보안</button>
+      <button class="filter-chip" data-filter="생산·설비">생산·설비</button>
+      <button class="filter-chip" data-filter="업무 애플리케이션">업무 앱</button>
+      <button class="filter-chip" data-filter="데이터·백업">데이터·백업</button>
+      <button class="filter-chip" data-filter="기타">기타</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>카테고리</th>
+            <th>시스템 ID</th>
+            <th>표시명</th>
+            <th>소유 부서</th>
+            <th>중요도</th>
+            <th style="text-align:center">BIA 연계</th>
+            <th style="text-align:right">액션</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Export bar -->
+    <div class="export-bar">
+      <span class="export-note">
+        ※ Critical 시스템이 상단에 정렬됩니다 · 수정 클릭 시 위 폼에 로드됩니다
+      </span>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn" onclick="exportJSON()" title="JSON 내보내기">JSON</button>
+        <button class="btn btn-primary" onclick="exportCSV()">⬇ CSV 다운로드</button>
+      </div>
+    </div>
+  </div>
+
 </div>
+</main>
 
 <div class="toast" id="toast"></div>
+<button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
 <script src="../assets/sidebar.js"></script>
 <script>
-  const KEY = "bcms_system_registry_v1";
-  let editingId = null;
+(function(){
+'use strict';
 
-  const $ = (sel)=>document.querySelector(sel);
+const KEY = 'bcms_system_registry_v1';
+let editingId  = null;
+let activeFilter = '전체';
 
-  function toast(msg){
-    const t = $("#toast");
-    t.textContent = msg;
-    t.classList.add("on");
-    clearTimeout(toast._tm);
-    toast._tm = setTimeout(()=>t.classList.remove("on"), 1600);
+/* ─── Utils ─────────────────────────────────────────────────── */
+function $(sel){ return document.querySelector(sel); }
+function $$(sel){ return document.querySelectorAll(sel); }
+
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, m =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function safeParse(v, fb){ try{ return JSON.parse(v); }catch{ return fb; } }
+
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ─── Storage ────────────────────────────────────────────────── */
+function loadAll(){
+  const arr = safeParse(localStorage.getItem(KEY) || '[]', []);
+  return Array.isArray(arr) ? arr : [];
+}
+function saveAll(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+
+/* ─── Category helpers ───────────────────────────────────────── */
+const CAT_MAP = {
+  'IT 서비스':       'cat-it',
+  '전력·유틸리티':   'cat-power',
+  '통신·네트워크':   'cat-net',
+  '보안':            'cat-sec',
+  '생산·설비':       'cat-fac',
+  '업무 애플리케이션':'cat-app',
+  '데이터·백업':     'cat-data',
+  '기타':            'cat-other',
+};
+
+function normCat(raw){
+  if (!raw) return '기타';
+  for (const k of Object.keys(CAT_MAP)) {
+    if (raw === k) return k;
+  }
+  const c = raw.toLowerCase();
+  if (c.includes('it service') || c.includes('it 서비스')) return 'IT 서비스';
+  if (c.includes('power') || c.includes('전력') || c.includes('utility') || c.includes('유틸리티')) return '전력·유틸리티';
+  if (c.includes('cooling') || c.includes('냉각')) return '생산·설비';
+  if (c.includes('network') || c.includes('네트워크') || c.includes('통신')) return '통신·네트워크';
+  if (c.includes('security') || c.includes('보안')) return '보안';
+  if (c.includes('facility') || c.includes('시설') || c.includes('생산') || c.includes('설비')) return '생산·설비';
+  if (c.includes('business') || c.includes('app') || c.includes('애플리케이션') || c.includes('업무')) return '업무 애플리케이션';
+  if (c.includes('data') || c.includes('backup') || c.includes('백업') || c.includes('데이터')) return '데이터·백업';
+  return '기타';
+}
+
+function catBadge(cat){
+  const n = normCat(cat);
+  return `<span class="cat-badge ${CAT_MAP[n] || 'cat-other'}">${esc(n)}</span>`;
+}
+
+const CRIT_ORDER = { Critical:0, High:1, Medium:2, Low:3 };
+function critBadge(c){
+  const cls = { Critical:'crit-critical', High:'crit-high', Medium:'crit-medium', Low:'crit-low' }[c] || '';
+  return `<span class="crit-badge ${cls}">${esc(c||'—')}</span>`;
+}
+
+/* ─── BIA Selector ──────────────────────────────────────────── */
+function loadBIA(){
+  let data = safeParse(localStorage.getItem('bcmsBIAData'), []);
+  if (!Array.isArray(data)) data = [];
+  const box = $('#biaCheckboxes');
+  if (!box) return;
+  if (!data.length){
+    box.innerHTML = `<div class="bia-empty">BIA 데이터 없음 ·
+      <a href="../risk-bia/bia.html" style="color:var(--accent)">BIA 페이지</a>에서 업무를 등록하세요.</div>`;
+    return;
+  }
+  box.innerHTML = data.map(item => {
+    const name = item.process || item.name || item.displayName || item.function || item.id || '(이름 없음)';
+    return `<label class="bia-item">
+      <input type="checkbox" name="biaLink" value="${esc(item.id)}" onchange="updateBIACount()"/>
+      <span>${esc(name)}</span>
+    </label>`;
+  }).join('');
+}
+
+function updateBIACount(){
+  const checked = $$('#biaCheckboxes input[name=biaLink]:checked').length;
+  const badge = $('#biaSelectedCount');
+  if (!badge) return;
+  if (checked > 0){
+    badge.textContent = checked;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function getBIALinks(){
+  return [...$$('#biaCheckboxes input[name=biaLink]:checked')].map(el => el.value);
+}
+
+function setBIALinks(links){
+  $$('#biaCheckboxes input[name=biaLink]').forEach(el => {
+    el.checked = (links || []).includes(el.value);
+  });
+  updateBIACount();
+}
+
+/* ─── Form Toggle ───────────────────────────────────────────── */
+function toggleForm(){
+  const body = $('#formBody');
+  const hd   = $('#formPanelHd');
+  const btn  = $('#formToggleBtn');
+  const sub  = $('#formPanelSub');
+  const open = body.classList.toggle('open');
+  hd.classList.toggle('open', open);
+  btn.textContent = open ? '▲ 접기' : '▼ 펼치기';
+  sub.textContent = open ? '' : '클릭하여 펼치기';
+  if (open) loadBIA();
+}
+
+$('#formPanelHd').addEventListener('click', toggleForm);
+
+/* ─── Form Reset / Cancel ───────────────────────────────────── */
+function resetForm(){
+  editingId = null;
+  $('#f_category').value   = 'IT 서비스';
+  $('#f_systemId').value   = '';
+  $('#f_displayName').value = '';
+  $('#f_ownerDept').value  = '';
+  $('#f_type').value       = '';
+  $('#f_location').value   = '';
+  $('#f_criticality').value = 'Critical';
+  $('#f_tags').value       = '';
+  $('#f_definition').value  = '';
+  setBIALinks([]);
+  $('#btnSave').textContent = '💾 저장';
+  $('#editBanner').classList.remove('show');
+}
+
+function cancelEdit(){ resetForm(); toast('수정 취소'); }
+
+/* ─── Save ──────────────────────────────────────────────────── */
+function saveItem(){
+  const category    = normCat($('#f_category').value);
+  const systemId    = ($('#f_systemId').value   || '').trim();
+  const displayName = ($('#f_displayName').value || '').trim();
+  const ownerDept   = ($('#f_ownerDept').value  || '').trim();
+  const type        = ($('#f_type').value        || '').trim();
+  const location    = ($('#f_location').value    || '').trim();
+  const criticality = $('#f_criticality').value;
+  const tags        = ($('#f_tags').value||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const definition  = ($('#f_definition').value  || '').trim();
+  const biaLinks    = getBIALinks();
+
+  if (!systemId || !displayName){
+    toast('⚠ 시스템ID와 표시명은 필수입니다.');
+    return;
   }
 
-  function safeParse(v, fallback){
-    try{ return JSON.parse(v); }catch(e){ return fallback; }
+  const all = loadAll();
+  const dup = all.find(x => x.systemId === systemId && x.id !== editingId);
+  if (dup){ toast('⚠ 같은 시스템ID가 이미 존재합니다.'); return; }
+
+  const now = new Date().toISOString();
+  if (editingId){
+    const idx = all.findIndex(x => x.id === editingId);
+    if (idx >= 0) all[idx] = { ...all[idx], category, systemId, displayName, ownerDept, type, location, criticality, tags, definition, biaLinks, updatedAt: now };
+  } else {
+    all.unshift({ id:'SYSREG-'+Date.now(), category, systemId, displayName, ownerDept, type, location, criticality, tags, definition, biaLinks, createdAt:now, updatedAt:now });
   }
 
-  function loadAll(){
-    const arr = safeParse(localStorage.getItem(KEY) || "[]", []);
-    return Array.isArray(arr) ? arr : [];
+  saveAll(all);
+  toast(editingId ? '✅ 수정 완료' : '✅ 등록 완료');
+  resetForm();
+  renderAll();
+}
+
+/* ─── Edit ──────────────────────────────────────────────────── */
+function editItem(id){
+  const item = loadAll().find(x => x.id === id);
+  if (!item) return;
+
+  // Open form first
+  const body = $('#formBody');
+  if (!body.classList.contains('open')) toggleForm();
+
+  editingId = id;
+  $('#f_category').value   = normCat(item.category);
+  $('#f_systemId').value   = item.systemId   || '';
+  $('#f_displayName').value = item.displayName || '';
+  $('#f_ownerDept').value  = item.ownerDept  || '';
+  $('#f_type').value       = item.type       || '';
+  $('#f_location').value   = item.location   || '';
+  $('#f_criticality').value = item.criticality || 'Critical';
+  $('#f_tags').value       = (item.tags||[]).join(', ');
+  $('#f_definition').value  = item.definition || '';
+  setBIALinks(item.biaLinks || []);
+  $('#btnSave').textContent = '✅ 수정 저장';
+  const banner = $('#editBanner');
+  $('#editingLabel').textContent = item.displayName;
+  banner.classList.add('show');
+  banner.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  toast('수정 모드: ' + item.displayName);
+}
+
+/* ─── Delete ─────────────────────────────────────────────────── */
+function deleteItem(id){
+  const item = loadAll().find(x => x.id === id);
+  if (!confirm(`"${item?.displayName || id}" 을(를) 삭제할까요?`)) return;
+  saveAll(loadAll().filter(x => x.id !== id));
+  if (editingId === id) resetForm();
+  toast('🗑 삭제 완료');
+  renderAll();
+}
+
+function resetAll(){
+  if (!confirm('업무 시스템 목록을 모두 삭제할까요?')) return;
+  localStorage.removeItem(KEY);
+  resetForm();
+  renderAll();
+  toast('전체 삭제 완료');
+}
+
+/* ─── Summary Stats ─────────────────────────────────────────── */
+function renderStats(all){
+  $('#statTotal').textContent    = all.length;
+  $('#statCritical').textContent = all.filter(x => x.criticality === 'Critical').length;
+  $('#statDepts').textContent    = new Set(all.map(x => x.ownerDept).filter(Boolean)).size;
+  $('#statBIA').textContent      = all.filter(x => (x.biaLinks||[]).length > 0).length;
+}
+
+/* ─── Table Render ──────────────────────────────────────────── */
+function renderTable(){
+  const all  = loadAll();
+  const q    = ($('#q').value || '').trim().toLowerCase();
+
+  let filtered = all;
+  if (activeFilter !== '전체'){
+    filtered = filtered.filter(x => normCat(x.category) === activeFilter);
   }
-
-  function saveAll(arr){
-    localStorage.setItem(KEY, JSON.stringify(arr));
-  }
-
-  function esc(s){
-    return String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
-  }
-
-  function tagClass(level){
-    const v = String(level||"").toLowerCase();
-    if(v==="critical") return "critical";
-    if(v==="high") return "high";
-    if(v==="medium") return "medium";
-    if(v==="low") return "low";
-    return "";
-  }
-
-  function resetForm(){
-    editingId = null;
-    $("#f_category").value = "IT Service (IT 서비스)";
-    $("#f_systemId").value = "";
-    $("#f_displayName").value = "";
-    $("#f_ownerDept").value = "";
-    $("#f_type").value = "";
-    $("#f_location").value = "";
-    $("#f_criticality").value = "Critical";
-    $("#f_tags").value = "";
-    $("#f_definition").value = "";
-    $("#btnSave").textContent = "저장";
-  }
-
-  function saveItem(){
-    const category = $("#f_category").value;
-    const systemId = ($("#f_systemId").value || "").trim();
-    const displayName = ($("#f_displayName").value || "").trim();
-    const ownerDept = ($("#f_ownerDept").value || "").trim();
-    const type = ($("#f_type").value || "").trim();
-    const location = ($("#f_location").value || "").trim();
-    const criticality = $("#f_criticality").value;
-    const tags = ($("#f_tags").value || "").split(",").map(x=>x.trim()).filter(Boolean);
-    const definition = ($("#f_definition").value || "").trim();
-
-    if(!systemId || !displayName){
-      alert("시스템ID와 표시명은 필수입니다.");
-      return;
-    }
-
-    const all = loadAll();
-
-    const dup = all.find(x => x.systemId === systemId && x.id !== editingId);
-    if(dup){
-      alert("같은 시스템ID가 이미 존재합니다. 다른 ID를 입력하세요.");
-      return;
-    }
-
-    if(editingId){
-      const idx = all.findIndex(x=>x.id === editingId);
-      if(idx >= 0){
-        all[idx] = {
-          ...all[idx],
-          category, systemId, displayName, ownerDept, type, location, criticality, tags, definition,
-          updatedAt: new Date().toISOString()
-        };
-      }
-    }else{
-      all.unshift({
-        id: "SYSREG-" + Date.now(),
-        category, systemId, displayName, ownerDept, type, location, criticality, tags, definition,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-    }
-
-    saveAll(all);
-    toast("저장 완료");
-    resetForm();
-    renderTable();
-  }
-
-  function editItem(id){
-    const all = loadAll();
-    const item = all.find(x=>x.id===id);
-    if(!item) return;
-
-    editingId = id;
-    $("#f_category").value = item.category || "IT Service (IT 서비스)";
-    $("#f_systemId").value = item.systemId || "";
-    $("#f_displayName").value = item.displayName || "";
-    $("#f_ownerDept").value = item.ownerDept || "";
-    $("#f_type").value = item.type || "";
-    $("#f_location").value = item.location || "";
-    $("#f_criticality").value = item.criticality || "Critical";
-    $("#f_tags").value = (item.tags || []).join(", ");
-    $("#f_definition").value = item.definition || "";
-    $("#btnSave").textContent = "수정 저장";
-    toast("수정 모드");
-  }
-
-  function deleteItem(id){
-    if(!confirm("이 항목을 삭제할까요?")) return;
-    const all = loadAll().filter(x=>x.id!==id);
-    saveAll(all);
-    toast("삭제 완료");
-    renderTable();
-  }
-
-  function exportRegistry(){
-    const all = loadAll();
-    const blob = new Blob([JSON.stringify(all, null, 2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "bcms_system_registry_v1.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function resetAll(){
-    if(!confirm("업무 시스템 목록을 모두 삭제할까요?")) return;
-    localStorage.removeItem(KEY);
-    resetForm();
-    renderTable();
-    toast("전체 삭제 완료");
-  }
-
-  function seedDemo(){
-    const all = loadAll();
-    const demo = [
-      {
-        id:"SYSREG-DEMO-1",
-        category:"Security (보안)",
-        systemId:"IAM-SSO-01",
-        displayName:"IAM / SSO (인증/접근관리)",
-        ownerDept:"정보보안팀",
-        type:"Security/System",
-        location:"HQ / Auth Zone",
-        criticality:"High",
-        tags:["IAM","SSO","Login","Access"],
-        definition:"사용자 인증(로그인) 및 권한(접근제어)을 담당하는 핵심 시스템.",
-        createdAt:new Date().toISOString(),
-        updatedAt:new Date().toISOString()
-      },
-      {
-        id:"SYSREG-DEMO-2",
-        category:"IT Service (IT 서비스)",
-        systemId:"DB-PRIMARY-01",
-        displayName:"Primary DB (주 데이터베이스)",
-        ownerDept:"IT인프라팀",
-        type:"IT Service",
-        location:"IDC / Core DB",
-        criticality:"Critical",
-        tags:["DB","Storage","Core"],
-        definition:"핵심 트랜잭션 데이터가 저장되는 주 데이터베이스.",
-        createdAt:new Date().toISOString(),
-        updatedAt:new Date().toISOString()
-      },
-      {
-        id:"SYSREG-DEMO-3",
-        category:"Power (전력)",
-        systemId:"UPS-ROOM-01",
-        displayName:"UPS (무정전전원장치)",
-        ownerDept:"IT인프라팀",
-        type:"UPS",
-        location:"UPS Room",
-        criticality:"Critical",
-        tags:["UPS","Power","Battery","EPMS"],
-        definition:"상용전원 장애 시 부하에 안정적인 전원을 공급하는 무정전전원장치.",
-        createdAt:new Date().toISOString(),
-        updatedAt:new Date().toISOString()
-      },
-      {
-        id:"SYSREG-DEMO-4",
-        category:"Power (전력)",
-        systemId:"GEN-A-01",
-        displayName:"Generator A (비상발전기 A)",
-        ownerDept:"시설팀",
-        type:"Generator",
-        location:"Generator Room",
-        criticality:"Critical",
-        tags:["Generator","Fuel","ATS"],
-        definition:"정전 시 비상 전력을 공급하는 발전기(주요 라인).",
-        createdAt:new Date().toISOString(),
-        updatedAt:new Date().toISOString()
-      }
-    ];
-
-    const merged = [...demo.filter(d => !all.some(x=>x.id===d.id)), ...all];
-    saveAll(merged);
-    toast("데모 시드 생성");
-    renderTable();
-  }
-
-  function renderTable(){
-    const all = loadAll();
-    const q = ($("#q").value || "").trim().toLowerCase();
-
-    const filtered = !q ? all : all.filter(x => {
-      const hay = [
-        x.category, x.systemId, x.displayName, x.ownerDept, x.type, x.location, x.criticality,
-        (x.tags||[]).join(" "),
-        x.definition
-      ].join(" ").toLowerCase();
+  if (q){
+    filtered = filtered.filter(x => {
+      const hay = [x.systemId, x.displayName, x.ownerDept, x.type, x.location,
+                   x.category, (x.tags||[]).join(' '), x.definition].join(' ').toLowerCase();
       return hay.includes(q);
     });
-
-    const tbody = $("#tbody");
-    tbody.innerHTML = "";
-
-    if(!filtered.length){
-      tbody.innerHTML = `<tr><td colspan="6" style="opacity:.8;">등록된 항목이 없습니다. 왼쪽에서 추가하거나 “데모 시드”를 눌러보세요.</td></tr>`;
-      return;
-    }
-
-    filtered.forEach(x=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${esc(x.category || "-")}</td>
-        <td class="mono">${esc(x.systemId || "-")}</td>
-        <td>${esc(x.displayName || "-")}</td>
-        <td>${esc(x.ownerDept || "-")}</td>
-        <td><span class="tag ${tagClass(x.criticality)}">${esc(x.criticality || "-")}</span></td>
-        <td style="text-align:right;">
-          <button class="btn ghost" onclick="editItem('${esc(x.id)}')">수정</button>
-          <button class="btn danger" onclick="deleteItem('${esc(x.id)}')">삭제</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
   }
 
-  $("#q").addEventListener("input", ()=>{ clearTimeout(window.__t); window.__t=setTimeout(renderTable, 120); });
+  // Sort: Critical → High → Medium → Low → rest
+  filtered.sort((a,b) => (CRIT_ORDER[a.criticality]??4) - (CRIT_ORDER[b.criticality]??4));
+
+  const tbody = $('#tbody');
+  $('#listCount').textContent = filtered.length + '개';
+
+  if (!filtered.length){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">
+      ${all.length ? '검색 결과가 없습니다.' : '등록된 시스템이 없습니다. 위 폼에서 추가하거나 샘플 데이터를 불러오세요.'}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(x => {
+    const biaCount = (x.biaLinks||[]).length;
+    return `<tr>
+      <td>${catBadge(x.category)}</td>
+      <td>${esc(x.systemId||'—')}</td>
+      <td>
+        <div style="font-weight:500">${esc(x.displayName||'—')}</div>
+        ${x.location ? `<div style="font-size:.7rem;color:var(--text-2);margin-top:2px">📍 ${esc(x.location)}</div>` : ''}
+      </td>
+      <td>${esc(x.ownerDept||'—')}</td>
+      <td>${critBadge(x.criticality)}</td>
+      <td style="text-align:center">
+        <span class="bia-link-badge ${biaCount>0?'has':'none'}" title="${biaCount>0?'BIA 연계: '+(x.biaLinks||[]).join(', '):'BIA 미연계'}">
+          ${biaCount>0?biaCount:'—'}
+        </span>
+      </td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-ghost" style="font-size:.75rem;padding:.3rem .625rem"
+            onclick="editItem('${esc(x.id)}')">✏ 수정</button>
+          <button class="btn btn-danger" style="font-size:.75rem;padding:.3rem .625rem"
+            onclick="deleteItem('${esc(x.id)}')">삭제</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAll(){
+  const all = loadAll();
+  renderStats(all);
   renderTable();
+}
+
+/* ─── Filter chips ──────────────────────────────────────────── */
+$$('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    $$('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    renderTable();
+  });
+});
+
+/* ─── Search ─────────────────────────────────────────────────── */
+$('#q').addEventListener('input', () => {
+  clearTimeout(window.__qt);
+  window.__qt = setTimeout(renderTable, 140);
+});
+
+/* ─── Seed Demo ─────────────────────────────────────────────── */
+function seedDemo(){
+  const industry = (localStorage.getItem('bcmsIndustry') || '').toLowerCase();
+  const now = new Date().toISOString();
+
+  const isIDC = industry.includes('idc') || industry.includes('데이터센터') || industry.includes('data center');
+
+  const IDC_SAMPLE = [
+    {id:'SYSREG-IDC-1', systemId:'PWR-UPS-01',   displayName:'UPS 시스템 A',    category:'전력·유틸리티', criticality:'Critical', ownerDept:'시설팀',    type:'UPS',          location:'UPS Room', tags:['UPS','Power'],          definition:'상용전원 장애 시 부하에 무정전 전력을 공급하는 시스템.', biaLinks:[]},
+    {id:'SYSREG-IDC-2', systemId:'PWR-GEN-01',   displayName:'비상발전기 A',    category:'전력·유틸리티', criticality:'Critical', ownerDept:'시설팀',    type:'Generator',    location:'Generator Room', tags:['Generator','Fuel'],  definition:'정전 발생 시 비상 전력을 공급하는 발전기.', biaLinks:[]},
+    {id:'SYSREG-IDC-3', systemId:'COOL-CRAC-01', displayName:'항온항습기 A',    category:'생산·설비',     criticality:'Critical', ownerDept:'시설팀',    type:'Cooling/CRAC', location:'서버실 3F', tags:['Cooling','CRAC'],      definition:'서버실 온도·습도를 일정하게 유지하는 항온항습기.', biaLinks:[]},
+    {id:'SYSREG-IDC-4', systemId:'NET-CORE-01',  displayName:'코어 스위치',     category:'통신·네트워크', criticality:'Critical', ownerDept:'네트워크팀', type:'Network/Core', location:'IDC 코어존', tags:['Switch','Core','LAN'], definition:'데이터센터 네트워크의 핵심 레이어3 스위치.', biaLinks:[]},
+    {id:'SYSREG-IDC-5', systemId:'SEC-CCTV-01',  displayName:'CCTV 시스템',     category:'보안',          criticality:'High',     ownerDept:'보안팀',    type:'Security/System', location:'전 구역', tags:['CCTV','Security'],   definition:'시설 보안 및 출입 감시를 위한 CCTV 통합 관리 시스템.', biaLinks:[]},
+    {id:'SYSREG-IDC-6', systemId:'BAK-NAS-01',   displayName:'NAS 백업 시스템', category:'데이터·백업',   criticality:'High',     ownerDept:'IT팀',      type:'Backup/Storage', location:'백업실', tags:['NAS','Backup'],      definition:'데이터 백업 및 복구를 위한 NAS 스토리지 시스템.', biaLinks:[]},
+  ];
+
+  const GOV_SAMPLE = [
+    {id:'SYSREG-GOV-1', systemId:'IT-ERP-01',  displayName:'행정정보시스템',    category:'업무 애플리케이션', criticality:'Critical', ownerDept:'IT팀',  type:'Application',  location:'전산실', tags:['ERP','행정'],        definition:'행정 업무 전반을 지원하는 전자정부 행정정보시스템.', biaLinks:[]},
+    {id:'SYSREG-GOV-2', systemId:'IT-CMS-01',  displayName:'민원처리시스템',    category:'업무 애플리케이션', criticality:'Critical', ownerDept:'민원팀', type:'Application',  location:'전산실', tags:['민원','CMS'],        definition:'온라인·오프라인 민원 접수 및 처리를 지원하는 시스템.', biaLinks:[]},
+    {id:'SYSREG-GOV-3', systemId:'NET-FW-01',   displayName:'방화벽',           category:'보안',              criticality:'Critical', ownerDept:'IT팀',  type:'Security/System', location:'전산실', tags:['Firewall','보안'], definition:'내·외부 네트워크 경계를 보호하는 차세대 방화벽.', biaLinks:[]},
+    {id:'SYSREG-GOV-4', systemId:'PWR-UPS-01',  displayName:'UPS',              category:'전력·유틸리티',     criticality:'High',     ownerDept:'시설팀', type:'UPS',         location:'UPS Room', tags:['UPS','전력'],       definition:'전산실 무정전 전원 공급 장치.', biaLinks:[]},
+    {id:'SYSREG-GOV-5', systemId:'DB-PRIMARY-01', displayName:'주 데이터베이스', category:'데이터·백업',      criticality:'Critical', ownerDept:'IT팀',  type:'Database',    location:'전산실', tags:['DB','Oracle'],       definition:'업무 핵심 데이터가 저장되는 주 데이터베이스 서버.', biaLinks:[]},
+  ];
+
+  const seeds = isIDC ? IDC_SAMPLE : GOV_SAMPLE;
+  const all = loadAll();
+  const merged = [...seeds.filter(d => !all.some(x => x.id === d.id)).map(d => ({...d, createdAt:now, updatedAt:now})), ...all];
+  saveAll(merged);
+  toast(`🌱 ${isIDC ? 'IDC' : '공공기관'} 샘플 데이터 추가 완료`);
+  renderAll();
+}
+
+/* ─── Export ─────────────────────────────────────────────────── */
+function downloadBlob(content, filename, mime){
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON(){
+  const all = loadAll();
+  if (!all.length){ toast('내보낼 데이터가 없습니다.'); return; }
+  downloadBlob(JSON.stringify(all, null, 2), 'bcms_system_registry_v1.json', 'application/json');
+  toast('JSON 내보내기 완료');
+}
+
+function exportCSV(){
+  const all = loadAll();
+  if (!all.length){ toast('내보낼 데이터가 없습니다.'); return; }
+
+  const cols = ['systemId','displayName','category','ownerDept','type','location','criticality','tags','biaLinks','definition','createdAt','updatedAt'];
+  const hdrs = ['시스템ID','표시명','카테고리','소유부서','유형','위치','중요도','태그','BIA연계','용어정의','등록일','수정일'];
+
+  const csvQ = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = [hdrs, ...all.map(x => cols.map(c => {
+    const v = x[c];
+    return csvQ(Array.isArray(v) ? v.join(';') : v);
+  }))];
+
+  downloadBlob('﻿' + rows.map(r => r.join(',')).join('\r\n'),
+    `bcms_system_registry_${new Date().toISOString().slice(0,10)}.csv`,
+    'text/csv;charset=utf-8;');
+  toast('CSV 다운로드 완료');
+}
+
+/* ─── Theme Toggle ───────────────────────────────────────────── */
+(function(){
+  const root = document.documentElement;
+  const btn  = $('#themeToggle');
+  const saved = localStorage.getItem('bcmsTheme') || 'light';
+  root.setAttribute('data-theme', saved);
+  if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  if (btn) btn.addEventListener('click', () => {
+    const n = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', n);
+    btn.textContent = n === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('bcmsTheme', n);
+  });
+})();
+
+/* ─── Init ───────────────────────────────────────────────────── */
+renderAll();
+
+// Expose globals for inline handlers
+window.saveItem    = saveItem;
+window.editItem    = editItem;
+window.deleteItem  = deleteItem;
+window.resetForm   = resetForm;
+window.cancelEdit  = cancelEdit;
+window.resetAll    = resetAll;
+window.seedDemo    = seedDemo;
+window.exportJSON  = exportJSON;
+window.exportCSV   = exportCSV;
+window.updateBIACount = updateBIACount;
+
+})();
 </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>
