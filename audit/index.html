@@ -1,1587 +1,1383 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Audit Center | BCMS Portal v2</title>
-  <link rel="stylesheet" href="../assets/style.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>성과·심사 | BCMS Portal</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    .layout { display:flex; min-height: 100vh; }
-    #sidebarMount { flex: 0 0 auto; }
-    main { flex:1; padding: 18px 18px 28px; max-width: 1180px; margin: 0 auto; width: 100%; }
+    .wrap { max-width: 1280px; margin: 0 auto; }
 
-    /* Portfolio typography */
-    main { font-size: 16px; line-height: 1.65; }
-    .pageHead { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin: 10px 0 14px; }
-    .titleWrap h1 { margin:0; font-size: 24px; letter-spacing: .2px; }
-    .titleWrap p { margin: 6px 0 0; color: rgba(15,23,42,.58); line-height: 1.6; font-size: 14px; }
-    .rightTools { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-
-    .btn {
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(15,23,42,.04);
-      color:rgba(15,23,42,.88);
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-size: 12px;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex;
-      gap:6px;
-      align-items:center;
-      user-select:none;
-    }
-    .btn:hover { background: rgba(15,23,42,.04); }
-    .btn.danger { border-color: rgba(255,120,120,.35); }
-    .btn.ghost { background: transparent; }
-
-    /* Severity 기준표 */
-    details.sevBox{
-      margin: 8px 0 14px;
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.94);
-      border-radius:14px;
-      padding:12px;
-    }
-    details.sevBox summary{
-      cursor:pointer;
-      list-style:none;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      font-weight:900;
-    }
-    details.sevBox summary::-webkit-details-marker{ display:none; }
-    table.sevTable{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-      border:1px solid rgba(15,23,42,.12);
-      border-radius:12px;
-      overflow:hidden;
-      background: rgba(15,23,42,.04);
-      font-size:14px;
-    }
-    table.sevTable th, table.sevTable td{
-      padding:10px 10px;
-      border-bottom:1px solid rgba(15,23,42,.10);
-      vertical-align:top;
-      line-height:1.5;
-    }
-    table.sevTable th{ color:rgba(15,23,42,.62); text-align:left; }
-    table.sevTable tr:last-child td{ border-bottom:none; }
-
-    /* KPI */
-    .kpiGrid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px; margin: 12px 0 14px; }
-    @media (max-width: 980px){ .kpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 520px){ .kpiGrid { grid-template-columns: 1fr; } }
-
-    .kpi{
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.96);
-      border-radius: 14px;
-      padding: 12px 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.25);
-      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
-    }
-    .kpi:hover{
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(0,0,0,.35);
-      background: rgba(255,255,255,.98);
-    }
-    .kpi .label { color:rgba(15,23,42,.62); font-size: 13px; }
-    .kpi .value {
-      font-size: 26px;
-      margin-top: 6px;
-      font-weight: 800;
-      background: linear-gradient(90deg, #4da3ff, #7cc8ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .kpi .sub { margin-top: 4px; color:rgba(15,23,42,.62); font-size: 12px; }
-
-    /* Filters */
-    .filters {
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.94);
-      border-radius: 14px;
-      padding: 10px;
-      display:flex;
-      gap:10px;
-      flex-wrap: wrap;
-      align-items:center;
-      margin-bottom: 14px;
-    }
-    .filters .pill {
-      display:flex; align-items:center; gap:8px;
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(15,23,42,.04);
-      padding: 8px 10px;
-      border-radius: 999px;
-    }
-    .filters label { color:rgba(15,23,42,.62); font-size: 12px; }
-    .filters select, .filters input {
-      background: transparent;
-      border: none;
-      color: rgba(15,23,42,.88);
-      outline: none;
-      font-size: 14px;
-      min-width: 120px;
-    }
-    .filters input { min-width: 220px; }
-    .filters .btnRow { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
-
-    /* Sections */
-    .section {
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.94);
-      border-radius: 16px;
-      padding: 12px;
-      margin-top: 12px;
-    }
-    .sectionHead { display:flex; justify-content:space-between; align-items:flex-end; gap:10px; margin-bottom: 10px; }
-    .sectionHead h2 { margin:0; font-size: 19px; }
-    .sectionHead .hint { color:rgba(15,23,42,.62); font-size: 12px; }
-
-    /* Evidence cards */
-    .eList { display:flex; flex-direction:column; gap:10px; }
-    details.eCard {
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.96);
-      border-radius: 14px;
-      overflow:hidden;
-    }
-    details.eCard summary {
-      cursor:pointer;
-      list-style: none;
-      padding: 12px 12px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 10px;
-    }
-    details.eCard summary::-webkit-details-marker { display:none; }
-    .eMain { display:flex; flex-direction:column; gap:8px; min-width: 0; }
-    .eTopLine { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .eMeta { color:rgba(15,23,42,.62); font-size:14px; }
-    .eSubLine { display:flex; gap:10px; flex-wrap:wrap; color:rgba(15,23,42,.62); font-size:14px; }
-    .eActions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-
-    /* Badges */
-    .badge {
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border:1px solid rgba(15,23,42,.14);
-      color:rgba(15,23,42,.88);
-      background: rgba(255,255,255,.96);
-      white-space:nowrap;
-    }
-    .badge.critical { border-color: rgba(255,80,80,.55); background: rgba(255,80,80,.10); }
-    .badge.high { border-color: rgba(255,170,60,.55); background: rgba(255,170,60,.10); }
-    .badge.medium { border-color: rgba(120,200,255,.45); background: rgba(120,200,255,.10); }
-    .badge.low { border-color: rgba(170,255,170,.35); background: rgba(170,255,170,.08); }
-    .badge.state { border-color: rgba(255,255,255,.14); background: rgba(15,23,42,.04); color:rgba(15,23,42,.62); }
-
-    .badge.sev1{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); color:#fecaca; }
-    .badge.sev2{ border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
-    .badge.sev3{ border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
-    .badge.sev4{ border-color: rgba(59,130,246,.40); background: rgba(59,130,246,.10); color:#bfdbfe; }
-    .badge.sev5{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#0f172a; }
-
-    /* Details body */
-    .eBody { padding: 0 12px 12px; border-top:1px solid rgba(15,23,42,.10); }
-    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 10px; }
-    @media (max-width: 860px){ .grid2 { grid-template-columns: 1fr; } }
-
-    .box {
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(15,23,42,.04);
-      border-radius: 14px;
-      padding: 10px;
-    }
-    .box h3 { margin:0 0 8px; font-size: 13px; color:rgba(15,23,42,.88); }
-    .kv { display:grid; grid-template-columns: 130px 1fr; gap:8px 10px; }
-    .kv div { font-size: 12px; }
-    .kv .k { color:rgba(15,23,42,.62); }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-
-    .steps { display:flex; flex-direction:column; gap:8px; }
-    .step {
-      display:flex; justify-content:space-between; gap:10px;
-      padding: 8px 10px; border-radius: 12px;
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.94);
-    }
-    .step .left { display:flex; gap:8px; align-items:flex-start; min-width:0; }
-    .dot {
-      width: 10px; height: 10px; border-radius: 999px;
-      border:1px solid rgba(255,255,255,.16);
-      margin-top: 3px;
-    }
-    .dot.on { border-color: rgba(170,255,170,.6); background: rgba(170,255,170,.18); }
-    .step .txt { font-size: 14px; color:rgba(15,23,42,.88); }
-    .step .time { font-size: 12px; color:rgba(15,23,42,.62); white-space:nowrap; }
-
-    .empty {
-      color:rgba(15,23,42,.62);
-      font-size: 13px;
-      padding: 14px;
-      border-radius: 14px;
-      border:1px dashed rgba(255,255,255,.16);
-      background: rgba(15,23,42,.03);
+    .demoBannerSmall {
+      margin-bottom: 20px !important; padding: 7px 14px !important;
+      border: 0.5px solid rgba(0,112,243,.18) !important;
+      background: rgba(0,112,243,.04) !important;
+      border-radius: 8px !important; display: flex !important;
+      gap: 10px !important; flex-wrap: wrap !important; align-items: center !important;
     }
 
-    .toast {
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      max-width: 420px;
-      border:1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.98);
-      color:rgba(15,23,42,.88);
-      padding: 10px 12px;
-      border-radius: 12px;
-      box-shadow: 0 10px 26px rgba(0,0,0,.35);
-      font-size: 12px;
-      opacity: 0;
-      transform: translateY(8px);
-      pointer-events:none;
-      transition: .2s ease;
-      z-index:9999;
+    .hero { padding-bottom: 24px; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; }
+    .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+    .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+    .metricsStrip { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 24px; }
+    .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+    .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
+    .metric .v.word { font-size: 14px; font-family: inherit; }
+    .metric .v.accent { color: var(--accent); }
+    .metric .v.warn   { color: #dc2626; }
+
+    .tabNav { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
+    .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
+    .tabPane.hidden { display: none; }
+
+    /* ── shared ── */
+    .sectionCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 12px; }
+    .sectionCard:last-child { margin-bottom: 0; }
+    .cardHeader { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; background: var(--surface-hover); }
+    .cardHeader:hover { background: var(--bg); }
+    .cardHeaderToggle { font-size: 10px; color: var(--text-3); flex-shrink: 0; }
+    .cardBody { padding: 0; }
+    .cardBody.collapsed { display: none; }
+    .empty { padding: 32px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+    .controlRow { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 14px 18px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .field select, .field input { min-width: 130px; }
+    .formGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .formGrid .full  { grid-column: 1/-1; }
+    .formGrid .half2 { grid-column: span 2; }
+    .formRow { display: flex; flex-direction: column; gap: 5px; }
+    .formRow label { font-size: 11px; font-weight: 600; color: var(--text-2); letter-spacing: .02em; text-transform: uppercase; }
+    .formRow input, .formRow select, .formRow textarea { width: 100%; }
+    .formRow textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+    .formActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 0.5px solid var(--border); }
+    .idDisplay { font-size: 13px; font-weight: 600; font-family: "SF Mono","Consolas",monospace; color: var(--accent); background: var(--accent-subtle); border: 0.5px solid var(--accent-border) !important; border-radius: var(--r-sm); padding: 7px 11px; }
+
+    .tableSection { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .tableHeader  { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 8px; }
+    .tableHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .tableWrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 11px; font-weight: 600; padding: 9px 10px; text-align: left; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; }
+    td { font-size: 13px; padding: 9px 10px; vertical-align: middle; border-bottom: 0.5px solid var(--border); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface-hover); }
+
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 5px; border: 0.5px solid; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge.done    { background: rgba(34,197,94,.08);  color:#16a34a; border-color:rgba(34,197,94,.25); }
+    .badge.inprog  { background: rgba(245,158,11,.08); color:#b45309; border-color:rgba(245,158,11,.25); }
+    .badge.none    { background: rgba(239,68,68,.08);  color:#dc2626; border-color:rgba(239,68,68,.25); }
+    .badge.na      { background: rgba(156,163,175,.08);color:#6b7280; border-color:rgba(156,163,175,.25); }
+    .badge.plan    { background: rgba(99,102,241,.08); color:#4338ca; border-color:rgba(99,102,241,.25); }
+
+    /* ── Gap Analysis ── */
+    .gapGaugeCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px; }
+    .gapGaugeLabel { font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 80px; }
+    .gapGaugeTrack { flex: 1; height: 12px; background: var(--bg); border-radius: 999px; overflow: hidden; border: 0.5px solid var(--border); }
+    .gapGaugeFill  { height: 100%; border-radius: 999px; background: var(--accent); transition: width .4s; }
+    .gapGaugePct   { font-size: 14px; font-weight: 700; color: var(--text); min-width: 44px; text-align: right; font-family: "SF Mono","Consolas",monospace; }
+    .gapSaveBtn    { flex-shrink: 0; }
+
+    .clauseNum { font-size: 12px; font-weight: 700; font-family: "SF Mono","Consolas",monospace; color: var(--accent); background: var(--accent-subtle); padding: 2px 8px; border-radius: 5px; border: 0.5px solid var(--accent-border); white-space: nowrap; flex-shrink: 0; }
+    .clauseTitle { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; }
+    .clausePct { font-size: 12px; font-weight: 700; font-family: "SF Mono","Consolas",monospace; color: var(--text-2); white-space: nowrap; flex-shrink: 0; min-width: 36px; text-align: right; }
+    .clauseBar { width: 80px; height: 6px; background: var(--bg); border-radius: 999px; overflow: hidden; border: 0.5px solid var(--border); flex-shrink: 0; }
+    .clauseFill { height: 100%; border-radius: 999px; background: var(--accent); }
+
+    .subClauseRow { background: var(--bg); }
+    .subClauseRow td { font-size: 12px; font-weight: 700; color: var(--text-2); padding: 7px 10px; border-bottom: 0.5px solid var(--border); }
+    .reqTable { min-width: 860px; }
+    .reqTable .reqDesc { font-size: 12px; color: var(--text); max-width: 280px; line-height: 1.4; }
+    .reqTable select.statusDrp { font-size: 11px; padding: 4px 6px; min-width: 90px; border-radius: 5px; }
+    .reqTable input.evInput, .reqTable input.asgnInput, .reqTable input.noteInput { font-size: 12px; padding: 5px 7px; }
+    .reqTable input.evInput  { min-width: 160px; }
+    .reqTable input.asgnInput { min-width: 80px; }
+    .reqTable input.noteInput { min-width: 100px; }
+
+    /* ── Disaster Reduction ── */
+    .drHeader { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 0.5px solid var(--border); background: var(--surface-hover); }
+    .drHeaderTitle { font-size: 14px; font-weight: 700; color: var(--text); }
+    .drMaxScore { font-size: 11px; font-weight: 600; color: var(--text-3); background: var(--bg); border: 0.5px solid var(--border); padding: 2px 8px; border-radius: 5px; }
+    .drItemRow { display: grid; grid-template-columns: 1fr auto auto 200px; gap: 12px; align-items: start; padding: 14px 18px; border-bottom: 0.5px solid var(--border); }
+    .drItemRow:last-child { border-bottom: none; }
+    .drItemTitle { font-size: 13px; font-weight: 600; color: var(--text); }
+    .drItemRef   { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+    .drScoreWrap { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+    .drScoreWrap label { font-size: 10px; font-weight: 600; color: var(--text-2); text-transform: uppercase; }
+    .drScoreInput { width: 70px; text-align: center; font-size: 14px; font-weight: 700; font-family: "SF Mono","Consolas",monospace; }
+    .drMaxLabel { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .drEvidenceInput { font-size: 12px; resize: vertical; min-height: 48px; }
+
+    .gradeSection { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 20px 24px; margin-top: 14px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .gradeTotalLabel { font-size: 13px; font-weight: 600; color: var(--text-2); }
+    .gradeTotalScore { font-size: 32px; font-weight: 800; font-family: "SF Mono","Consolas",monospace; color: var(--accent); }
+    .gradeOf { font-size: 16px; color: var(--text-3); font-weight: 500; align-self: flex-end; margin-bottom: 6px; }
+    .gradeBadge { font-size: 16px; font-weight: 800; padding: 6px 18px; border-radius: 8px; border: 0.5px solid; }
+    .gradeBadge.A { background: rgba(34,197,94,.1); color:#16a34a; border-color:rgba(34,197,94,.3); }
+    .gradeBadge.B { background: rgba(245,158,11,.1); color:#b45309; border-color:rgba(245,158,11,.3); }
+    .gradeBadge.C { background: rgba(239,68,68,.1);  color:#dc2626; border-color:rgba(239,68,68,.3); }
+    .drGaugeTrack { flex: 1; height: 10px; background: var(--bg); border-radius: 999px; overflow: hidden; border: 0.5px solid var(--border); min-width: 120px; }
+    .drGaugeFill  { height: 100%; border-radius: 999px; background: var(--accent); transition: width .4s; }
+
+    /* ── CAPA priority / status tags ── */
+    .prio-긴급 { background: rgba(239,68,68,.1);  color:#dc2626; border-color:rgba(239,68,68,.3); }
+    .prio-높음 { background: rgba(249,115,22,.1); color:#c2410c; border-color:rgba(249,115,22,.3); }
+    .prio-중간 { background: rgba(245,158,11,.1); color:#b45309; border-color:rgba(245,158,11,.3); }
+    .prio-낮음 { background: rgba(34,197,94,.1);  color:#16a34a; border-color:rgba(34,197,94,.3); }
+
+    .sts-미착수 { background: rgba(156,163,175,.08); color:#6b7280; border-color:rgba(156,163,175,.3); }
+    .sts-진행중 { background: rgba(245,158,11,.08); color:#b45309; border-color:rgba(245,158,11,.25); }
+    .sts-완료   { background: rgba(34,197,94,.08);  color:#16a34a; border-color:rgba(34,197,94,.25); }
+    .sts-지연   { background: rgba(239,68,68,.08);  color:#dc2626; border-color:rgba(239,68,68,.25); }
+
+    tr.lateRow td { background: rgba(239,68,68,.03) !important; }
+    tr.lateRow:hover td { background: rgba(239,68,68,.07) !important; }
+
+    .capaGaugeCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .capaGaugeLabel { font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 80px; }
+    .capaGaugeTrack { flex: 1; height: 10px; background: var(--bg); border-radius: 999px; overflow: hidden; border: 0.5px solid var(--border); min-width: 100px; }
+    .capaGaugeFill  { height: 100%; border-radius: 999px; background: var(--accent); transition: width .4s; }
+    .capaGaugePct   { font-size: 13px; font-weight: 700; font-family: "SF Mono","Consolas",monospace; color: var(--text); min-width: 44px; text-align: right; }
+    .capaStatChip { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; }
+
+    .entryPanel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 22px 24px; margin-bottom: 14px; }
+    .entryPanel.hidden { display: none; }
+
+    @media (max-width: 960px) {
+      .metricsStrip { grid-template-columns: repeat(2,1fr); }
+      .formGrid { grid-template-columns: 1fr 1fr; }
+      .formGrid .full  { grid-column: 1/-1; }
+      .formGrid .half2 { grid-column: 1/-1; }
+      .drItemRow { grid-template-columns: 1fr auto; }
     }
-    .toast.on { opacity:1; transform: translateY(0); }
+    @media (max-width: 640px) {
+      .metricsStrip { grid-template-columns: 1fr 1fr; }
+      .formGrid { grid-template-columns: 1fr; }
+      .drItemRow { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
-
 <body>
-  <div class="layout">
-    <aside id="sidebarMount"></aside>
+  <aside id="sidebarMount"></aside>
+  <main class="main">
+    <div class="wrap">
 
-    <main>
-      <div class="pageHead">
-        <div class="titleWrap">
-          <h1>Audit Center (평가/감사)</h1>
-          <p>DR/EOP 실행 로그 및 Training 기록을 기반으로 증적(Evidence)을 조회·필터·내보내기 할 수 있습니다. (Check / Evidence Layer)</p>
+      <section class="hero">
+        <h1>성과·심사 (Performance &amp; Audit)</h1>
+        <p>ISO 22301 갭분석, 재해경감우수기업 자가평가, 내부심사 관리, CAPA 개선조치를 통합 관리합니다.<br>
+          연동: <b>bcmsGapAnalysis</b> · <b>bcmsDisasterReduction</b> · <b>bcmsAuditData</b> · <b>bcmsCapaItems</b></p>
+      </section>
+
+      <!-- Summary Metrics -->
+      <div class="metricsStrip">
+        <div class="metric">
+          <div class="k">ISO 22301 충족률</div>
+          <div class="v accent" id="mIso">-</div>
         </div>
-        <div class="rightTools">
-          <button class="btn" id="btnSeedDemo">🧪 Demo Seed</button>
-          <button class="btn" id="btnExportSnapshot">📤 Audit Snapshot</button>
-          <button class="btn danger" id="btnClearFiltered">🧹 필터 결과 삭제</button>
+        <div class="metric">
+          <div class="k">재해경감우수기업 충족률</div>
+          <div class="v accent" id="mDisaster">-</div>
+        </div>
+        <div class="metric">
+          <div class="k">미완료 CAPA</div>
+          <div class="v warn" id="mCapa">-</div>
+        </div>
+        <div class="metric">
+          <div class="k">다음 심사 예정 (D-day)</div>
+          <div class="v word" id="mNextAudit">-</div>
         </div>
       </div>
 
-      <!-- ✅ Severity 기준표 -->
-      <details class="sevBox" open>
-        <summary>
-          <span>📌 Severity Level (상황등급) 기준표</span>
-          <span class="mini" style="margin:0; color:rgba(15,23,42,.62); font-weight:800;">(클릭하면 접기/펼치기)</span>
-        </summary>
+      <!-- Tab nav -->
+      <div class="tabNav">
+        <button class="tabBtn active" id="tabGap"      type="button">ISO 22301 갭분석</button>
+        <button class="tabBtn"        id="tabDisaster" type="button">재해경감우수기업 점검</button>
+        <button class="tabBtn"        id="tabAudit"    type="button">내부심사 관리</button>
+        <button class="tabBtn"        id="tabCapa"     type="button">CAPA (개선조치)</button>
+      </div>
 
-        <table class="sevTable">
-          <thead>
-            <tr>
-              <th style="width:120px;">등급</th>
-              <th>정의(요약)</th>
-              <th>예시</th>
-              <th style="width:190px;">권장 대응</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="badge sev1">SEV1 (최고)</span></td>
-              <td>전사/대규모 중단 또는 DC 전력/냉각 핵심 상실, 대외 리스크 가능</td>
-              <td>UPS/발전/수전 이상으로 서비스 전반 중단 위험</td>
-              <td>비상대응 가동, War-room, 24/7 복구</td>
-            </tr>
-            <tr>
-              <td><span class="badge sev2">SEV2 (높음)</span></td>
-              <td>핵심 기능 영향/부분 중단, 다수 사용자 영향</td>
-              <td>인증/전력 계통 일부 이상으로 핵심 존 영향</td>
-              <td>즉시 조치, 1~2시간 단위 보고</td>
-            </tr>
-            <tr>
-              <td><span class="badge sev3">SEV3 (중간)</span></td>
-              <td>일부 기능 영향, 우회 가능, 제한된 사용자 영향</td>
-              <td>설비 경고/부분 성능저하</td>
-              <td>업무시간 내 복구, 재발방지 등록</td>
-            </tr>
-            <tr>
-              <td><span class="badge sev4">SEV4 (낮음)</span></td>
-              <td>경미한 결함/지연, 영향 제한</td>
-              <td>비핵심 기능 오류/경고</td>
-              <td>계획 수리, 정기 배포/점검</td>
-            </tr>
-            <tr>
-              <td><span class="badge sev5">SEV5 (정보)</span></td>
-              <td>관찰/점검/정보성 이벤트</td>
-              <td>테스트 로그</td>
-              <td>기록 유지</td>
-            </tr>
-          </tbody>
-        </table>
-      </details>
+      <!-- ═══════════════════════════════════════
+           Tab 1: ISO 22301 갭분석
+      ═══════════════════════════════════════ -->
+      <div id="paneGap">
+        <div class="gapGaugeCard">
+          <span class="gapGaugeLabel">전체 이행율</span>
+          <div class="gapGaugeTrack"><div class="gapGaugeFill" id="gapGaugeFill" style="width:0%"></div></div>
+          <span class="gapGaugePct" id="gapGaugePct">0%</span>
+          <button class="btn primary gapSaveBtn" id="btnGapSave" type="button">변경사항 저장</button>
+        </div>
+        <div id="gapMount"></div>
+      </div>
 
-      <!-- KPI -->
-      <section class="kpiGrid" aria-label="KPI">
-        <div class="kpi">
-          <div class="label">DR 실행 건수</div>
-          <div class="value" id="kpiDrCount">-</div>
-          <div class="sub" id="kpiDrCountSub">-</div>
+      <!-- ═══════════════════════════════════════
+           Tab 2: 재해경감우수기업 점검
+      ═══════════════════════════════════════ -->
+      <div id="paneDisaster" class="tabPane hidden">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <button class="btn primary" id="btnDrSave" type="button">저장</button>
         </div>
-        <div class="kpi">
-          <div class="label">평균 완료율</div>
-          <div class="value" id="kpiAvgCompletion">-</div>
-          <div class="sub" id="kpiAvgCompletionSub">-</div>
+        <div id="drMount"></div>
+        <div class="gradeSection" id="gradeSection">
+          <div>
+            <div class="gradeTotalLabel">총점</div>
+            <div style="display:flex;align-items:flex-end;gap:6px">
+              <span class="gradeTotalScore" id="drTotalScore">0</span>
+              <span class="gradeOf">/ 100점</span>
+            </div>
+          </div>
+          <div class="drGaugeTrack"><div class="drGaugeFill" id="drGaugeFill" style="width:0%"></div></div>
+          <span class="gradeBadge C" id="drGradeBadge">보통</span>
+          <span style="font-size:12px;color:var(--text-3)">(우수 80점↑ · 양호 60점↑ · 보통 60점 미만)</span>
         </div>
-        <div class="kpi">
-          <div class="label">평균 소요시간</div>
-          <div class="value" id="kpiAvgDuration">-</div>
-          <div class="sub" id="kpiAvgDurationSub">-</div>
-        </div>
-        <div class="kpi">
-          <div class="label">미완료 실행</div>
-          <div class="value" id="kpiOpenCount">-</div>
-          <div class="sub" id="kpiOpenCountSub">-</div>
-        </div>
-      </section>
+      </div>
 
-      <!-- Filters -->
-      <section class="filters" aria-label="Filters">
-        <div class="pill">
-          <label for="fDept">부서</label>
-          <select id="fDept"></select>
+      <!-- ═══════════════════════════════════════
+           Tab 3: 내부심사 관리
+      ═══════════════════════════════════════ -->
+      <div id="paneAudit" class="tabPane hidden">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <button class="btn" id="btnAuditToggle" type="button">+ 심사 등록</button>
         </div>
 
-        <div class="pill">
-          <label for="fSev">상황등급</label>
-          <select id="fSev">
-            <option value="__ALL__">전체</option>
-            <option value="1">SEV1</option>
-            <option value="2">SEV2</option>
-            <option value="3">SEV3</option>
-            <option value="4">SEV4</option>
-            <option value="5">SEV5</option>
-          </select>
-        </div>
-
-        <div class="pill">
-          <label for="fLevel">중요도</label>
-          <select id="fLevel">
-            <option value="__ALL__">전체</option>
-            <option value="Critical">Critical</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
-        </div>
-
-        <div class="pill">
-          <label for="fStatus">상태</label>
-          <select id="fStatus">
-            <option value="__ALL__">전체</option>
-            <option value="Completed">Completed</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Planned">Planned</option>
-            <option value="Closed">Closed</option>
-          </select>
-        </div>
-
-        <div class="pill">
-          <label for="fDays">기간</label>
-          <select id="fDays">
-            <option value="__ALL__">전체</option>
-            <option value="7">최근 7일</option>
-            <option value="30">최근 30일</option>
-            <option value="90">최근 90일</option>
-          </select>
-        </div>
-
-        <div class="pill">
-          <label for="fQ">검색</label>
-          <input id="fQ" placeholder="시스템/설비/이벤트/Registry/메모 키워드" />
-        </div>
-
-        <div class="btnRow">
-          <button class="btn" id="btnResetFilters">🔄 필터 초기화</button>
-          <button class="btn" id="btnExportDrAll">📤 DR 전체 Export</button>
-          <button class="btn" id="btnExportEopAll">📤 EOP 전체 Export</button>
-          <button class="btn" id="btnExportTrAll">📤 Training 전체 Export</button>
-        </div>
-      </section>
-
-      <!-- DR Evidence -->
-      <section class="section">
-        <div class="sectionHead">
-          <h2>1) DR Execution Evidence</h2>
-          <div class="hint">읽는 키: <span class="mono">localStorage["bcms_drp_exec_logs"]</span></div>
-        </div>
-        <div class="eList" id="drList"></div>
-      </section>
-
-      <!-- EOP Evidence -->
-      <section class="section">
-        <div class="sectionHead">
-          <h2>2) EOP Execution Evidence</h2>
-          <div class="hint">
-            읽는 키: <span class="mono">localStorage["bcms_eop_exec_logs"]</span> /
-            Registry 키: <span class="mono">localStorage["bcms_system_registry_v1"]</span>
+        <div class="entryPanel hidden" id="auditEntryPanel">
+          <div class="formGrid">
+            <div class="formRow">
+              <label>심사 ID <span style="font-weight:400;text-transform:none">(자동)</span></label>
+              <div class="idDisplay" id="newAudId">AUD-2026-001</div>
+            </div>
+            <div class="formRow half2">
+              <label>심사명</label>
+              <input type="text" id="aName" placeholder="예: 2026년 상반기 ISO 22301 내부심사">
+            </div>
+            <div class="formRow">
+              <label>심사 유형</label>
+              <select id="aType">
+                <option value="">선택하세요</option>
+                <option>내부심사</option>
+                <option>경영검토</option>
+                <option>사전심사</option>
+              </select>
+            </div>
+            <div class="formRow">
+              <label>심사 계획일</label>
+              <input type="date" id="aPlanDate">
+            </div>
+            <div class="formRow">
+              <label>심사원</label>
+              <input type="text" id="aAuditor" placeholder="심사원 성명">
+            </div>
+            <div class="formRow full">
+              <label>심사 범위 (대상 조항/부서)</label>
+              <input type="text" id="aScope" placeholder="예: ISO 22301 조항 4~10, 전체 부서">
+            </div>
+            <div class="formRow full" style="border-top:0.5px solid var(--border);padding-top:14px;margin-top:4px">
+              <label style="color:var(--text)">심사 결과 입력 <span style="font-weight:400;color:var(--text-3);text-transform:none">(완료 후 입력)</span></label>
+            </div>
+            <div class="formRow">
+              <label>실제 심사일</label>
+              <input type="date" id="aActualDate">
+            </div>
+            <div class="formRow half2">
+              <label>종합 의견</label>
+              <textarea id="aOverallComment" placeholder="심사 종합 의견을 입력하세요"></textarea>
+            </div>
+            <div class="formRow half2">
+              <label>적합 사항</label>
+              <textarea id="aConformity" placeholder="적합하게 이행된 사항을 기록하세요"></textarea>
+            </div>
+            <div class="formRow">
+              <label>차기 심사 예정일</label>
+              <input type="date" id="aNextDate">
+            </div>
+            <div class="formRow full">
+              <label>부적합 사항 <span style="font-weight:400;text-transform:none;color:var(--text-3)">(CAPA 자동 등록 가능)</span></label>
+              <textarea id="aNonconformity" placeholder="부적합 사항을 기록하세요 (여러 개는 줄바꿈으로 구분)"></textarea>
+            </div>
+            <div class="formRow full">
+              <label>관찰 사항</label>
+              <textarea id="aObservation" placeholder="관찰 사항을 기록하세요"></textarea>
+            </div>
+          </div>
+          <div class="formActions">
+            <button class="btn" type="button" id="btnAuditCancel">취소</button>
+            <button class="btn" type="button" id="btnAuditNcToCapa" style="color:var(--accent);border-color:var(--accent-border)">부적합 → CAPA 자동 등록</button>
+            <button class="btn primary" type="button" id="btnAuditSave">심사 저장</button>
           </div>
         </div>
-        <div class="eList" id="eopList"></div>
-      </section>
 
-      <!-- Training Evidence -->
-      <section class="section">
-        <div class="sectionHead">
-          <h2>3) Training Evidence</h2>
-          <div class="hint">읽는 키: <span class="mono">localStorage["bcms_training_records_v2"]</span></div>
+        <!-- ISO gap summary linkage -->
+        <div class="sectionCard" style="margin-bottom:12px">
+          <div class="cardHeader" style="cursor:default">
+            <span style="font-size:13px;font-weight:600;color:var(--text)">ISO 22301 갭분석 연동 현황</span>
+            <span style="font-size:12px;color:var(--text-3);margin-left:auto" id="auditGapSummary">갭분석 탭 데이터 연동 중...</span>
+          </div>
         </div>
-        <div class="eList" id="trList"></div>
-      </section>
 
-      <!-- Export Tools -->
-      <section class="section">
-        <div class="sectionHead">
-          <h2>4) Export & Tools</h2>
-          <div class="hint">Audit 대응용 JSON 스냅샷 다운로드 / 필터 기반 삭제</div>
+        <div class="tableSection">
+          <div class="tableHeader">
+            <h2>심사 이력</h2>
+            <span style="font-size:12px;color:var(--text-3)" id="auditCount">0건</span>
+          </div>
+          <div class="tableWrap">
+            <table style="min-width:900px">
+              <colgroup>
+                <col style="width:120px"><col style="width:200px"><col style="width:90px">
+                <col style="width:100px"><col style="width:120px"><col style="width:80px">
+                <col style="width:90px"><col style="width:80px"><col style="width:80px">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>심사 ID</th><th>심사명</th><th>유형</th>
+                  <th>계획일</th><th>심사원</th><th>부적합 수</th>
+                  <th>CAPA 완료율</th><th>상태</th><th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody"></tbody>
+            </table>
+          </div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn" id="btnExportFiltered">📤 필터 결과 Export</button>
-          <button class="btn danger" id="btnClearAll">🧨 전체 데이터 초기화(감사)</button>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           Tab 4: CAPA (개선조치)
+      ═══════════════════════════════════════ -->
+      <div id="paneCapa" class="tabPane hidden">
+        <div class="capaGaugeCard">
+          <span class="capaGaugeLabel">완료율</span>
+          <div class="capaGaugeTrack"><div class="capaGaugeFill" id="capaGaugeFill" style="width:0%"></div></div>
+          <span class="capaGaugePct" id="capaGaugePct">0%</span>
+          <span class="capaStatChip" id="capaStatChip">완료 0 / 전체 0</span>
+          <button class="btn" id="btnCapaToggle" type="button" style="margin-left:auto">+ CAPA 등록</button>
         </div>
-        <p style="margin:10px 0 0; color:rgba(15,23,42,.62); font-size:12px; line-height:1.6;">
-          ※ <b>전체 데이터 초기화</b>는 Demo 환경에서만 사용하세요. 실 운영이라면 Admin 권한 영역으로 분리하는 것이 적절합니다.
-        </p>
-      </section>
-    </main>
-  </div>
 
-  <div class="toast" id="toast"></div>
+        <div class="entryPanel hidden" id="capaEntryPanel">
+          <div class="formGrid">
+            <div class="formRow">
+              <label>CAPA ID <span style="font-weight:400;text-transform:none">(자동)</span></label>
+              <div class="idDisplay" id="newCapaId">CAP-2026-001</div>
+            </div>
+            <div class="formRow half2">
+              <label>제목</label>
+              <input type="text" id="cTitle" placeholder="개선조치 제목을 입력하세요">
+            </div>
+            <div class="formRow">
+              <label>발생 원인</label>
+              <select id="cSource" id="cSource">
+                <option value="">선택하세요</option>
+                <option value="훈련결과">훈련결과</option>
+                <option value="내부심사">내부심사</option>
+                <option value="사고">사고</option>
+                <option value="경영검토">경영검토</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div class="formRow">
+              <label>연계 출처 ID</label>
+              <select id="cSourceRef">
+                <option value="">선택하세요</option>
+              </select>
+            </div>
+            <div class="formRow">
+              <label>우선순위</label>
+              <select id="cPriority">
+                <option value="중간">중간</option>
+                <option value="긴급">긴급</option>
+                <option value="높음">높음</option>
+                <option value="낮음">낮음</option>
+              </select>
+            </div>
+            <div class="formRow half2">
+              <label>부적합 내용</label>
+              <textarea id="cNcDesc" placeholder="발생한 부적합 또는 문제 내용을 기술하세요"></textarea>
+            </div>
+            <div class="formRow">
+              <label>담당자</label>
+              <input type="text" id="cAssignee" placeholder="담당자 성명">
+            </div>
+            <div class="formRow half2">
+              <label>근본원인 분석</label>
+              <textarea id="cRootCause" placeholder="5-Why 등 근본원인 분석 결과"></textarea>
+            </div>
+            <div class="formRow">
+              <label>목표 완료일</label>
+              <input type="date" id="cTargetDate">
+            </div>
+            <div class="formRow half2">
+              <label>시정조치 내용</label>
+              <textarea id="cCorrectiveAction" placeholder="문제를 해결하기 위한 시정조치를 기술하세요"></textarea>
+            </div>
+            <div class="formRow half2">
+              <label>예방조치 내용</label>
+              <textarea id="cPreventiveAction" placeholder="재발 방지를 위한 예방조치를 기술하세요"></textarea>
+            </div>
+          </div>
+          <div class="formActions">
+            <button class="btn" type="button" id="btnCapaCancel">취소</button>
+            <button class="btn primary" type="button" id="btnCapaSave">CAPA 저장</button>
+          </div>
+        </div>
 
+        <div class="controlRow">
+          <div class="field">
+            <label>상태 필터</label>
+            <select id="capaStatusFilter">
+              <option value="">전체 상태</option>
+              <option value="미착수">미착수</option>
+              <option value="진행중">진행중</option>
+              <option value="완료">완료</option>
+              <option value="지연">지연</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>우선순위 필터</label>
+            <select id="capaPrioFilter">
+              <option value="">전체</option>
+              <option value="긴급">긴급</option>
+              <option value="높음">높음</option>
+              <option value="중간">중간</option>
+              <option value="낮음">낮음</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>원인 필터</label>
+            <select id="capaSourceFilter">
+              <option value="">전체</option>
+              <option value="훈련결과">훈련결과</option>
+              <option value="내부심사">내부심사</option>
+              <option value="사고">사고</option>
+              <option value="경영검토">경영검토</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tableSection">
+          <div class="tableHeader">
+            <h2>CAPA 목록</h2>
+            <span style="font-size:12px;color:var(--text-3)" id="capaCount">0건</span>
+          </div>
+          <div class="tableWrap">
+            <table style="min-width:1000px">
+              <colgroup>
+                <col style="width:110px"><col style="width:180px"><col style="width:80px">
+                <col style="width:90px"><col style="width:100px"><col style="width:90px">
+                <col style="width:70px"><col style="width:120px"><col style="width:100px">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>CAPA ID</th><th>제목</th><th>원인유형</th>
+                  <th>담당자</th><th>목표완료일</th><th>진행상태</th>
+                  <th>우선순위</th><th>상태 변경</th><th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="capaTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .wrap -->
+  </main>
+
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/demo-seed.js"></script>
   <script>
-    const KEY_DRP = "bcms_drp_exec_logs";
-    const KEY_EOP = "bcms_eop_exec_logs";
-    const KEY_TRN = "bcms_training_records_v2";
-    const KEY_SYS = "bcms_system_registry_v1"; // ✅ Registry
+  'use strict';
 
-    const $ = (sel) => document.querySelector(sel);
+  /* ─── Utilities ─── */
+  const esc = s => String(s ?? '').replace(/[&<>"']/g,
+    m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const loadJSON = (key, fb) => {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; }
+    catch { return fb; }
+  };
+  const saveJSON = (key, val) => {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  };
+  const today = () => new Date().toISOString().slice(0, 10);
+  const thisYear = new Date().getFullYear();
 
-    function toast(msg){
-      const t = $("#toast");
-      if (!t) return;
-      t.textContent = msg;
-      t.classList.add("on");
-      clearTimeout(toast._tm);
-      toast._tm = setTimeout(() => t.classList.remove("on"), 1800);
+  /* ─── Storage keys ─── */
+  const GAP_KEY      = 'bcmsGapAnalysis';
+  const DR_KEY       = 'bcmsDisasterReduction';
+  const AUDIT_KEY    = 'bcmsAuditData';
+  const CAPA_KEY     = 'bcmsCapaItems';
+
+  /* ═══════════════════════════════════════════
+     ISO 22301 Clause definitions
+  ═══════════════════════════════════════════ */
+  const ISO_CLAUSES = [
+    { num: '4', title: '조직 상황', items: [
+      { num: '4.1', title: '조직 및 상황 이해', reqs: [
+        '조직 내·외부 이슈 파악 및 문서화',
+        'BCMS 목적과 관련된 이슈를 정기적으로 모니터링·검토',
+      ]},
+      { num: '4.2', title: '이해관계자 니즈 파악', reqs: [
+        '이해관계자 식별 및 니즈·기대 결정',
+        '법적·규제적·계약적 요구사항 식별 및 문서화',
+      ]},
+      { num: '4.3', title: 'BCMS 적용 범위 결정', reqs: [
+        'BCMS 적용 범위 문서화',
+        '범위 내 제품·서비스 및 업무활동 명시',
+      ]},
+      { num: '4.4', title: 'BCMS 수립', reqs: [
+        'BCMS 수립·실행·유지·지속적 개선 프로세스 확립',
+      ]},
+    ]},
+    { num: '5', title: '리더십', items: [
+      { num: '5.1', title: '리더십과 의지표명', reqs: [
+        '최고경영자의 BCMS 책임 이행 및 지원 확인',
+        'BCMS 목표와 조직전략의 연계',
+      ]},
+      { num: '5.2', title: '방침', reqs: [
+        'BCMS 방침 수립·문서화·의사소통',
+        '업무연속성 목표와 부합하는 방침 유지',
+      ]},
+      { num: '5.3', title: '역할, 책임 및 권한', reqs: [
+        'BCMS 관련 역할·책임·권한 부여 및 의사소통',
+      ]},
+    ]},
+    { num: '6', title: '기획', items: [
+      { num: '6.1', title: '리스크와 기회 다루는 조치', reqs: [
+        'BCMS 관련 리스크와 기회 결정',
+        '리스크와 기회를 다루는 조치 계획 및 실행',
+      ]},
+      { num: '6.2', title: '업무연속성 목표 및 달성 기획', reqs: [
+        '측정 가능한 업무연속성 목표 수립·문서화',
+        '목표 달성을 위한 실행계획 수립',
+      ]},
+    ]},
+    { num: '7', title: '지원', items: [
+      { num: '7.1', title: '자원', reqs: ['BCMS 운영에 필요한 자원 결정 및 제공'] },
+      { num: '7.2', title: '역량', reqs: [
+        'BCMS 관련 인원 역량 결정',
+        '역량 확보·유지를 위한 조치 실행',
+      ]},
+      { num: '7.3', title: '인식', reqs: ['BCMS 방침·목표·역할에 대한 조직 내 인식 제고'] },
+      { num: '7.4', title: '의사소통', reqs: ['내·외부 의사소통 계획 수립 및 실행'] },
+      { num: '7.5', title: '문서화된 정보', reqs: [
+        'BCMS 요구 문서화된 정보 유지',
+        '문서 생성·갱신·관리 절차 운영',
+      ]},
+    ]},
+    { num: '8', title: '운용', items: [
+      { num: '8.1', title: '운용 기획 및 관리', reqs: ['BCMS 프로세스 기획·실행·관리'] },
+      { num: '8.2', title: '업무영향분석 (BIA)', reqs: [
+        'BIA 수행 및 문서화',
+        '핵심업무 우선순위·MTPD·RTO·RPO 결정',
+      ]},
+      { num: '8.3', title: '리스크 평가', reqs: [
+        '리스크 평가 수행 및 문서화',
+        '리스크 처리 옵션 결정 및 실행',
+      ]},
+      { num: '8.4', title: '업무연속성 전략 및 솔루션', reqs: [
+        '업무연속성 전략 결정',
+        '전략 실행을 위한 솔루션 선정·실행',
+      ]},
+      { num: '8.5', title: '업무연속성 계획 및 절차', reqs: [
+        'BCP 문서화·유지',
+        '비상대응 절차 수립 및 비상대응팀 지정',
+      ]},
+      { num: '8.6', title: '훈련 및 시험', reqs: [
+        '훈련·시험 프로그램 수립·실행·문서화',
+        '훈련 결과 검토 및 BCP 개선 반영',
+      ]},
+    ]},
+    { num: '9', title: '성과 평가', items: [
+      { num: '9.1', title: '모니터링, 측정, 분석 및 평가', reqs: [
+        'BCMS 성과 모니터링·측정 방법 결정 및 실행',
+        '분석·평가 결과 문서화',
+      ]},
+      { num: '9.2', title: '내부심사', reqs: [
+        '내부심사 프로그램 수립·실행',
+        '심사 결과 경영층에 보고 및 조치',
+      ]},
+      { num: '9.3', title: '경영검토', reqs: [
+        '정기 경영검토 실시',
+        '경영검토 결과 문서화 및 의사결정 반영',
+      ]},
+    ]},
+    { num: '10', title: '개선', items: [
+      { num: '10.1', title: '부적합 및 시정조치', reqs: [
+        '부적합 식별·분석·시정조치 수행',
+        '시정조치 효과성 검토 및 문서화',
+      ]},
+      { num: '10.2', title: '지속적 개선', reqs: [
+        'BCMS 적절성·충족성·효과성 지속적 개선 실행',
+      ]},
+    ]},
+  ];
+
+  /* ═══════════════════════════════════════════
+     Disaster Reduction definitions
+  ═══════════════════════════════════════════ */
+  const DR_FIELDS = [
+    { field: 1, title: '재해경감활동 기반구축', maxScore: 30, items: [
+      { id: '1-1', title: '재해경감 책임자 지정 및 조직구성', maxScore: 10, isoRef: 'ISO 22301 5.3 (역할·책임·권한)' },
+      { id: '1-2', title: '재해경감 활동계획 수립', maxScore: 10, isoRef: 'ISO 22301 6.2 (목표 및 달성 기획)' },
+      { id: '1-3', title: '예산 확보 및 집행', maxScore: 10, isoRef: 'ISO 22301 7.1 (자원)' },
+    ]},
+    { field: 2, title: '재해예방활동', maxScore: 30, items: [
+      { id: '2-1', title: '위험요소 파악 및 개선', maxScore: 15, isoRef: 'ISO 22301 8.3 (리스크 평가)' },
+      { id: '2-2', title: '안전점검 실시', maxScore: 15, isoRef: 'ISO 22301 9.1 (모니터링·측정·분석·평가)' },
+    ]},
+    { field: 3, title: '재해대응 및 복구활동', maxScore: 40, items: [
+      { id: '3-1', title: '비상대응계획 수립', maxScore: 15, isoRef: 'ISO 22301 8.5 (업무연속성 계획 및 절차)' },
+      { id: '3-2', title: '교육훈련 실시', maxScore: 15, isoRef: 'ISO 22301 8.6 (훈련 및 시험)' },
+      { id: '3-3', title: '복구계획 수립', maxScore: 10, isoRef: 'ISO 22301 8.4 (업무연속성 전략 및 솔루션)' },
+    ]},
+  ];
+
+  /* ═══════════════════════════════════════════
+     Summary Metrics
+  ═══════════════════════════════════════════ */
+  const renderMetrics = () => {
+    /* ISO 22301 충족률 */
+    const gapData = loadJSON(GAP_KEY, {});
+    let gapTotal = 0, gapDone = 0, gapNA = 0;
+    ISO_CLAUSES.forEach(clause => clause.items.forEach(item =>
+      item.reqs.forEach((_, ri) => {
+        const key = `${item.num}_${ri}`;
+        const st  = (gapData[key] || {}).status || '미착수';
+        if (st === '해당없음') { gapNA++; }
+        gapTotal++;
+        if (st === '완료') gapDone++;
+      })
+    ));
+    const isoPct = (gapTotal - gapNA) > 0
+      ? Math.round(gapDone / (gapTotal - gapNA) * 100) : 0;
+    document.getElementById('mIso').textContent = `${isoPct}%`;
+
+    /* 재해경감우수기업 충족률 */
+    const drData = loadJSON(DR_KEY, {});
+    let drTotal = 0;
+    DR_FIELDS.forEach(f => f.items.forEach(i => {
+      drTotal += Number((drData[i.id] || {}).score || 0);
+    }));
+    const drPct = Math.round(drTotal);
+    document.getElementById('mDisaster').textContent = `${drPct}점 (${Math.round(drPct)}%)`;
+
+    /* 미완료 CAPA */
+    const capas = loadJSON(CAPA_KEY, []);
+    const openCapas = capas.filter(c => c.status !== '완료').length;
+    document.getElementById('mCapa').textContent = openCapas;
+
+    /* 다음 심사 예정일 */
+    const audits = loadJSON(AUDIT_KEY, []);
+    const todayStr = today();
+    const futureAudits = audits
+      .filter(a => (a.planDate || '') >= todayStr && a.status !== '완료')
+      .sort((a, b) => a.planDate.localeCompare(b.planDate));
+    if (futureAudits.length) {
+      const next = futureAudits[0];
+      const diff = Math.ceil((new Date(next.planDate) - new Date()) / 86400000);
+      document.getElementById('mNextAudit').textContent =
+        `${next.planDate} (D-${diff})`;
+    } else {
+      document.getElementById('mNextAudit').textContent = '예정 없음';
     }
+  };
 
-    function safeJsonParse(raw, fallback){
-      try { return JSON.parse(raw); } catch { return fallback; }
-    }
+  /* ═══════════════════════════════════════════
+     Tab 1: ISO 22301 갭분석
+  ═══════════════════════════════════════════ */
+  const STATUS_OPTIONS_GAP = ['미착수', '진행중', '완료', '해당없음'];
+  const STATUS_BADGE_GAP = {
+    '완료':   'done', '진행중': 'inprog',
+    '미착수': 'none', '해당없음': 'na',
+  };
 
-    function loadArray(key){
-      const raw = localStorage.getItem(key);
-      const arr = safeJsonParse(raw, []);
-      return Array.isArray(arr) ? arr : [];
-    }
+  const renderGap = () => {
+    const data = loadJSON(GAP_KEY, {});
+    let totalReqs = 0, doneReqs = 0, naReqs = 0;
 
-    function saveArray(key, arr){
-      localStorage.setItem(key, JSON.stringify(arr));
-    }
+    /* pre-calculate for gauge update */
+    ISO_CLAUSES.forEach(clause => clause.items.forEach(item =>
+      item.reqs.forEach((_, ri) => {
+        const st = (data[`${item.num}_${ri}`] || {}).status || '미착수';
+        totalReqs++;
+        if (st === '완료')    doneReqs++;
+        if (st === '해당없음') naReqs++;
+      })
+    ));
+    const effective = totalReqs - naReqs;
+    const pct = effective > 0 ? Math.round(doneReqs / effective * 100) : 0;
+    document.getElementById('gapGaugeFill').style.width = `${pct}%`;
+    document.getElementById('gapGaugePct').textContent = `${pct}%`;
 
-    // ============================
-    // ✅ Registry Loader + Maps
-    // (너 system-registry.html 스키마 기준)
-    // ============================
-    function loadRegistry(){
-      const raw = localStorage.getItem(KEY_SYS);
-      const arr = safeJsonParse(raw, []);
-      if (!Array.isArray(arr)) return [];
-      return arr.map(x => ({
-        regId: x?.id || "",
-        category: x?.category || "",
-        systemCode: x?.systemId || "",     // 예: UPS-ROOM-01
-        name: x?.displayName || "",        // 예: UPS (무정전전원장치)
-        owner: x?.ownerDept || "",
-        criticality: x?.criticality || "",
-        tags: Array.isArray(x?.tags) ? x.tags : [],
-        definition: x?.definition || "",
-        type: x?.type || "",
-        location: x?.location || ""
-      })).filter(x => x.regId && x.name);
-    }
+    const mount = document.getElementById('gapMount');
+    mount.innerHTML = ISO_CLAUSES.map(clause => {
+      let cTotal = 0, cDone = 0, cNA = 0;
+      clause.items.forEach(item => item.reqs.forEach((_, ri) => {
+        const st = (data[`${item.num}_${ri}`] || {}).status || '미착수';
+        cTotal++;
+        if (st === '완료')    cDone++;
+        if (st === '해당없음') cNA++;
+      }));
+      const cEff = cTotal - cNA;
+      const cPct = cEff > 0 ? Math.round(cDone / cEff * 100) : 0;
 
-    function normCatLabel(cat){
-      const s = String(cat || "").toLowerCase();
-      if (s.includes("power") || s.includes("전력")) return "Power (전력)";
-      if (s.includes("facility") || s.includes("시설") || s.includes("설비")) return "Facility (시설)";
-      return cat || "";
-    }
+      const rowsHtml = clause.items.map(item => {
+        const subHeader = `<tr class="subClauseRow">
+          <td colspan="5"><b>${esc(item.num)}</b>&ensp;${esc(item.title)}</td>
+        </tr>`;
 
-    function buildRegistryMaps(reg){
-      const byRegId = new Map();
-      const bySystemCode = new Map();
-      reg.forEach(r => {
-        if (r.regId) byRegId.set(r.regId, r);
-        if (r.systemCode) bySystemCode.set(r.systemCode, r);
+        const reqRows = item.reqs.map((req, ri) => {
+          const key   = `${item.num}_${ri}`;
+          const entry = data[key] || {};
+          const st    = entry.status || '미착수';
+          const opts  = STATUS_OPTIONS_GAP.map(o =>
+            `<option value="${esc(o)}"${st === o ? ' selected' : ''}>${esc(o)}</option>`
+          ).join('');
+          return `<tr data-gap-key="${esc(key)}">
+            <td class="reqDesc">${esc(req)}</td>
+            <td>
+              <select class="gapStatusSel statusDrp" data-key="${esc(key)}">
+                ${opts}
+              </select>
+            </td>
+            <td><input type="text" class="gapEv evInput" data-key="${esc(key)}" placeholder="증거·근거" value="${esc(entry.evidence || '')}"></td>
+            <td><input type="text" class="gapAsgn asgnInput" data-key="${esc(key)}" placeholder="담당자" value="${esc(entry.assignee || '')}"></td>
+            <td><input type="text" class="gapNote noteInput" data-key="${esc(key)}" placeholder="비고" value="${esc(entry.note || '')}"></td>
+          </tr>`;
+        }).join('');
+
+        return subHeader + reqRows;
+      }).join('');
+
+      return `<div class="sectionCard">
+        <div class="cardHeader" data-clause-toggle>
+          <span class="clauseNum">${esc(clause.num)}</span>
+          <span class="clauseTitle">${esc(clause.title)}</span>
+          <div class="clauseBar" style="margin-left:auto"><div class="clauseFill" style="width:${cPct}%"></div></div>
+          <span class="clausePct">${cPct}%</span>
+          <span class="cardHeaderToggle">▼</span>
+        </div>
+        <div class="cardBody">
+          <div class="tableWrap">
+            <table class="reqTable">
+              <colgroup>
+                <col style="width:280px"><col style="width:110px">
+                <col><col style="width:100px"><col style="width:130px">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>세부 요구사항</th><th>이행상태</th>
+                  <th>증거/근거</th><th>담당자</th><th>비고</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    /* collapse toggle */
+    mount.querySelectorAll('[data-clause-toggle]').forEach(hdr => {
+      hdr.addEventListener('click', () => {
+        const body   = hdr.nextElementSibling;
+        const toggle = hdr.querySelector('.cardHeaderToggle');
+        const col    = body.classList.toggle('collapsed');
+        toggle.textContent = col ? '▶' : '▼';
       });
-      return { byRegId, bySystemCode };
-    }
+    });
+  };
 
-    // 느슨한 텍스트 매칭(구버전 로그 대응)
-    function inferTypeFromText(text){
-      const t = String(text || "").toLowerCase();
-      if (t.includes("ups")) return "ups";
-      if (t.includes("generator") || t.includes("발전")) return "generator";
-      if (t.includes("utility") || t.includes("수전")) return "utility";
-      if (t.includes("switchgear") || t.includes("breaker") || t.includes("배전") || t.includes("차단") || t.includes("tob")) return "switchgear";
-      if (t.includes("transfer") || t.includes("절체")) return "transfer";
-      return "";
-    }
-
-    function findRegistryForEopLog(log, maps, regList){
-      // 1) 신버전: systemId = Registry record id
-      if (log?.systemId && maps.byRegId.has(log.systemId)) return maps.byRegId.get(log.systemId);
-
-      // 2) 신버전: systemCode = Registry systemId
-      if (log?.systemCode && maps.bySystemCode.has(log.systemCode)) return maps.bySystemCode.get(log.systemCode);
-
-      // 3) 구버전/혼합: systemName이 있으면 name으로 매칭 시도
-      const sName = String(log?.systemName || "").trim();
-      if (sName) {
-        const hit = regList.find(r => r.name === sName);
-        if (hit) return hit;
-      }
-
-      // 4) 최후: equipment/event/location 기반 느슨한 매칭
-      const text = [log?.equipment, log?.event, log?.eopTitle, log?.location, log?.category].join(" ");
-      const inferred = inferTypeFromText(text);
-      if (!inferred) return null;
-
-      // 카테고리 힌트도 반영(있으면)
-      const catHint = normCatLabel(log?.category || "");
-
-      const candidates = regList.filter(r => {
-        const rText = `${r.name} ${r.systemCode} ${r.category} ${(r.tags||[]).join(" ")}`.toLowerCase();
-        const rInfer = (r.type || "").toLowerCase() || inferTypeFromText(rText);
-        const catOk = !catHint || !r.category ? true : (normCatLabel(r.category) === catHint);
-        return catOk && rInfer === inferred;
-      });
-
-      return candidates[0] || null;
-    }
-
-    // DR에서도(가능하면) Registry 표시명 매칭
-    function findRegistryForDrLog(log, maps, regList){
-      // DR 로그는 스키마가 다양해서: systemId(업무용) 또는 system 텍스트로 매칭
-      const sysId = String(log?.systemId || "").trim();
-      if (sysId && maps.bySystemCode.has(sysId)) return maps.bySystemCode.get(sysId);
-
-      const sysName = String(log?.system || "").trim();
-      if (sysName) {
-        const hit = regList.find(r => r.name === sysName);
-        if (hit) return hit;
-      }
-      return null;
-    }
-
-    function toDate(ts){
-      if (!ts) return null;
-      const d = new Date(ts);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    function fmtDateTime(ts){
-      const d = toDate(ts);
-      if (!d) return "-";
-      const yy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      const hh = String(d.getHours()).padStart(2,"0");
-      const mi = String(d.getMinutes()).padStart(2,"0");
-      return `${yy}-${mm}-${dd} ${hh}:${mi}`;
-    }
-
-    function fmtDateOnly(ts){
-      const d = toDate(ts);
-      if (!d) return "-";
-      const yy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      return `${yy}-${mm}-${dd}`;
-    }
-
-    function minutesBetween(aTs, bTs){
-      const a = toDate(aTs), b = toDate(bTs);
-      if (!a || !b) return null;
-      const ms = b.getTime() - a.getTime();
-      if (!isFinite(ms) || ms < 0) return null;
-      return Math.round(ms / 60000);
-    }
-
-    function computeCompletion(steps){
-      if (!Array.isArray(steps) || steps.length === 0) return 0;
-      const done = steps.filter(s => !!s && s.checked === true).length;
-      return Math.round((done / steps.length) * 100);
-    }
-
-    function levelClass(level){
-      const v = String(level || "").toLowerCase();
-      if (v === "critical") return "critical";
-      if (v === "high") return "high";
-      if (v === "medium") return "medium";
-      if (v === "low") return "low";
-      return "";
-    }
-
-    /* Severity */
-    function inferSeverityFromLevel(level){
-      const v = String(level||"").toLowerCase();
-      if(v === "critical") return 1;
-      if(v === "high") return 2;
-      if(v === "medium") return 3;
-      if(v === "low") return 4;
-      return 5;
-    }
-    function getSeverityFromDr(log){
-      const s = Number(log?.severity);
-      if([1,2,3,4,5].includes(s)) return s;
-      return inferSeverityFromLevel(log?.level);
-    }
-    function getSeverityFromEop(log){
-      const s = Number(log?.severity);
-      if([1,2,3,4,5].includes(s)) return s;
-      return 3;
-    }
-    function sevBadgeClass(sev){
-      if(sev===1) return "sev1";
-      if(sev===2) return "sev2";
-      if(sev===3) return "sev3";
-      if(sev===4) return "sev4";
-      return "sev5";
-    }
-    function sevLabel(sev){
-      if(sev===1) return "SEV1";
-      if(sev===2) return "SEV2";
-      if(sev===3) return "SEV3";
-      if(sev===4) return "SEV4";
-      return "SEV5";
-    }
-
-    function downloadJson(filename, data){
-      const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json;charset=utf-8"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function normalizeText(v){
-      return String(v ?? "").toLowerCase();
-    }
-
-    function pickDeptList(drLogs, eopLogs, trRecs){
-      const set = new Set();
-      drLogs.forEach(x => x?.dept && set.add(x.dept));
-      eopLogs.forEach(x => x?.dept && set.add(x.dept));
-      trRecs.forEach(x => x?.dept && set.add(x.dept));
-      trRecs.forEach(x => {
-        (x?.attachedDrLogs || x?.attached || []).forEach(l => l?.dept && set.add(l.dept));
-      });
-      const list = Array.from(set).sort((a,b)=> String(a).localeCompare(String(b)));
-      return ["__ALL__", ...list];
-    }
-
-    function nowMinusDays(days){
-      const d = new Date();
-      d.setDate(d.getDate() - days);
-      return d.getTime();
-    }
-
-    // ============================
-    // ✅ Registry state
-    // ============================
-    let _regAll = [];
-    let _regMaps = { byRegId: new Map(), bySystemCode: new Map() };
-
-    function applyFilters(drLogs, eopLogs, trRecs){
-      const dept = $("#fDept").value;
-      const sev = $("#fSev").value;
-      const level = $("#fLevel").value;
-      const status = $("#fStatus").value;
-      const days = $("#fDays").value;
-      const q = normalizeText($("#fQ").value.trim());
-
-      const minTs = (days !== "__ALL__") ? nowMinusDays(Number(days)) : null;
-
-      const matchCommon = (objText, objTs) => {
-        if (q) {
-          const hay = normalizeText(objText);
-          if (!hay.includes(q)) return false;
-        }
-        if (minTs != null) {
-          const ts = toDate(objTs)?.getTime();
-          if (!ts || ts < minTs) return false;
-        }
-        return true;
+  /* collect gap data from DOM */
+  const collectGapData = () => {
+    const data = loadJSON(GAP_KEY, {});
+    document.querySelectorAll('[data-gap-key]').forEach(row => {
+      const key = row.getAttribute('data-gap-key');
+      if (!key) return;
+      data[key] = {
+        status:   row.querySelector('.gapStatusSel')?.value || '미착수',
+        evidence: row.querySelector('.gapEv')?.value.trim() || '',
+        assignee: row.querySelector('.gapAsgn')?.value.trim() || '',
+        note:     row.querySelector('.gapNote')?.value.trim() || '',
       };
+    });
+    return data;
+  };
 
-      const drFiltered = drLogs.filter(l => {
-        const lDept = l?.dept || "";
-        const lLevel = l?.level || "";
-        const lStatus = l?.finishedAt ? "Completed" : "In Progress";
-        const baseTs = l?.savedAt || l?.startedAt || l?.finishedAt;
+  document.getElementById('btnGapSave').addEventListener('click', () => {
+    saveJSON(GAP_KEY, collectGapData());
+    renderMetrics();
+    const btn = document.getElementById('btnGapSave');
+    btn.textContent = '저장됨 ✓';
+    setTimeout(() => { btn.textContent = '변경사항 저장'; }, 1000);
+  });
 
-        if (dept !== "__ALL__" && lDept !== dept) return false;
+  /* live gauge update on status change */
+  document.getElementById('gapMount').addEventListener('change', e => {
+    if (e.target.classList.contains('gapStatusSel')) {
+      const data = collectGapData();
+      let t = 0, d = 0, na = 0;
+      ISO_CLAUSES.forEach(cl => cl.items.forEach(it => it.reqs.forEach((_, ri) => {
+        const st = (data[`${it.num}_${ri}`] || {}).status || '미착수';
+        t++;
+        if (st === '완료')    d++;
+        if (st === '해당없음') na++;
+      })));
+      const eff = t - na;
+      const pct = eff > 0 ? Math.round(d / eff * 100) : 0;
+      document.getElementById('gapGaugeFill').style.width = `${pct}%`;
+      document.getElementById('gapGaugePct').textContent = `${pct}%`;
+    }
+  });
 
-        if (sev !== "__ALL__") {
-          const s = getSeverityFromDr(l);
-          if (String(s) !== String(sev)) return false;
-        }
+  /* ═══════════════════════════════════════════
+     Tab 2: 재해경감우수기업 점검
+  ═══════════════════════════════════════════ */
+  const renderDisaster = () => {
+    const data = loadJSON(DR_KEY, {});
+    const mount = document.getElementById('drMount');
 
-        if (level !== "__ALL__" && lLevel !== level) return false;
+    mount.innerHTML = DR_FIELDS.map(f => {
+      const fieldScore = f.items.reduce((sum, i) =>
+        sum + Math.min(Number((data[i.id] || {}).score || 0), i.maxScore), 0);
 
-        if (status !== "__ALL__") {
-          if (status === "Completed" && lStatus !== "Completed") return false;
-          if (status === "In Progress" && lStatus !== "In Progress") return false;
-          if (["Planned","Closed"].includes(status)) return false;
-        }
+      const itemsHtml = f.items.map(i => {
+        const entry = data[i.id] || {};
+        return `<div class="drItemRow">
+          <div>
+            <div class="drItemTitle">${esc(i.title)}</div>
+            <div class="drItemRef">${esc(i.isoRef)}</div>
+          </div>
+          <div class="drScoreWrap">
+            <label>자가평가</label>
+            <input type="number" class="drScoreInput" data-dr-id="${esc(i.id)}"
+              min="0" max="${i.maxScore}" step="1" value="${esc(entry.score ?? '')}">
+            <div class="drMaxLabel">/ ${i.maxScore}점</div>
+          </div>
+          <div></div>
+          <textarea class="drEvidenceInput" data-dr-ev="${esc(i.id)}"
+            placeholder="증거자료 링크·메모">${esc(entry.evidence || '')}</textarea>
+        </div>`;
+      }).join('');
 
-        const r = findRegistryForDrLog(l, _regMaps, _regAll);
-        const regText = r ? `${r.name} ${r.systemCode} ${r.owner} ${r.criticality} ${r.category} ${(r.tags||[]).join(" ")} ${r.definition}` : "";
+      return `<div class="sectionCard">
+        <div class="drHeader">
+          <span class="drHeaderTitle">[${f.field}분야] ${esc(f.title)}</span>
+          <span class="drMaxScore">소계 ${fieldScore}점 / ${f.maxScore}점</span>
+        </div>
+        <div>${itemsHtml}</div>
+      </div>`;
+    }).join('');
 
-        const text = [l?.system, l?.systemId, l?.process, l?.processName, l?.memo, l?.dept, l?.level, regText].join(" ");
-        return matchCommon(text, baseTs);
+    updateDrGrade(data);
+  };
+
+  const updateDrGrade = (data) => {
+    if (!data) data = loadJSON(DR_KEY, {});
+    let total = 0;
+    DR_FIELDS.forEach(f => f.items.forEach(i => {
+      total += Math.min(Number((data[i.id] || {}).score || 0), i.maxScore);
+    }));
+    document.getElementById('drTotalScore').textContent = total;
+    document.getElementById('drGaugeFill').style.width  = `${total}%`;
+    const badge = document.getElementById('drGradeBadge');
+    if (total >= 80) {
+      badge.textContent = '우수'; badge.className = 'gradeBadge A';
+    } else if (total >= 60) {
+      badge.textContent = '양호'; badge.className = 'gradeBadge B';
+    } else {
+      badge.textContent = '보통'; badge.className = 'gradeBadge C';
+    }
+  };
+
+  document.getElementById('drMount').addEventListener('input', e => {
+    if (e.target.classList.contains('drScoreInput')) {
+      const tempData = collectDrData();
+      updateDrGrade(tempData);
+      /* update field sub-totals */
+      document.querySelectorAll('.drMaxScore').forEach((el, fi) => {
+        const f = DR_FIELDS[fi];
+        if (!f) return;
+        const sub = f.items.reduce((s, i) =>
+          s + Math.min(Number((tempData[i.id] || {}).score || 0), i.maxScore), 0);
+        el.textContent = `소계 ${sub}점 / ${f.maxScore}점`;
       });
+    }
+  });
 
-      const eopFiltered = eopLogs.filter(l => {
-        const lDept = l?.dept || "";
-        const baseTs = l?.savedAt || l?.startedAt || l?.finishedAt;
-        const lStatus = l?.finishedAt ? "Completed" : "In Progress";
+  const collectDrData = () => {
+    const data = loadJSON(DR_KEY, {});
+    document.querySelectorAll('[data-dr-id]').forEach(el => {
+      const id = el.getAttribute('data-dr-id');
+      if (!data[id]) data[id] = {};
+      data[id].score = Number(el.value) || 0;
+    });
+    document.querySelectorAll('[data-dr-ev]').forEach(el => {
+      const id = el.getAttribute('data-dr-ev');
+      if (!data[id]) data[id] = {};
+      data[id].evidence = el.value.trim();
+    });
+    return data;
+  };
 
-        if (dept !== "__ALL__" && lDept !== dept) return false;
+  document.getElementById('btnDrSave').addEventListener('click', () => {
+    saveJSON(DR_KEY, collectDrData());
+    renderMetrics();
+    const btn = document.getElementById('btnDrSave');
+    btn.textContent = '저장됨 ✓';
+    setTimeout(() => { btn.textContent = '저장'; }, 1000);
+  });
 
-        if (sev !== "__ALL__") {
-          const s = getSeverityFromEop(l);
-          if (String(s) !== String(sev)) return false;
-        }
+  /* ═══════════════════════════════════════════
+     Tab 3: 내부심사 관리
+  ═══════════════════════════════════════════ */
+  let audits = [];
+  let editingAuditId = null;
 
-        if (level !== "__ALL__") {
-          const lv = String(l?.level || "");
-          if (lv && lv !== level) return false;
-        }
+  const loadAudits = () => { audits = loadJSON(AUDIT_KEY, []); };
+  const saveAudits = () => saveJSON(AUDIT_KEY, audits);
 
-        if (status !== "__ALL__") {
-          if (status === "Completed" && lStatus !== "Completed") return false;
-          if (status === "In Progress" && lStatus !== "In Progress") return false;
-          if (["Planned","Closed"].includes(status)) return false;
-        }
+  const genAuditId = () => {
+    const yr = String(thisYear);
+    const used = new Set(audits.map(a => a.id));
+    for (let n = 1; n <= 999; n++) {
+      const id = `AUD-${yr}-${String(n).padStart(3,'0')}`;
+      if (!used.has(id)) return id;
+    }
+    return `AUD-${yr}-${Date.now()}`;
+  };
 
-        const r = findRegistryForEopLog(l, _regMaps, _regAll);
-        const regText = r ? `${r.name} ${r.systemCode} ${r.owner} ${r.criticality} ${r.category} ${(r.tags||[]).join(" ")} ${r.definition}` : "";
+  const auditStatusBadge = (a) => {
+    if (a.status === '완료') return `<span class="badge done">완료</span>`;
+    if (a.planDate && a.planDate < today()) return `<span class="badge none">지연</span>`;
+    return `<span class="badge plan">예정</span>`;
+  };
 
-        const text = [
-          l?.event, l?.eopTitle, l?.eopId,
-          l?.equipment, l?.location, l?.category,
-          l?.systemId, l?.systemCode, l?.systemName,
-          regText,
-          l?.memo, lDept
-        ].join(" ");
-        return matchCommon(text, baseTs);
-      });
+  const renderAuditTable = () => {
+    loadAudits();
+    const capas = loadJSON(CAPA_KEY, []);
+    document.getElementById('auditCount').textContent = `${audits.length}건`;
 
-      const trFiltered = trRecs.filter(r => {
-        const rDept = r?.dept || "";
-        const rStatus = r?.status || r?.state || "";
-        const baseTs = r?.updatedAt || r?.finishedAt || r?.startedAt || r?.createdAt || r?.savedAt;
+    /* ISO gap summary linkage */
+    const gapData = loadJSON(GAP_KEY, {});
+    let gt = 0, gd = 0, gna = 0;
+    ISO_CLAUSES.forEach(c => c.items.forEach(it => it.reqs.forEach((_, ri) => {
+      const st = (gapData[`${it.num}_${ri}`] || {}).status || '미착수';
+      gt++; if (st === '완료') gd++; if (st === '해당없음') gna++;
+    })));
+    const gEff = gt - gna;
+    const gPct = gEff > 0 ? Math.round(gd / gEff * 100) : 0;
+    document.getElementById('auditGapSummary').textContent =
+      `갭분석 이행율 ${gPct}% (완료 ${gd} / 유효 ${gEff}개 요구사항)`;
 
-        if (dept !== "__ALL__" && rDept && rDept !== dept) return false;
-
-        if (status !== "__ALL__") {
-          if (["Planned","In Progress","Completed","Closed"].includes(status)) {
-            if (String(rStatus) !== status) return false;
-          } else {
-            if (["In Progress","Completed"].includes(status)) return false;
-          }
-        }
-
-        if (level !== "__ALL__") {
-          const direct = String(r?.level || "") === level;
-          const attached = (r?.attachedDrLogs || r?.attached || []).some(l => String(l?.level || "") === level);
-          if (!direct && !attached) return false;
-        }
-
-        const text = [
-          r?.title, r?.name, r?.scenario, r?.description, r?.memo,
-          rDept, rStatus,
-          JSON.stringify(r?.capa || r?.actions || []),
-        ].join(" ");
-        return matchCommon(text, baseTs);
-      });
-
-      return { drFiltered, eopFiltered, trFiltered };
+    const tbody = document.getElementById('auditTableBody');
+    if (!audits.length) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty">등록된 심사가 없습니다.</td></tr>`;
+      return;
     }
 
-    function renderDeptSelect(list){
-      const sel = $("#fDept");
-      sel.innerHTML = "";
-      list.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = (v === "__ALL__") ? "전체" : v;
+    tbody.innerHTML = audits.map(a => {
+      const ncLines = (a.nonconformity || '').split('\n').filter(l => l.trim()).length;
+      const relCapas = capas.filter(c => c.sourceRef === a.id);
+      const doneCapas = relCapas.filter(c => c.status === '완료').length;
+      const capaRate  = relCapas.length > 0
+        ? `${Math.round(doneCapas / relCapas.length * 100)}%` : '-';
+
+      return `<tr>
+        <td><span style="font-family:'SF Mono','Consolas',monospace;font-size:12px;color:var(--text-2)">${esc(a.id)}</span></td>
+        <td style="font-weight:600">${esc(a.name || '-')}</td>
+        <td><span class="badge plan">${esc(a.type || '-')}</span></td>
+        <td style="font-family:'SF Mono','Consolas',monospace;font-size:12px">${esc(a.planDate || '-')}</td>
+        <td>${esc(a.auditor || '-')}</td>
+        <td style="text-align:center">${ncLines || '-'}</td>
+        <td style="text-align:center">${capaRate}</td>
+        <td>${auditStatusBadge(a)}</td>
+        <td>
+          <div style="display:flex;gap:5px">
+            <button class="btn" type="button" data-aud-edit="${esc(a.id)}" style="font-size:11px;padding:3px 8px">편집</button>
+            <button class="btn" type="button" data-aud-del="${esc(a.id)}" style="font-size:11px;padding:3px 8px;color:#dc2626;border-color:rgba(239,68,68,.25)">삭제</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  };
+
+  const openAuditForm = (audit = null) => {
+    editingAuditId = audit ? audit.id : null;
+    document.getElementById('newAudId').textContent    = audit ? audit.id : genAuditId();
+    document.getElementById('aName').value             = audit?.name || '';
+    document.getElementById('aType').value             = audit?.type || '';
+    document.getElementById('aPlanDate').value         = audit?.planDate || today();
+    document.getElementById('aAuditor').value          = audit?.auditor || '';
+    document.getElementById('aScope').value            = audit?.scope || '';
+    document.getElementById('aActualDate').value       = audit?.actualDate || '';
+    document.getElementById('aOverallComment').value   = audit?.overallComment || '';
+    document.getElementById('aConformity').value       = audit?.conformity || '';
+    document.getElementById('aNonconformity').value    = audit?.nonconformity || '';
+    document.getElementById('aObservation').value      = audit?.observation || '';
+    document.getElementById('aNextDate').value         = audit?.nextDate || '';
+    document.getElementById('auditEntryPanel').classList.remove('hidden');
+    document.getElementById('btnAuditToggle').textContent = '× 닫기';
+  };
+
+  const closeAuditForm = () => {
+    editingAuditId = null;
+    document.getElementById('auditEntryPanel').classList.add('hidden');
+    document.getElementById('btnAuditToggle').textContent = '+ 심사 등록';
+  };
+
+  document.getElementById('btnAuditToggle').addEventListener('click', () => {
+    const panel = document.getElementById('auditEntryPanel');
+    if (panel.classList.contains('hidden')) { loadAudits(); openAuditForm(); }
+    else closeAuditForm();
+  });
+
+  document.getElementById('btnAuditCancel').addEventListener('click', closeAuditForm);
+
+  document.getElementById('btnAuditSave').addEventListener('click', () => {
+    const name = document.getElementById('aName').value.trim();
+    const type = document.getElementById('aType').value;
+    if (!name) { alert('심사명을 입력하세요.'); return; }
+    if (!type) { alert('심사 유형을 선택하세요.'); return; }
+
+    loadAudits();
+    const id = editingAuditId || document.getElementById('newAudId').textContent;
+    const actualDate = document.getElementById('aActualDate').value;
+    const obj = {
+      id, name, type,
+      planDate:       document.getElementById('aPlanDate').value,
+      auditor:        document.getElementById('aAuditor').value.trim(),
+      scope:          document.getElementById('aScope').value.trim(),
+      actualDate,
+      overallComment: document.getElementById('aOverallComment').value.trim(),
+      conformity:     document.getElementById('aConformity').value.trim(),
+      nonconformity:  document.getElementById('aNonconformity').value.trim(),
+      observation:    document.getElementById('aObservation').value.trim(),
+      nextDate:       document.getElementById('aNextDate').value,
+      status:         actualDate ? '완료' : '예정',
+    };
+
+    if (editingAuditId) {
+      const idx = audits.findIndex(a => a.id === editingAuditId);
+      if (idx >= 0) audits[idx] = obj; else audits.unshift(obj);
+    } else {
+      audits.unshift(obj);
+    }
+    saveAudits();
+    closeAuditForm();
+    renderAuditTable();
+    renderMetrics();
+  });
+
+  /* NC → CAPA */
+  document.getElementById('btnAuditNcToCapa').addEventListener('click', () => {
+    const ncText = document.getElementById('aNonconformity').value.trim();
+    if (!ncText) { alert('부적합 사항을 먼저 입력하세요.'); return; }
+    const audId = editingAuditId || document.getElementById('newAudId').textContent;
+
+    let capas = loadJSON(CAPA_KEY, []);
+    const yr = String(thisYear);
+    const used = new Set(capas.map(c => c.id));
+    let n = 1;
+    let newId;
+    while (true) {
+      newId = `CAP-${yr}-${String(n).padStart(3,'0')}`;
+      if (!used.has(newId)) break;
+      n++;
+    }
+    capas.unshift({
+      id: newId,
+      title: `[심사 ${audId}] 부적합 개선조치`,
+      source: '내부심사',
+      sourceRef: audId,
+      ncDesc: ncText,
+      rootCause: '', correctiveAction: '', preventiveAction: '',
+      assignee: '', targetDate: '', priority: '높음',
+      status: '미착수',
+      createdAt: today(),
+    });
+    saveJSON(CAPA_KEY, capas);
+    alert(`CAPA ${newId}가 등록되었습니다.\nCAPA 탭에서 상세 내용을 입력하세요.`);
+    switchTab('tabCapa', 'paneCapa');
+  });
+
+  /* edit/delete audit from table */
+  document.getElementById('auditTableBody').addEventListener('click', e => {
+    const editBtn = e.target.closest('[data-aud-edit]');
+    const delBtn  = e.target.closest('[data-aud-del]');
+    if (editBtn) {
+      loadAudits();
+      const audit = audits.find(a => a.id === editBtn.getAttribute('data-aud-edit'));
+      if (audit) openAuditForm(audit);
+    }
+    if (delBtn) {
+      const id = delBtn.getAttribute('data-aud-del');
+      if (!confirm(`심사 "${id}"를 삭제할까요?`)) return;
+      loadAudits();
+      audits = audits.filter(a => a.id !== id);
+      saveAudits();
+      renderAuditTable();
+      renderMetrics();
+    }
+  });
+
+  /* ═══════════════════════════════════════════
+     Tab 4: CAPA
+  ═══════════════════════════════════════════ */
+  let capas = [];
+  let editingCapaId = null;
+
+  const loadCapas = () => { capas = loadJSON(CAPA_KEY, []); };
+  const saveCapas = () => saveJSON(CAPA_KEY, capas);
+
+  const genCapaId = () => {
+    const yr = String(thisYear);
+    const used = new Set(capas.map(c => c.id));
+    for (let n = 1; n <= 999; n++) {
+      const id = `CAP-${yr}-${String(n).padStart(3,'0')}`;
+      if (!used.has(id)) return id;
+    }
+    return `CAP-${yr}-${Date.now()}`;
+  };
+
+  const isCapaLate = (c) =>
+    c.status !== '완료' && c.targetDate && c.targetDate < today();
+
+  const effectiveStatus = (c) => isCapaLate(c) ? '지연' : (c.status || '미착수');
+
+  const updateCapaGauge = () => {
+    loadCapas();
+    const total = capas.length;
+    const done  = capas.filter(c => c.status === '완료').length;
+    const pct   = total > 0 ? Math.round(done / total * 100) : 0;
+    document.getElementById('capaGaugeFill').style.width = `${pct}%`;
+    document.getElementById('capaGaugePct').textContent = `${pct}%`;
+    document.getElementById('capaStatChip').textContent = `완료 ${done} / 전체 ${total}`;
+  };
+
+  const loadSourceRefOptions = (source) => {
+    const sel = document.getElementById('cSourceRef');
+    sel.innerHTML = `<option value="">선택하세요 (선택 사항)</option>`;
+    if (source === '훈련결과') {
+      const trainings = loadJSON('bcmsTrainingData', []);
+      trainings.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id; opt.textContent = `${t.id} — ${t.name || ''}`;
+        sel.appendChild(opt);
+      });
+    } else if (source === '내부심사') {
+      const auds = loadJSON(AUDIT_KEY, []);
+      auds.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id; opt.textContent = `${a.id} — ${a.name || ''}`;
         sel.appendChild(opt);
       });
     }
+  };
 
-    function renderKpis(drLogsFiltered){
-      const count = drLogsFiltered.length;
-      const open = drLogsFiltered.filter(l => !l?.finishedAt).length;
+  document.getElementById('cSource').addEventListener('change', e => {
+    loadSourceRefOptions(e.target.value);
+  });
 
-      const completions = drLogsFiltered.map(l => computeCompletion(l?.steps || []));
-      const avgComp = completions.length
-        ? Math.round(completions.reduce((a,b)=>a+b,0) / completions.length)
-        : 0;
+  const getFilteredCapas = () => {
+    const stF  = document.getElementById('capaStatusFilter').value;
+    const prF  = document.getElementById('capaPrioFilter').value;
+    const srcF = document.getElementById('capaSourceFilter').value;
+    return capas.filter(c => {
+      if (stF  && effectiveStatus(c) !== stF)  return false;
+      if (prF  && c.priority !== prF)           return false;
+      if (srcF && c.source !== srcF)            return false;
+      return true;
+    });
+  };
 
-      const durations = drLogsFiltered
-        .map(l => minutesBetween(l?.startedAt, l?.finishedAt))
-        .filter(v => typeof v === "number");
-      const avgDur = durations.length
-        ? Math.round(durations.reduce((a,b)=>a+b,0) / durations.length)
-        : 0;
+  const renderCapaTable = () => {
+    loadCapas();
+    updateCapaGauge();
+    const filtered = getFilteredCapas();
+    document.getElementById('capaCount').textContent = `${filtered.length}건`;
 
-      $("#kpiDrCount").textContent = String(count);
-      $("#kpiDrCountSub").textContent = count ? "필터 적용 기준" : "데이터 없음";
-
-      $("#kpiAvgCompletion").textContent = `${avgComp}%`;
-      $("#kpiAvgCompletionSub").textContent = count ? "체크리스트 기준" : "-";
-
-      $("#kpiAvgDuration").textContent = (durations.length ? `${avgDur}분` : "-");
-      $("#kpiAvgDurationSub").textContent = durations.length ? "완료된 실행 기준" : "완료 기록 없음";
-
-      $("#kpiOpenCount").textContent = String(open);
-      $("#kpiOpenCountSub").textContent = open ? "진행중 실행 포함" : "진행중 없음";
+    const tbody = document.getElementById('capaTableBody');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty">등록된 CAPA가 없습니다.</td></tr>`;
+      return;
     }
 
-    function escapeHtml(str){
-      return String(str ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+    const STATUS_OPT = ['미착수', '진행중', '완료'];
 
-    function sanitize(v){
-      return String(v ?? "")
-        .replace(/[\\/:*?"<>|]/g, "_")
-        .replace(/\s+/g, "_")
-        .slice(0, 60) || "NA";
-    }
-
-    /* ---------- Render DR List ---------- */
-    function renderDrList(drLogs){
-      const mount = $("#drList");
-      mount.innerHTML = "";
-
-      if (!drLogs.length) {
-        mount.innerHTML = `<div class="empty">조건에 맞는 DR 실행 로그가 없습니다.</div>`;
-        return;
-      }
-
-      const sorted = [...drLogs].sort((a,b) => {
-        const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
-        const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
-        return tb - ta;
-      });
-
-      sorted.forEach((l, idx) => {
-        const level = l?.level || "-";
-        const dept = l?.dept || "-";
-        const proc = l?.process || l?.processName || "-";
-        const sysRaw = l?.system || l?.systemId || "-";
-
-        const reg = findRegistryForDrLog(l, _regMaps, _regAll);
-        const sysLabel = reg ? `${reg.name}${reg.systemCode ? " · " + reg.systemCode : ""}` : sysRaw;
-
-        const sev = getSeverityFromDr(l);
-
-        const startedAt = l?.startedAt;
-        const finishedAt = l?.finishedAt;
-        const status = finishedAt ? "Completed" : "In Progress";
-
-        const durMin = minutesBetween(startedAt, finishedAt);
-        const completion = computeCompletion(l?.steps || []);
-        const dt = fmtDateOnly(l?.savedAt || finishedAt || startedAt);
-
-        const card = document.createElement("details");
-        card.className = "eCard";
-        card.open = false;
-
-        card.innerHTML = `
-          <summary>
-            <div class="eMain">
-              <div class="eTopLine">
-                <span class="eMeta">${dt}</span>
-                <span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)} (SEV)</span>
-                <span class="badge ${levelClass(level)}">${escapeHtml(level)}</span>
-                <span class="badge state">${status}</span>
-                <span class="eMeta">· ${escapeHtml(dept)}</span>
-                <span class="eMeta">· ${escapeHtml(proc)}</span>
-              </div>
-              <div class="eSubLine">
-                <span>시스템: <b>${escapeHtml(sysLabel)}</b></span>
-                <span>완료율: <b>${completion}%</b></span>
-                <span>소요: <b>${durMin != null ? `${durMin}분` : "-"}</b></span>
-                <span>시작: <b>${escapeHtml(fmtDateTime(startedAt))}</b></span>
-                <span>종료: <b>${escapeHtml(fmtDateTime(finishedAt))}</b></span>
-              </div>
-            </div>
-
-            <div class="eActions">
-              <button class="btn ghost" data-act="export-dr" data-idx="${idx}">📤 JSON</button>
-              <button class="btn" data-act="copy-dr" data-idx="${idx}">📋 복사</button>
-            </div>
-          </summary>
-
-          <div class="eBody">
-            <div class="grid2">
-              <div class="box">
-                <h3>실행 정보</h3>
-                <div class="kv">
-                  <div class="k">상황등급</div><div><span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)}</span></div>
-                  <div class="k">부서</div><div>${escapeHtml(dept)}</div>
-                  <div class="k">프로세스</div><div>${escapeHtml(proc)}</div>
-                  <div class="k">중요도</div><div><span class="badge ${levelClass(level)}">${escapeHtml(level)}</span></div>
-                  <div class="k">시스템</div><div>${escapeHtml(sysLabel)}</div>
-                  <div class="k">시작</div><div class="mono">${escapeHtml(fmtDateTime(startedAt))}</div>
-                  <div class="k">종료</div><div class="mono">${escapeHtml(fmtDateTime(finishedAt))}</div>
-                  <div class="k">소요시간</div><div>${durMin != null ? `${durMin}분` : "-"}</div>
-                  <div class="k">저장시각</div><div class="mono">${escapeHtml(fmtDateTime(l?.savedAt))}</div>
-                </div>
-              </div>
-
-              <div class="box">
-                <h3>메모</h3>
-                <div style="color:rgba(15,23,42,.62); font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
-              </div>
-            </div>
-
-            <div class="box" style="margin-top:10px;">
-              <h3>단계별 체크 로그</h3>
-              <div class="steps">
-                ${
-                  Array.isArray(l?.steps) && l.steps.length
-                    ? l.steps.map(s => `
-                      <div class="step">
-                        <div class="left">
-                          <span class="dot ${s?.checked ? "on" : ""}"></span>
-                          <div class="txt">${escapeHtml(s?.text || "-")}</div>
-                        </div>
-                        <div class="time">${s?.checked ? escapeHtml(fmtDateTime(s?.checkedAt)) : "—"}</div>
-                      </div>
-                    `).join("")
-                    : `<div class="empty">체크리스트 단계 정보가 없습니다.</div>`
-                }
-              </div>
-            </div>
+    tbody.innerHTML = filtered.map(c => {
+      const eff  = effectiveStatus(c);
+      const late = isCapaLate(c);
+      return `<tr class="${late ? 'lateRow' : ''}">
+        <td><span style="font-family:'SF Mono','Consolas',monospace;font-size:12px;color:var(--text-2)">${esc(c.id)}</span></td>
+        <td style="font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.title)}">${esc(c.title || '-')}</td>
+        <td>${esc(c.source || '-')}</td>
+        <td>${esc(c.assignee || '-')}</td>
+        <td style="font-family:'SF Mono','Consolas',monospace;font-size:12px;${late?'color:#dc2626;font-weight:700':''}">${esc(c.targetDate || '-')}</td>
+        <td><span class="badge sts-${eff}">${esc(eff)}</span></td>
+        <td><span class="badge prio-${esc(c.priority || '중간')}">${esc(c.priority || '중간')}</span></td>
+        <td>
+          <select class="capaStsSel" data-capa-id="${esc(c.id)}" style="font-size:11px;padding:3px 5px;border-radius:5px;border:0.5px solid var(--border-strong);background:var(--surface);color:var(--text);min-width:68px">
+            ${STATUS_OPT.map(s => `<option value="${s}"${c.status === s?' selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <div style="display:flex;gap:5px">
+            <button class="btn" type="button" data-capa-edit="${esc(c.id)}" style="font-size:11px;padding:3px 8px">편집</button>
+            <button class="btn" type="button" data-capa-del="${esc(c.id)}" style="font-size:11px;padding:3px 8px;color:#dc2626;border-color:rgba(239,68,68,.25)">삭제</button>
           </div>
-        `;
+        </td>
+      </tr>`;
+    }).join('');
+  };
 
-        card.querySelectorAll("button").forEach(btn => {
-          btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          });
-        });
+  /* status change delegate */
+  document.getElementById('capaTableBody').addEventListener('change', e => {
+    const sel = e.target.closest('.capaStsSel');
+    if (!sel) return;
+    const id = sel.getAttribute('data-capa-id');
+    loadCapas();
+    const c = capas.find(x => x.id === id);
+    if (c) { c.status = sel.value; saveCapas(); renderCapaTable(); renderMetrics(); }
+  });
 
-        mount.appendChild(card);
+  /* edit/delete delegate */
+  document.getElementById('capaTableBody').addEventListener('click', e => {
+    const editBtn = e.target.closest('[data-capa-edit]');
+    const delBtn  = e.target.closest('[data-capa-del]');
+    if (editBtn) {
+      loadCapas();
+      const c = capas.find(x => x.id === editBtn.getAttribute('data-capa-edit'));
+      if (c) openCapaForm(c);
+    }
+    if (delBtn) {
+      const id = delBtn.getAttribute('data-capa-del');
+      if (!confirm(`CAPA "${id}"를 삭제할까요?`)) return;
+      loadCapas();
+      capas = capas.filter(x => x.id !== id);
+      saveCapas();
+      renderCapaTable();
+      renderMetrics();
+    }
+  });
+
+  const openCapaForm = (c = null) => {
+    editingCapaId = c ? c.id : null;
+    document.getElementById('newCapaId').textContent       = c ? c.id : genCapaId();
+    document.getElementById('cTitle').value                = c?.title || '';
+    document.getElementById('cSource').value               = c?.source || '';
+    loadSourceRefOptions(c?.source || '');
+    document.getElementById('cSourceRef').value            = c?.sourceRef || '';
+    document.getElementById('cPriority').value             = c?.priority || '중간';
+    document.getElementById('cNcDesc').value               = c?.ncDesc || '';
+    document.getElementById('cAssignee').value             = c?.assignee || '';
+    document.getElementById('cRootCause').value            = c?.rootCause || '';
+    document.getElementById('cTargetDate').value           = c?.targetDate || '';
+    document.getElementById('cCorrectiveAction').value     = c?.correctiveAction || '';
+    document.getElementById('cPreventiveAction').value     = c?.preventiveAction || '';
+    document.getElementById('capaEntryPanel').classList.remove('hidden');
+    document.getElementById('btnCapaToggle').textContent = '× 닫기';
+    document.getElementById('capaEntryPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const closeCapaForm = () => {
+    editingCapaId = null;
+    document.getElementById('capaEntryPanel').classList.add('hidden');
+    document.getElementById('btnCapaToggle').textContent = '+ CAPA 등록';
+  };
+
+  document.getElementById('btnCapaToggle').addEventListener('click', () => {
+    const panel = document.getElementById('capaEntryPanel');
+    if (panel.classList.contains('hidden')) { loadCapas(); openCapaForm(); }
+    else closeCapaForm();
+  });
+
+  document.getElementById('btnCapaCancel').addEventListener('click', closeCapaForm);
+
+  document.getElementById('btnCapaSave').addEventListener('click', () => {
+    const title = document.getElementById('cTitle').value.trim();
+    if (!title) { alert('CAPA 제목을 입력하세요.'); return; }
+
+    loadCapas();
+    const id = editingCapaId || document.getElementById('newCapaId').textContent;
+    const obj = {
+      id, title,
+      source:            document.getElementById('cSource').value,
+      sourceRef:         document.getElementById('cSourceRef').value,
+      priority:          document.getElementById('cPriority').value,
+      ncDesc:            document.getElementById('cNcDesc').value.trim(),
+      assignee:          document.getElementById('cAssignee').value.trim(),
+      rootCause:         document.getElementById('cRootCause').value.trim(),
+      targetDate:        document.getElementById('cTargetDate').value,
+      correctiveAction:  document.getElementById('cCorrectiveAction').value.trim(),
+      preventiveAction:  document.getElementById('cPreventiveAction').value.trim(),
+      status: editingCapaId
+        ? (capas.find(c => c.id === editingCapaId)?.status || '미착수')
+        : '미착수',
+      createdAt: editingCapaId
+        ? (capas.find(c => c.id === editingCapaId)?.createdAt || today())
+        : today(),
+    };
+
+    if (editingCapaId) {
+      const idx = capas.findIndex(c => c.id === editingCapaId);
+      if (idx >= 0) capas[idx] = obj; else capas.unshift(obj);
+    } else {
+      capas.unshift(obj);
+    }
+    saveCapas();
+    closeCapaForm();
+    renderCapaTable();
+    renderMetrics();
+  });
+
+  /* filters */
+  ['capaStatusFilter', 'capaPrioFilter', 'capaSourceFilter'].forEach(id => {
+    document.getElementById(id).addEventListener('change', renderCapaTable);
+  });
+
+  /* ═══════════════════════════════════════════
+     Tab switching
+  ═══════════════════════════════════════════ */
+  const TABS = [
+    { btn: 'tabGap',      pane: 'paneGap'      },
+    { btn: 'tabDisaster', pane: 'paneDisaster'  },
+    { btn: 'tabAudit',    pane: 'paneAudit'     },
+    { btn: 'tabCapa',     pane: 'paneCapa'      },
+  ];
+
+  const switchTab = (activeBtn, activePane) => {
+    TABS.forEach(t => {
+      document.getElementById(t.btn).classList.toggle('active',  t.btn === activeBtn);
+      document.getElementById(t.pane).classList.toggle('hidden', t.pane !== activePane);
+    });
+    if (activePane === 'paneDisaster') renderDisaster();
+    if (activePane === 'paneAudit')    renderAuditTable();
+    if (activePane === 'paneCapa')     renderCapaTable();
+  };
+
+  TABS.forEach(({ btn, pane }) => {
+    document.getElementById(btn).addEventListener('click', () => switchTab(btn, pane));
+  });
+
+  /* ─── Demo seed ─── */
+  if (window.BCMSDemoSeed) {
+    window.BCMSDemoSeed.ensureDemoIfEmpty();
+    window.BCMSDemoSeed.mountBanner('.wrap');
+    const banner = document.querySelector('.wrap > div:first-child');
+    if (banner && banner.style.background) {
+      banner.className = 'demoBannerSmall'; banner.style.cssText = '';
+      const msg = banner.querySelector('span');
+      if (msg) msg.style.cssText = 'font-size:12px;font-weight:500;color:var(--text-2)';
+      banner.querySelectorAll('button').forEach(b => {
+        b.style.cssText = 'padding:3px 9px;border-radius:6px;border:0.5px solid var(--border-strong);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2)';
       });
-
-      mount.onclick = (e) => {
-        const btn = e.target.closest("button[data-act]");
-        if (!btn) return;
-        const act = btn.dataset.act;
-        const idx = Number(btn.dataset.idx);
-        if (!Number.isFinite(idx)) return;
-
-        const current = getCurrentFiltered().drFiltered;
-        const sorted = [...current].sort((a,b) => {
-          const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
-          const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
-          return tb - ta;
-        });
-        const one = sorted[idx];
-        if (!one) return;
-
-        if (act === "export-dr") {
-          const filename = `dr-evidence_${fmtDateOnly(one?.savedAt || one?.finishedAt || one?.startedAt)}_${sanitize(one?.dept)}_${sanitize(one?.system || one?.systemId)}.json`;
-          downloadJson(filename, one);
-          toast("DR 실행 로그 JSON 다운로드");
-        }
-        if (act === "copy-dr") {
-          navigator.clipboard?.writeText(JSON.stringify(one, null, 2));
-          toast("클립보드에 복사했습니다");
-        }
-      };
     }
-
-    /* ---------- Render EOP List (✅ Registry 매칭 표시) ---------- */
-    function renderEopList(eopLogs){
-      const mount = $("#eopList");
-      mount.innerHTML = "";
-
-      if (!eopLogs.length) {
-        mount.innerHTML = `<div class="empty">조건에 맞는 EOP 실행 로그가 없습니다.</div>`;
-        return;
-      }
-
-      const sorted = [...eopLogs].sort((a,b) => {
-        const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
-        const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
-        return tb - ta;
-      });
-
-      sorted.forEach((l, idx) => {
-        const sev = getSeverityFromEop(l);
-        const dept = l?.dept || "-";
-        const evt  = l?.event || l?.eopTitle || l?.eopId || "EOP";
-        const eq   = l?.equipment || "-";
-        const loc  = l?.location || "-";
-        const cat  = l?.category || "-";
-
-        const reg = findRegistryForEopLog(l, _regMaps, _regAll);
-        const regLabel = reg ? `${reg.name}${reg.systemCode ? " · " + reg.systemCode : ""}` : "";
-        const regOwner = reg?.owner || "";
-        const regCrit = reg?.criticality || "";
-        const regCat = reg ? normCatLabel(reg.category) : "";
-
-        const startedAt = l?.startedAt;
-        const finishedAt = l?.finishedAt;
-        const status = finishedAt ? "Completed" : "In Progress";
-        const completion = computeCompletion(l?.steps || []);
-        const durMin = minutesBetween(startedAt, finishedAt);
-        const dt = fmtDateOnly(l?.savedAt || finishedAt || startedAt);
-
-        const card = document.createElement("details");
-        card.className = "eCard";
-
-        card.innerHTML = `
-          <summary>
-            <div class="eMain">
-              <div class="eTopLine">
-                <span class="eMeta">${dt}</span>
-                <span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)} (SEV)</span>
-                <span class="badge state">${status}</span>
-                <span class="eMeta">· ${escapeHtml(cat)}</span>
-                <span class="eMeta">· ${escapeHtml(eq)}</span>
-                ${reg ? `<span class="badge state">Registry 매칭</span>` : `<span class="badge state">Registry 없음</span>`}
-              </div>
-              <div class="eSubLine">
-                <span>이벤트: <b>${escapeHtml(evt)}</b></span>
-                <span>위치: <b>${escapeHtml(loc)}</b></span>
-                <span>부서: <b>${escapeHtml(dept)}</b></span>
-                <span>완료율: <b>${completion}%</b></span>
-                <span>소요: <b>${durMin != null ? `${durMin}분` : "-"}</b></span>
-                ${reg ? `<span>표준 설비: <b>${escapeHtml(regLabel)}</b></span>` : ``}
-              </div>
-            </div>
-
-            <div class="eActions">
-              <button class="btn ghost" data-act="export-eop" data-idx="${idx}">📤 JSON</button>
-              <button class="btn" data-act="copy-eop" data-idx="${idx}">📋 복사</button>
-            </div>
-          </summary>
-
-          <div class="eBody">
-            <div class="grid2">
-              <div class="box">
-                <h3>실행 정보</h3>
-                <div class="kv">
-                  <div class="k">상황등급</div><div><span class="badge ${sevBadgeClass(sev)}">${sevLabel(sev)}</span></div>
-                  <div class="k">카테고리</div><div>${escapeHtml(cat)}</div>
-                  <div class="k">장비/설비</div><div>${escapeHtml(eq)}</div>
-                  <div class="k">이벤트</div><div>${escapeHtml(evt)}</div>
-                  <div class="k">위치</div><div>${escapeHtml(loc)}</div>
-                  <div class="k">부서</div><div>${escapeHtml(dept)}</div>
-
-                  <div class="k">표준 설비(Registry)</div><div>${reg ? `<b>${escapeHtml(regLabel)}</b>` : "—"}</div>
-                  <div class="k">소유부서(Registry)</div><div>${regOwner ? escapeHtml(regOwner) : "—"}</div>
-                  <div class="k">중요도(Registry)</div><div>${regCrit ? `<span class="badge ${levelClass(regCrit)}">${escapeHtml(regCrit)}</span>` : "—"}</div>
-                  <div class="k">카테고리(Registry)</div><div>${regCat ? escapeHtml(regCat) : "—"}</div>
-
-                  <div class="k">시작</div><div class="mono">${escapeHtml(fmtDateTime(startedAt))}</div>
-                  <div class="k">종료</div><div class="mono">${escapeHtml(fmtDateTime(finishedAt))}</div>
-                </div>
-              </div>
-
-              <div class="box">
-                <h3>메모</h3>
-                <div style="color:rgba(15,23,42,.62); font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(l?.memo || "—")}</div>
-              </div>
-            </div>
-
-            <div class="box" style="margin-top:10px;">
-              <h3>단계별 체크 로그</h3>
-              <div class="steps">
-                ${
-                  Array.isArray(l?.steps) && l.steps.length
-                    ? l.steps.map(s => `
-                      <div class="step">
-                        <div class="left">
-                          <span class="dot ${s?.checked ? "on" : ""}"></span>
-                          <div class="txt">${escapeHtml(s?.text || "-")}</div>
-                        </div>
-                        <div class="time">${s?.checked ? escapeHtml(fmtDateTime(s?.checkedAt)) : "—"}</div>
-                      </div>
-                    `).join("")
-                    : `<div class="empty">체크리스트 단계 정보가 없습니다.</div>`
-                }
-              </div>
-            </div>
-          </div>
-        `;
-
-        card.querySelectorAll("button").forEach(btn => {
-          btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          });
-        });
-
-        mount.appendChild(card);
-      });
-
-      mount.onclick = (e) => {
-        const btn = e.target.closest("button[data-act]");
-        if (!btn) return;
-        const act = btn.dataset.act;
-        const idx = Number(btn.dataset.idx);
-        if (!Number.isFinite(idx)) return;
-
-        const current = getCurrentFiltered().eopFiltered;
-        const sorted = [...current].sort((a,b) => {
-          const ta = toDate(a?.savedAt || a?.finishedAt || a?.startedAt)?.getTime() || 0;
-          const tb = toDate(b?.savedAt || b?.finishedAt || b?.startedAt)?.getTime() || 0;
-          return tb - ta;
-        });
-        const one = sorted[idx];
-        if (!one) return;
-
-        if (act === "export-eop") {
-          const filename = `eop-evidence_${fmtDateOnly(one?.savedAt || one?.finishedAt || one?.startedAt)}_${sanitize(one?.equipment)}_${sanitize(one?.event || one?.eopTitle || one?.eopId)}.json`;
-          downloadJson(filename, one);
-          toast("EOP 실행 로그 JSON 다운로드");
-        }
-        if (act === "copy-eop") {
-          navigator.clipboard?.writeText(JSON.stringify(one, null, 2));
-          toast("클립보드에 복사했습니다");
-        }
-      };
-    }
-
-    /* ---------- Render Training List (요약) ---------- */
-    function renderTrainingList(trRecs){
-      const mount = $("#trList");
-      mount.innerHTML = "";
-
-      if (!trRecs.length) {
-        mount.innerHTML = `<div class="empty">조건에 맞는 Training 기록이 없습니다.</div>`;
-        return;
-      }
-
-      const sorted = [...trRecs].sort((a,b) => {
-        const ta = toDate(a?.updatedAt || a?.finishedAt || a?.startedAt || a?.createdAt || a?.savedAt)?.getTime() || 0;
-        const tb = toDate(b?.updatedAt || b?.finishedAt || b?.startedAt || b?.createdAt || b?.savedAt)?.getTime() || 0;
-        return tb - ta;
-      });
-
-      sorted.forEach((r, idx) => {
-        const title = r?.title || r?.name || "Training Record";
-        const dept = r?.dept || "-";
-        const status = r?.status || r?.state || "-";
-        const baseTs = r?.updatedAt || r?.finishedAt || r?.startedAt || r?.createdAt || r?.savedAt;
-
-        const attached = (r?.attachedDrLogs || r?.attached || []);
-        const attachCount = Array.isArray(attached) ? attached.length : 0;
-
-        let completion = (typeof r?.completion === "number") ? Math.round(r.completion) : null;
-        if (completion == null && attachCount) {
-          const comps = attached.map(l => computeCompletion(l?.steps || []));
-          completion = Math.round(comps.reduce((a,b)=>a+b,0) / comps.length);
-        }
-        if (completion == null) completion = 0;
-
-        const capa = (r?.capa || r?.actions || []);
-        const capaOpen = Array.isArray(capa) ? capa.filter(x => {
-          const st = String(x?.status || x?.state || "").toLowerCase();
-          return st && !["closed","done","completed"].includes(st);
-        }).length : 0;
-
-        const card = document.createElement("details");
-        card.className = "eCard";
-
-        card.innerHTML = `
-          <summary>
-            <div class="eMain">
-              <div class="eTopLine">
-                <span class="eMeta">${fmtDateOnly(baseTs)}</span>
-                <span class="badge state">${escapeHtml(status)}</span>
-                <span class="eMeta">· ${escapeHtml(dept)}</span>
-                <span class="eMeta">· ${escapeHtml(title)}</span>
-              </div>
-              <div class="eSubLine">
-                <span>Attach: <b>${attachCount}건</b></span>
-                <span>평가(완료율): <b>${completion}%</b></span>
-                <span>CAPA 오픈: <b>${capaOpen}건</b></span>
-              </div>
-            </div>
-
-            <div class="eActions">
-              <button class="btn ghost" data-act="export-tr" data-idx="${idx}">📤 JSON</button>
-              <button class="btn" data-act="copy-tr" data-idx="${idx}">📋 복사</button>
-            </div>
-          </summary>
-
-          <div class="eBody">
-            <div class="grid2">
-              <div class="box">
-                <h3>기본 정보</h3>
-                <div class="kv">
-                  <div class="k">제목</div><div>${escapeHtml(title)}</div>
-                  <div class="k">부서</div><div>${escapeHtml(dept)}</div>
-                  <div class="k">상태</div><div><span class="badge state">${escapeHtml(status)}</span></div>
-                  <div class="k">기준일</div><div class="mono">${escapeHtml(fmtDateTime(baseTs))}</div>
-                  <div class="k">완료율</div><div>${completion}%</div>
-                  <div class="k">Attach</div><div>${attachCount}건</div>
-                </div>
-              </div>
-
-              <div class="box">
-                <h3>메모</h3>
-                <div style="color:rgba(15,23,42,.62); font-size:12px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(r?.memo || r?.note || "—")}</div>
-              </div>
-            </div>
-          </div>
-        `;
-
-        card.querySelectorAll("button").forEach(btn => {
-          btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          });
-        });
-
-        mount.appendChild(card);
-      });
-
-      mount.onclick = (e) => {
-        const btn = e.target.closest("button[data-act]");
-        if (!btn) return;
-        const act = btn.dataset.act;
-        const idx = Number(btn.dataset.idx);
-        if (!Number.isFinite(idx)) return;
-
-        const current = getCurrentFiltered().trFiltered;
-        const sorted = [...current].sort((a,b) => {
-          const ta = toDate(a?.updatedAt || a?.finishedAt || a?.startedAt || a?.createdAt || a?.savedAt)?.getTime() || 0;
-          const tb = toDate(b?.updatedAt || b?.finishedAt || b?.startedAt || b?.createdAt || b?.savedAt)?.getTime() || 0;
-          return tb - ta;
-        });
-        const one = sorted[idx];
-        if (!one) return;
-
-        if (act === "export-tr") {
-          const filename = `training-evidence_${fmtDateOnly(one?.updatedAt || one?.finishedAt || one?.startedAt || one?.createdAt || one?.savedAt)}_${sanitize(one?.dept)}_${sanitize(one?.title || one?.name || "training")}.json`;
-          downloadJson(filename, one);
-          toast("Training 기록 JSON 다운로드");
-        }
-        if (act === "copy-tr") {
-          navigator.clipboard?.writeText(JSON.stringify(one, null, 2));
-          toast("클립보드에 복사했습니다");
-        }
-      };
-    }
-
-    /* ---------- State ---------- */
-    let _drAll = [];
-    let _eopAll = [];
-    let _trAll = [];
-
-    function getCurrentFiltered(){
-      return applyFilters(_drAll, _eopAll, _trAll);
-    }
-
-    function refresh(){
-      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
-      renderKpis(drFiltered);
-      renderDrList(drFiltered);
-      renderEopList(eopFiltered);
-      renderTrainingList(trFiltered);
-    }
-
-    function fillDeptOptions(){
-      const list = pickDeptList(_drAll, _eopAll, _trAll);
-      renderDeptSelect(list);
-      if (!$("#fDept").value) $("#fDept").value = "__ALL__";
-    }
-
-    function loadAll(){
-      // ✅ registry 먼저 로드
-      _regAll = loadRegistry();
-      _regMaps = buildRegistryMaps(_regAll);
-
-      _drAll = loadArray(KEY_DRP);
-      _eopAll = loadArray(KEY_EOP);
-      _trAll = loadArray(KEY_TRN);
-
-      fillDeptOptions();
-      refresh();
-    }
-
-    /* ---------- Exports / Tools ---------- */
-    function exportAuditSnapshot(){
-      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
-      const payload = {
-        generatedAt: new Date().toISOString(),
-        keys: { drp: KEY_DRP, eop: KEY_EOP, training: KEY_TRN, registry: KEY_SYS },
-        filters: {
-          dept: $("#fDept").value,
-          sev: $("#fSev").value,
-          level: $("#fLevel").value,
-          status: $("#fStatus").value,
-          days: $("#fDays").value,
-          q: $("#fQ").value
-        },
-        counts: {
-          dr: drFiltered.length,
-          eop: eopFiltered.length,
-          training: trFiltered.length
-        },
-        registrySnapshot: _regAll,
-        drEvidence: drFiltered,
-        eopEvidence: eopFiltered,
-        trainingEvidence: trFiltered
-      };
-      downloadJson(`audit_snapshot_${fmtDateOnly(Date.now())}.json`, payload);
-      toast("Audit Snapshot 다운로드");
-    }
-
-    function exportFiltered(){
-      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
-      downloadJson(`audit_filtered_${fmtDateOnly(Date.now())}.json`, { drFiltered, eopFiltered, trFiltered });
-      toast("필터 결과 Export 완료");
-    }
-
-    function exportAllDr(){
-      downloadJson(`dr_logs_all_${fmtDateOnly(Date.now())}.json`, _drAll);
-      toast("DR 전체 Export 완료");
-    }
-
-    function exportAllEop(){
-      downloadJson(`eop_logs_all_${fmtDateOnly(Date.now())}.json`, _eopAll);
-      toast("EOP 전체 Export 완료");
-    }
-
-    function exportAllTr(){
-      downloadJson(`training_all_${fmtDateOnly(Date.now())}.json`, _trAll);
-      toast("Training 전체 Export 완료");
-    }
-
-    function resetFilters(){
-      $("#fDept").value = "__ALL__";
-      $("#fSev").value = "__ALL__";
-      $("#fLevel").value = "__ALL__";
-      $("#fStatus").value = "__ALL__";
-      $("#fDays").value = "__ALL__";
-      $("#fQ").value = "";
-      refresh();
-      toast("필터 초기화");
-    }
-
-    function clearFiltered(){
-      const { drFiltered, eopFiltered, trFiltered } = getCurrentFiltered();
-
-      const drSet = new Set(drFiltered.map(x => JSON.stringify(x)));
-      const eopSet = new Set(eopFiltered.map(x => JSON.stringify(x)));
-      const trSet = new Set(trFiltered.map(x => JSON.stringify(x)));
-
-      const drRemain = _drAll.filter(x => !drSet.has(JSON.stringify(x)));
-      const eopRemain = _eopAll.filter(x => !eopSet.has(JSON.stringify(x)));
-      const trRemain = _trAll.filter(x => !trSet.has(JSON.stringify(x)));
-
-      saveArray(KEY_DRP, drRemain);
-      saveArray(KEY_EOP, eopRemain);
-      saveArray(KEY_TRN, trRemain);
-
-      _drAll = drRemain;
-      _eopAll = eopRemain;
-      _trAll = trRemain;
-
-      fillDeptOptions();
-      refresh();
-      toast("필터 결과 삭제 완료");
-    }
-
-    function clearAll(){
-      if (!confirm("정말로 DR + EOP + Training 기록을 모두 삭제할까요? (되돌릴 수 없음)")) return;
-      localStorage.removeItem(KEY_DRP);
-      localStorage.removeItem(KEY_EOP);
-      localStorage.removeItem(KEY_TRN);
-      _drAll = [];
-      _eopAll = [];
-      _trAll = [];
-      fillDeptOptions();
-      resetFilters();
-      refresh();
-      toast("전체 데이터 삭제 완료");
-    }
-
-    /* ---------- Demo Seed ---------- */
-    function seedDemoData(){
-      const now = Date.now();
-      const iso = (ms)=> new Date(ms).toISOString();
-
-      const demoDr = [
-        {
-          systemId:"DB-PRIMARY-01",
-          system:"Primary DB",
-          dept:"IT인프라팀",
-          process:"DB 복구",
-          level:"Critical",
-          severity: 1,
-          startedAt: iso(now - 1000*60*55),
-          finishedAt: iso(now - 1000*60*20),
-          memo:"RTO 내 복구 성공. 장애 원인: 스토리지 I/O 스파이크.",
-          steps:[
-            {text:"DR DB 인스턴스 기동", checked:true, checkedAt: iso(now-1000*60*50)},
-            {text:"스토리지 마운트 확인", checked:true, checkedAt: iso(now-1000*60*45)},
-            {text:"리플리케이션 상태 점검", checked:true, checkedAt: iso(now-1000*60*35)},
-            {text:"애플리케이션 연결 테스트", checked:true, checkedAt: iso(now-1000*60*25)},
-          ],
-          savedAt: iso(now - 1000*60*18)
-        }
-      ];
-
-      const demoEop = [
-        {
-          type:"EOP_EXEC",
-          eopId:"EOP-PWR-UPS-FAIL",
-          eopTitle:"UPS Failure (UPS 장애)",
-          category:"Power (전력)",
-          equipment:"UPS (무정전전원장치)",
-          event:"UPS Failure (UPS 장애)",
-          location:"UPS Room (UPS실)",
-          dept:"IT인프라팀",
-          process:"IDC 운영",
-          level:"High",
-          severity: 2,
-          // ✅ 아래 2개 중 하나만 있어도 Registry 매칭됨
-          systemCode: "UPS-ROOM-01",
-          startedAt: iso(now - 1000*60*25),
-          finishedAt: iso(now - 1000*60*10),
-          memo:"EPMS 확인 후 BYPASS 위험 확인. 즉시 공유 및 절체 준비.",
-          steps:[
-            {idx:0, text:"EPMS에서 UPS 알람/상태 스크린샷 확보", checked:true, checkedAt: iso(now-1000*60*23)},
-            {idx:1, text:"BYPASS 여부 및 부하율 확인", checked:true, checkedAt: iso(now-1000*60*20)},
-            {idx:2, text:"유관부서/당직/벤더 콜", checked:true, checkedAt: iso(now-1000*60*15)},
-          ],
-          savedAt: iso(now - 1000*60*8)
-        }
-      ];
-
-      const demoTraining = [
-        {
-          title:"2026 Q1 DR 모의훈련",
-          dept:"IT인프라팀",
-          status:"Completed",
-          memo:"핵심 시스템 복구 시나리오 훈련. CAPA 생성 후 추적 필요.",
-          attachedDrLogs: demoDr,
-          capa:[
-            {text:"스토리지 I/O 임계치 알림 강화", status:"Open", dueDate: iso(now + 1000*60*60*24*14)},
-            {text:"UPS 절체 절차 Runbook 보강", status:"Open", dueDate: iso(now + 1000*60*60*24*7)},
-          ],
-          createdAt: iso(now - 1000*60*60*24*2),
-          updatedAt: iso(now - 1000*60*60*5)
-        }
-      ];
-
-      saveArray(KEY_DRP, [...demoDr, ...loadArray(KEY_DRP)]);
-      saveArray(KEY_EOP, [...demoEop, ...loadArray(KEY_EOP)]);
-      saveArray(KEY_TRN, [...demoTraining, ...loadArray(KEY_TRN)]);
-
-      loadAll();
-      resetFilters();
-      toast("Demo Seed 생성 완료");
-    }
-
-    /* ---------- Query -> Filters ---------- */
-    function hasOption(selectId, value){
-      const sel = document.querySelector(selectId);
-      if (!sel) return false;
-      return Array.from(sel.options).some(o => o.value === value);
-    }
-
-    function applyQueryToFilters(){
-      const params = new URLSearchParams(location.search);
-
-      const dept = params.get("dept");
-      const sev = params.get("sev");
-      const level = params.get("level");
-      const status = params.get("status");
-      const days = params.get("days");
-      const q = params.get("q");
-
-      if (sev && hasOption("#fSev", sev)) $("#fSev").value = sev;
-      if (level && hasOption("#fLevel", level)) $("#fLevel").value = level;
-      if (status && hasOption("#fStatus", status)) $("#fStatus").value = status;
-      if (days && hasOption("#fDays", days)) $("#fDays").value = days;
-      if (q != null) $("#fQ").value = q;
-
-      if (dept && hasOption("#fDept", dept)) $("#fDept").value = dept;
-
-      refresh();
-    }
-
-    function debounce(fn, wait){
-      let t = null;
-      return (...args) => {
-        clearTimeout(t);
-        t = setTimeout(() => fn(...args), wait);
-      };
-    }
-
-    function bind(){
-      ["#fDept","#fSev","#fLevel","#fStatus","#fDays"].forEach(id => $(id).addEventListener("change", refresh));
-      $("#fQ").addEventListener("input", debounce(refresh, 180));
-
-      $("#btnResetFilters").addEventListener("click", resetFilters);
-      $("#btnExportSnapshot").addEventListener("click", exportAuditSnapshot);
-      $("#btnExportFiltered").addEventListener("click", exportFiltered);
-      $("#btnExportDrAll").addEventListener("click", exportAllDr);
-      $("#btnExportEopAll").addEventListener("click", exportAllEop);
-      $("#btnExportTrAll").addEventListener("click", exportAllTr);
-
-      $("#btnSeedDemo").addEventListener("click", seedDemoData);
-
-      $("#btnClearFiltered").addEventListener("click", () => {
-        if (!confirm("현재 필터 조건에 해당하는 DR/EOP/Training 기록을 삭제할까요?")) return;
-        clearFiltered();
-      });
-
-      $("#btnClearAll").addEventListener("click", clearAll);
-    }
-
-    bind();
-    loadAll();
-    setTimeout(applyQueryToFilters, 0);
+  }
+
+  /* ─── Init ─── */
+  renderGap();
+  renderMetrics();
   </script>
-
-  <script src="../assets/sidebar.js"></script>
 </body>
 </html>
