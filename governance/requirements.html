@@ -1,411 +1,846 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Portal - ISO 22301 요구사항</title>
-  <link rel="stylesheet" href="../assets/style.css"/>
-  <style>
-    html, body{ height:auto !important; min-height:100% !important; }
-    .layout{ display:flex !important; min-height:100vh !important; }
-    .main{ flex:1 1 auto !important; min-height:100vh !important; }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>BCMS Portal - 법규·요구사항</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 40px; }
 
-    :root{
-      --line: rgba(15,23,42,.12);
-      --textSub: rgba(15,23,42,.66);
-      --okBg: rgba(22,163,74,.12);
-      --okFg: #166534;
-      --partBg: rgba(217,119,6,.14);
-      --partFg: #9a3412;
-      --gapBg: rgba(148,163,184,.18);
-      --gapFg: #334155;
-      --accentBg: rgba(37,99,235,.10);
-      --accentBd: rgba(37,99,235,.35);
-    }
+  .hero h1 { margin: 0; font-size: 24px; font-weight: 950; }
+  .hero p  { margin: 6px 0 0; color: var(--text-2); font-size: 14px; }
 
-    .wrap{ max-width:1200px; margin:0 auto; padding:24px 18px 60px; }
+  /* ── KPI ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 18px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+  .kpi-label { font-size: 12px; font-weight: 700; color: var(--text-2); }
+  .kpi-value { font-size: 30px; font-weight: 950; margin: 6px 0 2px; line-height: 1; }
+  .kpi-sub   { font-size: 12px; color: var(--text-2); }
 
-    .pageHeader h1{ margin:0; font-size:24px; letter-spacing:-.02em; }
-    .pageHeader p{ margin:10px 0 0; font-size:15px; line-height:1.7; color:var(--textSub); }
+  /* ── Tabs ── */
+  .tab-bar { display: flex; border-bottom: 1px solid var(--border); margin-top: 22px; }
+  .tab-btn {
+    padding: 10px 22px; font-size: 14px; font-weight: 600; border: none;
+    background: transparent; cursor: pointer; color: var(--text-2);
+    border-bottom: 2.5px solid transparent; margin-bottom: -1px; transition: all .15s;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+  .tab-btn:hover:not(.active) { color: var(--text); background: rgba(0,0,0,.03); }
+  [data-theme="dark"] .tab-btn:hover:not(.active) { background: rgba(255,255,255,.04); }
+  .tab-pane { display: none; margin-top: 16px; }
+  .tab-pane.active { display: block; }
 
-    .tabs{ margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; }
-    .tabBtn{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:999px;
-      padding:9px 14px;
-      font-size:14px;
-      font-weight:900;
-      cursor:pointer;
-      color:#0f172a;
-    }
-    .tabBtn.active{
-      border-color:var(--accentBd);
-      background:var(--accentBg);
-      color:#1d4ed8;
-      box-shadow:0 0 0 1px rgba(37,99,235,.08) inset;
-    }
+  /* ── Form ── */
+  .form-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; padding: 11px 16px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    margin-bottom: 10px; user-select: none;
+  }
+  .form-toggle:hover { background: var(--surface-hover); }
+  .form-toggle h3 { margin: 0; font-size: 14px; font-weight: 700; }
+  .chevron { font-size: 16px; transition: transform .2s; display: inline-block; }
+  .chevron.open { transform: rotate(180deg); }
+  .form-body {
+    display: none; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    margin-bottom: 14px;
+  }
+  .form-body.open { display: block; }
+  .edit-badge { font-size: 13px; color: var(--accent); font-weight: 700; margin-left: 8px; }
 
-    .layer{ margin-top:14px; }
-    .layer[hidden]{ display:none; }
+  .fg { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .ff { display: flex; flex-direction: column; gap: 5px; }
+  .ff.s2 { grid-column: span 2; }
+  .ff.s3 { grid-column: span 3; }
+  .fl { font-size: 12px; font-weight: 700; color: var(--text-2); }
+  .fi, .fs, .ft {
+    padding: 8px 10px; font-size: 13px;
+    border: 1px solid var(--border-strong); border-radius: 8px;
+    background: var(--surface); color: var(--text);
+    font-family: inherit; outline: none; width: 100%; box-sizing: border-box;
+  }
+  .ft { resize: vertical; min-height: 72px; line-height: 1.5; }
+  .fi:focus, .fs:focus, .ft:focus { border-color: var(--accent); }
+  .fi[readonly] { background: var(--surface-hover); color: var(--text-2); }
+  .cb-group { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 4px 0; }
+  .cb-item  { display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .cb-item input { cursor: pointer; accent-color: var(--accent); }
+  .form-actions { display: flex; gap: 8px; margin-top: 14px; }
 
-    .summaryRow{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:10px;
-      margin-bottom:14px;
-    }
-    .summaryCard{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fff;
-      padding:13px;
-    }
-    .summaryCard .k{ font-size:14px; font-weight:800; color:var(--textSub); }
-    .summaryCard .v{ margin-top:7px; font-size:26px; font-weight:950; }
+  /* ── Buttons ── */
+  .btn { padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .btn:hover { background: var(--surface-hover); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+  .btn-primary:hover { opacity: .9; background: var(--accent); }
+  .btn-danger  { background: #dc2626; color: #fff; border-color: transparent; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
 
-    .isoGrid{ display:grid; grid-template-columns:350px 1fr; gap:12px; }
-    .panel{ border:1px solid var(--line); background:#fff; border-radius:16px; padding:12px; }
+  /* ── Filters ── */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .fsel { padding: 7px 10px; font-size: 13px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); }
+  .fsrch { padding: 7px 10px; font-size: 13px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); min-width: 180px; outline: none; }
+  .fsrch:focus { border-color: var(--accent); }
 
-    .searchRow{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
-    .searchRow input{
-      width:100%; border:1px solid var(--line); border-radius:10px;
-      padding:10px 11px; font-size:15px;
-    }
-    .searchRow span{ font-size:14px; color:var(--textSub); font-weight:700; }
+  /* ── Table ── */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 960px; }
+  th, td { padding: 10px 11px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { font-size: 11.5px; font-weight: 800; color: var(--text-2); background: var(--surface); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface-hover); }
+  .empty-row { text-align: center; color: var(--text-2); padding: 28px !important; }
 
-    .clauseList{ display:flex; flex-direction:column; gap:8px; max-height:620px; overflow:auto; }
-    .clauseItem{
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#fff;
-      padding:10px;
-      cursor:pointer;
-    }
-    .clauseItem.active{ border-color:var(--accentBd); background:#f8fbff; }
-    .clauseHead{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-    .clauseHead strong{ font-size:16px; }
-    .clauseItem p{ margin:6px 0 0; font-size:14px; line-height:1.5; color:var(--textSub); }
+  /* ── Badges ── */
+  .bdg { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 9px; font-size: 11.5px; font-weight: 700; border: 1px solid; white-space: nowrap; }
+  .bdg-ok      { color: #166534; background: rgba(22,163,74,.1);   border-color: rgba(22,163,74,.3);   }
+  .bdg-review  { color: #d97706; background: rgba(217,119,6,.1);   border-color: rgba(217,119,6,.3);   }
+  .bdg-fail    { color: #dc2626; background: rgba(220,38,38,.1);   border-color: rgba(220,38,38,.3);   }
+  .bdg-na      { color: #64748b; background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); }
+  .bdg-warn    { color: #b45309; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4);  }
 
-    .statusBadge{
-      display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px;
-      border:1px solid transparent; font-size:12px; font-weight:900; white-space:nowrap;
-    }
-    .status-ok{ background:var(--okBg); border-color:rgba(22,163,74,.28); color:var(--okFg); }
-    .status-partial{ background:var(--partBg); border-color:rgba(217,119,6,.34); color:var(--partFg); }
-    .status-gap{ background:var(--gapBg); border-color:rgba(100,116,139,.34); color:var(--gapFg); }
+  /* ── ISO mapping tab ── */
+  .iso-sections { display: flex; flex-direction: column; gap: 8px; }
+  .iso-sec {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  }
+  .iso-sec-head {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    cursor: pointer; user-select: none; transition: background .15s;
+  }
+  .iso-sec-head:hover { background: var(--surface-hover); }
+  .iso-sec-num  { font-size: 18px; font-weight: 950; color: var(--accent); min-width: 36px; }
+  .iso-sec-title{ font-size: 14px; font-weight: 700; flex: 1; }
+  .iso-sec-count{ font-size: 12px; color: var(--text-2); }
+  .iso-sec-arrow{ font-size: 14px; color: var(--text-2); transition: transform .2s; }
+  .iso-sec-arrow.open { transform: rotate(90deg); }
+  .iso-sec-body { display: none; border-top: 1px solid var(--border); padding: 14px 16px; }
+  .iso-sec-body.open { display: block; }
+  .iso-sec-desc { font-size: 13px; color: var(--text-2); margin-bottom: 12px; line-height: 1.6; }
+  .iso-req-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .iso-req-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+  }
+  .iso-req-clause { font-weight: 800; color: var(--accent); min-width: 38px; font-size: 12px; }
+  .iso-req-name   { flex: 1; font-weight: 600; }
+  .iso-linked-reqs { margin-top: 10px; }
+  .iso-linked-title { font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
+  .iso-linked-item  {
+    display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+    background: var(--surface-hover); border-radius: 6px; font-size: 12.5px; margin-bottom: 4px;
+  }
+  .iso-link-wrap { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .iso-link-btn {
+    display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px;
+    border: 1px solid var(--border); border-radius: 999px; font-size: 12px; font-weight: 600;
+    color: var(--accent); text-decoration: none; background: var(--surface); transition: all .15s;
+  }
+  .iso-link-btn:hover { background: var(--surface-hover); }
 
-    .detailHead{ border-bottom:1px solid rgba(15,23,42,.08); padding-bottom:10px; margin-bottom:12px; }
-    .detailHead h2{ margin:0; font-size:18px; }
-    .detailHead p{ margin:8px 0 0; font-size:15px; line-height:1.65; color:var(--textSub); }
+  /* ── 재해경감 tab ── */
+  .dra-intro {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-bottom: 16px;
+  }
+  .dra-intro h3 { margin: 0 0 8px; font-size: 15px; font-weight: 800; }
+  .dra-intro p  { margin: 0; font-size: 13px; color: var(--text-2); line-height: 1.7; }
+  .dra-list { display: flex; flex-direction: column; gap: 10px; }
+  .dra-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+  }
+  .dra-item-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .dra-num   { font-size: 22px; font-weight: 950; color: var(--accent); line-height: 1; min-width: 30px; }
+  .dra-title { font-size: 14px; font-weight: 700; flex: 1; }
+  .dra-clause{ font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .dra-body  { font-size: 13px; color: var(--text-2); line-height: 1.7; margin-bottom: 10px; }
+  .dra-status-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dra-link-wrap  { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 
-    .block{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:11px; margin-top:10px; }
-    .block h3{ margin:0 0 8px; font-size:16px; }
-    .row{ border:1px solid rgba(15,23,42,.1); border-radius:10px; padding:10px; margin-top:8px; }
-    .row b{ font-size:15px; }
-    .row p{ margin:6px 0 0; font-size:14px; line-height:1.55; color:var(--textSub); }
-    .linkBtn{
-      display:inline-flex; align-items:center; margin-top:7px; border:1px solid var(--line);
-      border-radius:10px; background:#fff; padding:6px 10px; text-decoration:none;
-      color:#0f172a; font-size:13px; font-weight:800;
-    }
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(40px);
+    background: #0f172a; color: #fff; font-size: 13px; font-weight: 600;
+    padding: 9px 20px; border-radius: 999px; opacity: 0;
+    transition: all .25s; pointer-events: none; z-index: 9999; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  [data-theme="dark"] .toast { background: #f8fafc; color: #0f172a; }
 
-    .opsHeader{ border:1px solid var(--line); border-radius:14px; background:#fff; padding:12px; margin-bottom:12px; }
-    .opsHeader p{ margin:0; font-size:15px; color:var(--textSub); line-height:1.65; }
-
-    .opsGroup{ margin-top:12px; }
-    .opsGroup h3{ margin:0 0 8px; font-size:18px; }
-    .opsCards{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    .opsCard{ border:1px solid var(--line); border-radius:14px; background:#fff; padding:12px; }
-    .opsId{ font-size:13px; font-weight:900; color:#1e40af; }
-    .opsDesc{ margin-top:7px; font-size:16px; line-height:1.55; }
-    .chips{ margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
-    .chip{ border:1px solid rgba(15,23,42,.14); border-radius:999px; padding:4px 10px; font-size:13px; background:#fff; }
-    .subTitle{ margin-top:10px; font-size:14px; font-weight:800; color:var(--textSub); }
-
-    @media (max-width:980px){
-      .isoGrid{ grid-template-columns:1fr; }
-      .opsCards{ grid-template-columns:1fr; }
-      .summaryRow{ grid-template-columns:1fr; }
-    }
-  </style>
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2,1fr); }
+    .fg { grid-template-columns: 1fr 1fr; }
+    .ff.s3 { grid-column: span 2; }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .fg { grid-template-columns: 1fr; }
+    .ff.s2,.ff.s3 { grid-column: span 1; }
+  }
+</style>
 </head>
 <body>
-  <div class="layout">
-    <aside id="sidebarMount"></aside>
-    <main class="main">
-      <div class="wrap">
-        <section class="pageHeader">
-          <h1>ISO 22301 요구사항 대응 현황</h1>
-          <p>BCMS Portal은 ISO 22301 요구사항과 실제 운영 요구사항을 함께 관리합니다. ISO 요구사항은 감사 대응을 위한 구조이며, 운영 요구사항은 실제 BCMS 운영 규칙을 정의합니다.</p>
-        </section>
+<aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-        <div class="tabs">
-          <button class="tabBtn active" id="tabIso" type="button">ISO 요구사항</button>
-          <button class="tabBtn" id="tabOps" type="button">운영 요구사항</button>
-        </div>
-
-        <section id="layerIso" class="layer">
-          <div class="summaryRow" id="isoSummary"></div>
-          <div class="isoGrid">
-            <aside class="panel">
-              <div class="searchRow">
-                <input id="q" placeholder="조항 검색 (예: 8.4, 내부심사, 리스크)"/>
-                <span id="cnt">0</span>
-              </div>
-              <div class="clauseList" id="clauseList"></div>
-            </aside>
-            <section class="panel" id="detail"></section>
-          </div>
-        </section>
-
-        <section id="layerOps" class="layer" hidden>
-          <article class="opsHeader">
-            <p>운영 요구사항은 실제 BCMS 운영 시 지켜야 할 규칙입니다. 사고 대응, 증적 관리, 복구 활동이 누락되지 않도록 핵심 항목만 간결하게 관리합니다.</p>
-          </article>
-          <div id="opsMount"></div>
-        </section>
-      </div>
-    </main>
+  <div class="hero">
+    <h1>📋 법규·요구사항</h1>
+    <p>BCMS 관련 법규 및 요구사항을 등록·관리하고 ISO 22301 조항별 매핑 현황을 확인합니다.</p>
   </div>
 
-  <script src="../assets/sidebar.js"></script>
-  <script>
-    (() => {
-      const statusLabel = {
-        ok: '구현 완료',
-        partial: '일부 구현',
-        gap: '추가 설계 필요'
-      };
-      const statusClass = {
-        ok: 'status-ok',
-        partial: 'status-partial',
-        gap: 'status-gap'
-      };
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">등록된 법규</div>
+      <div class="kpi-value" id="kTotal">0</div>
+      <div class="kpi-sub">전체 요구사항 수</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">준수 중</div>
+      <div class="kpi-value" id="kOk" style="color:#16a34a;">0</div>
+      <div class="kpi-sub">준수 상태 양호</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">검토 필요</div>
+      <div class="kpi-value" id="kReview" style="color:#d97706;">0</div>
+      <div class="kpi-sub">검토 중 또는 미준수</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">만료 임박</div>
+      <div class="kpi-value" id="kExpiring" style="color:#dc2626;">0</div>
+      <div class="kpi-sub">30일 이내 점검 예정</div>
+    </div>
+  </div>
 
-      const clauses = [
-        {
-          id: '4',
-          title: '4. 조직 상황',
-          desc: '조직 이해관계자 / 적용 범위 / BCMS 목표 정의',
-          status: 'partial',
-          intent: '조직의 내부·외부 이슈와 이해관계자를 반영해 BCMS 적용 범위를 유지합니다.',
-          links: [
-            { name: '정책·범위 관리', desc: 'BCMS 정책/범위/목표 관리', href: './policy.html' },
-            { name: '시스템 등록', desc: '핵심 서비스 범위 확인', href: './system-registry.html' }
-          ],
-          gaps: ['이해관계자 요구사항 정기 검토 템플릿 보강']
-        },
-        {
-          id: '5',
-          title: '5. 리더십',
-          desc: '경영진 책임 / 정책 승인 / 역할 위임',
-          status: 'ok',
-          intent: '경영진의 책임과 지원 체계가 운영 절차와 연결되어야 합니다.',
-          links: [
-            { name: '조직도', desc: '역할·책임 체계 점검', href: './org.html' },
-            { name: '비상대응 조직도', desc: '비상시 지휘체계 확인', href: './eop-org-chart.html' }
-          ],
-          gaps: []
-        },
-        {
-          id: '6',
-          title: '6. 계획',
-          desc: '리스크 대응 / 목표 수립 / 변경 계획',
-          status: 'partial',
-          intent: '리스크·기회 기반으로 BCMS 목표와 실행 계획을 관리합니다.',
-          links: [
-            { name: 'Risk/BIA', desc: '업무영향 및 우선순위 분석', href: '../risk-bia/index.html' },
-            { name: '전략/계획', desc: 'BCP·DR 계획 관리', href: '../strategy-plans/index.html' }
-          ],
-          gaps: ['변경관리 이력과 목표 추적 지표 보강']
-        },
-        {
-          id: '7',
-          title: '7. 지원',
-          desc: '역량 / 인식 / 의사소통 / 문서화',
-          status: 'partial',
-          intent: '운영 인력 역량과 커뮤니케이션, 문서화 관리가 일관되어야 합니다.',
-          links: [
-            { name: '증적 관리', desc: '운영 기록/Evidence 관리', href: '../audit/evidence.html' },
-            { name: '개선조치', desc: '지적사항 후속 조치 관리', href: '../audit/capa.html' }
-          ],
-          gaps: ['역량 평가 이력과 교육 추적 기능 연동']
-        },
-        {
-          id: '8',
-          title: '8. 운영',
-          desc: '사고 대응 / BCP 실행 / 복구 절차 운영',
-          status: 'ok',
-          intent: '사고 대응과 복구 실행, 기록 관리가 운영 흐름에 반영되어야 합니다.',
-          links: [
-            { name: 'Incident Dashboard', desc: '사고 등록/대응/종료', href: '../op-center/incident-dashboard.html' },
-            { name: '운영 현황', desc: '미처리 항목 모니터링', href: '../op-center/ops-status.html' }
-          ],
-          gaps: []
-        },
-        {
-          id: '9',
-          title: '9. 성과 평가',
-          desc: '모니터링 / 내부심사 / 경영검토',
-          status: 'partial',
-          intent: '내부심사와 모니터링 결과를 개선조치로 연결해야 합니다.',
-          links: [
-            { name: '감사 화면', desc: '심사 및 점검 결과 확인', href: '../audit/index.html' },
-            { name: '개선조치', desc: '후속 조치 추적', href: '../audit/capa.html' }
-          ],
-          gaps: ['경영검토 회의록 자동 연결 강화']
-        },
-        {
-          id: '10',
-          title: '10. 개선',
-          desc: '시정조치 / 지속 개선 / 재발 방지',
-          status: 'ok',
-          intent: '사고 종료 후 시정·예방 조치가 닫히는 흐름을 유지해야 합니다.',
-          links: [
-            { name: '개선조치', desc: '조치 상태 관리', href: '../audit/capa.html' },
-            { name: '운영 현황', desc: '미완료 조치 집중 모니터링', href: '../op-center/ops-status.html' }
-          ],
-          gaps: []
-        }
-      ];
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="list">📋 법규·요구사항 목록</button>
+    <button class="tab-btn" data-tab="iso">🔗 ISO 22301 매핑</button>
+    <button class="tab-btn" data-tab="dra">🏢 재해경감우수기업</button>
+  </div>
 
-      const operationRequirements = [
-        { id:'REQ-SVC-001', category:'서비스', description:'서비스 장애 발생 시 15분 내 상황 공유', links:['Incident Dashboard','Evidence'], orgUnits:['서비스품질팀','고객지원팀'] },
-        { id:'REQ-INC-001', category:'사고 대응', description:'모든 사고는 Incident Dashboard에 등록', links:['Incident Dashboard','Evidence'], orgUnits:['재난안전(BCM)팀'] },
-        { id:'REQ-LOG-001', category:'기록 / Evidence', description:'모든 사고 대응 기록은 Evidence로 저장', links:['Evidence','Audit'], orgUnits:['감사·컴플라이언스팀'] },
-        { id:'REQ-DR-001', category:'복구 / DR', description:'DR 전환 목표시간 1시간', links:['BIA','DR Plan'], orgUnits:['SRE/플랫폼운영팀','DC운영(NOC/관제)팀'] }
-      ];
+  <!-- ══ Tab 1: Requirements list ══ -->
+  <div class="tab-pane active" id="tab-list">
 
-      const q = document.getElementById('q');
-      const cnt = document.getElementById('cnt');
-      const clauseList = document.getElementById('clauseList');
-      const detail = document.getElementById('detail');
-      const isoSummary = document.getElementById('isoSummary');
-      const opsMount = document.getElementById('opsMount');
-      const tabIso = document.getElementById('tabIso');
-      const tabOps = document.getElementById('tabOps');
-      const layerIso = document.getElementById('layerIso');
-      const layerOps = document.getElementById('layerOps');
+    <div class="form-toggle" id="formToggle">
+      <h3>➕ 법규 등록<span class="edit-badge" id="editBadge" style="display:none">✏️ 수정 중</span></h3>
+      <span class="chevron" id="chevron">▼</span>
+    </div>
+    <div class="form-body" id="formBody">
+      <div class="fg">
+        <div class="ff">
+          <label class="fl">법규 ID (자동생성)</label>
+          <input class="fi" id="fId" type="text" readonly placeholder="저장 시 자동 생성"/>
+        </div>
+        <div class="ff s2">
+          <label class="fl">법규명 *</label>
+          <input class="fi" id="fName" type="text" placeholder="예: 개인정보 보호법"/>
+        </div>
+        <div class="ff">
+          <label class="fl">구분</label>
+          <select class="fs" id="fCat">
+            <option value="law">법령 (법률/시행령/시행규칙)</option>
+            <option value="notice">고시·지침</option>
+            <option value="cert">인증 요구사항</option>
+            <option value="sla">계약·SLA 요구사항</option>
+            <option value="internal">내부 규정</option>
+          </select>
+        </div>
+        <div class="ff s2">
+          <label class="fl">관련 조항/내용</label>
+          <input class="fi" id="fClause" type="text" placeholder="예: 제29조 (안전조치의무)"/>
+        </div>
+        <div class="ff">
+          <label class="fl">준수 의무 부서</label>
+          <input class="fi" id="fDept" type="text" placeholder="예: IT본부, 경영지원"/>
+        </div>
+        <div class="ff">
+          <label class="fl">점검 주기</label>
+          <select class="fs" id="fCycle">
+            <option value="monthly">월간</option>
+            <option value="quarterly">분기</option>
+            <option value="biannual">반기</option>
+            <option value="annual">연간</option>
+          </select>
+        </div>
+        <div class="ff">
+          <label class="fl">다음 점검 예정일</label>
+          <input class="fi" id="fNextCheck" type="date"/>
+        </div>
+        <div class="ff">
+          <label class="fl">준수 상태</label>
+          <select class="fs" id="fStatus">
+            <option value="ok">준수중</option>
+            <option value="review">검토필요</option>
+            <option value="fail">미준수</option>
+            <option value="na">해당없음</option>
+          </select>
+        </div>
+        <div class="ff s3">
+          <label class="fl">준수 방법 / 비고</label>
+          <textarea class="ft" id="fMethod" placeholder="준수 방법, 이행 조치, 관련 문서 등..."></textarea>
+        </div>
+        <div class="ff s3">
+          <label class="fl">BCMS 연계 모듈 (복수 선택)</label>
+          <div class="cb-group" id="moduleCbs"></div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btnSave">저장</button>
+        <button class="btn" id="btnCancel">취소</button>
+        <button class="btn" id="btnLoadSample" style="margin-left:auto;">샘플 데이터 로드</button>
+      </div>
+    </div>
 
-      let selectedId = clauses[0].id;
+    <!-- Filters -->
+    <div class="filter-bar">
+      <select class="fsel" id="fltCat">
+        <option value="">구분 전체</option>
+        <option value="law">법령</option>
+        <option value="notice">고시·지침</option>
+        <option value="cert">인증 요구사항</option>
+        <option value="sla">계약·SLA</option>
+        <option value="internal">내부 규정</option>
+      </select>
+      <select class="fsel" id="fltStatus">
+        <option value="">상태 전체</option>
+        <option value="ok">준수중</option>
+        <option value="review">검토필요</option>
+        <option value="fail">미준수</option>
+        <option value="na">해당없음</option>
+      </select>
+      <select class="fsel" id="fltDept"><option value="">부서 전체</option></select>
+      <input class="fsrch" id="fltSearch" type="text" placeholder="법규명 검색..."/>
+      <button class="btn btn-sm" id="btnClear">초기화</button>
+    </div>
 
-      const renderSummary = (list) => {
-        const total = list.length;
-        const ok = list.filter((c) => c.status === 'ok').length;
-        const partial = list.filter((c) => c.status === 'partial').length;
-        const gap = list.filter((c) => c.status === 'gap').length;
-        isoSummary.innerHTML = `
-          <article class="summaryCard"><div class="k">전체 조항</div><div class="v">${total}</div></article>
-          <article class="summaryCard"><div class="k">구현 완료</div><div class="v">${ok}</div></article>
-          <article class="summaryCard"><div class="k">일부 구현</div><div class="v">${partial}</div></article>
-          <article class="summaryCard"><div class="k">추가 설계 필요</div><div class="v">${gap}</div></article>
-        `;
-      };
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>법규 ID</th>
+            <th>법규명</th>
+            <th>구분</th>
+            <th>준수 부서</th>
+            <th>점검 주기</th>
+            <th>다음 점검일</th>
+            <th>상태</th>
+            <th style="width:100px;">관리</th>
+          </tr>
+        </thead>
+        <tbody id="reqTbody"></tbody>
+      </table>
+    </div>
+  </div>
 
-      const renderList = () => {
-        const keyword = (q.value || '').trim().toLowerCase();
-        const filtered = clauses.filter((item) => {
-          const t = `${item.id} ${item.title} ${item.desc} ${item.intent}`.toLowerCase();
-          return !keyword || t.includes(keyword);
-        });
-        if (!filtered.some((item) => item.id === selectedId)) {
-          selectedId = filtered[0] ? filtered[0].id : clauses[0].id;
-        }
-        cnt.textContent = `${filtered.length}건`;
-        clauseList.innerHTML = filtered.map((item) => `
-          <article class="clauseItem ${item.id === selectedId ? 'active' : ''}" data-id="${item.id}">
-            <div class="clauseHead">
-              <strong>${item.title}</strong>
-              <span class="statusBadge ${statusClass[item.status]}">${statusLabel[item.status]}</span>
-            </div>
-            <p>${item.desc}</p>
-          </article>
-        `).join('') || '<div class="row"><b>검색 결과 없음</b><p>다른 검색어로 확인해 주세요.</p></div>';
-      };
+  <!-- ══ Tab 2: ISO 22301 mapping ══ -->
+  <div class="tab-pane" id="tab-iso">
+    <p style="font-size:13px;color:var(--text-2);margin:0 0 16px;">ISO 22301 조항을 클릭하면 해당 조항과 연계된 등록 법규 및 포털 바로가기를 확인합니다.</p>
+    <div class="iso-sections" id="isoSections"></div>
+  </div>
 
-      const renderDetail = () => {
-        const item = clauses.find((c) => c.id === selectedId) || clauses[0];
-        detail.innerHTML = `
-          <section class="detailHead">
-            <h2>${item.title}</h2>
-            <p>${item.intent}</p>
-            <div style="margin-top:10px;"><span class="statusBadge ${statusClass[item.status]}">${statusLabel[item.status]}</span></div>
-          </section>
+  <!-- ══ Tab 3: 재해경감우수기업 ══ -->
+  <div class="tab-pane" id="tab-dra">
+    <div class="dra-intro">
+      <h3>🏢 재해경감우수기업 인증 법적 근거 및 요건</h3>
+      <p>「자연재해대책법」 제60조의2 및 「재해경감을 위한 기업의 자율활동 지원에 관한 법률」에 근거한 인증 제도입니다.
+         행정안전부가 인증 기준을 고시하며, BCMS 구축·운영이 핵심 평가 항목입니다.</p>
+    </div>
+    <div class="dra-list" id="draList"></div>
+  </div>
 
-          <section class="block">
-            <h3>현재 대응 기능</h3>
-            ${item.links.map((link) => `
-              <article class="row">
-                <b>${link.name}</b>
-                <p>${link.desc}</p>
-                <a class="linkBtn" href="${link.href}">바로가기</a>
-              </article>
-            `).join('')}
-          </section>
+</div><!-- .wrap -->
+</main>
 
-          <section class="block">
-            <h3>보완 필요 사항</h3>
-            ${item.gaps.length
-              ? item.gaps.map((g) => `<article class="row"><b>검토 항목</b><p>${g}</p></article>`).join('')
-              : '<article class="row"><b>현재 상태</b><p>추가 설계 필요 항목이 없습니다.</p></article>'}
-          </section>
-        `;
-      };
+<div class="toast" id="toast"></div>
+<script src="../assets/sidebar.js"></script>
+<script>
+'use strict';
 
-      const renderOps = () => {
-        const categories = ['서비스', '사고 대응', '기록 / Evidence', '복구 / DR'];
-        opsMount.innerHTML = categories.map((category) => {
-          const items = operationRequirements.filter((req) => req.category === category);
-          return `
-            <section class="opsGroup">
-              <h3>${category}</h3>
-              <div class="opsCards">
-                ${items.map((item) => `
-                  <article class="opsCard">
-                    <div class="opsId">${item.id}</div>
-                    <div class="opsDesc">${item.description}</div>
-                    <div class="subTitle">연결 기능</div>
-                    <div class="chips">${item.links.map((v) => `<span class="chip">${v}</span>`).join('')}</div>
-                    ${item.orgUnits?.length ? `<div class="subTitle">관련 조직</div><div class="chips">${item.orgUnits.map((v) => `<span class="chip">${v}</span>`).join('')}</div>` : ''}
-                  </article>
-                `).join('')}
-              </div>
-            </section>
-          `;
-        }).join('');
-      };
+const KEY = 'bcmsRequirements';
+const KEY_IND = 'bcmsIndustry';
 
-      const switchLayer = (mode) => {
-        const iso = mode === 'iso';
-        tabIso.classList.toggle('active', iso);
-        tabOps.classList.toggle('active', !iso);
-        layerIso.hidden = !iso;
-        layerOps.hidden = iso;
-      };
+/* ── Static data ── */
+const CAT_LBL    = { law:'법령', notice:'고시·지침', cert:'인증 요구사항', sla:'계약·SLA', internal:'내부 규정' };
+const STATUS_LBL = { ok:'준수중', review:'검토필요', fail:'미준수', na:'해당없음' };
+const CYCLE_LBL  = { monthly:'월간', quarterly:'분기', biannual:'반기', annual:'연간' };
+const MODULES    = ['BIA','리스크평가','BCP전략','훈련','내부심사','문서관리'];
 
-      q.addEventListener('input', () => {
-        renderList();
-        renderDetail();
-      });
-      clauseList.addEventListener('click', (e) => {
-        const card = e.target.closest('.clauseItem[data-id]');
-        if (!card) return;
-        selectedId = card.dataset.id;
-        renderList();
-        renderDetail();
-      });
-      tabIso.addEventListener('click', () => switchLayer('iso'));
-      tabOps.addEventListener('click', () => switchLayer('ops'));
+const ISO_SECTIONS = [
+  { num:'4', title:'조직 상황 (Context of the Organization)', desc:'조직의 내·외부 이슈, 이해관계자 요구사항, BCMS 적용 범위 및 업무연속성 관리시스템의 요건을 결정합니다.',
+    clauses:[
+      { c:'4.1', n:'조직 및 상황 이해' },
+      { c:'4.2', n:'이해관계자 요구사항 파악' },
+      { c:'4.3', n:'BCMS 적용 범위 결정' },
+      { c:'4.4', n:'업무연속성 관리시스템' },
+    ],
+    links:[{ label:'거버넌스 대시보드', href:'../governance/index.html' },{ label:'조직 관리', href:'../governance/org-registry.html' }]
+  },
+  { num:'5', title:'리더십 (Leadership)', desc:'최고 경영자의 리더십, 업무연속성 방침 수립 및 조직 내 역할과 책임을 정의합니다.',
+    clauses:[
+      { c:'5.1', n:'리더십 및 의지표명' },
+      { c:'5.2', n:'업무연속성 방침' },
+      { c:'5.3', n:'역할·책임·권한' },
+    ],
+    links:[{ label:'정책/목표/범위', href:'../governance/policy.html' },{ label:'조직도', href:'../governance/org.html' }]
+  },
+  { num:'6', title:'기획 (Planning)', desc:'리스크와 기회를 다루는 활동, 업무연속성 목표 및 달성 계획을 수립합니다.',
+    clauses:[
+      { c:'6.1', n:'리스크와 기회를 다루는 활동' },
+      { c:'6.2', n:'업무연속성 목표 및 달성 계획' },
+      { c:'6.3', n:'변경사항 기획' },
+    ],
+    links:[{ label:'리스크 평가', href:'../risk-bia/risk.html' },{ label:'BCP 전략', href:'../strategy-plans/bcp.html' }]
+  },
+  { num:'7', title:'지원 (Support)', desc:'자원, 역량, 인식, 의사소통 및 문서화된 정보를 관리합니다.',
+    clauses:[
+      { c:'7.1', n:'자원' },
+      { c:'7.2', n:'역량' },
+      { c:'7.3', n:'인식' },
+      { c:'7.4', n:'의사소통' },
+      { c:'7.5', n:'문서화된 정보' },
+    ],
+    links:[{ label:'훈련·점검', href:'../training/index.html' },{ label:'문서체계', href:'../governance/docs.html' }]
+  },
+  { num:'8', title:'운용 (Operation)', desc:'BIA, 리스크 평가, 업무연속성 전략 및 대응 절차를 수립·이행합니다.',
+    clauses:[
+      { c:'8.1', n:'운영 기획 및 관리' },
+      { c:'8.2', n:'업무영향분석 (BIA)' },
+      { c:'8.3', n:'리스크 평가' },
+      { c:'8.4', n:'업무연속성 전략 및 솔루션' },
+      { c:'8.5', n:'업무연속성 계획 및 절차' },
+      { c:'8.6', n:'훈련 및 시험' },
+      { c:'8.7', n:'사후 검토' },
+    ],
+    links:[{ label:'BIA', href:'../risk-bia/bia.html' },{ label:'리스크 평가', href:'../risk-bia/risk.html' },{ label:'BCP', href:'../strategy-plans/bcp.html' },{ label:'운영센터', href:'../op-center/index.html' }]
+  },
+  { num:'9', title:'성과 평가 (Performance Evaluation)', desc:'모니터링, 내부심사 및 경영검토를 통해 BCMS의 적합성과 효과성을 평가합니다.',
+    clauses:[
+      { c:'9.1', n:'모니터링·측정·분석·평가' },
+      { c:'9.2', n:'내부심사' },
+      { c:'9.3', n:'경영검토' },
+    ],
+    links:[{ label:'평가·감사', href:'../audit/index.html' },{ label:'Executive Summary', href:'../reports/executive-summary.html' }]
+  },
+  { num:'10', title:'개선 (Improvement)', desc:'부적합사항과 시정조치, 지속적 개선을 통해 BCMS를 향상시킵니다.',
+    clauses:[
+      { c:'10.1', n:'부적합 및 시정조치' },
+      { c:'10.2', n:'지속적 개선' },
+    ],
+    links:[{ label:'CAPA 관리', href:'../audit/capa.html' }]
+  },
+];
 
-      renderSummary(clauses);
-      renderList();
-      renderDetail();
-      renderOps();
-      switchLayer('iso');
-    })();
-  </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+const DRA_ITEMS = [
+  {
+    title:'자연재해대책법 제60조의2 – 재해경감우수기업 인증',
+    clause:'자연재해대책법 제60조의2, 시행령 제64조의2',
+    body:'행정안전부 장관은 재해 예방을 위한 활동이 우수한 기업을 재해경감우수기업으로 인증할 수 있습니다. 인증 기업은 공공입찰 가점, 금융 우대 등 지원을 받습니다.',
+    status:'ok',
+    links:[{ label:'정책/목표', href:'../governance/policy.html' }]
+  },
+  {
+    title:'재해경감 자율활동 지원법 – BCMS 구축·운영',
+    clause:'재해경감을 위한 기업의 자율활동 지원에 관한 법률 제6조',
+    body:'업무연속성관리시스템(BCMS) 구축 및 운영이 핵심 인증 요건입니다. ISO 22301 인증 보유 또는 동등 수준의 BCMS 운영 실적이 요구됩니다.',
+    status:'review',
+    links:[{ label:'BIA', href:'../risk-bia/bia.html' },{ label:'BCP 전략', href:'../strategy-plans/bcp.html' }]
+  },
+  {
+    title:'행정안전부 인증 기준 – 위기 대응 계획 수립',
+    clause:'재해경감우수기업 인증기준 고시 제3조',
+    body:'① 재해위험 분석 및 평가 수행 ② 업무영향분석(BIA) 결과 보유 ③ 업무연속성계획(BCP) 수립 및 정기 훈련 실시 ④ 경영진 의지표명 문서 보유',
+    status:'review',
+    links:[{ label:'BCP 전략', href:'../strategy-plans/bcp.html' },{ label:'훈련·점검', href:'../training/index.html' }]
+  },
+  {
+    title:'인증 기준 – 정기 훈련 및 모의 훈련',
+    clause:'재해경감우수기업 인증기준 고시 제4조',
+    body:'연 1회 이상 BCP 훈련 실시 및 결과 기록 보존 의무. 훈련 시나리오는 최신 BIA 결과를 반영해야 합니다.',
+    status:'ok',
+    links:[{ label:'훈련·점검', href:'../training/index.html' },{ label:'증적 관리', href:'../audit/evidence.html' }]
+  },
+  {
+    title:'인증 기준 – 내부심사 및 경영검토',
+    clause:'재해경감우수기업 인증기준 고시 제5조',
+    body:'연 1회 이상 내부심사 실시, 심사 결과 경영진 보고 및 개선조치 이행 필요. 개선조치(CAPA) 이행 증적 보존.',
+    status:'ok',
+    links:[{ label:'평가·감사', href:'../audit/index.html' },{ label:'CAPA 관리', href:'../audit/capa.html' }]
+  },
+  {
+    title:'인증 갱신 – 3년 주기 갱신 심사',
+    clause:'자연재해대책법 시행령 제64조의3',
+    body:'최초 인증 후 3년마다 갱신 심사를 받아야 합니다. 갱신 심사는 최초 인증 기준과 동일하게 적용됩니다.',
+    status:'na',
+    links:[{ label:'Executive Summary', href:'../reports/executive-summary.html' }]
+  },
+];
+
+/* ── Sample requirements by industry ── */
+const SAMPLES_COMMON = [
+  { name:'개인정보 보호법', cat:'law', clause:'제29조 (안전조치의무)', dept:'전 부서', cycle:'annual', status:'ok', method:'개인정보 처리방침 수립 및 안전관리 기준 준수', modules:['문서관리','내부심사'] },
+  { name:'정보통신망 이용촉진 및 정보보호 등에 관한 법률', cat:'law', clause:'제45조 (정보통신서비스 안전성)', dept:'IT본부', cycle:'annual', status:'ok', method:'정보보안 정책 및 기술적 보호조치 이행', modules:['리스크평가','문서관리'] },
+  { name:'중대재해처벌법', cat:'law', clause:'제4조 (사업주 의무)', dept:'경영지원', cycle:'biannual', status:'review', method:'안전보건관리체계 구축 및 점검', modules:['리스크평가','훈련'] },
+  { name:'재난 및 안전관리 기본법', cat:'law', clause:'제25조의2 (기업 재난관리)', dept:'경영지원', cycle:'annual', status:'ok', method:'재난대응계획 수립 및 연 1회 이상 훈련', modules:['BCP전략','훈련'] },
+  { name:'자연재해대책법 (재해경감우수기업)', cat:'law', clause:'제60조의2', dept:'경영지원', cycle:'annual', status:'review', method:'BCMS 구축·운영, BIA 및 BCP 수립', modules:['BIA','BCP전략','훈련','내부심사'] },
+];
+const SAMPLES_BY_IND = {
+  '금융': [
+    { name:'전자금융거래법', cat:'law', clause:'제21조 (안전성 확보)', dept:'IT본부', cycle:'annual', status:'ok', method:'전자금융 안전대책 수립 및 취약점 점검', modules:['리스크평가','내부심사'] },
+    { name:'금융위원회 업무연속성 감독규정', cat:'notice', clause:'업무연속성 관리기준', dept:'IT본부', cycle:'biannual', status:'ok', method:'BCP 수립 및 반기 1회 훈련 실시', modules:['BCP전략','훈련'] },
+    { name:'금융보안원 ISMS-P', cat:'cert', clause:'전 항목', dept:'IT본부', cycle:'annual', status:'ok', method:'연간 ISMS-P 심사 대응', modules:['리스크평가','문서관리','내부심사'] },
+  ],
+  '공공기관': [
+    { name:'전자정부법', cat:'law', clause:'제56조 (정보보호)', dept:'IT본부', cycle:'annual', status:'ok', method:'공공정보 보호 및 보안 조치 이행', modules:['리스크평가','문서관리'] },
+    { name:'국가정보보안기본지침', cat:'notice', clause:'전 항목', dept:'IT본부', cycle:'biannual', status:'ok', method:'국가 사이버안전센터 보안 기준 준수', modules:['리스크평가','내부심사'] },
+    { name:'공공기관 정보자원 관리지침', cat:'notice', clause:'제12조 (재해복구)', dept:'IT본부', cycle:'annual', status:'review', method:'DR센터 구성 및 복구절차 점검', modules:['BCP전략','훈련'] },
+  ],
+  '통신': [
+    { name:'전기통신사업법', cat:'law', clause:'제22조 (통신서비스 품질)', dept:'IT본부', cycle:'quarterly', status:'ok', method:'서비스 가용성 SLA 관리 및 장애 대응', modules:['BCP전략','훈련'] },
+    { name:'정보통신기반 보호법', cat:'law', clause:'제9조 (보호계획 수립)', dept:'IT본부', cycle:'annual', status:'ok', method:'주요정보통신기반시설 보호계획 수립', modules:['리스크평가','BCP전략'] },
+    { name:'주요정보통신기반시설 보호지침', cat:'notice', clause:'전 항목', dept:'IT본부', cycle:'biannual', status:'ok', method:'취약점 분석·평가 및 보호조치 이행', modules:['리스크평가','내부심사'] },
+  ],
+  'IDC': [
+    { name:'전기통신사업법', cat:'law', clause:'제22조 (통신서비스 품질)', dept:'운영본부', cycle:'quarterly', status:'ok', method:'IDC 가용성 SLA 관리 및 장애 대응', modules:['BCP전략','훈련'] },
+    { name:'정보통신기반 보호법', cat:'law', clause:'제9조', dept:'IT운영본부', cycle:'annual', status:'ok', method:'주요정보통신기반시설 보호계획 수립', modules:['리스크평가','BCP전략'] },
+    { name:'주요정보통신기반시설 보호지침', cat:'notice', clause:'전 항목', dept:'보안본부', cycle:'biannual', status:'ok', method:'취약점 분석·평가 및 보호조치 이행', modules:['리스크평가','내부심사'] },
+  ],
+  '고속도로': [
+    { name:'도로법', cat:'law', clause:'제56조 (도로 유지·관리)', dept:'시설본부', cycle:'biannual', status:'ok', method:'도로 유지관리 계획 수립 및 이행', modules:['BCP전략'] },
+    { name:'도로교통법', cat:'law', clause:'제68조 (위험물 통행)', dept:'관제본부', cycle:'annual', status:'ok', method:'교통관제 및 비상대응절차 수립', modules:['BCP전략','훈련'] },
+    { name:'터널 방재시설 설치 및 관리지침', cat:'notice', clause:'전 항목', dept:'시설본부', cycle:'biannual', status:'review', method:'터널 방재시설 정기점검 및 훈련', modules:['리스크평가','훈련'] },
+  ],
+};
+
+/* ── Storage ── */
+const loadReqs = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
+const saveReqs = (d) => localStorage.setItem(KEY, JSON.stringify(d));
+
+/* ── Utilities ── */
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg, ms = 2400) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+function daysDiff(ds) {
+  if (!ds) return null;
+  const d = new Date(ds);
+  return isNaN(d) ? null : Math.round((d - new Date()) / 86400000);
+}
+function reviewBadge(ds) {
+  const diff = daysDiff(ds);
+  if (diff === null) return '';
+  if (diff < 0)    return ' <span class="bdg bdg-warn">기한 초과</span>';
+  if (diff <= 30)  return ' <span class="bdg bdg-warn">임박</span>';
+  return '';
+}
+function genId(reqs) {
+  const year = new Date().getFullYear();
+  const prefix = `REQ-${year}-`;
+  const nums = reqs.filter(r => (r.id||'').startsWith(prefix)).map(r => parseInt(r.id.slice(-3))).filter(n => !isNaN(n));
+  return `${prefix}${String(nums.length ? Math.max(...nums) + 1 : 1).padStart(3,'0')}`;
+}
+
+/* ── Build module checkboxes ── */
+(function() {
+  document.getElementById('moduleCbs').innerHTML = MODULES.map(m =>
+    `<label class="cb-item"><input type="checkbox" name="mod" value="${m}"> ${m}</label>`
+  ).join('');
+})();
+
+/* ── Tab switching ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'iso') renderIso();
+    if (btn.dataset.tab === 'dra') renderDra();
+  });
+});
+
+/* ── Collapsible form ── */
+document.getElementById('formToggle').addEventListener('click', () => {
+  const body = document.getElementById('formBody');
+  const chev = document.getElementById('chevron');
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+});
+
+/* ── State ── */
+let editingId = null;
+
+/* ── Save ── */
+document.getElementById('btnSave').addEventListener('click', () => {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { toast('법규명을 입력하세요.'); return; }
+  const reqs = loadReqs();
+  const mods = [...document.querySelectorAll('#moduleCbs input:checked')].map(el => el.value);
+  const data = {
+    name, cat: document.getElementById('fCat').value,
+    clause: document.getElementById('fClause').value.trim(),
+    dept: document.getElementById('fDept').value.trim(),
+    cycle: document.getElementById('fCycle').value,
+    nextCheck: document.getElementById('fNextCheck').value,
+    status: document.getElementById('fStatus').value,
+    method: document.getElementById('fMethod').value.trim(),
+    modules: mods,
+  };
+  if (editingId) {
+    const idx = reqs.findIndex(r => r.id === editingId);
+    if (idx !== -1) reqs[idx] = { ...reqs[idx], ...data };
+    toast('수정되었습니다 ✓');
+  } else {
+    reqs.push({ id: genId(reqs), ...data });
+    toast('등록되었습니다 ✓');
+  }
+  saveReqs(reqs);
+  resetForm();
+  renderAll();
+});
+
+/* ── Cancel / reset ── */
+document.getElementById('btnCancel').addEventListener('click', resetForm);
+function resetForm() {
+  editingId = null;
+  document.getElementById('editBadge').style.display = 'none';
+  document.getElementById('btnSave').textContent = '저장';
+  ['fId','fName','fClause','fDept','fNextCheck','fMethod'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fCat').value    = 'law';
+  document.getElementById('fCycle').value  = 'annual';
+  document.getElementById('fStatus').value = 'ok';
+  document.querySelectorAll('#moduleCbs input').forEach(el => el.checked = false);
+  document.getElementById('formBody').classList.remove('open');
+  document.getElementById('chevron').classList.remove('open');
+}
+
+/* ── Edit ── */
+function editReq(id) {
+  const req = loadReqs().find(r => r.id === id);
+  if (!req) return;
+  editingId = id;
+  document.getElementById('editBadge').style.display = '';
+  document.getElementById('btnSave').textContent = '수정 저장';
+  document.getElementById('fId').value        = req.id;
+  document.getElementById('fName').value      = req.name;
+  document.getElementById('fCat').value       = req.cat;
+  document.getElementById('fClause').value    = req.clause    || '';
+  document.getElementById('fDept').value      = req.dept      || '';
+  document.getElementById('fCycle').value     = req.cycle     || 'annual';
+  document.getElementById('fNextCheck').value = req.nextCheck || '';
+  document.getElementById('fStatus').value    = req.status;
+  document.getElementById('fMethod').value    = req.method    || '';
+  document.querySelectorAll('#moduleCbs input').forEach(el => {
+    el.checked = (req.modules || []).includes(el.value);
+  });
+  document.getElementById('formBody').classList.add('open');
+  document.getElementById('chevron').classList.add('open');
+  document.getElementById('formBody').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+/* ── Delete ── */
+function deleteReq(id) {
+  if (!confirm('이 항목을 삭제하시겠습니까?')) return;
+  saveReqs(loadReqs().filter(r => r.id !== id));
+  if (editingId === id) resetForm();
+  renderAll();
+  toast('삭제되었습니다');
+}
+
+/* ── Sample load ── */
+document.getElementById('btnLoadSample').addEventListener('click', () => {
+  if (loadReqs().length && !confirm('기존 데이터에 샘플을 추가합니까?')) return;
+  const ind = (localStorage.getItem(KEY_IND) || '').trim();
+  let samples = [...SAMPLES_COMMON];
+  if (SAMPLES_BY_IND[ind]) samples = [...samples, ...SAMPLES_BY_IND[ind]];
+  const existing = loadReqs();
+  const allReqs  = [...existing];
+  samples.forEach(s => {
+    const id = genId(allReqs);
+    allReqs.push({ id, ...s });
+  });
+  saveReqs(allReqs);
+  renderAll();
+  toast(`샘플 ${samples.length}개가 로드되었습니다 ✓`);
+});
+
+/* ── Filters ── */
+['fltCat','fltStatus','fltDept'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderTable);
+});
+document.getElementById('fltSearch').addEventListener('input', renderTable);
+document.getElementById('btnClear').addEventListener('click', () => {
+  ['fltCat','fltStatus','fltDept'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fltSearch').value = '';
+  renderTable();
+});
+
+/* ── Render KPI ── */
+function renderKpi(reqs) {
+  document.getElementById('kTotal').textContent    = reqs.length;
+  document.getElementById('kOk').textContent       = reqs.filter(r => r.status === 'ok').length;
+  document.getElementById('kReview').textContent   = reqs.filter(r => r.status === 'review' || r.status === 'fail').length;
+  const exp = reqs.filter(r => { const d = daysDiff(r.nextCheck); return d !== null && d >= 0 && d <= 30; });
+  document.getElementById('kExpiring').textContent = exp.length;
+}
+
+/* ── Render dept filter ── */
+function refreshDeptFilter(reqs) {
+  const depts = [...new Set(reqs.map(r => r.dept).filter(Boolean))].sort();
+  const sel = document.getElementById('fltDept');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">부서 전체</option>' +
+    depts.map(d => `<option value="${esc(d)}"${d === cur ? ' selected':''}>${esc(d)}</option>`).join('');
+}
+
+/* ── Render table ── */
+function renderTable() {
+  const reqs = loadReqs();
+  refreshDeptFilter(reqs);
+  const cat    = document.getElementById('fltCat').value;
+  const status = document.getElementById('fltStatus').value;
+  const dept   = document.getElementById('fltDept').value;
+  const q      = document.getElementById('fltSearch').value.trim().toLowerCase();
+
+  const rows = reqs.filter(r =>
+    (!cat    || r.cat === cat) &&
+    (!status || r.status === status) &&
+    (!dept   || r.dept === dept) &&
+    (!q      || r.name.toLowerCase().includes(q) || (r.id||'').toLowerCase().includes(q))
+  );
+
+  const tbody = document.getElementById('reqTbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-row">등록된 법규·요구사항이 없습니다.</td></tr>';
+    return;
+  }
+
+  const statusCls = { ok:'bdg-ok', review:'bdg-review', fail:'bdg-fail', na:'bdg-na' };
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td style="font-size:11.5px;font-weight:700;color:var(--text-2);">${esc(r.id)}</td>
+    <td style="font-weight:600;max-width:280px;">${esc(r.name)}</td>
+    <td>${esc(CAT_LBL[r.cat] || r.cat)}</td>
+    <td>${esc(r.dept || '-')}</td>
+    <td>${esc(CYCLE_LBL[r.cycle] || r.cycle)}</td>
+    <td style="white-space:nowrap;">${esc(r.nextCheck || '-')}${reviewBadge(r.nextCheck)}</td>
+    <td><span class="bdg ${statusCls[r.status] || 'bdg-na'}">${esc(STATUS_LBL[r.status] || r.status)}</span></td>
+    <td style="white-space:nowrap;">
+      <button class="btn btn-sm" onclick="editReq('${esc(r.id)}')">수정</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteReq('${esc(r.id)}')">삭제</button>
+    </td>
+  </tr>`).join('');
+}
+
+/* ── Render ISO mapping ── */
+function renderIso() {
+  const reqs = loadReqs();
+  const el = document.getElementById('isoSections');
+
+  el.innerHTML = ISO_SECTIONS.map(sec => {
+    // Find linked reqs: any req whose modules overlap with this section's related modules
+    // Simple mapping: any req is considered relevant to sections based on module names
+    const sectionModules = {
+      '4':['BIA','문서관리'], '5':['문서관리'], '6':['리스크평가','BCP전략'],
+      '7':['훈련','문서관리','내부심사'], '8':['BIA','리스크평가','BCP전략','훈련'],
+      '9':['내부심사'], '10':['내부심사']
+    };
+    const relevant = (sectionModules[sec.num] || []);
+    const linked = reqs.filter(r => (r.modules||[]).some(m => relevant.includes(m)));
+
+    const clauseHtml = sec.clauses.map(c =>
+      `<div class="iso-req-item">
+        <span class="iso-req-clause">${esc(c.c)}</span>
+        <span class="iso-req-name">${esc(c.n)}</span>
+      </div>`
+    ).join('');
+
+    const linkedHtml = linked.length
+      ? `<div class="iso-linked-reqs">
+          <div class="iso-linked-title">연계된 법규·요구사항 (${linked.length}건)</div>
+          ${linked.slice(0,5).map(r =>
+            `<div class="iso-linked-item">
+              <span class="bdg ${({ok:'bdg-ok',review:'bdg-review',fail:'bdg-fail',na:'bdg-na'})[r.status]||'bdg-na'}">${esc(STATUS_LBL[r.status]||r.status)}</span>
+              <span style="font-weight:600;">${esc(r.name)}</span>
+              <span style="font-size:11.5px;color:var(--text-2);margin-left:auto;">${esc(r.id)}</span>
+            </div>`).join('')}
+          ${linked.length > 5 ? `<div style="font-size:12px;color:var(--text-2);padding:4px 10px;">외 ${linked.length-5}건</div>` : ''}
+        </div>`
+      : '<div style="font-size:13px;color:var(--text-2);margin-top:8px;">연계된 법규가 없습니다. 법규 등록 시 BCMS 연계 모듈을 선택하세요.</div>';
+
+    const linksHtml = sec.links.map(l =>
+      `<a class="iso-link-btn" href="${l.href}">↗ ${esc(l.label)}</a>`
+    ).join('');
+
+    return `<div class="iso-sec">
+      <div class="iso-sec-head" onclick="toggleIsoSec(this)">
+        <span class="iso-sec-num">${sec.num}</span>
+        <span class="iso-sec-title">${esc(sec.title)}</span>
+        <span class="iso-sec-count">${sec.clauses.length}개 요구사항</span>
+        <span class="iso-sec-arrow">▶</span>
+      </div>
+      <div class="iso-sec-body">
+        <p class="iso-sec-desc">${esc(sec.desc)}</p>
+        <div class="iso-req-list">${clauseHtml}</div>
+        ${linkedHtml}
+        <div class="iso-link-wrap">${linksHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleIsoSec(head) {
+  const body  = head.nextElementSibling;
+  const arrow = head.querySelector('.iso-sec-arrow');
+  const open  = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+/* ── Render DRA ── */
+function renderDra() {
+  const statusCls = { ok:'bdg-ok', review:'bdg-review', fail:'bdg-fail', na:'bdg-na' };
+  document.getElementById('draList').innerHTML = DRA_ITEMS.map((item, i) => {
+    const links = item.links.map(l =>
+      `<a class="iso-link-btn" href="${l.href}">↗ ${esc(l.label)}</a>`
+    ).join('');
+    return `<div class="dra-item">
+      <div class="dra-item-head">
+        <div class="dra-num">${i+1}</div>
+        <div>
+          <div class="dra-title">${esc(item.title)}</div>
+          <div class="dra-clause">${esc(item.clause)}</div>
+        </div>
+      </div>
+      <div class="dra-body">${esc(item.body)}</div>
+      <div class="dra-status-row">
+        <span class="bdg ${statusCls[item.status]||'bdg-na'}">${STATUS_LBL[item.status]||item.status}</span>
+        <div class="dra-link-wrap">${links}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Expose ── */
+window.editReq      = editReq;
+window.deleteReq    = deleteReq;
+window.toggleIsoSec = toggleIsoSec;
+
+/* ── Render all ── */
+function renderAll() {
+  const reqs = loadReqs();
+  renderKpi(reqs);
+  renderTable();
+}
+
+renderAll();
+</script>
+
+<button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+<script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>
