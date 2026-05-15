@@ -129,7 +129,7 @@
 
       const BIA_KEY  = 'bcmsBIAData';
       const CORE_KEY = 'bcmsCoreFunctions';
-      const ORG_KEY  = 'bcmsOrgRegistry';      // new people-based registry
+      const ORG_KEY  = 'bcmsOrgRegistry';
       const ORG_KEY_LEGACY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
 
       /* ── Helpers ── */
@@ -141,26 +141,24 @@
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c]));
 
       /* ── DOM refs ── */
-      const cards        = document.getElementById('cards');
-      const q            = document.getElementById('q');
-      const matchFilter  = document.getElementById('matchFilter');
-      const teamCount    = document.getElementById('teamCount');
-      const functionCount= document.getElementById('functionCount');
-      const matchCount   = document.getElementById('matchCount');
-      const addBtn       = document.getElementById('addBtn');
-      const modalWrap    = document.getElementById('modalWrap');
-      const modalTitle   = document.getElementById('modalTitle');
-      const teamInput    = document.getElementById('teamInput');
-      const functionsInput = document.getElementById('functionsInput');
-      const saveBtn      = document.getElementById('saveBtn');
-      const cancelBtn    = document.getElementById('cancelBtn');
-      const teamOptions  = document.getElementById('teamOptions');
+      const cards         = document.getElementById('cards');
+      const q             = document.getElementById('q');
+      const matchFilter   = document.getElementById('matchFilter');
+      const teamCount     = document.getElementById('teamCount');
+      const functionCount = document.getElementById('functionCount');
+      const matchCount    = document.getElementById('matchCount');
+      const addBtn        = document.getElementById('addBtn');
+      const modalWrap     = document.getElementById('modalWrap');
+      const modalTitle    = document.getElementById('modalTitle');
+      const teamInput     = document.getElementById('teamInput');
+      const functionsInput= document.getElementById('functionsInput');
+      const saveBtn       = document.getElementById('saveBtn');
+      const cancelBtn     = document.getElementById('cancelBtn');
+      const teamOptions   = document.getElementById('teamOptions');
 
       let editingTeam = '';
 
-      /* ── Data readers ── */
-
-      /* bcmsBIAData → [{team, functions:[string,...], source:'bia'}] */
+      /* ── Read bcmsBIAData only ── */
       const readBIARows = () => {
         const raw = safeParse(localStorage.getItem(BIA_KEY), []);
         if (!Array.isArray(raw)) return [];
@@ -170,60 +168,62 @@
             functions: uniq((row.functions || [])
               .map((f) => typeof f === 'string' ? f : normStr(f?.name || f?.functionName))
               .filter(Boolean)),
-            source: 'bia',
+            _raw: row.functions || [],   // preserve rich BIA data for merge
           }))
           .filter((r) => r.team && r.functions.length);
       };
 
-      /* bcmsCoreFunctions → [{team, functions:[string,...], source:'core'}] */
-      const readCoreRows = () => {
-        const raw = safeParse(localStorage.getItem(CORE_KEY), []);
-        if (!Array.isArray(raw)) return [];
-        return raw
-          .map((row) => ({
-            team: normStr(row.team),
-            functions: normFns(row.functions || []),
-            source: 'core',
-          }))
-          .filter((r) => r.team && r.functions.length);
+      /* Rebuild bcmsCoreFunctions from BIA — used by BIA page's "불러오기" */
+      const syncCoreFromBIA = () => {
+        const coreData = readBIARows().map((r) => ({ team: r.team, functions: r.functions }));
+        localStorage.setItem(CORE_KEY, JSON.stringify(coreData));
       };
 
-      /* Merge: BIA first, then CORE entries whose team is not already in BIA */
-      const mergeRows = () => {
-        const biaRows  = readBIARows();
-        const coreRows = readCoreRows();
-        const biaTeams = new Set(biaRows.map((r) => r.team));
-        const extraCore = coreRows.filter((r) => !biaTeams.has(r.team));
-        return [...biaRows, ...extraCore];
-      };
-
-      /* Teams for "조직 매칭" check – from new people registry (dept field) */
+      /* ── Org teams for "조직 매칭" ── */
       const readOrgTeams = () => {
-        // New org registry: array of people with .dept
         const people = safeParse(localStorage.getItem(ORG_KEY), []);
         if (Array.isArray(people) && people.length) {
           return uniq(people.map((p) => p.dept).filter(Boolean));
         }
-        // Legacy fallback: division→team structure
         const org = safeParse(localStorage.getItem(ORG_KEY_LEGACY), { divisions: [] });
         return uniq((org.divisions || [])
           .flatMap((d) => (d.teams || []).map((t) => t.name))
           .filter(Boolean));
       };
 
-      /* ── Persist helpers (CORE_KEY only – BIA data is read-only here) ── */
-      const saveCoreRow = (team, functions) => {
-        const rows = readCoreRows();
-        const idx  = rows.findIndex((r) => r.team === team || r.team === editingTeam);
-        const item = { team, functions };
-        if (idx >= 0) rows[idx] = item;
-        else rows.unshift(item);
-        localStorage.setItem(CORE_KEY, JSON.stringify(rows));
+      /* ── Write to bcmsBIAData (preserves rich function data) ── */
+      const updateBIARow = (originalTeam, newTeam, newFnNames) => {
+        const rows = safeParse(localStorage.getItem(BIA_KEY), []);
+        if (!Array.isArray(rows)) return;
+
+        const idx = rows.findIndex((r) => normStr(r.team) === originalTeam);
+        const oldFns = idx >= 0 ? (rows[idx].functions || []) : [];
+
+        // Keep existing rich objects for unchanged function names; add simple ones for new
+        const oldFnMap = new Map(oldFns.map((f) => {
+          const name = typeof f === 'string' ? f : normStr(f?.name || f?.functionName);
+          return [name, f];
+        }));
+        const newFns = newFnNames.map((name) =>
+          oldFnMap.has(name) ? oldFnMap.get(name) : { name, importance: '일반' }
+        );
+
+        if (idx >= 0) {
+          rows[idx] = { ...rows[idx], team: newTeam, functions: newFns };
+        } else {
+          rows.push({ team: newTeam, functions: newFns });
+        }
+
+        localStorage.setItem(BIA_KEY, JSON.stringify(rows));
+        syncCoreFromBIA();
       };
 
-      const deleteCoreRow = (team) => {
-        const rows = readCoreRows().filter((r) => r.team !== team);
-        localStorage.setItem(CORE_KEY, JSON.stringify(rows));
+      const deleteBIARow = (team) => {
+        const rows = safeParse(localStorage.getItem(BIA_KEY), []);
+        localStorage.setItem(BIA_KEY, JSON.stringify(
+          Array.isArray(rows) ? rows.filter((r) => normStr(r.team) !== team) : []
+        ));
+        syncCoreFromBIA();
       };
 
       /* ── Modal ── */
@@ -242,24 +242,24 @@
 
       /* ── Render ── */
       const renderTeamOptions = (orgTeams) => {
-        /* datalist includes org teams + BIA teams for convenience */
         const biaTeams = readBIARows().map((r) => r.team);
         const all = uniq([...orgTeams, ...biaTeams]).sort();
-        teamOptions.innerHTML = all.map((name) => `<option value="${escHtml(name)}"></option>`).join('');
+        teamOptions.innerHTML = all.map((n) => `<option value="${escHtml(n)}"></option>`).join('');
       };
 
       const renderMetrics = (allRows, orgTeams) => {
         const totalFns = allRows.reduce((acc, r) => acc + r.functions.length, 0);
         const matched  = allRows.filter((r) => orgTeams.includes(r.team)).length;
-        teamCount.textContent    = String(allRows.length);
-        functionCount.textContent= String(totalFns);
-        matchCount.textContent   = `${matched}/${allRows.length || 0}`;
+        teamCount.textContent     = String(allRows.length);
+        functionCount.textContent = String(totalFns);
+        matchCount.textContent    = `${matched}/${allRows.length || 0}`;
       };
 
       const renderCards = () => {
-        const orgTeams  = readOrgTeams();
-        const allRows   = mergeRows();
+        const orgTeams = readOrgTeams();
+        const allRows  = readBIARows();   // bcmsBIAData only — no CORE merge
         renderTeamOptions(orgTeams);
+        renderMetrics(allRows, orgTeams);
 
         const keyword = (q.value || '').trim().toLowerCase();
         const mode    = matchFilter.value;
@@ -268,21 +268,18 @@
           const matched = orgTeams.includes(row.team);
           if (mode === 'matched'   && !matched) return false;
           if (mode === 'unmatched' &&  matched) return false;
-          const inText = `${row.team} ${row.functions.join(' ')}`.toLowerCase();
-          return !keyword || inText.includes(keyword);
+          const hay = `${row.team} ${row.functions.join(' ')}`.toLowerCase();
+          return !keyword || hay.includes(keyword);
         });
 
-        renderMetrics(allRows, orgTeams);
-
-        /* Empty state: no data at all */
         if (!allRows.length) {
           cards.innerHTML = `
-            <div class="empty" style="grid-column:1/-1; padding:24px; line-height:2">
-              <p style="font-size:15px; font-weight:700; margin:0 0 6px">등록된 핵심업무가 없습니다.</p>
+            <div class="empty" style="grid-column:1/-1;padding:24px;line-height:2">
+              <p style="font-size:15px;font-weight:700;margin:0 0 6px">등록된 핵심업무가 없습니다.</p>
               <p style="margin:0 0 4px">
                 <a href="../risk-bia/bia.html">📋 BIA 분석 페이지</a>에서 팀별 핵심업무를 먼저 등록해주세요.
               </p>
-              <p style="margin:0; color:#94a3b8">
+              <p style="margin:0;color:#94a3b8">
                 BIA에 등록된 업무는 이 페이지에 자동으로 반영됩니다.
                 직접 추가하려면 위 "핵심업무 추가" 버튼을 사용하세요.
               </p>
@@ -290,7 +287,6 @@
           return;
         }
 
-        /* Search/filter empty */
         if (!viewRows.length) {
           cards.innerHTML = '<div class="empty" style="grid-column:1/-1">조건에 맞는 핵심업무가 없습니다.</div>';
           return;
@@ -298,33 +294,27 @@
 
         cards.innerHTML = viewRows.map((row) => {
           const matched = orgTeams.includes(row.team);
-          const isBia   = row.source === 'bia';
-
-          const actionHtml = isBia
-            ? `<a class="btn" href="../risk-bia/bia.html" title="BIA 페이지에서 수정">BIA에서 수정 →</a>`
-            : `<button class="btn" type="button" data-edit="${escHtml(row.team)}">수정</button>
-               <button class="btn" type="button" data-delete="${escHtml(row.team)}">삭제</button>`;
-
           return `
-            <article class="teamCard ${isBia ? 'bia-sourced' : ''}">
+            <article class="teamCard bia-sourced">
               <div class="teamHead">
                 <h2 class="teamTitle">${escHtml(row.team)}</h2>
-                <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                  ${isBia
-                    ? '<span class="tag tag-bia">BIA 연동</span>'
-                    : '<span class="tag tag-core">직접 등록</span>'}
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <span class="tag tag-bia">BIA 연동</span>
                   <span class="tag">${matched ? '조직 매칭 완료' : '조직 미매칭'}</span>
                 </div>
               </div>
               <ul class="functionList">
                 ${row.functions.map((fn) => `<li>${escHtml(fn)}</li>`).join('')}
               </ul>
-              <div class="actions">${actionHtml}</div>
+              <div class="actions">
+                <button class="btn" type="button" data-edit="${escHtml(row.team)}">수정</button>
+                <button class="btn" type="button" data-delete="${escHtml(row.team)}">삭제</button>
+              </div>
             </article>`;
         }).join('');
       };
 
-      /* ── Save (modal submit) ── */
+      /* ── Save (modal) – writes directly to bcmsBIAData ── */
       const upsertRow = () => {
         const team      = normStr(teamInput.value);
         const functions = normFns((functionsInput.value || '').split('\n'));
@@ -332,7 +322,7 @@
           alert('팀명과 핵심업무를 입력해 주세요.');
           return;
         }
-        saveCoreRow(team, functions);
+        updateBIARow(editingTeam || team, team, functions);
         closeModal();
         renderCards();
       };
@@ -349,15 +339,15 @@
         const deleteTeam = e.target.getAttribute('data-delete');
 
         if (editTeam) {
-          const row = readCoreRows().find((r) => r.team === editTeam);
+          const row = readBIARows().find((r) => r.team === editTeam);
           if (!row) return;
           openModal('edit', row);
           return;
         }
 
         if (deleteTeam) {
-          if (!confirm(`'${deleteTeam}' 팀의 핵심업무를 삭제할까요?`)) return;
-          deleteCoreRow(deleteTeam);
+          if (!confirm(`'${deleteTeam}' 팀의 핵심업무를 삭제할까요?\n(BIA 분석 데이터도 함께 삭제됩니다)`)) return;
+          deleteBIARow(deleteTeam);
           renderCards();
         }
       });
@@ -366,12 +356,13 @@
         if (e.target === modalWrap) closeModal();
       });
 
-      /* ── Auto-refresh when BIA data changes (cross-tab or same-tab) ── */
+      /* ── Auto-refresh when BIA data changes (cross-tab) ── */
       window.addEventListener('storage', (e) => {
-        if (e.key === BIA_KEY || e.key === CORE_KEY) renderCards();
+        if (e.key === BIA_KEY) { syncCoreFromBIA(); renderCards(); }
       });
 
-      /* ── Init ── */
+      /* ── Init: discard stale bcmsCoreFunctions, resync from BIA ── */
+      syncCoreFromBIA();
       renderCards();
     })();
   </script>
