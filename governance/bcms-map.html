@@ -1,597 +1,598 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko" data-theme="light">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BCMS Portal - BCMS 체계 맵</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BCMS 체계 맵 | BCMS Portal</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-  .wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 40px; }
+/* ── Page Header ── */
+.page-title{font-size:1.5rem;font-weight:700;color:var(--text);margin:0 0 .25rem}
+.page-sub{font-size:.875rem;color:var(--text-2);margin:0 0 1.5rem}
 
-  .hero h1 { margin: 0; font-size: 24px; font-weight: 950; }
-  .hero p  { margin: 6px 0 0; color: var(--text-2); font-size: 14px; }
+/* ── Tabs ── */
+.tab-bar{display:flex;gap:.375rem;border-bottom:2px solid var(--border);margin-bottom:1.5rem}
+.tab-btn{padding:.5rem 1.125rem;border:none;background:none;cursor:pointer;
+  font-size:.9375rem;font-weight:500;color:var(--text-2);
+  border-bottom:2.5px solid transparent;margin-bottom:-2px;
+  border-radius:var(--r-sm) var(--r-sm) 0 0;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:var(--accent)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-pane{display:none}.tab-pane.active{display:block}
 
-  /* ── Tabs ── */
-  .tab-bar { display: flex; border-bottom: 1px solid var(--border); margin-top: 22px; }
-  .tab-btn {
-    padding: 10px 22px; font-size: 14px; font-weight: 600; border: none;
-    background: transparent; cursor: pointer; color: var(--text-2);
-    border-bottom: 2.5px solid transparent; margin-bottom: -1px; transition: all .15s;
-  }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
-  .tab-btn:hover:not(.active) { color: var(--text); background: rgba(0,0,0,.03); }
-  [data-theme="dark"] .tab-btn:hover:not(.active) { background: rgba(255,255,255,.04); }
-  .tab-pane { display: none; margin-top: 24px; }
-  .tab-pane.active { display: block; }
+/* ── Summary Gauge Row ── */
+.gauge-row{display:flex;align-items:center;gap:1.75rem;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:1.25rem 1.5rem;
+  margin-bottom:1.5rem;box-shadow:var(--shadow)}
+.gauge-wrap{position:relative;width:96px;height:96px;flex-shrink:0}
+.gauge-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.g-track{fill:none;stroke:var(--border-strong);stroke-width:8}
+.g-fill{fill:none;stroke-width:8;stroke-linecap:round;
+  stroke-dasharray:87.96 87.96;stroke-dashoffset:87.96;
+  transition:stroke-dashoffset .7s cubic-bezier(.4,0,.2,1),stroke .4s}
+.gauge-center{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:0}
+.gauge-pct{font-size:1.375rem;font-weight:700;color:var(--text);line-height:1}
+.gauge-unit{font-size:.6875rem;color:var(--text-2);margin-top:2px}
+.gauge-info{flex:1;min-width:0}
+.gauge-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.2rem}
+.gauge-desc{font-size:.8125rem;color:var(--text-2);line-height:1.5;margin-bottom:.5rem}
+.maturity-badge{display:inline-block;padding:.2rem .7rem;border-radius:99px;
+  font-size:.75rem;font-weight:600}
 
-  /* ── Gauge ── */
-  .gauge-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-top: 24px; }
-  .gauge-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .gauge-title { font-size: 14px; font-weight: 800; }
-  .gauge-label { font-size: 13px; font-weight: 700; color: var(--text-2); }
-  .gauge-bar   { height: 14px; background: var(--border); border-radius: 999px; overflow: hidden; }
-  .gauge-fill  { height: 100%; border-radius: 999px; transition: width .7s ease; }
-  .maturity-labels { display: flex; justify-content: space-between; margin-top: 6px; }
-  .maturity-lbl { font-size: 11px; color: var(--text-2); font-weight: 600; }
-  .maturity-badge {
-    display: inline-flex; align-items: center; border-radius: 999px;
-    padding: 4px 14px; font-size: 13px; font-weight: 800; margin-top: 10px;
-    border: 1px solid;
-  }
+/* ── PDCA Flow Strip ── */
+.pdca-flow{display:flex;align-items:center;justify-content:center;
+  gap:.5rem;margin-bottom:1.125rem;flex-wrap:wrap}
+.pf-item{display:flex;align-items:center;gap:.375rem;
+  padding:.35rem .75rem;border-radius:8px;font-size:.8125rem;font-weight:600}
+.pf-dot{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+.pf-arrow{font-size:1rem;color:var(--text-2);flex-shrink:0}
+.pf-plan{background:#eff6ff;color:#1d4ed8}
+.pf-plan .pf-dot{background:#dbeafe;color:#1d4ed8}
+.pf-do{background:#f0fdf4;color:#15803d}
+.pf-do .pf-dot{background:#dcfce7;color:#15803d}
+.pf-check{background:#fefce8;color:#a16207}
+.pf-check .pf-dot{background:#fef9c3;color:#a16207}
+.pf-act{background:#fdf2f8;color:#9d174d}
+.pf-act .pf-dot{background:#fce7f3;color:#9d174d}
+[data-theme=dark] .pf-plan{background:#1e3a5f;color:#93c5fd}
+[data-theme=dark] .pf-plan .pf-dot{background:#1e3a5f;color:#93c5fd}
+[data-theme=dark] .pf-do{background:#052e16;color:#86efac}
+[data-theme=dark] .pf-do .pf-dot{background:#14532d;color:#86efac}
+[data-theme=dark] .pf-check{background:#422006;color:#fde68a}
+[data-theme=dark] .pf-check .pf-dot{background:#451a03;color:#fde68a}
+[data-theme=dark] .pf-act{background:#500724;color:#fbcfe8}
+[data-theme=dark] .pf-act .pf-dot{background:#4c0519;color:#fbcfe8}
 
-  /* ── PDCA layout ── */
-  .pdca-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 16px;
-  }
-  .pdca-arrows {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    grid-template-rows: auto auto;
-    gap: 0;
-    align-items: center;
-    justify-items: center;
-    margin: 4px 0;
-    pointer-events: none;
-  }
+/* ── PDCA Cards ── */
+.pdca-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.75rem}
+.pdca-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:1.25rem 1.375rem;box-shadow:var(--shadow);
+  transition:transform .15s,box-shadow .15s;border-top:3px solid transparent}
+.pdca-card:hover{transform:translateY(-2px);box-shadow:0 4px 18px rgba(0,0,0,.1)}
+.pdca-card.plan-card{border-top-color:#3b82f6}
+.pdca-card.do-card{border-top-color:#22c55e}
+.pdca-card.check-card{border-top-color:#eab308}
+.pdca-card.act-card{border-top-color:#ec4899}
 
-  /* PDCA card */
-  .pdca-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px; padding: 18px 20px; position: relative;
-    transition: box-shadow .2s, transform .15s;
-  }
-  .pdca-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
-  .pdca-phase {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
-    padding: 4px 10px; border-radius: 999px; margin-bottom: 10px;
-  }
-  .phase-plan  { background: rgba(37,99,235,.12);  color: #1d4ed8; border: 1px solid rgba(37,99,235,.25); }
-  .phase-do    { background: rgba(5,150,105,.12);  color: #065f46; border: 1px solid rgba(5,150,105,.25); }
-  .phase-check { background: rgba(245,158,11,.12); color: #92400e; border: 1px solid rgba(245,158,11,.25); }
-  .phase-act   { background: rgba(124,58,237,.12); color: #5b21b6; border: 1px solid rgba(124,58,237,.25); }
+.pdca-hd{display:flex;align-items:flex-start;gap:.75rem;margin-bottom:1rem}
+.pdca-icon{width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;flex-shrink:0}
+.pdca-icon.plan{background:#dbeafe;color:#1d4ed8}
+.pdca-icon.do{background:#dcfce7;color:#15803d}
+.pdca-icon.check{background:#fef9c3;color:#a16207}
+.pdca-icon.act{background:#fce7f3;color:#9d174d}
+[data-theme=dark] .pdca-icon.plan{background:#1e3a5f;color:#93c5fd}
+[data-theme=dark] .pdca-icon.do{background:#14532d;color:#86efac}
+[data-theme=dark] .pdca-icon.check{background:#422006;color:#fde68a}
+[data-theme=dark] .pdca-icon.act{background:#4c0519;color:#fbcfe8}
 
-  .pdca-title { font-size: 17px; font-weight: 800; margin: 0 0 4px; }
-  .pdca-sub   { font-size: 12.5px; color: var(--text-2); margin: 0 0 14px; }
+.pdca-names{flex:1;min-width:0}
+.pdca-phase{font-size:1rem;font-weight:700;color:var(--text)}
+.pdca-phase-ko{font-size:.6875rem;color:var(--text-2);margin-top:1px}
+.pdca-desc{font-size:.75rem;color:var(--text-2);line-height:1.45;margin-top:3px}
 
-  .pdca-modules { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-  .pdca-module  {
-    display: flex; align-items: center; gap: 8px; padding: 7px 10px;
-    border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
-    text-decoration: none; color: var(--text); transition: background .15s;
-  }
-  .pdca-module:hover { background: var(--surface-hover); }
-  .pdca-module-icon { font-size: 15px; }
-  .pdca-module-name { flex: 1; font-weight: 600; }
-  .pdca-module-pct  { font-size: 12px; font-weight: 700; color: var(--text-2); }
+/* Progress */
+.prog-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.375rem}
+.prog-lbl{font-size:.8125rem;font-weight:500;color:var(--text-2)}
+.prog-val{font-size:1.25rem;font-weight:700;color:var(--text)}
+.prog-val.na{font-size:.875rem;color:var(--text-2)}
+.prog-track{height:9px;background:var(--border-strong);border-radius:99px;overflow:hidden;margin-bottom:.875rem}
+.prog-bar{height:100%;border-radius:99px;transition:width .6s ease;min-width:0}
+.prog-bar.plan{background:linear-gradient(90deg,#60a5fa,#1d4ed8)}
+.prog-bar.do{background:linear-gradient(90deg,#4ade80,#15803d)}
+.prog-bar.check{background:linear-gradient(90deg,#fde047,#a16207)}
+.prog-bar.act{background:linear-gradient(90deg,#f472b6,#9d174d)}
 
-  .pdca-prog-wrap { margin-bottom: 14px; }
-  .pdca-prog-head { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 5px; }
-  .pdca-prog-bar  { height: 7px; background: var(--border); border-radius: 999px; overflow: hidden; }
-  .pdca-prog-fill { height: 100%; border-radius: 999px; transition: width .6s ease; }
+/* Sub-metrics */
+.sub-metrics{display:flex;flex-direction:column;gap:.3rem}
+.sub-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.3125rem .5rem;background:var(--bg);border-radius:6px;font-size:.8125rem}
+.sub-name{color:var(--text-2)}
+.sub-val{font-weight:600;color:var(--text)}
+.sub-val.na{color:var(--text-2);font-weight:400;font-size:.75rem}
 
-  .pdca-btn {
-    display: inline-flex; align-items: center; gap: 4px; padding: 7px 14px;
-    border-radius: 999px; border: 1px solid var(--border); background: var(--surface);
-    color: var(--accent); font-size: 12.5px; font-weight: 700; text-decoration: none;
-    transition: all .15s; cursor: pointer;
-  }
-  .pdca-btn:hover { background: var(--surface-hover); }
+.no-data-note{font-size:.75rem;color:var(--text-2);font-style:italic;
+  margin:.5rem 0 0;padding:.375rem .5rem;background:var(--bg);border-radius:6px}
+.source-link{display:inline-block;margin-top:.625rem;font-size:.75rem;
+  color:var(--accent);text-decoration:none}
+.source-link:hover{text-decoration:underline}
 
-  /* PDCA arrow connectors */
-  .pdca-flow-wrap { position: relative; }
-  .flow-arrows {
-    display: flex; align-items: center; justify-content: center;
-    gap: 0; margin: 6px 0; color: var(--text-2); font-size: 13px; font-weight: 600;
-  }
-  .arrow-box {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 4px; padding: 8px 14px;
-    background: var(--surface-hover); border: 1px solid var(--border);
-    border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text-2);
-  }
-  .arrow-icon { font-size: 20px; }
+/* ── ISO 22301 Cards ── */
+.iso-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:1rem}
+.iso-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:1.125rem 1.25rem;box-shadow:var(--shadow);
+  cursor:pointer;transition:transform .15s,box-shadow .15s;
+  display:flex;flex-direction:column;gap:.625rem}
+.iso-card:hover{transform:translateY(-2px);box-shadow:0 4px 18px rgba(0,0,0,.1)}
+.iso-card-top{display:flex;align-items:flex-start;gap:.625rem}
+.iso-num-badge{width:38px;height:38px;border-radius:9px;display:flex;
+  align-items:center;justify-content:center;font-size:.9375rem;font-weight:800;
+  flex-shrink:0;background:var(--border-strong);color:var(--text)}
+.iso-meta{flex:1;min-width:0}
+.iso-clause-lbl{font-size:.6875rem;font-weight:600;color:var(--text-2);margin-bottom:2px}
+.iso-clause-name{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.25}
+.iso-clause-en{font-size:.6875rem;color:var(--text-2)}
+.iso-prog-hd{display:flex;justify-content:space-between;align-items:baseline}
+.iso-prog-lbl{font-size:.75rem;color:var(--text-2)}
+.iso-prog-pct{font-size:.9375rem;font-weight:700;color:var(--text)}
+.iso-track{height:7px;background:var(--border-strong);border-radius:99px;overflow:hidden}
+.iso-fill{height:100%;border-radius:99px;transition:width .6s ease}
+.iso-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.25rem}
+.iso-status-badge{display:inline-block;padding:.175rem .55rem;border-radius:99px;
+  font-size:.6875rem;font-weight:600}
+.iso-items{font-size:.6875rem;color:var(--text-2)}
 
-  /* ── ISO 22301 cards ── */
-  .iso-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px;
-  }
-  .iso-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; padding: 16px 18px;
-    cursor: pointer; transition: box-shadow .2s, transform .15s;
-    text-decoration: none; display: flex; flex-direction: column; gap: 10px;
-  }
-  .iso-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
-  .iso-card-top { display: flex; align-items: flex-start; gap: 12px; }
-  .iso-num {
-    font-size: 26px; font-weight: 950; line-height: 1;
-    min-width: 36px; color: var(--accent);
-  }
-  .iso-card-meta { flex: 1; }
-  .iso-card-title { font-size: 14px; font-weight: 800; margin: 0 0 3px; }
-  .iso-card-desc  { font-size: 12px; color: var(--text-2); line-height: 1.5; margin: 0; }
-  .iso-card-links { display: flex; flex-wrap: wrap; gap: 4px; }
-  .iso-link-chip {
-    font-size: 11.5px; font-weight: 600; padding: 3px 9px;
-    border-radius: 999px; border: 1px solid var(--border);
-    color: var(--text-2); background: var(--surface-hover);
-  }
-  .iso-prog-wrap { margin-top: 2px; }
-  .iso-prog-head { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 700; color: var(--text-2); margin-bottom: 4px; }
-  .iso-prog-bar  { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
-  .iso-prog-fill { height: 100%; border-radius: 999px; transition: width .6s ease; }
+/* Status / fill color tokens */
+.s-none{color:#6b7280;background:#f3f4f6}
+.s-bad {color:#dc2626;background:#fef2f2}
+.s-warn{color:#d97706;background:#fffbeb}
+.s-good{color:#16a34a;background:#f0fdf4}
+.f-none{background:#d1d5db}
+.f-bad {background:linear-gradient(90deg,#ef4444,#dc2626)}
+.f-warn{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.f-good{background:linear-gradient(90deg,#22c55e,#16a34a)}
+[data-theme=dark] .s-none{color:#9ca3af;background:#1f2937}
+[data-theme=dark] .s-bad {color:#f87171;background:#450a0a}
+[data-theme=dark] .s-warn{color:#fcd34d;background:#422006}
+[data-theme=dark] .s-good{color:#86efac;background:#052e16}
 
-  /* left border accent by status */
-  .iso-card.status-none    { border-left: 4px solid #94a3b8; }
-  .iso-card.status-low     { border-left: 4px solid #ef4444; }
-  .iso-card.status-mid     { border-left: 4px solid #f59e0b; }
-  .iso-card.status-high    { border-left: 4px solid #22c55e; }
+/* ── Footer ── */
+.map-footer{display:flex;justify-content:space-between;align-items:center;
+  margin-top:1.25rem;padding-top:.75rem;border-top:1px solid var(--border)}
+.footer-note{font-size:.75rem;color:var(--text-2)}
+.refresh-btn{padding:.375rem .875rem;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text-2);cursor:pointer;font-size:.8125rem;
+  transition:background .15s,color .15s}
+.refresh-btn:hover{background:var(--surface-hover);color:var(--text)}
 
-  /* fill colors */
-  .fill-blue   { background: #2563eb; }
-  .fill-green  { background: #22c55e; }
-  .fill-yellow { background: #f59e0b; }
-  .fill-red    { background: #ef4444; }
-  .fill-gray   { background: #94a3b8; }
-  .fill-purple { background: #7c3aed; }
-
-  /* overall gauge fill */
-  .gauge-fill-blue   { background: linear-gradient(90deg, #2563eb, #60a5fa); }
-  .gauge-fill-green  { background: linear-gradient(90deg, #16a34a, #4ade80); }
-  .gauge-fill-yellow { background: linear-gradient(90deg, #d97706, #fbbf24); }
-  .gauge-fill-red    { background: linear-gradient(90deg, #dc2626, #f87171); }
-
-  /* maturity badges */
-  .bdg-init  { color: #64748b; background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); }
-  .bdg-dev   { color: #dc2626; background: rgba(220,38,38,.1);   border-color: rgba(220,38,38,.3);   }
-  .bdg-def   { color: #d97706; background: rgba(217,119,6,.1);   border-color: rgba(217,119,6,.3);   }
-  .bdg-opt   { color: #16a34a; background: rgba(22,163,74,.1);   border-color: rgba(22,163,74,.3);   }
-
-  @media (max-width: 800px) {
-    .pdca-grid { grid-template-columns: 1fr; }
-    .iso-grid  { grid-template-columns: 1fr; }
-  }
+/* ── Responsive ── */
+@media(max-width:640px){
+  .pdca-grid{grid-template-columns:1fr}
+  .gauge-row{flex-direction:column;text-align:center;gap:1rem}
+  .iso-grid{grid-template-columns:1fr}
+  .pdca-flow{justify-content:center}
+  .map-footer{flex-direction:column;gap:.5rem;text-align:center}
+}
 </style>
 </head>
 <body>
-<aside id="sidebarMount"></aside>
-<main class="main">
-<div class="wrap">
+<div id="sidebarMount"></div>
+<main class="main-content">
 
-  <div class="hero">
-    <h1>🗺 BCMS 체계 맵</h1>
-    <p>ISO 22301 기반 업무연속성관리체계 전체 구조 및 실시간 진행 현황</p>
-  </div>
+  <h2 class="page-title">BCMS 체계 맵</h2>
+  <p class="page-sub">ISO 22301 기반 BCMS 운영 현황 — PDCA 사이클 · 조항별 이행율 실시간 대시보드</p>
 
+  <!-- Tab Bar -->
   <div class="tab-bar">
-    <button class="tab-btn active" data-tab="pdca">🔄 BCMS 흐름도</button>
-    <button class="tab-btn" data-tab="iso">📐 ISO 22301 체계</button>
+    <button class="tab-btn active" data-tab="pdca">📊 PDCA 대시보드</button>
+    <button class="tab-btn" data-tab="iso">📋 ISO 22301 체계</button>
   </div>
 
-  <!-- ══ Tab 1: PDCA ══ -->
-  <div class="tab-pane active" id="tab-pdca">
+  <!-- ══════════════════ Tab 1: PDCA ══════════════════ -->
+  <div id="tab-pdca" class="tab-pane active">
 
-    <div class="pdca-grid">
-      <!-- PLAN -->
-      <div class="pdca-card" id="card-plan">
-        <span class="pdca-phase phase-plan">📋 Plan — 계획</span>
-        <p class="pdca-title">거버넌스 · BIA · 리스크 평가</p>
-        <p class="pdca-sub">조직 상황 파악 및 위험·영향 분석</p>
-        <div class="pdca-prog-wrap">
-          <div class="pdca-prog-head"><span>단계 진행률</span><span id="plan-pct">0%</span></div>
-          <div class="pdca-prog-bar"><div class="pdca-prog-fill fill-blue" id="plan-bar" style="width:0%"></div></div>
+    <div class="gauge-row">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 36 36" aria-hidden="true">
+          <circle class="g-track" cx="18" cy="18" r="14"/>
+          <circle class="g-fill" id="gaugePDCA" cx="18" cy="18" r="14" stroke="#3b82f6"/>
+        </svg>
+        <div class="gauge-center">
+          <span class="gauge-pct" id="pdcaPct">—</span>
+          <span class="gauge-unit">성숙도</span>
         </div>
-        <div class="pdca-modules" id="plan-modules"></div>
-        <a class="pdca-btn" href="../governance/index.html">↗ 거버넌스 대시보드</a>
       </div>
-
-      <!-- DO -->
-      <div class="pdca-card" id="card-do">
-        <span class="pdca-phase phase-do">⚙️ Do — 실행</span>
-        <p class="pdca-title">BCP/DRP 전략 · 훈련 · 운영센터</p>
-        <p class="pdca-sub">연속성 전략 수립 및 대응 체계 운영</p>
-        <div class="pdca-prog-wrap">
-          <div class="pdca-prog-head"><span>단계 진행률</span><span id="do-pct">0%</span></div>
-          <div class="pdca-prog-bar"><div class="pdca-prog-fill fill-green" id="do-bar" style="width:0%"></div></div>
-        </div>
-        <div class="pdca-modules" id="do-modules"></div>
-        <a class="pdca-btn" href="../strategy-plans/index.html">↗ 전략 대시보드</a>
-      </div>
-
-      <!-- CHECK -->
-      <div class="pdca-card" id="card-check">
-        <span class="pdca-phase phase-check">🔍 Check — 평가</span>
-        <p class="pdca-title">내부심사 · 성과 평가 · 갭분석</p>
-        <p class="pdca-sub">이행 현황 모니터링 및 갭 식별</p>
-        <div class="pdca-prog-wrap">
-          <div class="pdca-prog-head"><span>단계 진행률</span><span id="check-pct">0%</span></div>
-          <div class="pdca-prog-bar"><div class="pdca-prog-fill fill-yellow" id="check-bar" style="width:0%"></div></div>
-        </div>
-        <div class="pdca-modules" id="check-modules"></div>
-        <a class="pdca-btn" href="../audit/index.html">↗ 평가·감사 대시보드</a>
-      </div>
-
-      <!-- ACT -->
-      <div class="pdca-card" id="card-act">
-        <span class="pdca-phase phase-act">🔁 Act — 개선</span>
-        <p class="pdca-title">CAPA · 경영검토 · 지속 개선</p>
-        <p class="pdca-sub">부적합 조치 및 BCMS 지속적 향상</p>
-        <div class="pdca-prog-wrap">
-          <div class="pdca-prog-head"><span>단계 진행률</span><span id="act-pct">0%</span></div>
-          <div class="pdca-prog-bar"><div class="pdca-prog-fill fill-purple" id="act-bar" style="width:0%"></div></div>
-        </div>
-        <div class="pdca-modules" id="act-modules"></div>
-        <a class="pdca-btn" href="../audit/capa.html">↗ CAPA 관리</a>
+      <div class="gauge-info">
+        <div class="gauge-title">BCMS 전체 운영 성숙도</div>
+        <div class="gauge-desc">PDCA 4단계 평균 진행률 기반 · ISO 22301 준수 체계</div>
+        <span class="maturity-badge s-none" id="maturityBadge">데이터 없음</span>
       </div>
     </div>
 
-    <!-- PDCA flow indicator -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:18px 0 6px;flex-wrap:wrap;">
-      <div class="arrow-box"><span class="arrow-icon">📋</span><span>PLAN</span></div>
-      <span style="font-size:22px;color:var(--text-2);">→</span>
-      <div class="arrow-box"><span class="arrow-icon">⚙️</span><span>DO</span></div>
-      <span style="font-size:22px;color:var(--text-2);">→</span>
-      <div class="arrow-box"><span class="arrow-icon">🔍</span><span>CHECK</span></div>
-      <span style="font-size:22px;color:var(--text-2);">→</span>
-      <div class="arrow-box"><span class="arrow-icon">🔁</span><span>ACT</span></div>
-      <span style="font-size:22px;color:var(--text-2);">↻</span>
+    <!-- PDCA Flow Indicator -->
+    <div class="pdca-flow">
+      <div class="pf-item pf-plan"><div class="pf-dot">P</div>PLAN</div>
+      <span class="pf-arrow">→</span>
+      <div class="pf-item pf-do"><div class="pf-dot">D</div>DO</div>
+      <span class="pf-arrow">→</span>
+      <div class="pf-item pf-check"><div class="pf-dot">C</div>CHECK</div>
+      <span class="pf-arrow">→</span>
+      <div class="pf-item pf-act"><div class="pf-dot">A</div>ACT</div>
+      <span class="pf-arrow" style="color:var(--accent);font-weight:700" title="ACT 결과가 PLAN으로 환류됩니다">↩</span>
     </div>
 
-    <!-- Overall maturity gauge -->
-    <div class="gauge-card">
-      <div class="gauge-head">
-        <span class="gauge-title">전체 BCMS 성숙도</span>
-        <span id="maturity-badge" class="maturity-badge bdg-init">초기 단계</span>
-      </div>
-      <div class="gauge-bar"><div class="gauge-fill gauge-fill-blue" id="maturity-fill" style="width:0%"></div></div>
-      <div class="maturity-labels">
-        <span class="maturity-lbl">0% 초기</span>
-        <span class="maturity-lbl">25% 개발중</span>
-        <span class="maturity-lbl">50% 정의됨</span>
-        <span class="maturity-lbl">75% 최적화</span>
-        <span class="maturity-lbl">100%</span>
-      </div>
-      <p style="font-size:13px;color:var(--text-2);margin:10px 0 0;">각 단계의 localStorage 데이터(BIA, 리스크, BCP, 훈련, 감사, CAPA)를 자동 집계한 종합 성숙도입니다.</p>
+    <!-- PDCA Cards -->
+    <div class="pdca-grid" id="pdcaGrid"></div>
+
+    <div class="map-footer">
+      <span class="footer-note" id="pdcaUpdated">마지막 갱신: —</span>
+      <button class="refresh-btn" id="pdcaRefreshBtn">↻ 새로고침</button>
     </div>
   </div>
 
-  <!-- ══ Tab 2: ISO 22301 ══ -->
-  <div class="tab-pane" id="tab-iso">
-    <p style="font-size:13px;color:var(--text-2);margin:0 0 16px;">카드를 클릭하면 해당 포털 메뉴로 이동합니다. 이행율은 bcmsGapAnalysis 데이터를 기반으로 자동 계산됩니다.</p>
+  <!-- ══════════════════ Tab 2: ISO 22301 ══════════════════ -->
+  <div id="tab-iso" class="tab-pane">
+
+    <div class="gauge-row">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 36 36" aria-hidden="true">
+          <circle class="g-track" cx="18" cy="18" r="14"/>
+          <circle class="g-fill" id="gaugeISO" cx="18" cy="18" r="14" stroke="#16a34a"/>
+        </svg>
+        <div class="gauge-center">
+          <span class="gauge-pct" id="isoPct">—</span>
+          <span class="gauge-unit">이행율</span>
+        </div>
+      </div>
+      <div class="gauge-info">
+        <div class="gauge-title">ISO 22301 전체 이행율</div>
+        <div class="gauge-desc">갭분석(Gap Analysis) 기반 · 조항 4–10 이행 현황<br>
+          <span style="font-size:.75rem">갭분석 데이터는
+            <a href="/audit/index.html" style="color:var(--accent)">감사 페이지</a>에서 관리합니다.</span>
+        </div>
+        <span class="maturity-badge s-none" id="isoBadge">데이터 없음</span>
+      </div>
+    </div>
+
     <div class="iso-grid" id="isoGrid"></div>
 
-    <div class="gauge-card">
-      <div class="gauge-head">
-        <span class="gauge-title">ISO 22301 전체 이행율</span>
-        <span class="gauge-label" id="isoGaugeText">0%</span>
-      </div>
-      <div class="gauge-bar"><div class="gauge-fill gauge-fill-blue" id="isoGaugeFill" style="width:0%"></div></div>
-      <p style="font-size:12px;color:var(--text-2);margin:8px 0 0;">bcmsGapAnalysis 데이터가 없으면 0%로 표시됩니다. 감사 탭에서 갭 분석을 수행하세요.</p>
+    <div class="map-footer">
+      <span class="footer-note" id="isoUpdated">마지막 갱신: —</span>
+      <button class="refresh-btn" id="isoRefreshBtn">↻ 새로고침</button>
     </div>
   </div>
 
-</div>
 </main>
-
 <script src="../assets/sidebar.js"></script>
 <script>
+(function () {
 'use strict';
 
-/* ── Data sources ── */
-const loadJ = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } };
-
-function pct(n, d) { return d > 0 ? Math.round((n / d) * 100) : 0; }
-
-/* ── Progress calculators ── */
-function calcPlan() {
-  const modules = [];
-
-  // BIA
-  const biaRaw = loadJ('bcmsBIAData');
-  const biaArr = Array.isArray(biaRaw) ? biaRaw : [];
-  const biaFns = biaArr.flatMap(t => Array.isArray(t.functions) ? t.functions : []);
-  const biaPct = biaFns.length > 0 ? Math.min(100, Math.round(biaFns.length / 5 * 100)) : 0;
-  modules.push({ icon:'📊', name:'업무영향분석 (BIA)', pct: biaPct, href:'../risk-bia/bia.html' });
-
-  // Risk
-  const riskRaw = loadJ('bcmsRiskAssessment') || loadJ('bcmsRiskList');
-  const riskArr = Array.isArray(riskRaw) ? riskRaw : [];
-  const riskItems = riskArr.flatMap(t => Array.isArray(t.risks) ? t.risks : (Array.isArray(t) ? t : []));
-  const riskPct = riskItems.length > 0 ? Math.min(100, Math.round(riskItems.length / 5 * 100)) : 0;
-  modules.push({ icon:'⚠️', name:'리스크 평가', pct: riskPct, href:'../risk-bia/risk.html' });
-
-  // Governance (requirements)
-  const reqRaw = loadJ('bcmsRequirements');
-  const reqArr = Array.isArray(reqRaw) ? reqRaw : [];
-  const govPct = reqArr.length > 0 ? 100 : 0;
-  modules.push({ icon:'🧭', name:'거버넌스 / 법규등록', pct: govPct, href:'../governance/index.html' });
-
-  const avg = pct(biaPct + riskPct + govPct, 300);
-  return { modules, avg };
-}
-
-function calcDo() {
-  const modules = [];
-
-  // BCP strategy
-  const bcpRaw = loadJ('bcmsBCPStrategy');
-  const bcpItems = Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw ? [bcpRaw] : []);
-  const bcpPct = bcpItems.length > 0 ? Math.min(100, Math.round(bcpItems.length / 3 * 100)) : 0;
-  modules.push({ icon:'📑', name:'BCP 전략', pct: bcpPct, href:'../strategy-plans/bcp.html' });
-
-  // Training
-  const trainRaw = loadJ('bcmsTrainingData') || loadJ('bcmsTraining');
-  const trainArr = Array.isArray(trainRaw) ? trainRaw : [];
-  const done = trainArr.filter(t => t.status === 'done' || t.status === 'completed' || t.result === '완료').length;
-  const trainPct = trainArr.length > 0 ? pct(done || trainArr.length, trainArr.length) : 0;
-  modules.push({ icon:'🎯', name:'훈련·점검', pct: trainPct, href:'../training/index.html' });
-
-  // Op center: incident data
-  const incRaw = loadJ('bcmsIncidents') || loadJ('bcmsIncidentData');
-  const incArr = Array.isArray(incRaw) ? incRaw : [];
-  const opPct  = incArr.length >= 0 ? (incArr.length > 0 ? 80 : 30) : 0;
-  modules.push({ icon:'🚨', name:'운영센터 / 사고관리', pct: opPct, href:'../op-center/index.html' });
-
-  const avg = pct(bcpPct + trainPct + opPct, 300);
-  return { modules, avg };
-}
-
-function calcCheck() {
-  const modules = [];
-
-  // Gap analysis
-  const gapRaw = loadJ('bcmsGapAnalysis');
-  const gapArr = Array.isArray(gapRaw) ? gapRaw : [];
-  const gapDone = gapArr.filter(g => (g.status === '완료' || g.status === 'done' || (g.score >= 80))).length;
-  const gapPct  = gapArr.length > 0 ? pct(gapDone, gapArr.length) : 0;
-  modules.push({ icon:'📈', name:'갭분석 / 내부심사', pct: gapPct, href:'../audit/index.html' });
-
-  // Evidence
-  const evRaw = loadJ('bcmsEvidence') || loadJ('bcmsAuditEvidence');
-  const evArr = Array.isArray(evRaw) ? evRaw : [];
-  const evPct = evArr.length > 0 ? Math.min(100, Math.round(evArr.length / 5 * 100)) : 0;
-  modules.push({ icon:'📁', name:'증적 관리', pct: evPct, href:'../audit/evidence.html' });
-
-  // Reports
-  const repRaw = loadJ('bcmsExecutiveSummary') || loadJ('bcmsReports');
-  const repPct = repRaw ? 100 : 0;
-  modules.push({ icon:'🗂', name:'경영진 보고 / 검토', pct: repPct, href:'../reports/executive-summary.html' });
-
-  const avg = pct(gapPct + evPct + repPct, 300);
-  return { modules, avg };
-}
-
-function calcAct() {
-  const modules = [];
-
-  // CAPA
-  const capaRaw = loadJ('bcmsCapaItems') || loadJ('bcmsCapa');
-  const capaArr = Array.isArray(capaRaw) ? capaRaw : [];
-  const capaDone = capaArr.filter(c => c.status === '완료' || c.status === 'closed' || c.status === 'done').length;
-  const capaPct  = capaArr.length > 0 ? pct(capaDone, capaArr.length) : 0;
-  modules.push({ icon:'✅', name:'CAPA (개선조치)', pct: capaPct, href:'../audit/capa.html' });
-
-  // Admin CAPA
-  const adminRaw = loadJ('bcmsAdminCapa');
-  const adminArr = Array.isArray(adminRaw) ? adminRaw : [];
-  const adminDone = adminArr.filter(c => c.status === '완료' || c.status === 'closed').length;
-  const adminPct  = adminArr.length > 0 ? pct(adminDone, adminArr.length) : 0;
-  modules.push({ icon:'⚙️', name:'개선항목 관리 (Admin)', pct: adminPct, href:'../admin/capa.html' });
-
-  const allCapa = capaArr.length + adminArr.length;
-  const allDone = capaDone + adminDone;
-  const avg = allCapa > 0 ? pct(allDone, allCapa) : 0;
-  return { modules, avg };
-}
-
-/* ── Render module list ── */
-function renderModules(containerId, modules) {
-  document.getElementById(containerId).innerHTML = modules.map(m => `
-    <a class="pdca-module" href="${m.href}">
-      <span class="pdca-module-icon">${m.icon}</span>
-      <span class="pdca-module-name">${m.name}</span>
-      <span class="pdca-module-pct">${m.pct}%</span>
-    </a>`).join('');
-}
-
-/* ── Maturity ── */
-function maturityInfo(pct) {
-  if (pct >= 76) return { label:'최적화', cls:'bdg-opt',  fillCls:'gauge-fill-green'  };
-  if (pct >= 51) return { label:'정의됨',  cls:'bdg-def',  fillCls:'gauge-fill-yellow' };
-  if (pct >= 26) return { label:'개발중',  cls:'bdg-dev',  fillCls:'gauge-fill-red'    };
-  return            { label:'초기 단계', cls:'bdg-init', fillCls:'gauge-fill-blue'   };
-}
-
-/* ── Render PDCA tab ── */
-function renderPdca() {
-  const plan  = calcPlan();
-  const doo   = calcDo();
-  const check = calcCheck();
-  const act   = calcAct();
-
-  renderModules('plan-modules',  plan.modules);
-  renderModules('do-modules',    doo.modules);
-  renderModules('check-modules', check.modules);
-  renderModules('act-modules',   act.modules);
-
-  document.getElementById('plan-pct').textContent  = plan.avg  + '%';
-  document.getElementById('do-pct').textContent     = doo.avg   + '%';
-  document.getElementById('check-pct').textContent = check.avg + '%';
-  document.getElementById('act-pct').textContent   = act.avg   + '%';
-
-  document.getElementById('plan-bar').style.width  = plan.avg  + '%';
-  document.getElementById('do-bar').style.width     = doo.avg   + '%';
-  document.getElementById('check-bar').style.width = check.avg + '%';
-  document.getElementById('act-bar').style.width   = act.avg   + '%';
-
-  const overall = Math.round((plan.avg + doo.avg + check.avg + act.avg) / 4);
-  const m = maturityInfo(overall);
-  const badge = document.getElementById('maturity-badge');
-  badge.textContent = `${overall}% — ${m.label}`;
-  badge.className   = 'maturity-badge ' + m.cls;
-  const fill = document.getElementById('maturity-fill');
-  fill.className = 'gauge-fill ' + m.fillCls;
-  fill.style.width = overall + '%';
-}
-
-/* ── ISO 22301 sections ── */
-const ISO_SECTIONS = [
-  {
-    num:'4', title:'조직 상황', sub:'Context of the Organization',
-    desc:'조직의 내·외부 이슈, 이해관계자 요구사항, BCMS 적용 범위를 결정합니다.',
-    links:['거버넌스','정책/목표'], href:'../governance/policy.html',
-    gapKey:'4',
-  },
-  {
-    num:'5', title:'리더십', sub:'Leadership',
-    desc:'최고 경영자의 의지표명, 업무연속성 방침 수립 및 조직 내 역할·책임을 정의합니다.',
-    links:['정책/방침','조직도'], href:'../governance/policy.html',
-    gapKey:'5',
-  },
-  {
-    num:'6', title:'기획', sub:'Planning',
-    desc:'리스크와 기회를 다루는 활동, 업무연속성 목표 및 달성 계획을 수립합니다.',
-    links:['리스크 평가','BCP 전략'], href:'../risk-bia/risk.html',
-    gapKey:'6',
-  },
-  {
-    num:'7', title:'지원', sub:'Support',
-    desc:'자원, 역량, 인식, 의사소통 및 문서화된 정보를 관리합니다.',
-    links:['문서체계','훈련'], href:'../governance/docs.html',
-    gapKey:'7',
-  },
-  {
-    num:'8', title:'운용', sub:'Operation',
-    desc:'BIA, 리스크 평가, 업무연속성 전략 및 대응 절차를 수립·이행합니다.',
-    links:['BIA','BCP','운영센터'], href:'../risk-bia/bia.html',
-    gapKey:'8',
-  },
-  {
-    num:'9', title:'성과 평가', sub:'Performance Evaluation',
-    desc:'모니터링, 내부심사 및 경영검토를 통해 BCMS의 적합성과 효과성을 평가합니다.',
-    links:['내부심사','감사'], href:'../audit/index.html',
-    gapKey:'9',
-  },
-  {
-    num:'10', title:'개선', sub:'Improvement',
-    desc:'부적합사항과 시정조치, 지속적 개선을 통해 BCMS를 향상시킵니다.',
-    links:['CAPA','개선관리'], href:'../audit/capa.html',
-    gapKey:'10',
-  },
-];
-
-function calcIsoProgress(gapArr, clauseNum) {
-  if (!gapArr || !gapArr.length) return 0;
-  const items = gapArr.filter(g => {
-    const cl = String(g.clause || g.section || g.num || '');
-    return cl.startsWith(clauseNum + '.');
-  });
-  if (!items.length) {
-    // Fallback: try overall score from gap data
-    const overall = gapArr.find(g => String(g.clause || '').startsWith(clauseNum));
-    if (overall) {
-      return typeof overall.score === 'number' ? Math.round(overall.score) :
-             overall.status === '완료' ? 100 : overall.status === '진행중' ? 50 : 0;
-    }
-    return 0;
-  }
-  const scores = items.map(g =>
-    typeof g.score === 'number' ? g.score :
-    (g.status === '완료' || g.status === 'done') ? 100 :
-    (g.status === '진행중' || g.status === 'partial') ? 50 : 0
-  );
-  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-}
-
-function statusClass(p) {
-  if (p === 0)    return 'status-none';
-  if (p < 50)    return 'status-low';
-  if (p < 80)    return 'status-mid';
-  return 'status-high';
-}
-function fillClass(p) {
-  if (p === 0)   return 'fill-gray';
-  if (p < 50)   return 'fill-red';
-  if (p < 80)   return 'fill-yellow';
-  return 'fill-green';
-}
-
-/* ── Render ISO tab ── */
-function renderIso() {
-  const gapArr = loadJ('bcmsGapAnalysis') || [];
-
-  const cards = ISO_SECTIONS.map(sec => {
-    const p = calcIsoProgress(gapArr, sec.num);
-    const chips = sec.links.map(l => `<span class="iso-link-chip">${l}</span>`).join('');
-    return `<a class="iso-card ${statusClass(p)}" href="${sec.href}">
-      <div class="iso-card-top">
-        <span class="iso-num">${sec.num}</span>
-        <div class="iso-card-meta">
-          <p class="iso-card-title">${sec.title}</p>
-          <p class="iso-card-desc">${sec.desc}</p>
-        </div>
-      </div>
-      <div class="iso-card-links">${chips}</div>
-      <div class="iso-prog-wrap">
-        <div class="iso-prog-head"><span>이행율</span><span>${p}%</span></div>
-        <div class="iso-prog-bar"><div class="iso-prog-fill ${fillClass(p)}" style="width:${p}%"></div></div>
-      </div>
-    </a>`;
-  });
-
-  document.getElementById('isoGrid').innerHTML = cards.join('');
-
-  const totalPct = Math.round(
-    ISO_SECTIONS.map(s => calcIsoProgress(gapArr, s.num)).reduce((a, b) => a + b, 0) / ISO_SECTIONS.length
-  );
-  document.getElementById('isoGaugeText').textContent = totalPct + '%';
-  const gf = document.getElementById('isoGaugeFill');
-  gf.className = 'gauge-fill ' + (totalPct >= 80 ? 'gauge-fill-green' : totalPct >= 50 ? 'gauge-fill-yellow' : 'gauge-fill-red');
-  gf.style.width = totalPct + '%';
-}
-
-/* ── Tab switching ── */
+/* ─── Tab switching ─────────────────────────────────────────── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    if (btn.dataset.tab === 'iso') renderIso();
+    const t = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + t));
   });
 });
 
-/* ── Init ── */
-renderPdca();
-</script>
+/* ─── Storage helpers ───────────────────────────────────────── */
+function loadJ(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+}
 
-<button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-<script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+function toArr(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  if (v.items && Array.isArray(v.items)) return v.items;
+  if (v.rows  && Array.isArray(v.rows))  return v.rows;
+  if (typeof v === 'object') return Object.values(v).filter(x => x && typeof x === 'object');
+  return [];
+}
+
+/* ─── Rate helpers ──────────────────────────────────────────── */
+const DONE    = ['완료','등록완료','done','completed','closed','pass','승인','이행','compliant'];
+const PARTIAL = ['부분이행','partial','진행중','in_progress','일부'];
+
+function clamp(n) { return Math.round(Math.min(Math.max(n, 0), 100)); }
+
+function statusRate(arr) {
+  if (!arr.length) return null;
+  const scored = arr.filter(x => x.status || x.state);
+  if (!scored.length) return clamp(Math.min(arr.length / 5, 1) * 100);
+  let score = 0;
+  scored.forEach(x => {
+    const st = (x.status || x.state || '').toLowerCase();
+    if (DONE.some(v => st.includes(v)))    score += 1;
+    else if (PARTIAL.some(v => st.includes(v))) score += 0.5;
+  });
+  return clamp((score / scored.length) * 100);
+}
+
+function gapRate(items) {
+  if (!items.length) return null;
+  let score = 0;
+  items.forEach(x => {
+    const st = x.status || x.state || '';
+    if (st === '이행'   || st === 'compliant') score += 1;
+    else if (st === '부분이행' || st === 'partial')  score += 0.5;
+  });
+  return clamp((score / items.length) * 100);
+}
+
+function avg(...vals) {
+  const valid = vals.filter(v => v !== null);
+  if (!valid.length) return null;
+  return clamp(valid.reduce((a, b) => a + b, 0) / valid.length);
+}
+
+function fmtPct(v) { return v === null ? '—' : v + '%'; }
+
+function statusCls(v) {
+  if (v === null) return { bar: 'f-none', badge: 's-none', label: '데이터 없음' };
+  if (v < 30)    return { bar: 'f-bad',  badge: 's-bad',  label: '미이행' };
+  if (v < 65)    return { bar: 'f-warn', badge: 's-warn', label: '부분이행' };
+  return              { bar: 'f-good', badge: 's-good', label: '이행' };
+}
+
+function maturityLbl(v) {
+  if (v === null) return { label: '데이터 없음', cls: 's-none' };
+  if (v < 20)    return { label: '1단계: 초기',     cls: 's-bad' };
+  if (v < 40)    return { label: '2단계: 관리됨',   cls: 's-bad' };
+  if (v < 60)    return { label: '3단계: 정의됨',   cls: 's-warn' };
+  if (v < 80)    return { label: '4단계: 정량관리', cls: 's-warn' };
+  return              { label: '5단계: 최적화',   cls: 's-good' };
+}
+
+function setGauge(circleId, pctId, v, color) {
+  const circ = 87.96;
+  const el = document.getElementById(circleId);
+  const pt = document.getElementById(pctId);
+  if (!el || !pt) return;
+  el.style.strokeDashoffset = circ * (1 - (v === null ? 0 : v) / 100);
+  el.style.stroke = color;
+  pt.textContent = v === null ? '—' : v + '%';
+}
+
+function nowStr() { return new Date().toLocaleString('ko-KR', { hour12: false }); }
+
+/* ─── Data sources ──────────────────────────────────────────── */
+function calcBIA()      { return statusRate(toArr(loadJ('bcmsBIAData', null))); }
+function calcRisk()     { return statusRate(toArr(loadJ('bcmsRiskAssessment', null) || loadJ('bcmsRiskList', null))); }
+function calcBCP()      { return statusRate(toArr(loadJ('bcmsBCPStrategy', null))); }
+function calcTraining() { return statusRate(toArr(loadJ('bcmsTrainingData', null))); }
+
+function calcGapAll() {
+  const arr = toArr(loadJ('bcmsGapAnalysis', null));
+  return { rate: gapRate(arr), arr };
+}
+
+function calcCAPA() {
+  const arr = toArr(loadJ('bcmsCapaItems', null));
+  if (!arr.length) return null;
+  let done = 0;
+  arr.forEach(x => {
+    const st = (x.status || x.state || '').toLowerCase();
+    if (DONE.some(v => st.includes(v))) done++;
+  });
+  return clamp((done / arr.length) * 100);
+}
+
+/* ─── PDCA phase definitions ────────────────────────────────── */
+const PHASES = [
+  {
+    id: 'plan', label: 'PLAN', labelKo: '계획', cls: 'plan-card', iconCls: 'plan', emoji: '📐',
+    desc: '업무영향분석·리스크 평가를 통해 BCMS 범위와 목표를 수립합니다.',
+    sources: [
+      { name: 'BIA 등록률',    fn: calcBIA,  link: '../risk-bia/bia.html' },
+      { name: '리스크 등록률', fn: calcRisk, link: '../risk-bia/risk.html' },
+    ],
+    avgFn: () => avg(calcBIA(), calcRisk()),
+    mainLink: '../risk-bia/index.html',
+    mainLinkLabel: 'BIA·리스크 페이지로 →',
+  },
+  {
+    id: 'do', label: 'DO', labelKo: '실행', cls: 'do-card', iconCls: 'do', emoji: '⚙️',
+    desc: 'BCP 전략을 수립하고 훈련·연습을 통해 계획을 실행합니다.',
+    sources: [
+      { name: 'BCP전략 완료율', fn: calcBCP,      link: '../strategy-plans/bcp.html' },
+      { name: '훈련 완료율',    fn: calcTraining, link: '../training/index.html' },
+    ],
+    avgFn: () => avg(calcBCP(), calcTraining()),
+    mainLink: '../strategy-plans/index.html',
+    mainLinkLabel: '전략·훈련 페이지로 →',
+  },
+  {
+    id: 'check', label: 'CHECK', labelKo: '점검', cls: 'check-card', iconCls: 'check', emoji: '🔍',
+    desc: '갭분석을 통해 BCMS 이행 수준과 ISO 22301 준수 현황을 평가합니다.',
+    sources: [
+      { name: '갭분석 이행율', fn: () => calcGapAll().rate, link: '../audit/index.html' },
+    ],
+    avgFn: () => calcGapAll().rate,
+    mainLink: '../audit/index.html',
+    mainLinkLabel: '감사·갭분석으로 →',
+  },
+  {
+    id: 'act', label: 'ACT', labelKo: '개선', cls: 'act-card', iconCls: 'act', emoji: '✅',
+    desc: 'CAPA를 통해 부적합 사항을 시정하고 BCMS를 지속적으로 개선합니다.',
+    sources: [
+      { name: 'CAPA 완료율', fn: calcCAPA, link: '../audit/capa.html' },
+    ],
+    avgFn: () => calcCAPA(),
+    mainLink: '../audit/capa.html',
+    mainLinkLabel: 'CAPA 관리로 →',
+  },
+];
+
+/* ─── Render PDCA ───────────────────────────────────────────── */
+function renderPDCA() {
+  const phaseVals = PHASES.map(p => p.avgFn());
+  const overall   = avg(...phaseVals);
+  const gc = overall === null ? '#6b7280' : overall >= 80 ? '#16a34a' : overall >= 50 ? '#d97706' : '#dc2626';
+
+  setGauge('gaugePDCA', 'pdcaPct', overall, gc);
+
+  const mb = document.getElementById('maturityBadge');
+  if (mb) {
+    const m = maturityLbl(overall);
+    mb.textContent  = m.label;
+    mb.className    = 'maturity-badge ' + m.cls;
+  }
+
+  const grid = document.getElementById('pdcaGrid');
+  if (!grid) return;
+
+  grid.innerHTML = PHASES.map((p, i) => {
+    const v   = phaseVals[i];
+    const sc  = statusCls(v);
+    const barW = v === null ? 0 : v;
+
+    const subRows = p.sources.map(s => {
+      const sv = s.fn();
+      return `<div class="sub-row">
+        <span class="sub-name">${s.name}</span>
+        <span class="sub-val${sv === null ? ' na' : ''}">${fmtPct(sv)}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="pdca-card ${p.cls}">
+      <div class="pdca-hd">
+        <div class="pdca-icon ${p.iconCls}">${p.emoji}</div>
+        <div class="pdca-names">
+          <div class="pdca-phase">${p.label} <span style="font-size:.6875rem;color:var(--text-2);font-weight:400">(${p.labelKo})</span></div>
+          <div class="pdca-desc">${p.desc}</div>
+        </div>
+      </div>
+      <div class="prog-hd">
+        <span class="prog-lbl">전체 진행률</span>
+        <span class="prog-val${v === null ? ' na' : ''}">${fmtPct(v)}</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-bar ${p.id}" style="width:${barW}%"></div>
+      </div>
+      <div class="sub-metrics">${subRows}</div>
+      ${v === null ? '<p class="no-data-note">데이터가 없습니다. 해당 페이지에서 항목을 등록해 주세요.</p>' : ''}
+      <a class="source-link" href="${p.mainLink}">${p.mainLinkLabel}</a>
+    </div>`;
+  }).join('');
+
+  const upd = document.getElementById('pdcaUpdated');
+  if (upd) upd.textContent = '마지막 갱신: ' + nowStr();
+}
+
+/* ─── ISO 22301 Clause definitions ─────────────────────────── */
+const ISO_CLAUSES = [
+  { num:'4',  name:'조직의 맥락',  en:'Context of the Organization', icon:'🏢',  link:'../governance/requirements.html' },
+  { num:'5',  name:'리더십',       en:'Leadership',                  icon:'👔',  link:'../governance/policy.html' },
+  { num:'6',  name:'기획',         en:'Planning',                    icon:'📐',  link:'../risk-bia/index.html' },
+  { num:'7',  name:'지원',         en:'Support',                     icon:'🔧',  link:'../governance/docs.html' },
+  { num:'8',  name:'운영',         en:'Operation',                   icon:'⚙️', link:'../op-center/index.html' },
+  { num:'9',  name:'성과 평가',    en:'Performance Evaluation',      icon:'📊',  link:'../audit/index.html' },
+  { num:'10', name:'개선',         en:'Improvement',                 icon:'🔄',  link:'../audit/capa.html' },
+];
+
+function clauseItems(gapArr, num) {
+  return gapArr.filter(x => {
+    const c = String(x.clause || x.section || x.clauseNum || x.ref || '');
+    return c === num || c.startsWith(num + '.') || c.startsWith('ISO ' + num);
+  });
+}
+
+function gapCounts(items) {
+  let ok = 0, part = 0, no = 0;
+  items.forEach(x => {
+    const st = x.status || x.state || '';
+    if (st === '이행' || st === 'compliant')    ok++;
+    else if (st === '부분이행' || st === 'partial') part++;
+    else no++;
+  });
+  return { ok, part, no };
+}
+
+/* ─── Render ISO 22301 ──────────────────────────────────────── */
+function renderISO() {
+  const { rate: isoOverall, arr: gapArr } = calcGapAll();
+  const gc = isoOverall === null ? '#6b7280' : isoOverall >= 80 ? '#16a34a' : isoOverall >= 50 ? '#d97706' : '#dc2626';
+
+  setGauge('gaugeISO', 'isoPct', isoOverall, gc);
+
+  const ib = document.getElementById('isoBadge');
+  if (ib) {
+    const sc = statusCls(isoOverall);
+    ib.textContent = sc.label;
+    ib.className   = 'maturity-badge ' + sc.badge;
+  }
+
+  const grid = document.getElementById('isoGrid');
+  if (!grid) return;
+
+  if (!gapArr.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2.5rem 1rem;color:var(--text-2);font-size:.875rem;line-height:1.75">
+      갭분석 데이터가 없습니다.<br>
+      <a href="../audit/index.html" style="color:var(--accent)">감사 페이지에서 갭분석 항목을 등록해 주세요 →</a>
+    </div>`;
+  } else {
+    grid.innerHTML = ISO_CLAUSES.map(cl => {
+      const items  = clauseItems(gapArr, cl.num);
+      const v      = gapRate(items);
+      const sc     = statusCls(v);
+      const barW   = v === null ? 0 : v;
+      const cnt    = gapCounts(items);
+      const hasSub = items.length > 0;
+      const cntStr = hasSub
+        ? `이행 ${cnt.ok} · 부분 ${cnt.part} · 미이행 ${cnt.no}`
+        : '등록된 항목 없음';
+
+      return `<div class="iso-card" onclick="location.href='${cl.link}'"
+               role="button" tabindex="0" aria-label="조항 ${cl.num} ${cl.name} 상세보기">
+        <div class="iso-card-top">
+          <div class="iso-num-badge">${cl.num}</div>
+          <div class="iso-meta">
+            <div class="iso-clause-lbl">ISO 22301 조항 ${cl.num}</div>
+            <div class="iso-clause-name">${cl.icon} ${cl.name}</div>
+            <div class="iso-clause-en">${cl.en}</div>
+          </div>
+        </div>
+        <div>
+          <div class="iso-prog-hd">
+            <span class="iso-prog-lbl">갭분석 이행율</span>
+            <span class="iso-prog-pct">${fmtPct(v)}</span>
+          </div>
+          <div class="iso-track">
+            <div class="iso-fill ${sc.bar}" style="width:${barW}%"></div>
+          </div>
+        </div>
+        <div class="iso-bottom">
+          <span class="iso-status-badge ${sc.badge}">${sc.label}</span>
+          <span class="iso-items">${cntStr}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const upd = document.getElementById('isoUpdated');
+  if (upd) upd.textContent = '마지막 갱신: ' + nowStr();
+}
+
+/* ─── Keyboard support for ISO cards ───────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList.contains('iso-card')) e.target.click();
+});
+
+/* ─── Refresh buttons ───────────────────────────────────────── */
+document.getElementById('pdcaRefreshBtn')?.addEventListener('click', renderPDCA);
+document.getElementById('isoRefreshBtn')?.addEventListener('click', renderISO);
+
+/* ─── Init ──────────────────────────────────────────────────── */
+renderPDCA();
+renderISO();
+
+})();
+</script>
 </body>
 </html>
