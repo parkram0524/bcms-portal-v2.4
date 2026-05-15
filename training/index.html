@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>훈련·점검 | BCMS Portal</title>
+  <title>BCMS Portal - 훈련·점검</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
     .wrap { max-width: 1280px; margin: 0 auto; }
@@ -425,10 +425,27 @@
     </div><!-- .wrap -->
   </main>
 
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/demo-seed.js"></script>
   <script>
   'use strict';
+
+  /* ─── Theme ─── */
+  {
+    const root = document.documentElement;
+    const tog = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('bcmsTheme') || 'light';
+    root.setAttribute('data-theme', saved);
+    if (tog) { tog.textContent = saved === 'dark' ? '☀️' : '🌙'; }
+    if (tog) tog.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      tog.textContent = next === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('bcmsTheme', next);
+    });
+  }
 
   /* ─── Utilities ─── */
   const esc = s => String(s ?? '').replace(/[&<>"']/g,
@@ -1318,6 +1335,7 @@
       banner.className = 'demoBannerSmall'; banner.style.cssText = '';
       const msg = banner.querySelector('span');
       if (msg) msg.style.cssText = 'font-size:12px;font-weight:500;color:var(--text-2)';
+      if (msg) msg.textContent = '샘플 데이터가 로드되어 있습니다. 실제 데이터 입력 후 샘플을 제거하세요.';
       banner.querySelectorAll('button').forEach(b => {
         b.style.cssText = 'padding:3px 9px;border-radius:6px;border:0.5px solid var(--border-strong);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2)';
       });

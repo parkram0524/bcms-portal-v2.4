@@ -1,9 +1,9 @@
-<!doctype html>
-<html lang="ko">
+﻿<!doctype html>
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>조직 관리 | BCMS Portal v2</title>
+  <title>BCMS Portal - 조직 관리</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
     .grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; }
@@ -238,5 +238,7 @@
       renderMapping();
     })();
   </script>
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>

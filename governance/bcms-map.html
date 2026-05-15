@@ -1,9 +1,9 @@
-<!doctype html>
-<html lang="ko">
+﻿<!doctype html>
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Map | Governance</title>
+  <title>BCMS Portal - BCMS 체계 맵</title>
   <link rel="stylesheet" href="../assets/style.css"/>
 
   <style>
@@ -587,5 +587,7 @@
 <script>
   function go(href){ if(!href) return; location.href = href; }
 </script>
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>

@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
 <meta charset="utf-8"/>
-<title>BCP (업무 연속) | Procedure Library</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>BCMS Portal - BCP (업무 연속)</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
   .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
@@ -590,6 +591,7 @@
     try{ savePlans(false); }catch(e){}
   });
 </script>
-
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>

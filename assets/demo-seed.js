@@ -220,7 +220,7 @@
     btnRm.style.cssText='padding:6px 10px;border-radius:999px;border:1px solid rgba(239,68,68,.35);background:#fff;color:#991b1b;font-size:12px;font-weight:900;cursor:pointer;';
 
     const refreshText = ()=>{
-      msg.textContent = hasDemo() ? '현재 표시되는 항목 중 일부는 예시 데이터입니다.' : '예시 데이터를 불러오면 BIA, 리스크, BCP, DRP 흐름을 바로 확인할 수 있습니다.';
+      msg.textContent = '샘플 데이터가 로드되어 있습니다. 실제 데이터 입력 후 샘플을 제거하세요.';
     };
     btnLoad.addEventListener('click', ()=>{ loadDemo({force:true}); location.reload(); });
     btnRm.addEventListener('click', ()=>{ removeDemo(); location.reload(); });

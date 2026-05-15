@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>대시보드 | BCMS Portal</title>
+  <title>BCMS Portal - 대시보드</title>
   <link rel="stylesheet" href="assets/style.css"/>
   <style>
     .wrap { max-width: 1280px; margin: 0 auto; }
@@ -187,10 +187,27 @@
     </div><!-- .wrap -->
   </main>
 
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+
   <script src="assets/sidebar.js"></script>
   <script src="assets/demo-seed.js"></script>
   <script>
   'use strict';
+
+  /* ── Theme ── */
+  {
+    const root = document.documentElement;
+    const tog = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('bcmsTheme') || 'light';
+    root.setAttribute('data-theme', saved);
+    if (tog) { tog.textContent = saved === 'dark' ? '☀️' : '🌙'; }
+    if (tog) tog.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      tog.textContent = next === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('bcmsTheme', next);
+    });
+  }
 
   /* ── Utils ── */
   const esc = s => String(s ?? '').replace(/[&<>"']/g,
@@ -548,6 +565,8 @@
     if (banner && banner.style.background) {
       banner.style.cssText = '';
       banner.style.cssText = 'margin-bottom:12px;padding:6px 14px;border:0.5px solid rgba(0,112,243,.18);background:rgba(0,112,243,.04);border-radius:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-2)';
+      const msgEl = banner.querySelector('span');
+      if (msgEl) msgEl.textContent = '샘플 데이터가 로드되어 있습니다. 실제 데이터 입력 후 샘플을 제거하세요.';
     }
   };
 
