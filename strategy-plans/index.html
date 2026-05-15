@@ -6,7 +6,7 @@
   <title>BCMS Portal - BCP 전략·계획</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    .wrap { max-width: 1280px; margin: 0 auto; }
+    .wrap { max-width: 1280px; margin: 0 auto; overflow-x: hidden; }
 
     .demoBannerSmall {
       margin-bottom: 20px !important; padding: 7px 14px !important;
@@ -118,12 +118,12 @@
     .tableSection { margin-top: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
     .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 8px; }
     .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
-    .tableWrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th { font-size: 11px; font-weight: 600; padding: 9px 10px; height: 36px; text-align: left; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; }
-    td { font-size: 13px; padding: 8px 10px; vertical-align: middle; border-bottom: 0.5px solid var(--border); color: var(--text); }
+    .tableWrap { overflow-x: hidden; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th { font-size: 11px; font-weight: 600; padding: 9px 10px; height: 36px; text-align: left; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    td { font-size: 13px; padding: 8px 10px; vertical-align: middle; border-bottom: 0.5px solid var(--border); color: var(--text); overflow: hidden; }
     tr:last-child td { border-bottom: none; }
-    td input, td select { width: 100%; min-width: 70px; }
+    td input, td select { width: 100%; }
 
     .empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
 
@@ -225,16 +225,16 @@
             </div>
           </div>
           <div class="tableWrap">
-            <table style="min-width:860px">
+            <table>
               <colgroup>
-                <col style="width:190px">
-                <col style="width:88px">
-                <col style="width:88px">
-                <col style="width:130px">
-                <col style="width:180px">
-                <col style="width:150px">
-                <col style="width:100px">
-                <col style="width:72px">
+                <col style="width:22%">
+                <col style="width:8%">
+                <col style="width:8%">
+                <col style="width:13%">
+                <col style="width:19%">
+                <col style="width:14%">
+                <col style="width:9%">
+                <col style="width:7%">
               </colgroup>
               <thead>
                 <tr>
@@ -436,12 +436,13 @@
 
   /* ── Dept filter ── */
   const populateDeptFilter = () => {
-    const sel   = document.getElementById('bcpDeptFilter');
-    const prev  = sel.value;
-    const depts = [...new Set(ALL_FNS.map(f => f.team).filter(Boolean))].sort();
+    const sel     = document.getElementById('bcpDeptFilter');
+    const prev    = sel.value;
+    const biaRows = loadJSON('bcmsBIAData', []);
+    const depts   = [...new Set(biaRows.map(b => String(b.team || '').trim()).filter(Boolean))].sort();
     sel.innerHTML = `<option value="">전체 부서</option>` +
       depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
-    if (prev) sel.value = prev;
+    if (prev && depts.includes(prev)) sel.value = prev;
   };
 
   /* ── Step HTML builder ── */
