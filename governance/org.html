@@ -406,44 +406,42 @@ window.ORG = (() => {
       { selector:'node', style:{
           label:'data(label)', 'text-valign':'center', 'text-halign':'center',
           'font-family':'"Pretendard","Inter",system-ui,sans-serif',
-          'font-size':'13px', 'font-weight':'600',
-          'text-wrap':'wrap', 'text-max-width':'110px',
+          'font-size':'18px', 'font-weight':'600',
+          'text-wrap':'wrap', 'text-max-width':'120px',
           shape:'round-rectangle',
           'background-color': surf, color: txt,
           'border-color': bord, 'border-width':'1.5px',
-          width:'120px', height:'44px',
+          width:'label', height:'label', padding:'16px',
       }},
       { selector:'node[type="ceo"]', style:{
           'background-color':'#0f172a', color:'#fff',
-          'border-width':'0', width:'160px', height:'60px',
-          'font-size':'16px', 'font-weight':'700',
-          'text-max-width':'145px',
+          'border-width':'0',
+          'font-size':'20px', 'font-weight':'700', padding:'20px',
       }},
       { selector:'node[type="division"]', style:{
           'background-color':'#1d4f89', color:'#fff',
-          'border-width':'0', width:'140px', height:'50px',
-          'font-size':'14px', 'text-max-width':'125px',
+          'border-width':'0',
+          'font-size':'18px', padding:'16px',
       }},
       { selector:'node[type="team"]', style:{
           'background-color': surf, color: txt,
           'border-color': blue, 'border-width':'1.5px',
-          width:'120px', height:'44px', 'font-size':'13px',
+          'font-size':'16px', padding:'14px',
       }},
       { selector:'node[type="eop-root"]', style:{
           'background-color':'#7f1d1d', color:'#fff',
-          'border-width':'0', width:'160px', height:'60px',
-          'font-size':'16px', 'font-weight':'700', 'text-max-width':'145px',
+          'border-width':'0',
+          'font-size':'20px', 'font-weight':'700', padding:'20px',
       }},
       { selector:'node[type="eop-stage"]', style:{
           'background-color':'#92400e', color:'#fff',
           'border-color':'rgba(251,191,36,.7)', 'border-width':'2.5px', 'border-style':'dashed',
-          width:'140px', height:'50px',
-          'font-size':'14px', 'font-weight':'700', 'text-max-width':'125px',
+          'font-size':'18px', 'font-weight':'700', padding:'16px',
       }},
       { selector:'node[type="eop-unit"]', style:{
           'background-color': surf, color: txt,
           'border-color': red, 'border-width':'1.5px',
-          width:'120px', height:'44px', 'font-size':'13px',
+          'font-size':'16px', padding:'14px',
       }},
       // Custom color override
       { selector:'node[bgColor]', style:{
@@ -838,8 +836,9 @@ window.ORG = (() => {
   }
 
   /* ── Dark mode sync ───────────────────────────────────────────── */
-  new MutationObserver(() => { if (cy) cy.style(mkStyle()); })
-    .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+  new MutationObserver(() => {
+    if (cy) { cy.style(mkStyle()); cy.fit(undefined, 50); }
+  }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
 
   /* ── Init ─────────────────────────────────────────────────────── */
   function init() {
