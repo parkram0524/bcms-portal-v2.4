@@ -53,8 +53,6 @@
         <a href="${H("/strategy-plans/index.html")}">전략 대시보드</a>
         <a href="${H("/strategy-plans/bcp.html")}">BCP 전략</a>
         <a href="${H("/strategy-plans/drp.html")}">DRP 절차</a>
-        <a href="${H("/strategy-plans/priority.html")}">복구 우선순위(통합)</a>
-        <a href="${H("/strategy-plans/recovery-priority.html")}">Recovery Priority</a>
       </div>
     </div>
 
