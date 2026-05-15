@@ -1,243 +1,944 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>BCMS Portal - 정책·목표·범위</title>
 <link rel="stylesheet" href="../assets/style.css"/>
-
 <style>
-.main{ padding:28px; }
-.wrap{ max-width:1200px; margin:0 auto; }
+  .wrap { max-width: 1280px; margin: 0 auto; }
 
-/* ===== 제목 ===== */
-.header{
-  margin-bottom:24px;
-}
-.header h1{
-  margin:0;
-  font-size:30px;
-  font-weight:900;
-}
-.header p{
-  margin:8px 0 0;
-  color:#94a3b8;
-}
+  /* ── Hero ── */
+  .hero { margin-bottom: 20px; }
+  .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+  .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); }
 
-/* ===== 공통 섹션 ===== */
-.section{
-  border-radius:18px;
-  padding:24px;
-  margin-bottom:22px;
-}
+  /* ── Tab Nav ── */
+  .tabNav { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tabBtn {
+    font-size: 13px; font-weight: 600;
+    padding: 7px 18px; border-radius: 20px;
+    border: 0.5px solid var(--border-strong) !important;
+    background: var(--surface) !important;
+    color: var(--text-2) !important;
+    cursor: pointer; transition: all .15s;
+  }
+  .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
+  .tabPane.hidden { display: none; }
 
-/* 섹션별 배경톤 다르게 */
-.s1{ background:rgba(59,130,246,.08); }
-.s2{ background:rgba(34,197,94,.08); }
-.s3{ background:rgba(234,179,8,.08); }
-.s4{ background:rgba(236,72,153,.08); }
+  /* ── Section labels ── */
+  .sectionLabel {
+    font-size: 11px; font-weight: 600; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin-bottom: 5px; display: block;
+  }
+  .isoTag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 5px;
+    background: var(--accent-subtle); color: var(--accent);
+    border: 0.5px solid var(--accent-border);
+    margin-bottom: 14px;
+  }
 
-.section h2{
-  margin:0 0 16px;
-  font-size:20px;
-  font-weight:900;
-}
+  /* ── Grid helpers ── */
+  .formGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .formGrid .full { grid-column: 1 / -1; }
+  .formGrid .half { grid-column: span 2; }
+  .formRow { display: flex; flex-direction: column; gap: 5px; }
+  .formRow label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+  .formRow input, .formRow select, .formRow textarea { width: 100%; }
+  .formRow textarea { resize: vertical; min-height: 120px; line-height: 1.6; font-family: inherit; }
 
-/* ===== 선언 카드 ===== */
-.cardGrid{
-  display:grid;
-  grid-template-columns: repeat(4,1fr);
-  gap:16px;
-}
-@media(max-width:1000px){
-  .cardGrid{ grid-template-columns:repeat(2,1fr); }
-}
-@media(max-width:600px){
-  .cardGrid{ grid-template-columns:1fr; }
-}
+  /* ── Form actions ── */
+  .formActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 0.5px solid var(--border); }
 
-.card{
-  background:#ffffff;
-  border-radius:16px;
-  padding:18px;
-  min-height:120px;
-}
+  /* ── ISO Checklist ── */
+  .checkGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .checkItem {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--r); padding: 12px 16px;
+    cursor: pointer; user-select: none; transition: border-color .15s;
+  }
+  .checkItem:hover { border-color: var(--border-strong); }
+  .checkItem input[type="checkbox"] { display: none; }
+  .checkIcon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+  .checkText { flex: 1; }
+  .checkText strong { font-size: 13px; font-weight: 600; color: var(--text); display: block; }
+  .checkText span  { font-size: 11px; color: var(--text-2); }
+  .checkItem.checked { border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.04); }
+  .checkItem.checked .checkIcon::after { content: '✅'; }
+  .checkItem:not(.checked) .checkIcon::after { content: '❌'; }
 
-.card h3{
-  margin:0 0 8px;
-  font-size:16px;
-  font-weight:900;
-}
+  /* ── Signer ── */
+  .signerGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-.card p{
-  margin:0;
-  color:#94a3b8;
-  font-size:14px;
-  line-height:1.6;
-}
+  /* ── Objectives table ── */
+  .tableSection { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; margin-top: 14px; }
+  .sectionHead { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 0.5px solid var(--border); }
+  .sectionHead h2 { font-size: 13px; font-weight: 600; color: var(--text); }
+  .tableWrap { overflow-x: auto; }
+  .empty { padding: 32px; text-align: center; font-size: 13px; color: var(--text-3); }
 
-/* ===== 흐름 다이어그램 ===== */
-.flow{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:18px;
-  flex-wrap:wrap;
-}
+  /* ── Progress bar ── */
+  .progressWrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+  .progressBar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progressFill { height: 100%; border-radius: 3px; transition: width .4s; }
+  .progressPct { font-size: 12px; font-weight: 700; font-family: "SF Mono","Consolas",monospace; min-width: 36px; text-align: right; }
 
-.node{
-  background:#ffffff;
-  padding:16px 20px;
-  border-radius:14px;
-  font-weight:900;
-  font-size:14px;
-  min-width:140px;
-  text-align:center;
-}
+  /* ── Status badge ── */
+  .statusBadge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; border: 0.5px solid; white-space: nowrap; }
+  .s-달성  { color: #16a34a; background: rgba(34,197,94,.1);  border-color: rgba(34,197,94,.25); }
+  .s-진행  { color: #b45309; background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.25); }
+  .s-미달  { color: #dc2626; background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.25); }
 
-.arrow{
-  font-size:20px;
-  font-weight:900;
-  color:#64748b;
-}
+  /* ── Scope cards ── */
+  .scopeSummary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .scopeCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 16px 18px; }
+  .scopeCard h3 { font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+  .scopeCard p  { font-size: 13px; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+  .scopeCard p.empty-scope { color: var(--text-3); font-style: italic; }
 
-/* ===== KPI ===== */
-.kpiGrid{
-  display:grid;
-  grid-template-columns: repeat(3,1fr);
-  gap:16px;
-}
-@media(max-width:900px){
-  .kpiGrid{ grid-template-columns:1fr; }
-}
+  /* ── Event checkboxes ── */
+  .evGrid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .evChk { position: relative; }
+  .evChk input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .evLabel {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border: 0.5px solid var(--border-strong);
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    color: var(--text-2); cursor: pointer;
+    background: var(--surface); transition: all .12s;
+  }
+  .evChk input:checked + .evLabel { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
 
-.kpi{
-  background:#ffffff;
-  padding:22px;
-  border-radius:18px;
-  text-align:center;
-}
-.kpi h3{
-  margin:0 0 10px;
-  font-size:16px;
-}
-.kpi .big{
-  font-size:34px;
-  font-weight:900;
-}
-.kpi p{
-  color:#94a3b8;
-  margin-top:8px;
-  font-size:14px;
-}
+  /* ── Stakeholder type badge ── */
+  .typeBadge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--bg); border: 0.5px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-2); }
+  .type-내부 { background: rgba(99,102,241,.08); color: #4338ca; border-color: rgba(99,102,241,.25); }
+  .type-외부 { background: rgba(245,158,11,.08); color: #b45309; border-color: rgba(245,158,11,.25); }
 
+  /* ── Delete btn ── */
+  .delBtn { width: 26px; height: 26px; border: 0.5px solid rgba(239,68,68,.3) !important; background: rgba(239,68,68,.05) !important; color: #dc2626 !important; border-radius: 5px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .delBtn:hover { background: rgba(239,68,68,.12) !important; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 64px; right: 20px;
+    background: var(--surface) !important; color: var(--text) !important;
+    border: 0.5px solid var(--border-strong) !important;
+    border-radius: var(--r); padding: 10px 16px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow); z-index: 999;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: none; }
+
+  @media (max-width: 900px) {
+    .formGrid { grid-template-columns: 1fr 1fr; }
+    .formGrid .full { grid-column: 1 / -1; }
+    .checkGrid { grid-template-columns: 1fr; }
+    .scopeSummary { grid-template-columns: 1fr; }
+    .signerGrid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .formGrid { grid-template-columns: 1fr; }
+    .formGrid .half { grid-column: span 1; }
+  }
 </style>
 </head>
-
 <body>
 <aside id="sidebarMount"></aside>
-
-<div class="main">
+<main class="main">
 <div class="wrap">
 
-<div class="header">
-<h1>📘 정책·목표·범위</h1>
-<p>BIA → Risk 평가 순서를 기준으로 설계된 BCMS 구조</p>
-</div>
-
-<!-- 1 경영진 선언 -->
-<section class="section s1">
-<h2>1) 경영진 선언</h2>
-
-<div class="cardGrid">
-  <div class="card">
-    <h3>🎯 복구 목표</h3>
-    <p>RTO/RPO 내 복구 + 투명 커뮤니케이션</p>
+  <div class="hero">
+    <h1>📋 정책·목표·범위</h1>
+    <p>BCMS 정책 선언, 목표/KPI 관리, 적용 범위 정의, 이해관계자 등록을 통합 관리합니다.</p>
   </div>
-  <div class="card">
-    <h3>🧩 표준 실행</h3>
-    <p>BCP·DRP·EOP·SOP 기반 일관 대응</p>
-  </div>
-  <div class="card">
-    <h3>🧾 증적 기반</h3>
-    <p>Execution Logs + Audit Evidence 자동화</p>
-  </div>
-  <div class="card">
-    <h3>🔁 지속 개선</h3>
-    <p>훈련 → 검증 → CAPA → 개정</p>
-  </div>
-</div>
-</section>
 
-<!-- 2 흐름 -->
-<section class="section s2">
-<h2>2) “살아있는 BCMS” 흐름</h2>
+  <nav class="tabNav">
+    <button class="tabBtn active" data-tab="policy">📄 BCMS 정책</button>
+    <button class="tabBtn" data-tab="objectives">🎯 목표 및 KPI</button>
+    <button class="tabBtn" data-tab="scope">🗺️ 적용 범위</button>
+    <button class="tabBtn" data-tab="stakeholders">👥 이해관계자</button>
+  </nav>
 
-<div class="flow">
-  <div class="node">BIA<br><span style="color:#94a3b8;font-weight:400;">핵심업무·RTO 확정</span></div>
-  <div class="arrow">→</div>
-  <div class="node">Risk 평가<br><span style="color:#94a3b8;font-weight:400;">위험·완화 산정</span></div>
-  <div class="arrow">→</div>
-  <div class="node">우선순위</div>
-  <div class="arrow">→</div>
-  <div class="node">전략·계획</div>
-  <div class="arrow">→</div>
-  <div class="node">훈련·점검</div>
-  <div class="arrow">→</div>
-  <div class="node">감사·평가</div>
-</div>
+  <!-- ══════════════════════════════════════════
+       탭 1: BCMS 정책
+  ══════════════════════════════════════════ -->
+  <div class="tabPane" id="tab-policy">
 
-</section>
+    <span class="isoTag">ISO 22301 §5.2 리더십 및 의지 표명</span>
 
-<!-- 3 범위 -->
-<section class="section s3">
-<h2>3) 적용 범위</h2>
+    <div class="card" style="margin-bottom:14px;">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:16px;">📝 정책 문서 편집</h2>
 
-<div class="cardGrid">
-  <div class="card">
-    <h3>✅ 포함</h3>
-    <p>IT 서비스 · IDC · 전력/설비 · DR/BCP/SOP</p>
-  </div>
-  <div class="card">
-    <h3>⛔ 제외</h3>
-    <p>비핵심 도구 · PoC · 개인 환경</p>
-  </div>
-  <div class="card">
-    <h3>🚨 이벤트 유형</h3>
-    <p>서비스 중단 · 데이터 손실 · 설비 · 보안 사고</p>
-  </div>
-</div>
-</section>
+      <div class="formGrid">
+        <div class="formRow">
+          <label>회사명</label>
+          <input type="text" id="p_company" placeholder="예: (주)BCMS솔루션"/>
+        </div>
+        <div class="formRow">
+          <label>버전</label>
+          <input type="text" id="p_version" placeholder="예: v1.0"/>
+        </div>
+        <div class="formRow">
+          <label>제정일</label>
+          <input type="date" id="p_policyDate"/>
+        </div>
+        <div class="formRow">
+          <label>최종 개정일</label>
+          <input type="date" id="p_revisionDate"/>
+        </div>
+        <div class="formRow">
+          <label>다음 검토 예정일</label>
+          <input type="date" id="p_nextReview"/>
+        </div>
+        <div class="formRow">
+          <label>정책 번호</label>
+          <input type="text" id="p_policyNo" placeholder="예: BCMS-POL-001"/>
+        </div>
+        <div class="formRow full">
+          <label>정책 본문</label>
+          <textarea id="p_body" style="min-height:200px;" placeholder="[회사명]은 핵심 업무의 연속성을 확보하고 이해관계자의 신뢰를 유지하기 위해 ISO 22301 기반 업무연속성관리시스템(BCMS)을 수립·운영·유지·개선할 것을 선언합니다.
 
-<!-- 4 KPI -->
-<section class="section s4">
-<h2>4) KPI</h2>
+당사는 다음을 준수합니다:
+1. 업무연속성 목표 수립 및 지속적 달성
+2. 법적·규제적 요구사항 및 이해관계자 요구사항 충족
+3. BCMS의 지속적 개선을 위한 자원 확보 및 의지 표명
+4. 전 임직원에게 정책을 전달하고 이해를 촉진"></textarea>
+        </div>
+      </div>
 
-<div class="kpiGrid">
-  <div class="kpi">
-    <h3>RTO 준수율</h3>
-    <div class="big">90%</div>
-    <p>목표 예시</p>
-  </div>
-  <div class="kpi">
-    <h3>증적 완결성</h3>
-    <div class="big">80%</div>
-    <p>로그 누락 0 목표</p>
-  </div>
-  <div class="kpi">
-    <h3>CAPA 리드타임</h3>
-    <div class="big">30일</div>
-    <p>Open → Close 평균</p>
-  </div>
-</div>
+      <div style="margin-top:18px;padding-top:16px;border-top:0.5px solid var(--border);">
+        <span class="sectionLabel">경영진 서명</span>
+        <div class="signerGrid">
+          <div class="formRow">
+            <label>서명자 이름</label>
+            <input type="text" id="p_signerName" placeholder="예: 홍길동"/>
+          </div>
+          <div class="formRow">
+            <label>직책</label>
+            <input type="text" id="p_signerTitle" placeholder="예: 대표이사 / CISO"/>
+          </div>
+        </div>
+      </div>
 
-</section>
+      <div class="formActions">
+        <button class="btn" id="btnPolicyClear" type="button">초기화</button>
+        <button class="btn primary" id="btnPolicySave" type="button">💾 저장</button>
+      </div>
+    </div>
 
-</div>
-</div>
+    <div class="card">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:4px;">✅ ISO 22301 §5.2 요구사항 체크리스트</h2>
+      <p style="font-size:12px;margin-bottom:16px;">정책 문서에 아래 항목이 포함되어 있는지 직접 체크하세요.</p>
+
+      <div class="checkGrid" id="checkGrid">
+        <label class="checkItem" data-key="objective">
+          <input type="checkbox" id="chk_objective"/>
+          <div class="checkIcon"></div>
+          <div class="checkText">
+            <strong>업무연속성 목표 부합</strong>
+            <span>조직의 업무연속성 목표에 부합하는 정책인지 명시</span>
+          </div>
+        </label>
+        <label class="checkItem" data-key="improvement">
+          <input type="checkbox" id="chk_improvement"/>
+          <div class="checkIcon"></div>
+          <div class="checkText">
+            <strong>지속적 개선 의지 포함</strong>
+            <span>BCMS의 지속적 개선에 대한 의지가 명확히 서술됨</span>
+          </div>
+        </label>
+        <label class="checkItem" data-key="documentation">
+          <input type="checkbox" id="chk_documentation"/>
+          <div class="checkIcon"></div>
+          <div class="checkText">
+            <strong>문서화 및 전달 계획</strong>
+            <span>정책이 문서화되어 전 조직에 전달·인식되도록 계획됨</span>
+          </div>
+        </label>
+        <label class="checkItem" data-key="scope">
+          <input type="checkbox" id="chk_scope"/>
+          <div class="checkIcon"></div>
+          <div class="checkText">
+            <strong>BCMS 범위 내 적용</strong>
+            <span>정의된 BCMS 범위 내 모든 관련 조직에 적용됨을 명시</span>
+          </div>
+        </label>
+      </div>
+      <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+        <button class="btn primary" id="btnCheckSave" type="button">체크리스트 저장</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-policy -->
+
+
+  <!-- ══════════════════════════════════════════
+       탭 2: 목표 및 KPI
+  ══════════════════════════════════════════ -->
+  <div class="tabPane hidden" id="tab-objectives">
+
+    <span class="isoTag">ISO 22301 §6.2 업무연속성 목표 및 계획</span>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:16px;">➕ 목표 등록</h2>
+
+      <div class="formGrid">
+        <div class="formRow">
+          <label>목표 ID <span style="font-style:normal;text-transform:none;letter-spacing:0;font-weight:400;color:var(--text-3)">(자동 생성)</span></label>
+          <input type="text" id="obj_id" readonly style="opacity:.7;cursor:default;" placeholder="저장 시 자동 생성"/>
+        </div>
+        <div class="formRow">
+          <label>목표 구분</label>
+          <select id="obj_category">
+            <option value="">선택</option>
+            <option>RTO 준수율</option>
+            <option>훈련 실시율</option>
+            <option>CAPA 완료율</option>
+            <option>인증 유지</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="formRow">
+          <label>담당 부서</label>
+          <input type="text" id="obj_dept" placeholder="예: BCMS PMO"/>
+        </div>
+        <div class="formRow half">
+          <label>목표 내용</label>
+          <input type="text" id="obj_content" placeholder="예: 핵심업무 RTO 준수율 달성"/>
+        </div>
+        <div class="formRow">
+          <label>측정 지표</label>
+          <input type="text" id="obj_metric" placeholder="예: 핵심업무 RTO 준수율 90% 이상"/>
+        </div>
+        <div class="formRow">
+          <label>목표값</label>
+          <input type="number" id="obj_targetValue" placeholder="예: 90" min="0"/>
+        </div>
+        <div class="formRow">
+          <label>단위</label>
+          <select id="obj_unit">
+            <option>%</option>
+            <option>일</option>
+            <option>건</option>
+            <option>회</option>
+            <option>점</option>
+          </select>
+        </div>
+        <div class="formRow">
+          <label>달성 기한</label>
+          <input type="date" id="obj_deadline"/>
+        </div>
+      </div>
+
+      <div class="formActions">
+        <button class="btn" id="btnObjReset" type="button">폼 초기화</button>
+        <button class="btn primary" id="btnObjSave" type="button">➕ 목표 등록</button>
+      </div>
+    </div>
+
+    <div class="tableSection">
+      <div class="sectionHead">
+        <h2>목표 목록</h2>
+        <span id="objCount" style="font-size:12px;color:var(--text-3);"></span>
+      </div>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>목표 ID</th>
+              <th>구분</th>
+              <th>목표 내용</th>
+              <th>목표값</th>
+              <th>현재값</th>
+              <th>달성률</th>
+              <th>기한</th>
+              <th>상태</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="objBody"></tbody>
+        </table>
+      </div>
+      <div class="empty hidden" id="objEmpty">등록된 목표가 없습니다. 위 폼에서 추가하세요.</div>
+    </div>
+
+  </div><!-- /tab-objectives -->
+
+
+  <!-- ══════════════════════════════════════════
+       탭 3: 적용 범위
+  ══════════════════════════════════════════ -->
+  <div class="tabPane hidden" id="tab-scope">
+
+    <span class="isoTag">ISO 22301 §4.3 BCMS 적용 범위 결정</span>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:16px;">📝 범위 정의 입력</h2>
+
+      <div class="formGrid">
+        <div class="formRow full">
+          <label>조직 범위</label>
+          <textarea id="sc_org" placeholder="예: 본사 IT서비스센터 및 주요 운영 부서 (전기팀, 기계팀, SRE팀, 네트워크팀, 정보보호팀, NOC팀)"></textarea>
+        </div>
+        <div class="formRow full">
+          <label>지리적 범위</label>
+          <textarea id="sc_geo" placeholder="예: 서울 본사(강남구), 판교 DR센터"></textarea>
+        </div>
+        <div class="formRow full">
+          <label>제품·서비스 범위</label>
+          <textarea id="sc_service" placeholder="예: 핵심 IT인프라 운영, 고객 데이터 관리, 전력/냉각 시설 운영"></textarea>
+        </div>
+        <div class="formRow full">
+          <label>제외 범위 및 이유</label>
+          <textarea id="sc_exclusion" placeholder="예: 해외 지사 제외 (별도 BCP 운영 중), 영업/마케팅 부서 제외 (업무연속성 리스크 미해당)"></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:0.5px solid var(--border);">
+        <span class="sectionLabel" style="margin-bottom:12px;">ISO 22301 관련 이벤트 유형 (해당 항목 선택)</span>
+        <div class="evGrid" id="evGrid">
+          <label class="evChk"><input type="checkbox" value="서비스 중단"/><span class="evLabel">⛔ 서비스 중단</span></label>
+          <label class="evChk"><input type="checkbox" value="데이터 손실"/><span class="evLabel">💾 데이터 손실</span></label>
+          <label class="evChk"><input type="checkbox" value="시설 접근 불가"/><span class="evLabel">🏢 시설 접근 불가</span></label>
+          <label class="evChk"><input type="checkbox" value="핵심 인력 부재"/><span class="evLabel">👤 핵심 인력 부재</span></label>
+          <label class="evChk"><input type="checkbox" value="공급망 중단"/><span class="evLabel">🔗 공급망 중단</span></label>
+          <label class="evChk"><input type="checkbox" value="사이버 공격"/><span class="evLabel">🔐 사이버 공격</span></label>
+          <label class="evChk"><input type="checkbox" value="자연재해"/><span class="evLabel">🌪️ 자연재해</span></label>
+          <label class="evChk"><input type="checkbox" value="전력·유틸리티 중단"/><span class="evLabel">⚡ 전력·유틸리티 중단</span></label>
+        </div>
+      </div>
+
+      <div class="formActions">
+        <button class="btn" id="btnScopeClear" type="button">초기화</button>
+        <button class="btn primary" id="btnScopeSave" type="button">💾 저장</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;font-weight:600;color:var(--text);">적용 범위 요약 카드</span>
+      <span style="font-size:11px;color:var(--text-3);">입력 내용 기반 자동 생성</span>
+    </div>
+    <div class="scopeSummary" id="scopeSummary">
+      <div class="scopeCard">
+        <h3>🏢 조직 범위</h3>
+        <p id="sc_org_view" class="empty-scope">입력 후 저장하면 표시됩니다.</p>
+      </div>
+      <div class="scopeCard">
+        <h3>📍 지리적 범위</h3>
+        <p id="sc_geo_view" class="empty-scope">입력 후 저장하면 표시됩니다.</p>
+      </div>
+      <div class="scopeCard">
+        <h3>🛠️ 제품·서비스 범위</h3>
+        <p id="sc_service_view" class="empty-scope">입력 후 저장하면 표시됩니다.</p>
+      </div>
+      <div class="scopeCard">
+        <h3>❌ 제외 범위</h3>
+        <p id="sc_exclusion_view" class="empty-scope">입력 후 저장하면 표시됩니다.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3 style="font-size:13px;font-weight:600;margin-bottom:10px;">포함 이벤트 유형</h3>
+      <div id="sc_events_view" style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="font-size:12px;color:var(--text-3);">저장 후 표시됩니다.</span>
+      </div>
+    </div>
+
+  </div><!-- /tab-scope -->
+
+
+  <!-- ══════════════════════════════════════════
+       탭 4: 이해관계자
+  ══════════════════════════════════════════ -->
+  <div class="tabPane hidden" id="tab-stakeholders">
+
+    <span class="isoTag">ISO 22301 §4.2 이해관계자의 니즈 및 기대 파악</span>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:16px;">➕ 이해관계자 등록</h2>
+
+      <div class="formGrid">
+        <div class="formRow">
+          <label>이해관계자명 / 그룹</label>
+          <input type="text" id="stk_name" placeholder="예: 경영진 / 주요 고객사"/>
+        </div>
+        <div class="formRow">
+          <label>구분</label>
+          <select id="stk_type">
+            <option value="">선택</option>
+            <option>내부</option>
+            <option>외부</option>
+          </select>
+        </div>
+        <div class="formRow">
+          <label>유형</label>
+          <select id="stk_category">
+            <option value="">선택</option>
+            <option>경영진</option>
+            <option>임직원</option>
+            <option>고객</option>
+            <option>협력업체/공급업체</option>
+            <option>규제기관</option>
+            <option>주주/투자자</option>
+            <option>지역사회</option>
+          </select>
+        </div>
+        <div class="formRow half">
+          <label>주요 관심사항 / 요구사항</label>
+          <input type="text" id="stk_requirements" placeholder="예: 서비스 가용성 99.9% 이상 유지"/>
+        </div>
+        <div class="formRow">
+          <label>의사소통 방법</label>
+          <input type="text" id="stk_communication" placeholder="예: 월간 보고서, 비상연락망"/>
+        </div>
+        <div class="formRow">
+          <label>담당자</label>
+          <input type="text" id="stk_manager" placeholder="예: 홍길동 팀장"/>
+        </div>
+      </div>
+
+      <div class="formActions">
+        <button class="btn" id="btnStkReset" type="button">폼 초기화</button>
+        <button class="btn primary" id="btnStkSave" type="button">➕ 등록</button>
+      </div>
+    </div>
+
+    <div class="tableSection">
+      <div class="sectionHead">
+        <h2>이해관계자 목록</h2>
+        <span id="stkCount" style="font-size:12px;color:var(--text-3);"></span>
+      </div>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>이해관계자</th>
+              <th>구분</th>
+              <th>유형</th>
+              <th>주요 요구사항</th>
+              <th>의사소통 방법</th>
+              <th>담당자</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="stkBody"></tbody>
+        </table>
+      </div>
+      <div class="empty hidden" id="stkEmpty">등록된 이해관계자가 없습니다.</div>
+    </div>
+
+  </div><!-- /tab-stakeholders -->
+
+</div><!-- .wrap -->
+</main>
+
+<div id="toast"></div>
+<button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
 <script src="../assets/sidebar.js"></script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+<script>
+'use strict';
+
+/* ──────────────────────────────────────────
+   UTIL
+────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const today = () => new Date().toISOString().slice(0, 10);
+const thisYear = () => String(new Date().getFullYear());
+const loadJ = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch { return fb; } };
+const saveJ = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ──────────────────────────────────────────
+   THEME TOGGLE
+────────────────────────────────────────── */
+(function(){
+  const r = document.documentElement, t = $('themeToggle');
+  const s = localStorage.getItem('bcmsTheme') || 'light';
+  r.setAttribute('data-theme', s);
+  if (t) { t.textContent = s === 'dark' ? '☀️' : '🌙'; }
+  if (t) t.addEventListener('click', () => {
+    const n = r.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    r.setAttribute('data-theme', n);
+    t.textContent = n === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('bcmsTheme', n);
+  });
+})();
+
+/* ──────────────────────────────────────────
+   TAB NAVIGATION
+────────────────────────────────────────── */
+document.querySelectorAll('.tabBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tabPane').forEach(p => p.classList.add('hidden'));
+    btn.classList.add('active');
+    $('tab-' + btn.dataset.tab).classList.remove('hidden');
+    if (btn.dataset.tab === 'objectives') renderObjTable();
+    if (btn.dataset.tab === 'stakeholders') renderStkTable();
+  });
+});
+
+/* ══════════════════════════════════════════
+   TAB 1: BCMS 정책
+══════════════════════════════════════════ */
+const POLICY_KEY = 'bcmsPolicyData';
+
+function loadPolicy() {
+  const d = loadJ(POLICY_KEY, {});
+  $('p_company').value     = d.companyName   || '';
+  $('p_version').value     = d.version       || '';
+  $('p_policyDate').value  = d.policyDate    || '';
+  $('p_revisionDate').value= d.revisionDate  || '';
+  $('p_nextReview').value  = d.nextReview    || '';
+  $('p_policyNo').value    = d.policyNo      || '';
+  $('p_body').value        = d.body          || '';
+  $('p_signerName').value  = d.signerName    || '';
+  $('p_signerTitle').value = d.signerTitle   || '';
+
+  const checks = d.checks || {};
+  document.querySelectorAll('.checkItem').forEach(item => {
+    const key = item.dataset.key;
+    const chkEl = item.querySelector('input[type="checkbox"]');
+    if (checks[key]) { chkEl.checked = true; item.classList.add('checked'); }
+    else             { chkEl.checked = false; item.classList.remove('checked'); }
+  });
+}
+
+$('btnPolicySave').addEventListener('click', () => {
+  const d = {
+    companyName:  $('p_company').value.trim(),
+    version:      $('p_version').value.trim(),
+    policyDate:   $('p_policyDate').value,
+    revisionDate: $('p_revisionDate').value,
+    nextReview:   $('p_nextReview').value,
+    policyNo:     $('p_policyNo').value.trim(),
+    body:         $('p_body').value,
+    signerName:   $('p_signerName').value.trim(),
+    signerTitle:  $('p_signerTitle').value.trim(),
+    checks:       loadJ(POLICY_KEY, {}).checks || {},
+    savedAt:      new Date().toISOString(),
+  };
+  saveJ(POLICY_KEY, d);
+  showToast('✅ 정책 문서가 저장되었습니다.');
+});
+
+$('btnPolicyClear').addEventListener('click', () => {
+  if (!confirm('정책 문서 입력 내용을 초기화할까요?')) return;
+  saveJ(POLICY_KEY, {});
+  loadPolicy();
+  showToast('초기화되었습니다.');
+});
+
+$('btnCheckSave').addEventListener('click', () => {
+  const d = loadJ(POLICY_KEY, {});
+  d.checks = {};
+  document.querySelectorAll('.checkItem').forEach(item => {
+    d.checks[item.dataset.key] = item.querySelector('input').checked;
+  });
+  saveJ(POLICY_KEY, d);
+  showToast('✅ 체크리스트가 저장되었습니다.');
+});
+
+document.querySelectorAll('.checkItem').forEach(item => {
+  item.addEventListener('click', () => {
+    const chk = item.querySelector('input');
+    chk.checked = !chk.checked;
+    item.classList.toggle('checked', chk.checked);
+  });
+});
+
+
+/* ══════════════════════════════════════════
+   TAB 2: 목표 및 KPI
+══════════════════════════════════════════ */
+const OBJ_KEY = 'bcmsObjectives';
+
+function genObjId() {
+  const yr = thisYear();
+  const list = loadJ(OBJ_KEY, []);
+  const num = String(list.length + 1).padStart(3, '0');
+  return `OBJ-${yr}-${num}`;
+}
+
+function calcCurrentValue(category) {
+  try {
+    if (category === 'RTO 준수율') {
+      const bia = loadJ('bcmsBIAData', []);
+      const fns = bia.flatMap(t => Array.isArray(t.functions) ? t.functions : []);
+      if (!fns.length) return null;
+      const withRto = fns.filter(f => f.rto && f.coreFinal);
+      return withRto.length > 0 ? Math.round(withRto.length / fns.filter(f => f.coreFinal).length * 100) : null;
+    }
+    if (category === '훈련 실시율') {
+      const tr = loadJ('bcmsTrainingData', []);
+      const yr = thisYear();
+      const plans = tr.filter(x => (x.planDate || '').startsWith(yr));
+      if (!plans.length) return null;
+      const done = plans.filter(x => x.status === '완료').length;
+      return Math.round(done / plans.length * 100);
+    }
+    if (category === 'CAPA 완료율') {
+      const capas = loadJ('bcmsCapaItems', []);
+      if (!capas.length) return null;
+      const done = capas.filter(c => c.status === '완료').length;
+      return Math.round(done / capas.length * 100);
+    }
+  } catch { }
+  return null;
+}
+
+function renderObjTable() {
+  const list = loadJ(OBJ_KEY, []);
+  const body = $('objBody');
+  const empty = $('objEmpty');
+  $('objCount').textContent = `총 ${list.length}개`;
+
+  if (!list.length) {
+    body.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  body.innerHTML = list.map((o, i) => {
+    const tv = Number(o.targetValue) || 0;
+    const cv = calcCurrentValue(o.category);
+    const cvDisplay = cv !== null ? cv : '-';
+    const pct = (cv !== null && tv > 0) ? Math.min(100, Math.round(cv / tv * 100)) : 0;
+    const color = pct >= 100 ? '#16a34a' : pct >= 70 ? '#b45309' : '#dc2626';
+    const sCls  = pct >= 100 ? 's-달성' : pct >= 70 ? 's-진행' : 's-미달';
+    const sLabel= pct >= 100 ? '달성' : pct >= 70 ? '진행중' : '미달';
+    const unit = o.unit || '%';
+    const today2 = today();
+    const overdue = o.deadline && o.deadline < today2 && pct < 100;
+
+    return `<tr>
+      <td style="font-family:monospace;font-size:12px;">${esc(o.id)}</td>
+      <td><span class="badge">${esc(o.category || '-')}</span></td>
+      <td>${esc(o.content || '-')}<br><span style="font-size:11px;color:var(--text-3);">${esc(o.metric || '')}</span></td>
+      <td style="font-variant-numeric:tabular-nums;">${esc(String(tv))}${esc(unit)}</td>
+      <td style="font-variant-numeric:tabular-nums;">${cv !== null ? esc(String(cvDisplay))+esc(unit) : '<span style="color:var(--text-3)">-</span>'}</td>
+      <td>
+        <div class="progressWrap">
+          <div class="progressBar"><div class="progressFill" style="width:${pct}%;background:${color};"></div></div>
+          <span class="progressPct" style="color:${color};">${cv !== null ? pct+'%' : '-'}</span>
+        </div>
+      </td>
+      <td style="font-size:12px;white-space:nowrap;${overdue?'color:#dc2626;font-weight:600;':''}">${esc(o.deadline || '-')}${overdue?' ⚠️':''}</td>
+      <td><span class="statusBadge ${cv !== null ? sCls : ''}">${cv !== null ? sLabel : '미측정'}</span></td>
+      <td><button class="delBtn" data-idx="${i}" title="삭제">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  body.querySelectorAll('.delBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const list2 = loadJ(OBJ_KEY, []);
+      if (!confirm(`"${list2[btn.dataset.idx]?.content}" 목표를 삭제할까요?`)) return;
+      list2.splice(Number(btn.dataset.idx), 1);
+      saveJ(OBJ_KEY, list2);
+      renderObjTable();
+      showToast('삭제되었습니다.');
+    });
+  });
+}
+
+$('btnObjSave').addEventListener('click', () => {
+  const cat     = $('obj_category').value;
+  const content = $('obj_content').value.trim();
+  if (!cat)     { showToast('⚠️ 목표 구분을 선택하세요.'); return; }
+  if (!content) { showToast('⚠️ 목표 내용을 입력하세요.'); return; }
+
+  const list = loadJ(OBJ_KEY, []);
+  list.push({
+    id:          genObjId(),
+    category:    cat,
+    content,
+    metric:      $('obj_metric').value.trim(),
+    targetValue: $('obj_targetValue').value,
+    unit:        $('obj_unit').value,
+    deadline:    $('obj_deadline').value,
+    department:  $('obj_dept').value.trim(),
+    createdAt:   new Date().toISOString(),
+  });
+  saveJ(OBJ_KEY, list);
+  resetObjForm();
+  renderObjTable();
+  showToast('✅ 목표가 등록되었습니다.');
+});
+
+function resetObjForm() {
+  ['obj_id','obj_content','obj_metric','obj_targetValue','obj_deadline','obj_dept'].forEach(id => $( id ).value = '');
+  $('obj_category').value = '';
+  $('obj_unit').value = '%';
+}
+
+$('btnObjReset').addEventListener('click', resetObjForm);
+
+
+/* ══════════════════════════════════════════
+   TAB 3: 적용 범위
+══════════════════════════════════════════ */
+const SCOPE_KEY = 'bcmsScope';
+
+function loadScope() {
+  const d = loadJ(SCOPE_KEY, {});
+  $('sc_org').value       = d.org       || '';
+  $('sc_geo').value       = d.geo       || '';
+  $('sc_service').value   = d.service   || '';
+  $('sc_exclusion').value = d.exclusion || '';
+
+  const evs = d.events || [];
+  document.querySelectorAll('#evGrid input[type="checkbox"]').forEach(chk => {
+    chk.checked = evs.includes(chk.value);
+  });
+  renderScopeCards(d);
+}
+
+function renderScopeCards(d) {
+  const fields = [
+    { id: 'sc_org_view',       val: d.org       || '' },
+    { id: 'sc_geo_view',       val: d.geo       || '' },
+    { id: 'sc_service_view',   val: d.service   || '' },
+    { id: 'sc_exclusion_view', val: d.exclusion || '' },
+  ];
+  fields.forEach(f => {
+    const el = $(f.id);
+    if (f.val.trim()) {
+      el.textContent = f.val.trim();
+      el.classList.remove('empty-scope');
+    } else {
+      el.textContent = '입력 후 저장하면 표시됩니다.';
+      el.classList.add('empty-scope');
+    }
+  });
+
+  const evView = $('sc_events_view');
+  const evs = d.events || [];
+  if (evs.length) {
+    evView.innerHTML = evs.map(e => `<span class="badge">${esc(e)}</span>`).join('');
+  } else {
+    evView.innerHTML = '<span style="font-size:12px;color:var(--text-3);">선택된 이벤트 유형 없음</span>';
+  }
+}
+
+$('btnScopeSave').addEventListener('click', () => {
+  const events = [];
+  document.querySelectorAll('#evGrid input:checked').forEach(chk => events.push(chk.value));
+  const d = {
+    org:       $('sc_org').value.trim(),
+    geo:       $('sc_geo').value.trim(),
+    service:   $('sc_service').value.trim(),
+    exclusion: $('sc_exclusion').value.trim(),
+    events,
+    savedAt:   new Date().toISOString(),
+  };
+  saveJ(SCOPE_KEY, d);
+  renderScopeCards(d);
+  showToast('✅ 적용 범위가 저장되었습니다.');
+});
+
+$('btnScopeClear').addEventListener('click', () => {
+  if (!confirm('적용 범위 입력 내용을 초기화할까요?')) return;
+  saveJ(SCOPE_KEY, {});
+  loadScope();
+  showToast('초기화되었습니다.');
+});
+
+
+/* ══════════════════════════════════════════
+   TAB 4: 이해관계자
+══════════════════════════════════════════ */
+const STK_KEY = 'bcmsStakeholders';
+
+function renderStkTable() {
+  const list = loadJ(STK_KEY, []);
+  const body = $('stkBody');
+  const empty = $('stkEmpty');
+  $('stkCount').textContent = `총 ${list.length}명/그룹`;
+
+  if (!list.length) {
+    body.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  body.innerHTML = list.map((s, i) => `<tr>
+    <td style="font-weight:600;">${esc(s.name)}</td>
+    <td><span class="typeBadge type-${esc(s.type)}">${esc(s.type || '-')}</span></td>
+    <td><span class="badge">${esc(s.category || '-')}</span></td>
+    <td style="max-width:220px;">${esc(s.requirements || '-')}</td>
+    <td>${esc(s.communication || '-')}</td>
+    <td>${esc(s.manager || '-')}</td>
+    <td><button class="delBtn" data-idx="${i}" title="삭제">✕</button></td>
+  </tr>`).join('');
+
+  body.querySelectorAll('.delBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const list2 = loadJ(STK_KEY, []);
+      if (!confirm(`"${list2[btn.dataset.idx]?.name}"을 삭제할까요?`)) return;
+      list2.splice(Number(btn.dataset.idx), 1);
+      saveJ(STK_KEY, list2);
+      renderStkTable();
+      showToast('삭제되었습니다.');
+    });
+  });
+}
+
+$('btnStkSave').addEventListener('click', () => {
+  const name = $('stk_name').value.trim();
+  const type = $('stk_type').value;
+  if (!name) { showToast('⚠️ 이해관계자명을 입력하세요.'); return; }
+  if (!type) { showToast('⚠️ 구분(내부/외부)을 선택하세요.'); return; }
+
+  const list = loadJ(STK_KEY, []);
+  list.push({
+    id:            `STK-${String(list.length + 1).padStart(3, '0')}`,
+    name,
+    type,
+    category:      $('stk_category').value,
+    requirements:  $('stk_requirements').value.trim(),
+    communication: $('stk_communication').value.trim(),
+    manager:       $('stk_manager').value.trim(),
+    createdAt:     new Date().toISOString(),
+  });
+  saveJ(STK_KEY, list);
+  resetStkForm();
+  renderStkTable();
+  showToast('✅ 이해관계자가 등록되었습니다.');
+});
+
+function resetStkForm() {
+  ['stk_name','stk_requirements','stk_communication','stk_manager'].forEach(id => $(id).value = '');
+  $('stk_type').value = '';
+  $('stk_category').value = '';
+}
+
+$('btnStkReset').addEventListener('click', resetStkForm);
+
+
+/* ──────────────────────────────────────────
+   INIT
+────────────────────────────────────────── */
+loadPolicy();
+loadScope();
+renderObjTable();
+renderStkTable();
+</script>
 </body>
 </html>
