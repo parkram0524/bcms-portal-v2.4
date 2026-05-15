@@ -394,81 +394,130 @@ window.ORG = (() => {
 
   /* ── Cytoscape style ──────────────────────────────────────────── */
   function mkStyle() {
-    const dk = document.documentElement.getAttribute('data-theme') === 'dark';
-    const surf  = dk ? '#111' : '#fff';
-    const txt   = dk ? '#ededed' : '#0f172a';
-    const edge  = dk ? 'rgba(255,255,255,.22)' : 'rgba(15,23,42,.22)';
-    const bord  = dk ? 'rgba(255,255,255,.18)' : 'rgba(15,23,42,.18)';
-    const blue  = 'rgba(37,99,235,.38)';
-    const red   = 'rgba(220,38,38,.38)';
+    const dk   = document.documentElement.getAttribute('data-theme') === 'dark';
+    const card = dk ? '#1f2937' : '#ffffff';
+    const edgeCol = dk ? 'rgba(255,255,255,.18)' : '#e5e7eb';
+    const edgeArrow = dk ? 'rgba(255,255,255,.18)' : '#e5e7eb';
+
+    // Banner colors (brighter in dark mode)
+    const C = {
+      ceo:  dk ? '#2563eb' : '#1e3a5f',
+      div:  dk ? '#3b82f6' : '#0070f3',
+      team: dk ? '#6b7280' : '#6b7280',
+      eop:  dk ? '#ef4444' : '#991b1b',
+      bcp:  dk ? '#d97706' : '#92400e',
+      unit: dk ? '#f87171' : '#dc2626',
+    };
+    // Text colors in card area
+    const T = {
+      ceo:  dk ? '#93c5fd' : '#1e3a5f',
+      div:  dk ? '#93c5fd' : '#0070f3',
+      team: dk ? '#e5e7eb' : '#374151',
+      eop:  dk ? '#fca5a5' : '#991b1b',
+      bcp:  dk ? '#fcd34d' : '#92400e',
+      unit: dk ? '#e5e7eb' : '#374151',
+    };
+
+    const shadow = (blur, alpha, offsetY) => ({
+      'shadow-blur': blur, 'shadow-offset-x': 0, 'shadow-offset-y': offsetY,
+      'shadow-color': `rgba(0,0,0,${alpha})`, 'shadow-opacity': 1,
+    });
+
+    const gradNode = (banner, txt, stops, w, h, extra = {}) => ({
+      'background-fill': 'linear-gradient',
+      'background-gradient-stop-colors': `${banner} ${banner} ${card} ${card}`,
+      'background-gradient-stop-positions': stops,
+      'background-gradient-direction': 'to-bottom',
+      color: txt, width: w, height: h,
+      'border-width': 0, 'text-valign': 'bottom', 'text-halign': 'center',
+      ...extra,
+    });
 
     return [
+      // ── Base ──
       { selector:'node', style:{
-          label:'data(label)', 'text-valign':'center', 'text-halign':'center',
+          label:'data(label)',
           'font-family':'"Pretendard","Inter",system-ui,sans-serif',
-          'font-size':'18px', 'font-weight':'600',
-          'text-wrap':'wrap', 'text-max-width':'120px',
-          shape:'round-rectangle',
-          'background-color': surf, color: txt,
-          'border-color': bord, 'border-width':'1.5px',
-          width:'label', height:'label', padding:'16px',
+          'text-wrap':'wrap', 'text-max-width':'110px',
+          shape:'round-rectangle', 'corner-radius': 8,
       }},
+
+      // ── CEO / 기관장 ──
       { selector:'node[type="ceo"]', style:{
-          'background-color':'#0f172a', color:'#fff',
-          'border-width':'0',
-          'font-size':'20px', 'font-weight':'700', padding:'20px',
+          ...gradNode(C.ceo, T.ceo, '0 40 40 100', 160, 72),
+          ...shadow(8, 0.12, 2),
+          'font-size':'15px', 'font-weight':'600', 'text-margin-y': -12,
+          'corner-radius': 10,
       }},
+
+      // ── 본부급 ──
       { selector:'node[type="division"]', style:{
-          'background-color':'#1d4f89', color:'#fff',
-          'border-width':'0',
-          'font-size':'18px', padding:'16px',
+          ...gradNode(C.div, T.div, '0 38 38 100', 140, 64),
+          ...shadow(6, 0.10, 2),
+          'font-size':'13px', 'font-weight':'600', 'text-margin-y': -10,
       }},
+
+      // ── 팀급 ──
       { selector:'node[type="team"]', style:{
-          'background-color': surf, color: txt,
-          'border-color': blue, 'border-width':'1.5px',
-          'font-size':'16px', padding:'14px',
+          ...gradNode(C.team, T.team, '0 35 35 100', 120, 56),
+          ...shadow(4, 0.08, 1),
+          'font-size':'12px', 'font-weight':'600', 'text-margin-y': -8,
       }},
+
+      // ── EOP 루트 ──
       { selector:'node[type="eop-root"]', style:{
-          'background-color':'#7f1d1d', color:'#fff',
-          'border-width':'0',
-          'font-size':'20px', 'font-weight':'700', padding:'20px',
+          ...gradNode(C.eop, T.eop, '0 40 40 100', 160, 72),
+          ...shadow(8, 0.12, 2),
+          'font-size':'15px', 'font-weight':'600', 'text-margin-y': -12,
+          'corner-radius': 10,
       }},
+
+      // ── BCP 대응본부 (점선 테두리 유지) ──
       { selector:'node[type="eop-stage"]', style:{
-          'background-color':'#92400e', color:'#fff',
-          'border-color':'rgba(251,191,36,.7)', 'border-width':'2.5px', 'border-style':'dashed',
-          'font-size':'18px', 'font-weight':'700', padding:'16px',
+          ...gradNode(C.bcp, T.bcp, '0 38 38 100', 140, 64),
+          ...shadow(6, 0.10, 2),
+          'font-size':'13px', 'font-weight':'600', 'text-margin-y': -10,
+          'border-width': 2, 'border-style': 'dashed',
+          'border-color': 'rgba(245,158,11,.7)',
       }},
+
+      // ── EOP 반(班) ──
       { selector:'node[type="eop-unit"]', style:{
-          'background-color': surf, color: txt,
-          'border-color': red, 'border-width':'1.5px',
-          'font-size':'16px', padding:'14px',
+          ...gradNode(C.unit, T.unit, '0 35 35 100', 120, 56),
+          ...shadow(4, 0.08, 1),
+          'font-size':'12px', 'font-weight':'600', 'text-margin-y': -8,
       }},
-      // Custom color override
+
+      // ── Custom color override ──
       { selector:'node[bgColor]', style:{
+          'background-fill': 'solid',
           'background-color':'data(bgColor)', color:'data(fgColor)',
+          'text-valign': 'center', 'text-margin-y': 0,
       }},
+
+      // ── Selection / edge-source highlight ──
       { selector:'node:selected', style:{
-          'border-color':'#0070f3', 'border-width':'2.5px',
-          'overlay-color':'#0070f3', 'overlay-padding':'3px', 'overlay-opacity':0.08,
+          'border-color':'#0070f3', 'border-width': 2.5,
+          'overlay-color':'#0070f3', 'overlay-padding': 3, 'overlay-opacity': 0.08,
       }},
       { selector:'.edgeSrc', style:{
-          'border-color':'#f59e0b', 'border-width':'3px',
-          'overlay-color':'#f59e0b', 'overlay-padding':'4px', 'overlay-opacity':0.15,
+          'border-color':'#f59e0b', 'border-width': 3,
+          'overlay-color':'#f59e0b', 'overlay-padding': 4, 'overlay-opacity': 0.15,
       }},
-      // Edges
+
+      // ── Edges ──
       { selector:'edge', style:{
           'curve-style':'bezier',
-          'target-arrow-shape':'triangle',
-          'arrow-scale':1.0,
-          'line-color': edge, 'target-arrow-color': edge, width:1.5,
+          'target-arrow-shape':'triangle', 'arrow-scale': 0.9,
+          'line-color': edgeCol, 'target-arrow-color': edgeArrow, width: 1.5,
       }},
       { selector:'edge[?dashed]', style:{
           'line-style':'dashed', 'line-dash-pattern':[8,4],
-          'line-color':'rgba(245,158,11,.5)', 'target-arrow-color':'rgba(245,158,11,.5)',
-          width:2.0, 'curve-style':'straight',
+          'line-color':'#f59e0b', 'target-arrow-color':'#f59e0b',
+          width: 2, 'curve-style':'straight',
           label:'data(label)',
           'font-size':'11px', 'font-weight':'600', color:'#b45309',
-          'text-background-opacity':1, 'text-background-color': surf,
+          'text-background-opacity':1, 'text-background-color': card,
           'text-background-padding':'4px', 'text-background-shape':'roundrectangle',
           'text-border-opacity':0.3, 'text-border-width':0.5, 'text-border-color':'rgba(245,158,11,.4)',
       }},
