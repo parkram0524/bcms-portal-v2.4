@@ -6,7 +6,6 @@
   <title>훈련·점검 | BCMS Portal</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    /* ── Layout ── */
     .wrap { max-width: 1280px; margin: 0 auto; }
 
     .demoBannerSmall {
@@ -17,31 +16,26 @@
       gap: 10px !important; flex-wrap: wrap !important; align-items: center !important;
     }
 
-    /* ── Hero ── */
     .hero { padding-bottom: 24px; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; }
     .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
     .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
 
-    /* ── Metrics strip ── */
     .metricsStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
     .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
     .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
     .metric .v.word { font-size: 14px; font-family: inherit; }
 
-    /* ── Tab nav ── */
-    .tabNav { display: flex; gap: 6px; margin-top: 24px; }
+    .tabNav { display: flex; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
     .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
     .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
     .tabPane.hidden { display: none; }
 
-    /* ── Control row ── */
     .controlRow { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 14px 18px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-top: 12px; }
     .field { display: flex; flex-direction: column; gap: 5px; }
     .field label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
     .field select, .field input { min-width: 140px; }
 
-    /* ── Entry panel (plan form) ── */
     .entryToggle { margin-top: 20px; display: flex; align-items: center; justify-content: space-between; }
     .entryToggle h2 { font-size: 13px; font-weight: 600; color: var(--text-2); }
     .entryPanel { margin-top: 10px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 22px 24px; }
@@ -55,7 +49,6 @@
     .formRow input, .formRow select, .formRow textarea { width: 100%; }
     .formRow textarea { resize: vertical; min-height: 56px; line-height: 1.5; }
 
-    /* ID display */
     .idDisplay {
       font-size: 13px; font-weight: 600; font-family: "SF Mono","Consolas",monospace;
       color: var(--accent); background: var(--accent-subtle);
@@ -63,7 +56,6 @@
       border-radius: var(--r-sm); padding: 7px 11px;
     }
 
-    /* Dept checkboxes */
     .deptGrid { display: flex; gap: 6px; flex-wrap: wrap; }
     .deptChk { position: relative; }
     .deptChk input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -77,7 +69,6 @@
 
     .formActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 0.5px solid var(--border); }
 
-    /* ── Table section ── */
     .tableSection { margin-top: 14px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
     .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 8px; }
     .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
@@ -88,15 +79,12 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface-hover); }
 
-    /* ── Status / type badges ── */
     .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 5px; border: 0.5px solid; font-size: 11px; font-weight: 700; white-space: nowrap; }
     .badge.plan   { background: rgba(99,102,241,.08);  color: #4338ca; border-color: rgba(99,102,241,.25); }
     .badge.done   { background: rgba(34,197,94,.08);   color: #16a34a; border-color: rgba(34,197,94,.25); }
     .badge.cancel { background: rgba(239,68,68,.08);   color: #dc2626; border-color: rgba(239,68,68,.25); }
-
     .typeBadge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--bg); border: 0.5px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
 
-    /* ── Record tab cards ── */
     .recGrid { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
     .recCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
     .recCard.entered { border-color: rgba(0,112,243,.25); }
@@ -114,7 +102,6 @@
     .recFld input, .recFld select, .recFld textarea { width: 100%; }
     .recFld textarea { min-height: 60px; resize: vertical; font-family: inherit; font-size: 13px; line-height: 1.5; }
 
-    /* Achievement badges */
     .ach-达 { background: rgba(34,197,94,.1); color: #16a34a; border-color: rgba(34,197,94,.25); }
     .ach-부분 { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.25); }
     .ach-미달 { background: rgba(239,68,68,.1); color: #dc2626; border-color: rgba(239,68,68,.25); }
@@ -122,40 +109,63 @@
     .recFoot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px; border-top: 0.5px solid var(--border); background: var(--bg); }
     .recFoot.hidden { display: none; }
 
-    /* ── Analysis tab ── */
-    .analysisGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-    .analysisCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 20px 22px; }
-    .analysisCard h3 { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 0.5px solid var(--border); }
-    .analysisCard.full { grid-column: 1 / -1; }
-
-    /* Bar rows */
-    .barRow { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .barRow:last-child { margin-bottom: 0; }
-    .barLabel { font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .barTrack { flex: 1; height: 8px; background: var(--bg); border-radius: 999px; overflow: hidden; border: 0.5px solid var(--border); }
-    .barFill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .3s; }
-    .barCount { font-size: 12px; font-weight: 700; color: var(--text); min-width: 28px; text-align: right; font-family: "SF Mono","Consolas",monospace; }
-
-    /* ISO 22301 checklist */
-    .isoRow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
-    .isoRow:last-child { border-bottom: none; }
-    .isoCheck { font-size: 18px; flex-shrink: 0; }
-    .isoLabel { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
-    .isoSub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-    .isoStatus { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 5px; border: 0.5px solid; white-space: nowrap; }
-    .isoStatus.ok { background: rgba(34,197,94,.08); color: #16a34a; border-color: rgba(34,197,94,.25); }
-    .isoStatus.ng { background: rgba(239,68,68,.08); color: #dc2626; border-color: rgba(239,68,68,.25); }
-
-    /* Year stat row */
-    .yearRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .yearLabel { font-size: 12px; font-weight: 700; color: var(--text-2); min-width: 50px; }
-    .yearDots { display: flex; gap: 4px; flex-wrap: wrap; }
-    .yearDot { width: 20px; height: 20px; border-radius: 4px; background: var(--accent); opacity: .8; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; font-weight: 700; }
-    .yearDot.done { opacity: 1; }
-    .yearDot.plan { opacity: .35; }
-
-    /* ── Empty state ── */
     .empty { padding: 36px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+    /* ── Scenario tab ── */
+    .scControlRow { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 14px 18px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 12px; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width: 22px; height: 22px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+    .aiLoadingBlock { display: none; align-items: center; justify-content: center; gap: 12px; padding: 28px; margin-top: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); }
+    .aiLoadingBlock.show { display: flex; }
+    .aiLoadingText { font-size: 13px; color: var(--text-2); font-weight: 500; }
+
+    .scenarioEditorPanel { margin-top: 14px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 22px 24px; }
+    .scenarioEditorPanel.hidden { display: none; }
+    .seLabel { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 5px; }
+
+    .timelineHeader { display: grid; grid-template-columns: 100px 1fr 130px 1fr 36px; gap: 6px; padding: 7px 8px; background: var(--surface-hover); border: 0.5px solid var(--border); border-radius: var(--r-sm) var(--r-sm) 0 0; margin-top: 10px; }
+    .tlHead { font-size: 11px; font-weight: 600; color: var(--text-2); }
+    .timelineRows { border: 0.5px solid var(--border); border-top: none; border-radius: 0 0 var(--r-sm) var(--r-sm); overflow: hidden; }
+    .timelineRow { display: grid; grid-template-columns: 100px 1fr 130px 1fr 36px; gap: 6px; padding: 6px 8px; border-bottom: 0.5px solid var(--border); align-items: center; }
+    .timelineRow:last-child { border-bottom: none; }
+    .timelineRow input { min-width: 0; width: 100%; padding: 5px 8px; font-size: 12px; }
+    .tlDelBtn { width: 28px; height: 28px; border: 0.5px solid rgba(239,68,68,.3); border-radius: 5px; background: rgba(239,68,68,.05); color: #dc2626; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tlDelBtn:hover { background: rgba(239,68,68,.12); }
+
+    .scenarioCardGrid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+    .scenarioCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 14px 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .scenarioCard:hover { border-color: var(--border-strong); }
+    .scCardTitle { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 160px; }
+    .scCardMeta { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+    .scCardActions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* ── ISO 22301 충족 현황 tab ── */
+    .isoComplianceGrid { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+    .complianceSection { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .complianceSectionHeader { padding: 12px 20px; border-bottom: 0.5px solid var(--border); font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; background: var(--surface-hover); }
+    .complianceItem { display: flex; gap: 12px; padding: 14px 20px; border-bottom: 0.5px solid var(--border); align-items: flex-start; cursor: pointer; transition: background .1s; }
+    .complianceItem:last-child { border-bottom: none; }
+    .complianceItem:hover { background: var(--surface-hover); }
+    .ciIcon { font-size: 20px; flex-shrink: 0; line-height: 1; margin-top: 1px; }
+    .ciBody { flex: 1; }
+    .ciTitle { font-size: 13px; font-weight: 600; color: var(--text); }
+    .ciRef  { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .ciBasis { font-size: 11px; color: #16a34a; margin-top: 4px; font-weight: 500; }
+    .ciRecommend { font-size: 11px; color: #dc2626; margin-top: 4px; }
+    .ciBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 5px; border: 0.5px solid; white-space: nowrap; align-self: center; flex-shrink: 0; }
+    .ciBadge.ok      { background: rgba(34,197,94,.08);  color: #16a34a; border-color: rgba(34,197,94,.25); }
+    .ciBadge.ng      { background: rgba(239,68,68,.08);  color: #dc2626; border-color: rgba(239,68,68,.25); }
+    .ciBadge.partial { background: rgba(245,158,11,.08); color: #b45309; border-color: rgba(245,158,11,.25); }
+
+    .gaugeSection { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 20px 24px; }
+    .gaugeSection h3 { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 0.5px solid var(--border); }
+    .gaugeRow { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .gaugeRow:last-child { margin-bottom: 0; }
+    .gaugeLabel { font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 200px; }
+    .gaugeTrack { flex: 1; height: 14px; background: var(--bg); border-radius: 999px; overflow: hidden; border: 0.5px solid var(--border); }
+    .gaugeFill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .5s ease; }
+    .gaugePct  { font-size: 13px; font-weight: 700; color: var(--text); min-width: 42px; text-align: right; font-family: "SF Mono","Consolas",monospace; }
 
     @media (max-width: 960px) {
       .metricsStrip { grid-template-columns: repeat(2, 1fr); }
@@ -163,12 +173,13 @@
       .entryGrid .full  { grid-column: 1 / -1; }
       .entryGrid .half2 { grid-column: 1 / -1; }
       .recBody { grid-template-columns: 1fr; }
-      .analysisGrid { grid-template-columns: 1fr; }
+      .timelineHeader, .timelineRow { grid-template-columns: 90px 1fr 110px 1fr 36px; }
     }
     @media (max-width: 640px) {
       .metricsStrip { grid-template-columns: 1fr 1fr; }
-      .tabNav { flex-wrap: wrap; }
       .entryGrid { grid-template-columns: 1fr; }
+      .timelineHeader, .timelineRow { grid-template-columns: 1fr; }
+      .tlHead:not(:first-child) { display: none; }
     }
   </style>
 </head>
@@ -177,14 +188,12 @@
   <main class="main">
     <div class="wrap">
 
-      <!-- Hero -->
       <section class="hero">
         <h1>훈련·점검 (ISO 22301)</h1>
-        <p>BCP/DRP 훈련 계획 수립, 결과 기록, 분석을 통합 관리합니다. ISO 22301 요구사항 충족 여부를 자동으로 점검합니다.<br>
-          연동 데이터: <b>bcmsTrainingData</b> · <b>bcmsRiskList</b> · <b>bcmsBIAData</b></p>
+        <p>BCP/DRP 훈련 계획 수립, AI 시나리오 생성, 결과 기록, ISO 22301 충족 현황을 통합 관리합니다.<br>
+          연동 데이터: <b>bcmsTrainingData</b> · <b>bcmsScenarioData</b> · <b>bcmsRiskList</b> · <b>bcmsBIAData</b></p>
       </section>
 
-      <!-- Metrics -->
       <div class="metricsStrip">
         <div class="metric">
           <div class="k">올해 훈련 계획</div>
@@ -204,11 +213,11 @@
         </div>
       </div>
 
-      <!-- Tab nav -->
       <div class="tabNav">
         <button class="tabBtn active" id="tabPlan"     type="button">훈련 계획</button>
+        <button class="tabBtn"        id="tabScenario" type="button">훈련 시나리오</button>
         <button class="tabBtn"        id="tabRecord"   type="button">훈련 기록</button>
-        <button class="tabBtn"        id="tabAnalysis" type="button">훈련 결과 분석</button>
+        <button class="tabBtn"        id="tabISO"      type="button">ISO 22301 충족 현황</button>
       </div>
 
       <!-- ═══════════════════════════════════════
@@ -246,10 +255,8 @@
           </div>
         </div>
 
-        <!-- Entry form -->
         <div class="entryPanel hidden" id="entryPanel">
           <div class="entryGrid">
-            <!-- Row 1 -->
             <div class="formRow">
               <label>훈련 ID <span style="font-weight:400;text-transform:none;letter-spacing:0">(자동 생성)</span></label>
               <div class="idDisplay" id="newTrnId">TRN-2026-001</div>
@@ -259,7 +266,6 @@
               <input type="text" id="fName" placeholder="예: 2026 Q1 BCP 탁상 훈련">
             </div>
 
-            <!-- Row 2 -->
             <div class="formRow">
               <label>훈련 유형</label>
               <select id="fType">
@@ -282,7 +288,6 @@
               <input type="date" id="fPlanDate">
             </div>
 
-            <!-- Row 3: Departments -->
             <div class="formRow full">
               <label>대상 부서/팀 <span style="font-weight:400;text-transform:none;letter-spacing:0">(다중선택)</span></label>
               <div class="deptGrid" id="deptGrid">
@@ -290,7 +295,6 @@
               </div>
             </div>
 
-            <!-- Row 4 -->
             <div class="formRow half2">
               <label>훈련 목표</label>
               <textarea id="fObjective" placeholder="이 훈련을 통해 달성하고자 하는 목표를 입력하세요"></textarea>
@@ -306,7 +310,6 @@
           </div>
         </div>
 
-        <!-- Plan table -->
         <div class="tableSection">
           <div class="sectionHeader">
             <h2>훈련 계획 목록</h2>
@@ -315,25 +318,14 @@
           <div class="tableWrap">
             <table style="min-width:860px">
               <colgroup>
-                <col style="width:120px">
-                <col style="width:200px">
-                <col style="width:160px">
-                <col style="width:170px">
-                <col style="width:130px">
-                <col style="width:90px">
-                <col style="width:76px">
-                <col style="width:80px">
+                <col style="width:120px"><col style="width:200px"><col style="width:160px">
+                <col style="width:170px"><col style="width:130px"><col style="width:90px">
+                <col style="width:76px"><col style="width:80px">
               </colgroup>
               <thead>
                 <tr>
-                  <th>훈련 ID</th>
-                  <th>훈련명</th>
-                  <th>유형</th>
-                  <th>시나리오</th>
-                  <th>대상 부서</th>
-                  <th>계획일</th>
-                  <th>상태</th>
-                  <th>관리</th>
+                  <th>훈련 ID</th><th>훈련명</th><th>유형</th><th>시나리오</th>
+                  <th>대상 부서</th><th>계획일</th><th>상태</th><th>관리</th>
                 </tr>
               </thead>
               <tbody id="planTableBody"></tbody>
@@ -343,7 +335,73 @@
       </div>
 
       <!-- ═══════════════════════════════════════
-           Tab 2: 훈련 기록
+           Tab 2: 훈련 시나리오 (NEW)
+      ═══════════════════════════════════════ -->
+      <div id="paneScenario" class="tabPane hidden">
+
+        <!-- Top controls -->
+        <div class="scControlRow">
+          <div class="field">
+            <label>리스크 선택</label>
+            <select id="scRiskSel" style="min-width:220px">
+              <option value="">리스크를 선택하세요</option>
+            </select>
+          </div>
+          <button class="btn primary" id="btnAIGenerate" type="button" style="margin-bottom:1px">AI 시나리오 생성</button>
+          <button class="btn" id="btnDirectWrite" type="button" style="margin-bottom:1px">새 시나리오 직접 작성</button>
+        </div>
+
+        <!-- AI loading -->
+        <div class="aiLoadingBlock" id="aiLoadingBlock">
+          <div class="spinner"></div>
+          <span class="aiLoadingText">AI가 시나리오를 작성 중입니다...</span>
+        </div>
+
+        <!-- Editor panel -->
+        <div class="scenarioEditorPanel hidden" id="scenarioEditorPanel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:0.5px solid var(--border)">
+            <span style="font-size:14px;font-weight:700;color:var(--text)" id="scEditorLabel">시나리오 편집</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn" id="btnScReset" type="button">초기화</button>
+              <button class="btn" id="btnScRegenerate" type="button">AI 재생성</button>
+              <button class="btn primary" id="btnScSave" type="button">저장</button>
+            </div>
+          </div>
+
+          <div class="formRow" style="margin-bottom:14px">
+            <label class="seLabel">시나리오 제목</label>
+            <input type="text" id="scTitle" placeholder="시나리오 제목을 입력하세요" style="font-size:15px;font-weight:600">
+          </div>
+
+          <div class="formRow" style="margin-bottom:18px">
+            <label class="seLabel">상황 설명</label>
+            <textarea id="scSituation" placeholder="훈련 시나리오의 배경 상황을 자세히 설명하세요" style="min-height:90px;line-height:1.6;resize:vertical"></textarea>
+          </div>
+
+          <label class="seLabel">타임라인 단계</label>
+          <div class="timelineHeader">
+            <span class="tlHead">T+시간</span>
+            <span class="tlHead">조치 내용</span>
+            <span class="tlHead">담당 부서/역할</span>
+            <span class="tlHead">확인 체크포인트</span>
+            <span class="tlHead"></span>
+          </div>
+          <div class="timelineRows" id="timelineRows"></div>
+          <button class="btn" id="btnAddStep" type="button" style="margin-top:8px;font-size:12px">+ 단계 추가</button>
+        </div>
+
+        <!-- Saved scenarios list -->
+        <div class="tableSection" id="scListSection" style="margin-top:20px">
+          <div class="sectionHeader">
+            <h2>저장된 시나리오</h2>
+            <span style="font-size:12px;color:var(--text-3)" id="scListCount">0건</span>
+          </div>
+          <div class="scenarioCardGrid" id="scenarioCardGrid" style="padding:12px 16px"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           Tab 3: 훈련 기록
       ═══════════════════════════════════════ -->
       <div id="paneRecord" class="tabPane hidden">
         <div class="controlRow" style="margin-bottom:0">
@@ -356,11 +414,11 @@
       </div>
 
       <!-- ═══════════════════════════════════════
-           Tab 3: 훈련 결과 분석
+           Tab 4: ISO 22301 충족 현황
       ═══════════════════════════════════════ -->
-      <div id="paneAnalysis" class="tabPane hidden">
-        <div class="analysisGrid" id="analysisMount">
-          <div class="empty" style="grid-column:1/-1">탭을 클릭하면 분석 결과가 표시됩니다.</div>
+      <div id="paneISO" class="tabPane hidden">
+        <div class="isoComplianceGrid" id="isoComplianceMount">
+          <div class="empty">탭을 클릭하면 충족 현황이 표시됩니다.</div>
         </div>
       </div>
 
@@ -386,7 +444,8 @@
   const thisYear = new Date().getFullYear();
 
   /* ─── Constants ─── */
-  const TRAIN_KEY = 'bcmsTrainingData';
+  const TRAIN_KEY    = 'bcmsTrainingData';
+  const SCENARIO_KEY = 'bcmsScenarioData';
 
   const TRAINING_TYPES = [
     '탁상 훈련 (Tabletop Exercise)',
@@ -401,13 +460,15 @@
 
   /* ─── Data ─── */
   let trainings = [];
+  let scenarios = [];
+  let editingScenarioId = null;
 
-  const loadTrainings = () => {
-    trainings = loadJSON(TRAIN_KEY, []);
-  };
+  const loadTrainings = () => { trainings = loadJSON(TRAIN_KEY, []); };
   const saveTrainings = () => saveJSON(TRAIN_KEY, trainings);
+  const loadScenarios = () => { scenarios = loadJSON(SCENARIO_KEY, []); };
+  const saveScenarios = () => saveJSON(SCENARIO_KEY, scenarios);
 
-  /* ─── ID generator ─── */
+  /* ─── ID generators ─── */
   const genId = () => {
     const yr = String(thisYear);
     const used = new Set(trainings.map(t => t.id));
@@ -417,18 +478,46 @@
     }
     return `TRN-${yr}-${Date.now()}`;
   };
+  const genScenarioId = () => `SC-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
 
-  /* ─── Load risks for scenario dropdown ─── */
+  /* ─── Risk dropdown for scenario tab ─── */
+  const loadScRiskOptions = () => {
+    const risks = loadJSON('bcmsRiskList', []);
+    const sel = document.getElementById('scRiskSel');
+    if (!risks.length) {
+      sel.innerHTML = `<option value="">리스크 데이터 없음 (risk.html에서 등록)</option>`;
+      return;
+    }
+    sel.innerHTML = `<option value="">리스크를 선택하세요</option>` +
+      risks.map((r, i) =>
+        `<option value="${i}">${esc(r.riskName || r.risk || r.name || '리스크')} [${esc(r.riskType || '')}]</option>`
+      ).join('');
+  };
+
+  /* ─── Plan tab: scenario dropdown (risks + saved scenarios) ─── */
   const loadScenarioOptions = () => {
     const risks = loadJSON('bcmsRiskList', []);
+    const saved = loadJSON(SCENARIO_KEY, []);
     const sel = document.getElementById('fScenario');
-    const names = new Set();
-    for (const r of risks) {
-      const name = String(r.risk || r.threat || r.hazard || r.name || '').trim();
-      if (name) names.add(name);
+
+    let html = `<option value="">선택하세요 (선택 사항)</option>`;
+
+    const riskNames = [...new Set(
+      risks.map(r => String(r.riskName || r.risk || r.name || '').trim()).filter(Boolean)
+    )];
+    if (riskNames.length) {
+      html += `<optgroup label="리스크 기반">` +
+        riskNames.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('') +
+        `</optgroup>`;
     }
-    const opts = [...names].map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
-    sel.innerHTML = `<option value="">선택하세요 (선택 사항)</option>${opts}`;
+
+    if (saved.length) {
+      html += `<optgroup label="저장된 시나리오">` +
+        saved.map(s => `<option value="${esc(s.title)}">${esc(s.title)}</option>`).join('') +
+        `</optgroup>`;
+    }
+
+    sel.innerHTML = html;
   };
 
   /* ─── Load BIA teams for dept checkboxes ─── */
@@ -448,7 +537,6 @@
     ).join('');
   };
 
-  /* ─── Get selected departments ─── */
   const getSelectedDepts = () => {
     const checks = document.querySelectorAll('.deptCheck:checked');
     if (checks.length) return [...checks].map(c => c.value);
@@ -457,7 +545,7 @@
     return [];
   };
 
-  /* ─── Year filter options ─── */
+  /* ─── Year filter ─── */
   const populateYearFilter = () => {
     const years = [...new Set(
       trainings.map(t => (t.planDate || '').slice(0, 4)).filter(y => y.length === 4)
@@ -469,7 +557,6 @@
     if (prev) sel.value = prev;
   };
 
-  /* ─── Status badge HTML ─── */
   const statusBadge = s => {
     const cls = s === '완료' ? 'done' : s === '취소' ? 'cancel' : 'plan';
     return `<span class="badge ${cls}">${esc(s)}</span>`;
@@ -479,18 +566,13 @@
   const renderMetrics = () => {
     const yr = String(thisYear);
     const yearTrainings = trainings.filter(t => (t.planDate || '').startsWith(yr));
-    const done  = yearTrainings.filter(t => t.status === '완료');
-    const plan  = yearTrainings.filter(t => t.status === '예정');
-
-    const lastDates = done
-      .map(t => t.actualDate || t.planDate || '')
-      .filter(Boolean).sort().reverse();
-    const lastDate = lastDates[0] || '-';
-
+    const done = yearTrainings.filter(t => t.status === '완료');
+    const plan = yearTrainings.filter(t => t.status === '예정');
+    const lastDates = done.map(t => t.actualDate || t.planDate || '').filter(Boolean).sort().reverse();
     document.getElementById('mTotal').textContent = yearTrainings.length;
     document.getElementById('mDone').textContent  = done.length;
     document.getElementById('mPlan').textContent  = plan.length;
-    document.getElementById('mLast').textContent  = lastDate;
+    document.getElementById('mLast').textContent  = lastDates[0] || '-';
   };
 
   /* ─── Plan table ─── */
@@ -498,11 +580,10 @@
     const type   = document.getElementById('typeFilter').value;
     const status = document.getElementById('statusFilter').value;
     const year   = document.getElementById('yearFilter').value;
-
     return trainings.filter(t => {
-      if (type   && t.type !== type)                       return false;
-      if (status && t.status !== status)                    return false;
-      if (year   && !(t.planDate || '').startsWith(year))  return false;
+      if (type   && t.type !== type)                      return false;
+      if (status && t.status !== status)                   return false;
+      if (year   && !(t.planDate || '').startsWith(year)) return false;
       return true;
     });
   };
@@ -510,13 +591,11 @@
   const renderPlanTable = () => {
     const filtered = getFiltered();
     document.getElementById('planCount').textContent = `${filtered.length}건`;
-
     const tbody = document.getElementById('planTableBody');
     if (!filtered.length) {
       tbody.innerHTML = `<tr><td colspan="8" class="empty">훈련 계획이 없습니다. "+ 훈련 등록" 버튼으로 추가하세요.</td></tr>`;
       return;
     }
-
     tbody.innerHTML = filtered.map(t => {
       const depts = (t.departments || []).join(', ') || '-';
       return `<tr data-id="${esc(t.id)}">
@@ -539,20 +618,17 @@
     }).join('');
   };
 
-  /* ─── Record tab cards ─── */
+  /* ─── Record cards ─── */
   const renderRecCards = () => {
     const active = trainings.filter(t => t.status !== '취소');
     const grid = document.getElementById('recCardGrid');
-
     if (!active.length) {
       grid.innerHTML = `<div class="empty">등록된 훈련이 없습니다. 훈련 계획 탭에서 훈련을 먼저 등록하세요.</div>`;
       return;
     }
-
     grid.innerHTML = active.map(t => {
       const hasRecord = !!(t.resultSummary || t.actualDate);
       const achCls = t.achievement === '달성' ? 'ach-达' : t.achievement === '부분달성' ? 'ach-부분' : t.achievement === '미달성' ? 'ach-미달' : '';
-
       return `
 <div class="recCard${hasRecord ? ' entered' : ''}" data-rec-id="${esc(t.id)}">
   <div class="recHeader" data-rtoggle>
@@ -598,121 +674,12 @@
       <textarea class="rImprovements" placeholder="개선이 필요한 사항을 기록하세요">${esc(t.improvements || '')}</textarea>
     </div>
     <div class="recFld full" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <a class="btn" href="../audit/capa.html" target="_blank"
-         style="font-size:12px" title="CAPA 페이지로 이동하여 개선조치를 등록하세요">
-        → CAPA 연계
-      </a>
+      <a class="btn" href="../audit/capa.html" target="_blank" style="font-size:12px" title="CAPA 페이지로 이동하여 개선조치를 등록하세요">→ CAPA 연계</a>
       <button class="btn primary" type="button" data-rec-save="${esc(t.id)}">저장</button>
     </div>
   </div>
 </div>`;
     }).join('');
-  };
-
-  /* ─── Analysis tab ─── */
-  const renderAnalysis = () => {
-    const mount = document.getElementById('analysisMount');
-    if (!trainings.length) {
-      mount.innerHTML = `<div class="empty" style="grid-column:1/-1">훈련 데이터가 없습니다.</div>`;
-      return;
-    }
-
-    const yr = String(thisYear);
-    const yearData = trainings.filter(t => (t.planDate || '').startsWith(yr));
-    const doneData = yearData.filter(t => t.status === '완료');
-
-    /* ── Type breakdown ── */
-    const typeCounts = {};
-    for (const t of yearData) typeCounts[t.type || '미분류'] = (typeCounts[t.type || '미분류'] || 0) + 1;
-    const maxType = Math.max(1, ...Object.values(typeCounts));
-    const typeRows = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).map(([label, cnt]) =>
-      `<div class="barRow">
-        <div class="barLabel" title="${esc(label)}">${esc(label.length > 18 ? label.slice(0,16)+'…' : label)}</div>
-        <div class="barTrack"><div class="barFill" style="width:${Math.round((cnt/maxType)*100)}%"></div></div>
-        <div class="barCount">${cnt}</div>
-      </div>`
-    ).join('');
-
-    /* ── Dept participation ── */
-    const deptCounts = {};
-    for (const t of doneData) {
-      for (const d of (t.departments || [])) {
-        deptCounts[d] = (deptCounts[d] || 0) + 1;
-      }
-    }
-    const maxDept = Math.max(1, ...Object.values(deptCounts));
-    const deptRows = Object.entries(deptCounts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label, cnt]) =>
-      `<div class="barRow">
-        <div class="barLabel" title="${esc(label)}">${esc(label)}</div>
-        <div class="barTrack"><div class="barFill" style="width:${Math.round((cnt/maxDept)*100)}%;background:#a855f7"></div></div>
-        <div class="barCount">${cnt}</div>
-      </div>`
-    ).join('');
-
-    /* ── Year trend ── */
-    const yearCounts = {};
-    for (const t of trainings) {
-      const y = (t.planDate || '').slice(0, 4);
-      if (y.length === 4) yearCounts[y] = (yearCounts[y] || { total: 0, done: 0 });
-      if (y.length === 4) {
-        yearCounts[y].total++;
-        if (t.status === '완료') yearCounts[y].done++;
-      }
-    }
-    const sortedYears = Object.entries(yearCounts).sort((a, b) => a[0].localeCompare(b[0]));
-    const trendRows = sortedYears.map(([y, { total, done }]) => {
-      const dots = Array.from({ length: total }, (_, i) =>
-        `<span class="yearDot ${i < done ? 'done' : 'plan'}" title="${i < done ? '완료' : '예정'}">${i < done ? '✓' : '·'}</span>`
-      ).join('');
-      return `<div class="yearRow">
-        <div class="yearLabel">${esc(y)}</div>
-        <div class="yearDots">${dots}</div>
-        <div class="barCount" style="font-size:11px;color:var(--text-2)">${done}/${total}</div>
-      </div>`;
-    }).join('');
-
-    /* ── ISO 22301 Checklist ── */
-    const hasBcpTrain = doneData.some(t =>
-      ['탁상 훈련 (Tabletop Exercise)', '기능 훈련 (Functional Exercise)', '전체 훈련 (Full-scale Exercise)'].includes(t.type)
-    );
-    const hasDrTest    = doneData.some(t => t.type === 'DR 테스트');
-    const hasFullScale = doneData.some(t => t.type === '전체 훈련 (Full-scale Exercise)');
-
-    const isoCheck = (ok, label, sub) => `
-      <div class="isoRow">
-        <span class="isoCheck">${ok ? '✅' : '❌'}</span>
-        <div style="flex:1"><div class="isoLabel">${label}</div><div class="isoSub">${sub}</div></div>
-        <span class="isoStatus ${ok ? 'ok' : 'ng'}">${ok ? '충족' : '미충족'}</span>
-      </div>`;
-
-    const isoHtml = [
-      isoCheck(hasBcpTrain, '연 1회 이상 BCP 훈련', '탁상·기능·전체 훈련 중 1건 이상 완료 여부'),
-      isoCheck(hasDrTest,   'DR 테스트 실시', 'IT 시스템 복구 테스트(DR 테스트) 완료 여부'),
-      isoCheck(hasFullScale, '전체 훈련 실시', 'Full-scale Exercise — 실전 규모 훈련 완료 여부'),
-    ].join('');
-
-    mount.innerHTML = `
-<div class="analysisCard">
-  <h3>ISO 22301 요구사항 충족 현황 (${yr}년)</h3>
-  ${isoHtml}
-</div>
-
-<div class="analysisCard">
-  <h3>유형별 훈련 횟수 (${yr}년)</h3>
-  ${typeRows || `<div class="empty" style="padding:20px 0">올해 훈련 데이터 없음</div>`}
-</div>
-
-<div class="analysisCard">
-  <h3>부서별 훈련 참여 (완료 기준)</h3>
-  ${Object.keys(deptCounts).length
-    ? deptRows
-    : `<div class="empty" style="padding:20px 0">부서 정보가 없습니다.<br>훈련 기록에서 대상 부서를 입력해 주세요.</div>`}
-</div>
-
-<div class="analysisCard">
-  <h3>연도별 훈련 추이</h3>
-  ${sortedYears.length ? trendRows : `<div class="empty" style="padding:20px 0">데이터 없음</div>`}
-</div>`;
   };
 
   /* ─── Full render ─── */
@@ -721,16 +688,513 @@
     renderMetrics();
     populateYearFilter();
     renderPlanTable();
-    renderRecCards();
   };
 
-  /* ─── Entry form toggle ─── */
+  /* ═══════════════════════════════════════════════
+     Tab 2: 훈련 시나리오 — Scenario logic
+  ═══════════════════════════════════════════════ */
+
+  /* ── Timeline row HTML ── */
+  const makeTlRow = (step = {}) => {
+    const row = document.createElement('div');
+    row.className = 'timelineRow';
+    row.innerHTML = `
+      <input type="text" class="tlTime" placeholder="T+00:30" value="${esc(step.time || '')}">
+      <input type="text" class="tlAction" placeholder="조치 내용" value="${esc(step.action || '')}">
+      <input type="text" class="tlResp" placeholder="담당 부서/역할" value="${esc(step.responsible || '')}">
+      <input type="text" class="tlCheck" placeholder="확인 체크포인트" value="${esc(step.checkpoint || '')}">
+      <button type="button" class="tlDelBtn" title="단계 삭제">×</button>`;
+    row.querySelector('.tlDelBtn').addEventListener('click', () => row.remove());
+    return row;
+  };
+
+  /* ── Read timeline from DOM ── */
+  const readTimeline = () => {
+    return [...document.querySelectorAll('#timelineRows .timelineRow')].map(row => ({
+      time:        row.querySelector('.tlTime')?.value.trim()   || '',
+      action:      row.querySelector('.tlAction')?.value.trim() || '',
+      responsible: row.querySelector('.tlResp')?.value.trim()   || '',
+      checkpoint:  row.querySelector('.tlCheck')?.value.trim()  || '',
+    }));
+  };
+
+  /* ── Populate editor with data ── */
+  const populateEditor = (data) => {
+    document.getElementById('scTitle').value     = data.title     || '';
+    document.getElementById('scSituation').value = data.situation || '';
+    const container = document.getElementById('timelineRows');
+    container.innerHTML = '';
+    const steps = Array.isArray(data.timeline) ? data.timeline : [];
+    if (!steps.length) steps.push({});
+    steps.forEach(step => container.appendChild(makeTlRow(step)));
+  };
+
+  /* ── Show/hide editor ── */
+  const showEditor = (label = '시나리오 편집') => {
+    document.getElementById('scEditorLabel').textContent = label;
+    document.getElementById('scenarioEditorPanel').classList.remove('hidden');
+  };
+  const hideEditor = () => {
+    document.getElementById('scenarioEditorPanel').classList.add('hidden');
+    editingScenarioId = null;
+  };
+
+  /* ── Anthropic API call ── */
+  const callAnthropicAI = async (risk) => {
+    let apiKey = localStorage.getItem('bcmsApiKey') || '';
+    if (!apiKey) {
+      apiKey = window.prompt('Anthropic API 키를 입력하세요:\n(입력한 키는 이 브라우저의 localStorage에만 저장됩니다)');
+      if (!apiKey) return null;
+      localStorage.setItem('bcmsApiKey', apiKey.trim());
+      apiKey = apiKey.trim();
+    }
+
+    const industry = localStorage.getItem('bcmsIndustry') || '일반';
+    const biaData  = loadJSON('bcmsBIAData', []);
+    const riskResources = Array.isArray(risk.resources) ? risk.resources : [];
+
+    const relatedFunctions = [];
+    for (const teamData of biaData) {
+      const fns = Array.isArray(teamData.functions) ? teamData.functions : [];
+      for (const fn of fns) {
+        const fnRes = Array.isArray(fn.requiredResources) ? fn.requiredResources : [];
+        if (riskResources.some(r => fnRes.includes(r))) {
+          relatedFunctions.push(fn.name);
+        }
+      }
+    }
+
+    const userPrompt = `리스크 정보:
+- 리스크명: ${risk.riskName || risk.risk || risk.name || ''}
+- 유형: ${risk.riskType || ''}
+- 영향받는 소요자원: ${riskResources.join(', ') || '정보 없음'}
+- 업종: ${industry}
+- 연관 핵심업무: ${relatedFunctions.join(', ') || '데이터 없음'}
+
+위 정보를 바탕으로 실제 기업 BCP 훈련에 사용할 현실적인 시나리오를 작성해주세요.`;
+
+    const systemPrompt = `당신은 ISO 22301 기반 BCM 전문가입니다. 주어진 리스크와 업종 정보를 바탕으로 실제 기업 훈련에 사용할 수 있는 현실적인 시나리오를 한국어로 작성하세요. 반드시 JSON 형식으로만 응답하고 다른 텍스트는 포함하지 마세요:
+{"title": "string", "situation": "string", "timeline": [{"time": "string", "action": "string", "responsible": "string", "checkpoint": "string"}]}`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`API 오류 ${response.status}: ${errBody.slice(0, 200)}`);
+    }
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('AI 응답에서 JSON을 찾을 수 없습니다.');
+    return JSON.parse(jsonMatch[0]);
+  };
+
+  /* ── AI generate handler ── */
+  const handleAIGenerate = async () => {
+    const sel = document.getElementById('scRiskSel');
+    const idx = sel.value;
+    if (idx === '') { alert('리스크를 먼저 선택하세요.'); return; }
+
+    const risks = loadJSON('bcmsRiskList', []);
+    const risk  = risks[Number(idx)];
+    if (!risk)  { alert('선택한 리스크 데이터를 찾을 수 없습니다.'); return; }
+
+    document.getElementById('aiLoadingBlock').classList.add('show');
+    document.getElementById('scenarioEditorPanel').classList.add('hidden');
+    document.getElementById('btnAIGenerate').disabled = true;
+
+    try {
+      const result = await callAnthropicAI(risk);
+      if (!result) return;
+      editingScenarioId = null;
+      populateEditor(result);
+      showEditor('AI 생성 시나리오 — 편집 후 저장하세요');
+    } catch (err) {
+      alert('AI 시나리오 생성 실패:\n' + err.message);
+    } finally {
+      document.getElementById('aiLoadingBlock').classList.remove('show');
+      document.getElementById('btnAIGenerate').disabled = false;
+    }
+  };
+
+  /* ── Save scenario ── */
+  const saveScenario = () => {
+    const title = document.getElementById('scTitle').value.trim();
+    if (!title) { alert('시나리오 제목을 입력하세요.'); return; }
+
+    loadScenarios();
+    const sel = document.getElementById('scRiskSel');
+    const risks = loadJSON('bcmsRiskList', []);
+    const riskRef = sel.value !== '' && risks[Number(sel.value)]
+      ? (risks[Number(sel.value)].riskName || risks[Number(sel.value)].risk || '')
+      : '';
+
+    const scenarioObj = {
+      id:        editingScenarioId || genScenarioId(),
+      title,
+      situation: document.getElementById('scSituation').value.trim(),
+      timeline:  readTimeline(),
+      riskRef,
+      createdAt: editingScenarioId
+        ? (scenarios.find(s => s.id === editingScenarioId)?.createdAt || today())
+        : today(),
+      updatedAt: today(),
+    };
+
+    if (editingScenarioId) {
+      const idx = scenarios.findIndex(s => s.id === editingScenarioId);
+      if (idx >= 0) scenarios[idx] = scenarioObj;
+      else scenarios.unshift(scenarioObj);
+    } else {
+      scenarios.unshift(scenarioObj);
+    }
+
+    saveScenarios();
+    editingScenarioId = null;
+    hideEditor();
+    renderScenarioList();
+    loadScenarioOptions();
+  };
+
+  /* ── Render scenario list ── */
+  const renderScenarioList = () => {
+    loadScenarios();
+    const grid  = document.getElementById('scenarioCardGrid');
+    const count = document.getElementById('scListCount');
+    count.textContent = `${scenarios.length}건`;
+
+    if (!scenarios.length) {
+      grid.innerHTML = `<div class="empty" style="padding:24px 0">저장된 시나리오가 없습니다.<br>AI 생성 또는 직접 작성으로 시나리오를 추가하세요.</div>`;
+      return;
+    }
+
+    grid.innerHTML = scenarios.map(s => `
+      <div class="scenarioCard" data-sc-id="${esc(s.id)}">
+        <div style="flex:1;min-width:0">
+          <div class="scCardTitle">${esc(s.title)}</div>
+          <div class="scCardMeta" style="margin-top:4px">
+            ${s.riskRef ? `<span style="margin-right:10px">연계 리스크: ${esc(s.riskRef)}</span>` : ''}
+            <span>생성일: ${esc(s.createdAt || '-')}</span>
+            ${s.updatedAt && s.updatedAt !== s.createdAt ? ` <span style="margin-left:6px;color:var(--text-3)">수정: ${esc(s.updatedAt)}</span>` : ''}
+            <span style="margin-left:10px">타임라인 ${(s.timeline || []).length}단계</span>
+          </div>
+        </div>
+        <div class="scCardActions">
+          <button class="btn" type="button" data-sc-edit="${esc(s.id)}" style="font-size:12px;padding:4px 10px">편집</button>
+          <button class="btn" type="button" data-sc-del="${esc(s.id)}" style="font-size:12px;padding:4px 10px;color:#dc2626;border-color:rgba(239,68,68,.25)">삭제</button>
+          <button class="btn primary" type="button" data-sc-use="${esc(s.id)}" style="font-size:12px;padding:4px 10px">훈련에 사용</button>
+        </div>
+      </div>`
+    ).join('');
+  };
+
+  /* ── Scenario card delegated events ── */
+  document.getElementById('scenarioCardGrid').addEventListener('click', e => {
+    const editBtn = e.target.closest('[data-sc-edit]');
+    const delBtn  = e.target.closest('[data-sc-del]');
+    const useBtn  = e.target.closest('[data-sc-use]');
+
+    if (editBtn) {
+      const id = editBtn.getAttribute('data-sc-edit');
+      loadScenarios();
+      const sc = scenarios.find(s => s.id === id);
+      if (!sc) return;
+      editingScenarioId = id;
+      populateEditor(sc);
+      showEditor('시나리오 편집');
+      document.getElementById('scenarioEditorPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    if (delBtn) {
+      const id = delBtn.getAttribute('data-sc-del');
+      if (!confirm('이 시나리오를 삭제할까요?')) return;
+      loadScenarios();
+      scenarios = scenarios.filter(s => s.id !== id);
+      saveScenarios();
+      renderScenarioList();
+      loadScenarioOptions();
+    }
+
+    if (useBtn) {
+      const id = useBtn.getAttribute('data-sc-use');
+      loadScenarios();
+      const sc = scenarios.find(s => s.id === id);
+      if (!sc) return;
+      useScenarioForPlan(sc);
+    }
+  });
+
+  /* ── Use scenario in plan tab ── */
+  const useScenarioForPlan = (sc) => {
+    switchTab('tabPlan', 'panePlan');
+    const panel = document.getElementById('entryPanel');
+    if (panel.classList.contains('hidden')) {
+      document.getElementById('btnToggleForm').click();
+    }
+    loadScenarioOptions();
+    const sel = document.getElementById('fScenario');
+    for (const opt of sel.options) {
+      if (opt.value === sc.title) { opt.selected = true; break; }
+    }
+  };
+
+  /* ── Add step button ── */
+  document.getElementById('btnAddStep').addEventListener('click', () => {
+    document.getElementById('timelineRows').appendChild(makeTlRow());
+  });
+
+  /* ── Reset editor ── */
+  document.getElementById('btnScReset').addEventListener('click', () => {
+    if (!confirm('편집 내용을 초기화할까요?')) return;
+    editingScenarioId = null;
+    populateEditor({ title: '', situation: '', timeline: [{}] });
+    document.getElementById('scEditorLabel').textContent = '새 시나리오';
+  });
+
+  /* ── Regenerate ── */
+  document.getElementById('btnScRegenerate').addEventListener('click', handleAIGenerate);
+
+  /* ── Save ── */
+  document.getElementById('btnScSave').addEventListener('click', saveScenario);
+
+  /* ── AI generate button ── */
+  document.getElementById('btnAIGenerate').addEventListener('click', handleAIGenerate);
+
+  /* ── Direct write button ── */
+  document.getElementById('btnDirectWrite').addEventListener('click', () => {
+    editingScenarioId = null;
+    populateEditor({ title: '', situation: '', timeline: [{}] });
+    showEditor('새 시나리오 작성');
+    document.getElementById('scenarioEditorPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ═══════════════════════════════════════════════
+     Tab 4: ISO 22301 충족 현황
+  ═══════════════════════════════════════════════ */
+  const renderISO = () => {
+    loadTrainings();
+    const mount = document.getElementById('isoComplianceMount');
+    const yr = String(thisYear);
+    const yearData = trainings.filter(t => (t.planDate || '').startsWith(yr));
+    const doneData = yearData.filter(t => t.status === '완료');
+    const capaData = loadJSON('bcmsCapaData', []);
+
+    /* ── helpers ── */
+    const hasBcpTrain   = doneData.some(t => ['탁상 훈련 (Tabletop Exercise)','기능 훈련 (Functional Exercise)','전체 훈련 (Full-scale Exercise)'].includes(t.type));
+    const hasDrTest     = doneData.some(t => t.type === 'DR 테스트');
+    const hasTabletop   = doneData.some(t => t.type === '탁상 훈련 (Tabletop Exercise)');
+    const hasDoc        = doneData.some(t => (t.resultSummary || '').trim().length > 0);
+    const hasCapa       = capaData.length > 0 || doneData.some(t => (t.improvements || '').trim().length > 0);
+
+    const hasTrainPlan  = yearData.length > 0;
+    const hasYearlyExec = doneData.length > 0;
+    const hasReport     = hasDoc;
+
+    /* ── iso items: { status, title, ref, basis, recommend } ── */
+    const isoItems = [
+      {
+        status: hasBcpTrain ? 'ok' : '미충족',
+        icon: hasBcpTrain ? '✅' : '❌',
+        title: '연 1회 이상 BCP 훈련 실시',
+        ref: 'ISO 22301 8.5 — 훈련 및 연습',
+        basis: hasBcpTrain
+          ? `근거: ${doneData.filter(t => ['탁상 훈련 (Tabletop Exercise)','기능 훈련 (Functional Exercise)','전체 훈련 (Full-scale Exercise)'].includes(t.type)).map(t => t.name).join(', ')}`
+          : '',
+        recommend: hasBcpTrain ? '' : `권고: 탁상 훈련·기능 훈련·전체 훈련 중 1건 이상을 ${yr}년 내 실시하고 완료 상태로 기록하세요.`,
+        navTab: hasBcpTrain ? null : 'tabPlan',
+      },
+      {
+        status: hasDrTest ? 'ok' : '미충족',
+        icon: hasDrTest ? '✅' : '❌',
+        title: 'DR 테스트 실시',
+        ref: 'ISO 22301 8.5 — IT 복구 테스트',
+        basis: hasDrTest
+          ? `근거: ${doneData.filter(t => t.type === 'DR 테스트').map(t => t.name).join(', ')}`
+          : '',
+        recommend: hasDrTest ? '' : `권고: DR 테스트 유형의 훈련을 ${yr}년 내 계획·실시하세요.`,
+        navTab: hasDrTest ? null : 'tabPlan',
+      },
+      {
+        status: hasTabletop ? 'ok' : '미충족',
+        icon: hasTabletop ? '✅' : '❌',
+        title: '탁상훈련 실시',
+        ref: 'ISO 22301 8.5 — 탁상 시나리오 검토',
+        basis: hasTabletop
+          ? `근거: ${doneData.filter(t => t.type === '탁상 훈련 (Tabletop Exercise)').map(t => t.name).join(', ')}`
+          : '',
+        recommend: hasTabletop ? '' : `권고: 시나리오 기반 탁상훈련을 실시하세요. 훈련 시나리오 탭에서 AI로 시나리오를 생성할 수 있습니다.`,
+        navTab: hasTabletop ? null : 'tabScenario',
+      },
+      {
+        status: hasDoc ? 'ok' : doneData.length > 0 ? 'partial' : '미충족',
+        icon: hasDoc ? '✅' : doneData.length > 0 ? '⚠️' : '❌',
+        title: '훈련 결과 문서화',
+        ref: 'ISO 22301 9.1 — 모니터링·측정·분석·평가',
+        basis: hasDoc
+          ? `근거: ${doneData.filter(t => (t.resultSummary||'').trim()).length}건의 훈련에 결과 요약 기록됨`
+          : doneData.length > 0 ? '완료된 훈련이 있으나 결과 요약이 기록되지 않은 항목이 있습니다.' : '',
+        recommend: hasDoc ? '' : '권고: 훈련 기록 탭에서 완료된 훈련마다 "훈련 결과 요약"을 작성하세요.',
+        navTab: hasDoc ? null : 'tabRecord',
+      },
+      {
+        status: hasCapa ? 'ok' : '미충족',
+        icon: hasCapa ? '✅' : '❌',
+        title: '결과 기반 CAPA 등록',
+        ref: 'ISO 22301 10.1 — 부적합 및 시정조치',
+        basis: hasCapa
+          ? `근거: CAPA 또는 개선사항 ${capaData.length > 0 ? `(CAPA ${capaData.length}건)` : '훈련 개선사항 기록됨'}`
+          : '',
+        recommend: hasCapa ? '' : '권고: 훈련 기록 탭에서 "개선 필요 사항"을 기록하거나 감사·CAPA 페이지에서 개선조치를 등록하세요.',
+        navTab: hasCapa ? null : 'tabRecord',
+      },
+    ];
+
+    const disasterItems = [
+      {
+        status: hasTrainPlan ? 'ok' : '미충족',
+        icon: hasTrainPlan ? '✅' : '❌',
+        title: '재난대응 훈련 계획 수립',
+        ref: '재해경감우수기업 평가항목 1',
+        basis: hasTrainPlan ? `근거: ${yr}년 훈련 계획 ${yearData.length}건 등록됨` : '',
+        recommend: hasTrainPlan ? '' : `권고: 훈련 계획 탭에서 ${yr}년 훈련을 등록하세요.`,
+        navTab: hasTrainPlan ? null : 'tabPlan',
+      },
+      {
+        status: hasYearlyExec ? 'ok' : '미충족',
+        icon: hasYearlyExec ? '✅' : '❌',
+        title: '연 1회 이상 훈련 실시',
+        ref: '재해경감우수기업 평가항목 2',
+        basis: hasYearlyExec ? `근거: ${yr}년 완료 훈련 ${doneData.length}건` : '',
+        recommend: hasYearlyExec ? '' : `권고: 훈련을 실시하고 훈련 기록 탭에서 상태를 "완료"로 변경하세요.`,
+        navTab: hasYearlyExec ? null : 'tabRecord',
+      },
+      {
+        status: hasReport ? 'ok' : '미충족',
+        icon: hasReport ? '✅' : '❌',
+        title: '훈련 결과 보고서 작성',
+        ref: '재해경감우수기업 평가항목 3',
+        basis: hasReport ? `근거: 결과 요약이 기록된 훈련 ${doneData.filter(t => (t.resultSummary||'').trim()).length}건` : '',
+        recommend: hasReport ? '' : '권고: 훈련 기록 탭에서 훈련 결과 요약을 작성하세요.',
+        navTab: hasReport ? null : 'tabRecord',
+      },
+    ];
+
+    const isoOk      = isoItems.filter(i => i.status === 'ok').length;
+    const isoTotal   = isoItems.length;
+    const disasterOk = disasterItems.filter(i => i.status === 'ok').length;
+    const disasterTotal = disasterItems.length;
+
+    const renderItems = (items) => items.map(item => {
+      const badgeCls = item.status === 'ok' ? 'ok' : item.status === 'partial' ? 'partial' : 'ng';
+      const badgeText = item.status === 'ok' ? '충족' : item.status === 'partial' ? '부분충족' : '미충족';
+      const navAttr = item.navTab ? `data-nav="${esc(item.navTab)}"` : '';
+      return `
+      <div class="complianceItem" ${navAttr} title="${item.navTab ? '클릭하면 해당 탭으로 이동합니다' : ''}">
+        <span class="ciIcon">${item.icon}</span>
+        <div class="ciBody">
+          <div class="ciTitle">${esc(item.title)}</div>
+          <div class="ciRef">${esc(item.ref)}</div>
+          ${item.basis    ? `<div class="ciBasis">${esc(item.basis)}</div>` : ''}
+          ${item.recommend ? `<div class="ciRecommend">${esc(item.recommend)}</div>` : ''}
+        </div>
+        <span class="ciBadge ${badgeCls}">${badgeText}</span>
+      </div>`;
+    }).join('');
+
+    const isoPct      = Math.round((isoOk / isoTotal) * 100);
+    const disasterPct = Math.round((disasterOk / disasterTotal) * 100);
+    const gaugeColor  = (pct) => pct >= 80 ? 'var(--accent)' : pct >= 50 ? '#f59e0b' : '#ef4444';
+
+    mount.innerHTML = `
+      <div class="complianceSection">
+        <div class="complianceSectionHeader">
+          <span>📋</span> ISO 22301 요구사항 (${yr}년 기준)
+        </div>
+        ${renderItems(isoItems)}
+      </div>
+
+      <div class="complianceSection">
+        <div class="complianceSectionHeader">
+          <span>🏆</span> 재해경감우수기업 평가항목
+        </div>
+        ${renderItems(disasterItems)}
+      </div>
+
+      <div class="gaugeSection">
+        <h3>충족률 현황</h3>
+        <div class="gaugeRow">
+          <span class="gaugeLabel">ISO 22301 충족률 (${isoOk}/${isoTotal})</span>
+          <div class="gaugeTrack">
+            <div class="gaugeFill" style="width:${isoPct}%;background:${gaugeColor(isoPct)}"></div>
+          </div>
+          <span class="gaugePct">${isoPct}%</span>
+        </div>
+        <div class="gaugeRow">
+          <span class="gaugeLabel">재해경감우수기업 충족률 (${disasterOk}/${disasterTotal})</span>
+          <div class="gaugeTrack">
+            <div class="gaugeFill" style="width:${disasterPct}%;background:${gaugeColor(disasterPct)}"></div>
+          </div>
+          <span class="gaugePct">${disasterPct}%</span>
+        </div>
+      </div>`;
+
+    /* nav click on compliance items */
+    mount.querySelectorAll('[data-nav]').forEach(el => {
+      el.addEventListener('click', () => {
+        const tabId = el.getAttribute('data-nav');
+        const paneId = tabId.replace('tab', 'pane');
+        switchTab(tabId, paneId);
+      });
+    });
+  };
+
+  /* ═══════════════════════════════════════════════
+     Tab switching
+  ═══════════════════════════════════════════════ */
+  const TABS = [
+    { btn: 'tabPlan',     pane: 'panePlan'     },
+    { btn: 'tabScenario', pane: 'paneScenario' },
+    { btn: 'tabRecord',   pane: 'paneRecord'   },
+    { btn: 'tabISO',      pane: 'paneISO'      },
+  ];
+
+  const switchTab = (activeBtn, activePane) => {
+    TABS.forEach(t => {
+      document.getElementById(t.btn).classList.toggle('active',  t.btn === activeBtn);
+      document.getElementById(t.pane).classList.toggle('hidden', t.pane !== activePane);
+    });
+    if (activePane === 'paneISO')      renderISO();
+    if (activePane === 'paneRecord')   renderRecCards();
+    if (activePane === 'paneScenario') { loadScRiskOptions(); renderScenarioList(); }
+  };
+
+  TABS.forEach(({ btn, pane }) => {
+    document.getElementById(btn).addEventListener('click', () => switchTab(btn, pane));
+  });
+
+  /* ═══════════════════════════════════════════════
+     Plan tab: entry form
+  ═══════════════════════════════════════════════ */
   document.getElementById('btnToggleForm').addEventListener('click', () => {
     const panel = document.getElementById('entryPanel');
     const isHidden = panel.classList.contains('hidden');
     panel.classList.toggle('hidden', !isHidden);
     if (!isHidden) return;
-    /* Reset + init new ID */
     document.getElementById('fName').value = '';
     document.getElementById('fType').value = '';
     document.getElementById('fPlanDate').value = today();
@@ -749,24 +1213,20 @@
     document.getElementById('btnToggleForm').textContent = '+ 훈련 등록';
   });
 
-  /* ─── Save plan ─── */
   document.getElementById('btnSavePlan').addEventListener('click', () => {
     const name = document.getElementById('fName').value.trim();
     const type = document.getElementById('fType').value;
     if (!name) { alert('훈련명을 입력하세요.'); return; }
     if (!type) { alert('훈련 유형을 선택하세요.'); return; }
-
     loadTrainings();
     const id = genId();
     trainings.unshift({
-      id,
-      name,
-      type,
-      scenario: document.getElementById('fScenario').value,
+      id, name, type,
+      scenario:    document.getElementById('fScenario').value,
       departments: getSelectedDepts(),
-      planDate: document.getElementById('fPlanDate').value,
-      objective: document.getElementById('fObjective').value.trim(),
-      criteria: document.getElementById('fCriteria').value.trim(),
+      planDate:    document.getElementById('fPlanDate').value,
+      objective:   document.getElementById('fObjective').value.trim(),
+      criteria:    document.getElementById('fCriteria').value.trim(),
       status: '예정',
       actualDate: '', participants: 0,
       resultSummary: '', achievement: '', issues: '', improvements: '',
@@ -777,7 +1237,7 @@
     document.getElementById('btnToggleForm').textContent = '+ 훈련 등록';
   });
 
-  /* ─── Table: status change + delete (delegated) ─── */
+  /* ─── Plan table: status change + delete ─── */
   document.getElementById('planTableBody').addEventListener('change', e => {
     const sel = e.target.closest('.statusSel');
     if (!sel) return;
@@ -798,14 +1258,12 @@
     renderAll();
   });
 
-  /* ─── Filter events ─── */
+  /* ─── Filters ─── */
   ['typeFilter', 'statusFilter', 'yearFilter'].forEach(id => {
-    document.getElementById(id).addEventListener('change', () => {
-      renderPlanTable();
-    });
+    document.getElementById(id).addEventListener('change', () => renderPlanTable());
   });
 
-  /* ─── Record card: toggle expand ─── */
+  /* ─── Record cards ─── */
   document.getElementById('recCardGrid').addEventListener('click', e => {
     const header = e.target.closest('[data-rtoggle]');
     if (header && !e.target.closest('a') && !e.target.closest('button')) {
@@ -816,8 +1274,6 @@
       body.classList.toggle('hidden', open);
       icon.textContent = open ? '▶' : '▼';
     }
-
-    /* Save single record */
     const saveBtn = e.target.closest('[data-rec-save]');
     if (saveBtn) {
       const id = saveBtn.getAttribute('data-rec-save');
@@ -842,7 +1298,6 @@
     renderMetrics();
   };
 
-  /* ─── Save all records ─── */
   document.getElementById('recSaveAll').addEventListener('click', () => {
     document.querySelectorAll('.recCard[data-rec-id]').forEach(card => {
       const id = card.getAttribute('data-rec-id');
@@ -852,24 +1307,6 @@
     const btn = document.getElementById('recSaveAll');
     btn.textContent = '저장됨';
     setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
-  });
-
-  /* ─── Tab switching ─── */
-  const TABS = [
-    { btn: 'tabPlan',     pane: 'panePlan'     },
-    { btn: 'tabRecord',   pane: 'paneRecord'   },
-    { btn: 'tabAnalysis', pane: 'paneAnalysis' },
-  ];
-
-  TABS.forEach(({ btn, pane }) => {
-    document.getElementById(btn).addEventListener('click', () => {
-      TABS.forEach(t => {
-        document.getElementById(t.btn).classList.toggle('active',  t.btn === btn);
-        document.getElementById(t.pane).classList.toggle('hidden', t.pane !== pane);
-      });
-      if (pane === 'paneAnalysis') renderAnalysis();
-      if (pane === 'paneRecord')   renderRecCards();
-    });
   });
 
   /* ─── Demo seed ─── */
