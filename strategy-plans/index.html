@@ -1,219 +1,766 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>재난·중단 대응 흐름 | BCMS Portal v2</title>
+  <title>BCP 전략·계획 | BCMS Portal</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    :root{
-      --bg:#f7f9fc;
-      --card:#fff;
-      --line:rgba(15,23,42,.12);
-      --text:#0f172a;
-      --sub:rgba(15,23,42,.62);
-      --sop:#dbeafe;
-      --eop:#efe3ff;
-      --drp:#dff5ff;
-      --bcp:#dcfce7;
+    /* ── Layout ── */
+    .wrap { max-width: 1280px; margin: 0 auto; }
+
+    .demoBannerSmall {
+      margin-bottom: 20px !important; padding: 7px 14px !important;
+      border: 0.5px solid rgba(0,112,243,.18) !important;
+      background: rgba(0,112,243,.04) !important;
+      border-radius: 8px !important; display: flex !important;
+      gap: 10px !important; flex-wrap: wrap !important; align-items: center !important;
     }
-    .wrap{ max-width:1360px; margin:0 auto; padding-bottom:18px; }
 
-    .hero{ border:1px solid var(--line); border-radius:24px; background:linear-gradient(145deg,#fff, #f8fbff); padding:28px; margin-bottom:18px; box-shadow:0 8px 24px rgba(15,23,42,.06); }
-    .heroTop{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; }
-    .hero h1{ margin:0; font-size:34px; letter-spacing:-.02em; font-weight:950; color:var(--text); }
-    .hero p{ margin:10px 0 0; max-width:840px; color:var(--sub); font-size:15px; line-height:1.65; }
-    .chipRow{ display:flex; gap:8px; flex-wrap:wrap; }
-    .chip{ padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; font-size:13px; font-weight:900; color:#1e293b; }
+    /* ── Hero ── */
+    .hero { padding-bottom: 24px; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; }
+    .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+    .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
 
-    .section{ margin-bottom:16px; border:1px solid var(--line); border-radius:20px; background:var(--card); padding:18px; box-shadow:0 4px 16px rgba(15,23,42,.04); }
-    .section h2{ margin:0 0 12px; font-size:23px; font-weight:950; letter-spacing:-.01em; }
+    /* ── Metrics strip ── */
+    .metricsStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+    .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
 
-    .flowBoard{ border:1px dashed rgba(15,23,42,.14); border-radius:20px; padding:16px; background:var(--bg); }
-    .flowCol{ display:grid; gap:10px; }
-    .node{ position:relative; border:1px solid var(--line); border-radius:20px; background:#fff; padding:12px 14px; font-size:15px; font-weight:850; text-align:center; box-shadow:0 4px 10px rgba(15,23,42,.05); transition:.16s ease; }
-    .node:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(15,23,42,.08); }
-    .node::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px; border-radius:20px 0 0 20px; opacity:.85; }
-    .node.sop::before{ background:#60a5fa; }
-    .node.eop::before{ background:#a855f7; }
-    .node.drp::before{ background:#38bdf8; }
-    .node.bcp::before{ background:#22c55e; }
-    .node.sop{ background:linear-gradient(180deg,#fff,#f5faff); }
-    .node.eop{ background:linear-gradient(180deg,#fff,#faf6ff); }
-    .node.drp{ background:linear-gradient(180deg,#fff,#f2fbff); }
-    .node.bcp{ background:linear-gradient(180deg,#fff,#f4fff7); }
+    /* ── Tab nav ── */
+    .tabNav { display: flex; gap: 6px; margin-top: 24px; }
+    .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
+    .tabBtn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; }
+    .tabPane.hidden { display: none; }
 
-    .arrow{ display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.45); font-size:22px; font-weight:900; min-height:20px; }
+    /* ── Control row ── */
+    .controlRow { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 14px 18px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-top: 12px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .field select, .field input { min-width: 140px; }
 
-    .decisionWrap{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start; }
-    .diamond{ width:170px; height:170px; margin:0 auto; transform:rotate(45deg); border:1px solid rgba(15,23,42,.2); border-radius:22px; background:#fff; box-shadow:0 6px 14px rgba(15,23,42,.08); display:flex; align-items:center; justify-content:center; }
-    .diamond span{ transform:rotate(-45deg); font-size:16px; font-weight:950; color:#1e293b; text-align:center; }
-    .branch{ display:grid; gap:8px; }
-    .branchLabel{ text-align:center; font-size:13px; font-weight:900; color:#475569; }
+    /* ── Grade badges ── */
+    .grade { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px; border: 0.5px solid; font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .grade.critical { background: rgba(239,68,68,.1);  color: #dc2626; border-color: rgba(239,68,68,.3); }
+    .grade.high     { background: rgba(249,115,22,.1); color: #ea580c; border-color: rgba(249,115,22,.3); }
+    .grade.medium   { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.3); }
+    .grade.low      { background: rgba(34,197,94,.1);  color: #16a34a; border-color: rgba(34,197,94,.25); }
 
-    .eopShell{ border:1px solid rgba(168,85,247,.28); background:rgba(168,85,247,.06); border-radius:20px; padding:12px; }
-    .parallel{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
-    .merge{ text-align:center; font-size:12px; color:#475569; font-weight:900; margin:8px 0; }
+    /* ── Chip ── */
+    .chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--bg); border: 0.5px solid var(--border); font-size: 12px; font-weight: 600; font-family: "SF Mono","Consolas",monospace; color: var(--text-2); white-space: nowrap; flex-shrink: 0; }
 
-    .roleGrid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-    .role{ border:1px solid var(--line); border-radius:20px; background:#fff; padding:14px; box-shadow:0 4px 12px rgba(15,23,42,.05); transition:.16s ease; }
-    .role:hover{ transform:translateY(-2px); }
-    .roleHead{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-    .dot{ width:30px; height:30px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:900; }
-    .role h3{ margin:0; font-size:19px; font-weight:950; }
-    .role p{ margin:0 0 8px; color:var(--sub); font-size:14px; }
-    .role ul{ margin:0; padding-left:18px; color:#334155; font-size:14px; line-height:1.55; min-height:74px; }
+    /* ── Toggle switch ── */
+    .toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; gap: 6px; user-select: none; flex-shrink: 0; }
+    .toggle input[type="checkbox"] { position: absolute; opacity: 0; width: 0 !important; height: 0 !important; border: none !important; background: none !important; padding: 0 !important; box-shadow: none !important; pointer-events: none; }
+    .toggleTrack { width: 36px; height: 20px; border-radius: 10px; background: var(--border-strong); transition: background .2s; position: relative; flex-shrink: 0; }
+    .toggleKnob { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .toggle input:checked ~ .toggleTrack { background: var(--accent); }
+    .toggle input:checked ~ .toggleTrack .toggleKnob { transform: translateX(16px); }
+    .toggleLabel { font-size: 11px; font-weight: 600; color: var(--text-3); white-space: nowrap; min-width: 46px; }
+    .toggle input:checked ~ .toggleLabel { color: var(--accent); }
 
-    .btn{ margin-top:10px; display:inline-flex; align-items:center; text-decoration:none; border:1px solid var(--line); border-radius:999px; padding:8px 13px; background:#fff; color:#0f172a; font-size:13px; font-weight:900; }
+    /* ── Strategy Cards (BCP Tab) ── */
+    .cardGrid { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
-    .triggerGrid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
-    .trigger{ border:1px solid var(--line); border-radius:16px; background:#fff; padding:12px; }
-    .trigger h4{ margin:0 0 6px; font-size:18px; }
-    .trigger p{ margin:0; color:var(--sub); font-size:14px; line-height:1.55; }
+    .stratCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; transition: border-color .15s; }
+    .stratCard.done { border-color: rgba(0,112,243,.3); }
 
-    .hubGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-    .hub{ border:1px solid var(--line); border-radius:16px; background:#fff; padding:12px; }
-    .hub strong{ display:block; font-size:17px; margin-bottom:6px; }
-    .hub p{ margin:0; color:var(--sub); font-size:14px; min-height:38px; }
+    .cardHeader { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
+    .cardHeader:hover { background: var(--surface-hover); }
+    .expandIcon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 0.5px solid var(--border-strong); border-radius: 4px; font-size: 9px; color: var(--text-3); background: var(--bg); flex-shrink: 0; }
 
-    .steps{ display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
-    .step{ border:1px solid var(--line); border-radius:14px; background:#fff; padding:10px; font-size:14px; }
-    .step b{ display:inline-flex; width:24px; height:24px; border-radius:999px; align-items:center; justify-content:center; margin-bottom:6px; background:#0f172a; color:#fff; font-size:12px; }
+    .fnNameBig { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .teamTag { font-size: 11px; color: var(--text-2); background: var(--bg); border: 0.5px solid var(--border); border-radius: 5px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; }
 
-    @media (max-width:1140px){ .roleGrid,.triggerGrid,.hubGrid,.steps{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
-    @media (max-width:760px){ .decisionWrap,.parallel,.roleGrid,.triggerGrid,.hubGrid,.steps{ grid-template-columns:1fr; } .hero h1{ font-size:30px; } }
+    .cardBody { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px; border-top: 0.5px solid var(--border); }
+    .cardBody.hidden { display: none; }
+    .cardFoot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px; border-top: 0.5px solid var(--border); background: var(--bg); }
+    .cardFoot.hidden { display: none; }
+
+    .fld { display: flex; flex-direction: column; gap: 5px; }
+    .fld.full { grid-column: 1 / -1; }
+    .fld label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .fld textarea { width: 100%; min-height: 68px; resize: vertical; font-family: inherit; font-size: 13px; line-height: 1.5; }
+    .fld select { width: 100%; }
+    .fld input  { width: 100%; }
+
+    .resBadgeRow { display: flex; gap: 5px; flex-wrap: wrap; }
+    .resBadge { font-size: 11px; padding: 2px 8px; border-radius: 5px; background: var(--accent-subtle); border: 0.5px solid var(--accent-border); color: var(--accent); font-weight: 600; }
+    .resBadge.empty-res { background: var(--bg); border-color: var(--border); color: var(--text-3); font-style: italic; }
+
+    /* ── Table section (DRP) ── */
+    .tableSection { margin-top: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 8px; }
+    .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .tableWrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 11px; font-weight: 600; padding: 9px 10px; height: 36px; text-align: left; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; }
+    td { font-size: 13px; padding: 8px 10px; vertical-align: middle; border-bottom: 0.5px solid var(--border); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    td input, td select { width: 100%; min-width: 70px; }
+
+    /* DRP mode badge */
+    .modeBadge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 5px; border: 0.5px solid; font-size: 11px; font-weight: 700; }
+    .hot  { background: rgba(239,68,68,.08);  color: #dc2626; border-color: rgba(239,68,68,.25); }
+    .warm { background: rgba(245,158,11,.08); color: #b45309; border-color: rgba(245,158,11,.25); }
+    .cold { background: rgba(34,197,94,.08);  color: #16a34a; border-color: rgba(34,197,94,.25); }
+
+    /* ── Matrix ── */
+    .matrixScroll { overflow-x: auto; }
+    .matTbl { border-collapse: collapse; font-size: 11px; min-width: 800px; }
+    .matTbl th { font-size: 10px; font-weight: 600; padding: 8px 10px; background: var(--surface-hover); border: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; text-align: center; }
+    .matTbl th.rhd { text-align: left; min-width: 160px; }
+    .matTbl td { padding: 7px 10px; border: 0.5px solid var(--border); vertical-align: top; min-width: 110px; }
+    .matTbl td.rhd { background: var(--surface-hover); font-weight: 600; font-size: 12px; color: var(--text); min-width: 160px; }
+    .matTbl td .sub { font-size: 10px; color: var(--text-3); font-weight: 400; margin-top: 1px; }
+
+    .mcell { font-size: 11px; line-height: 1.4; }
+    .mcell.filled { color: var(--text); background: rgba(0,112,243,.05); border-radius: 4px; padding: 4px 6px; }
+    .mcell.nodata { color: var(--text-3); font-size: 10px; }
+    .mcell.nores  { color: var(--border-strong); font-size: 12px; text-align: center; }
+
+    /* ── Empty ── */
+    .empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+    @media (max-width: 960px) {
+      .metricsStrip { grid-template-columns: repeat(2, 1fr); }
+      .cardBody { grid-template-columns: 1fr; }
+      .cardBody .fld.full { grid-column: 1; }
+    }
+    @media (max-width: 640px) {
+      .metricsStrip { grid-template-columns: 1fr 1fr; }
+      .tabNav { flex-wrap: wrap; }
+      .cardHeader { flex-wrap: wrap; }
+    }
   </style>
 </head>
 <body>
   <aside id="sidebarMount"></aside>
-
   <main class="main">
     <div class="wrap">
+
+      <!-- Hero -->
       <section class="hero">
-        <div class="heroTop">
-          <div>
-            <h1>재난·중단 대응 흐름</h1>
-            <p>SOP, EOP, DRP, BCP의 역할과 발동 시점을 한눈에 확인하고, 현재 포털의 관리 화면으로 즉시 이동할 수 있는 운영형 플로우 보드입니다.</p>
-          </div>
-          <div class="chipRow">
-            <span class="chip">SOP 중심 운영</span>
-            <span class="chip">EOP / DRP / BCP 연계</span>
-            <span class="chip">BCMS 운영 흐름</span>
-          </div>
-        </div>
+        <h1>BCP 전략·계획 (ISO 22301)</h1>
+        <p>우선순위 확정 핵심업무 기반 복구전략을 수립하고, IT 재해복구계획(DRP) 및 전략 매트릭스를 관리합니다.<br>
+          연동 데이터: <b>bcmsPriorityConfirmed</b> · <b>bcmsBIAData</b> · <b>bcmsBCPStrategy</b> · <b>bcmsDRPData</b></p>
       </section>
 
-      <section class="section">
-        <h2>재난·중단 대응 플로우</h2>
-        <div class="flowBoard">
-          <div class="flowCol">
-            <div class="node sop">SOP에 따라 평상시 운영</div>
-            <div class="arrow">↓</div>
-            <div class="node">인시던트 발생</div>
-            <div class="arrow">↓</div>
-            <div class="node">초동조치</div>
-            <div class="arrow">↓</div>
+      <!-- Summary metrics -->
+      <div class="metricsStrip">
+        <div class="metric">
+          <div class="k">BCP 수립 대상 업무</div>
+          <div class="v" id="mTarget">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">전략 수립 완료</div>
+          <div class="v" id="mCompleted" style="color:var(--accent)">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">전략 미완료</div>
+          <div class="v" id="mPending">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">DRP 연계 수</div>
+          <div class="v" id="mDrp">0</div>
+        </div>
+      </div>
 
-            <div class="decisionWrap">
-              <div>
-                <div class="diamond"><span>복구<br/>가능?</span></div>
-                <div class="arrow">↙</div>
-                <div class="branch">
-                  <div class="branchLabel">예</div>
-                  <div class="node sop">SOP로 복구 후 정상화</div>
-                </div>
-              </div>
+      <!-- Tab navigation -->
+      <div class="tabNav">
+        <button class="tabBtn active" id="tabBcp"    type="button">BCP 전략 목록</button>
+        <button class="tabBtn"        id="tabDrp"    type="button">DRP (재해복구계획)</button>
+        <button class="tabBtn"        id="tabMatrix" type="button">전략 매트릭스</button>
+      </div>
 
-              <div>
-                <div class="branchLabel" style="margin-bottom:8px;">아니오 / 복구 지연 / 중요 시스템</div>
-                <div class="eopShell">
-                  <div class="node eop">EOP 개시 (상황관리·보고·의사결정)</div>
-                  <div class="parallel">
-                    <div class="node drp">DRP 기술 복구</div>
-                    <div class="node bcp">BCP 업무 연속</div>
-                  </div>
-                  <div class="merge">DRP + BCP 병렬 트랙</div>
-                </div>
-              </div>
+      <!-- ═══════════════════════════════════════
+           Tab 1: BCP 전략 목록
+      ═══════════════════════════════════════ -->
+      <div id="paneBcp">
+        <div class="controlRow">
+          <div class="field">
+            <label>부서 필터</label>
+            <select id="bcpDeptFilter"><option value="">전체 부서</option></select>
+          </div>
+          <div class="field">
+            <label>등급 필터</label>
+            <select id="bcpGradeFilter">
+              <option value="">전체 등급</option>
+              <option value="critical">긴급 (Critical)</option>
+              <option value="high">높음 (High)</option>
+              <option value="medium">중간 (Medium)</option>
+              <option value="low">낮음 (Low)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>완료 여부</label>
+            <select id="bcpCompletedFilter">
+              <option value="">전체</option>
+              <option value="yes">완료</option>
+              <option value="no">미완료</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;">
+            <button class="btn primary" id="bcpSaveAll" type="button">전체 저장</button>
+          </div>
+        </div>
+        <div class="cardGrid" id="bcpCardGrid"></div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           Tab 2: DRP
+      ═══════════════════════════════════════ -->
+      <div id="paneDrp" class="tabPane hidden">
+        <div class="tableSection">
+          <div class="sectionHeader">
+            <h2>IT 시스템 복구 계획 (DRP)</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" id="drpAddRow"  type="button">+ 시스템 추가</button>
+              <button class="btn primary" id="drpSaveAll" type="button">전체 저장</button>
             </div>
-
-            <div class="arrow">↘  ↙</div>
-            <div class="node">서비스 복구 / 안정화</div>
-            <div class="arrow">↓</div>
-            <div class="node">사고 종료 / 증적 / 개선조치</div>
+          </div>
+          <div class="tableWrap">
+            <table style="min-width:860px">
+              <colgroup>
+                <col style="width:190px">
+                <col style="width:88px">
+                <col style="width:88px">
+                <col style="width:130px">
+                <col style="width:180px">
+                <col style="width:150px">
+                <col style="width:100px">
+                <col style="width:72px">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>시스템명</th>
+                  <th>RTO</th>
+                  <th>RPO</th>
+                  <th>복구 방식</th>
+                  <th>백업 위치</th>
+                  <th>담당자</th>
+                  <th>상태</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="drpTableBody"></tbody>
+            </table>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section class="section">
-        <h2>문서 역할 카드</h2>
-        <div class="roleGrid">
-          <article class="role">
-            <div class="roleHead"><span class="dot" style="background:var(--sop);">S</span><h3>SOP</h3></div>
-            <p>평상시 운영과 표준 장애조치 중심</p>
-            <ul><li>평상시 운영</li><li>표준 장애조치</li><li>정상 운영 절차</li></ul>
-            <a class="btn" href="../library/sop.html">관련 페이지 이동</a>
-          </article>
-
-          <article class="role">
-            <div class="roleHead"><span class="dot" style="background:var(--eop);">E</span><h3>EOP</h3></div>
-            <p>비상조직 가동 및 상황 지휘</p>
-            <ul><li>상황관리</li><li>보고 / 의사결정</li><li>사고 확산 통제</li></ul>
-            <a class="btn" href="../governance/eop-org-chart.html">관련 페이지 이동</a>
-          </article>
-
-          <article class="role">
-            <div class="roleHead"><span class="dot" style="background:var(--drp);">D</span><h3>DRP</h3></div>
-            <p>기술 복구와 전환/재기동 절차</p>
-            <ul><li>기술 복구</li><li>전환 / 복구 / 재기동</li><li>시스템·설비 복구 절차</li></ul>
-            <a class="btn" href="./drp.html">DRP 페이지 이동</a>
-          </article>
-
-          <article class="role">
-            <div class="roleHead"><span class="dot" style="background:var(--bcp);">B</span><h3>BCP</h3></div>
-            <p>업무 연속과 대체 운영 계획</p>
-            <ul><li>업무 연속 유지</li><li>대체 인력·장소·수기 처리</li><li>자원 상실 시 대체 운영</li></ul>
-            <a class="btn" href="./bcp.html">BCP 페이지 이동</a>
-          </article>
+      <!-- ═══════════════════════════════════════
+           Tab 3: 전략 매트릭스
+      ═══════════════════════════════════════ -->
+      <div id="paneMatrix" class="tabPane hidden">
+        <div class="tableSection">
+          <div class="sectionHeader">
+            <h2>핵심업무 × 소요자원 복구전략 매트릭스</h2>
+            <span style="font-size:12px;color:var(--text-3)">BCP 전략 기반 자동 생성 · ISO 22301 소요자원 8개 유형</span>
+          </div>
+          <div style="padding:16px">
+            <div class="matrixScroll" id="matrixMount">
+              <div class="empty">탭을 클릭하면 매트릭스가 생성됩니다.</div>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <section class="section">
-        <h2>SOP / EOP / DRP / BCP 언제 쓰는가</h2>
-        <div class="triggerGrid">
-          <article class="trigger"><h4>SOP</h4><p><b>언제:</b> 표준 절차로 복구 가능할 때<br/><b>초점:</b> 정상 운영·초동조치</p></article>
-          <article class="trigger"><h4>EOP</h4><p><b>언제:</b> 다부서 대응과 상황통제가 필요할 때<br/><b>초점:</b> 비상지휘·의사결정</p></article>
-          <article class="trigger"><h4>DRP</h4><p><b>언제:</b> 기술 복구 경로 전환이 필요할 때<br/><b>초점:</b> 시스템·설비 복구</p></article>
-          <article class="trigger"><h4>BCP</h4><p><b>언제:</b> 자원 상실로 업무 공백이 예상될 때<br/><b>초점:</b> 업무 연속 유지</p></article>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>현재 포털 연계 현황</h2>
-        <div class="hubGrid">
-          <article class="hub"><strong>핵심업무 관리</strong><p>핵심업무 등록/정비</p><a class="btn" href="../risk-bia/core-functions.html">바로 이동</a></article>
-          <article class="hub"><strong>업무영향분석(BIA)</strong><p>MTPD/RTO/업무등급 정의</p><a class="btn" href="../risk-bia/bia.html">바로 이동</a></article>
-          <article class="hub"><strong>리스크 평가</strong><p>핵심업무별 위험도 산정</p><a class="btn" href="../risk-bia/risk.html">바로 이동</a></article>
-          <article class="hub"><strong>Recovery Priority</strong><p>BIA 기반 복구 우선순위 TOP20</p><a class="btn" href="./recovery-priority.html">바로 이동</a></article>
-          <article class="hub"><strong>BCP 전략</strong><p>중점관리 리스크 연속성 전략</p><a class="btn" href="./bcp.html">바로 이동</a></article>
-          <article class="hub"><strong>DRP 절차</strong><p>실행 단계/담당/검증 기준</p><a class="btn" href="./drp.html">바로 이동</a></article>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>추천 사용 흐름</h2>
-        <div class="steps">
-          <div class="step"><b>1</b>핵심업무 확인</div>
-          <div class="step"><b>2</b>업무영향분석 수행</div>
-          <div class="step"><b>3</b>리스크 평가</div>
-          <div class="step"><b>4</b>복구 우선순위 확인</div>
-          <div class="step"><b>5</b>BCP 전략 수립</div>
-          <div class="step"><b>6</b>DRP 절차 작성</div>
-        </div>
-      </section>
-    </div>
+    </div><!-- .wrap -->
   </main>
 
   <script src="../assets/sidebar.js"></script>
+  <script src="../assets/demo-seed.js"></script>
+  <script>
+  'use strict';
+
+  /* ─── Utilities ─── */
+  const esc = s => String(s ?? '').replace(/[&<>"']/g,
+    m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  const loadJSON = (key, fb) => {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; }
+    catch { return fb; }
+  };
+  const saveJSON = (key, val) => {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  };
+
+  /* ─── Constants ─── */
+  const STRATEGY_TYPES = [
+    '대체 수작업 절차',
+    '대체 시스템/장비 활용',
+    '타 사업장 이전 운영',
+    '외부 위탁/아웃소싱',
+    '상호협약 (MOU)',
+    '즉시 복구 (자체 역량)',
+  ];
+
+  const RESOURCE_TYPES = [
+    '인원', '시설·작업장', '기술·IT', '정보·문서',
+    '공급망·외주', '유틸리티', '설비·장비', '자금',
+  ];
+
+  const RECOVERY_MODES = ['Hot site', 'Warm site', 'Cold site'];
+  const DRP_STATUS     = ['초안', '검토중', '확정'];
+
+  /* ─── RTO / score helpers ─── */
+  const rtoToMins = (value, unit) => {
+    if (value === '' || value == null) return null;
+    const v = Number(value);
+    if (!Number.isFinite(v) || v <= 0) return null;
+    if (unit === '일')   return v * 1440;
+    if (unit === '시간') return v * 60;
+    return v;
+  };
+
+  const rtoUrgency = m => {
+    if (m === null) return 1;
+    if (m <= 60)   return 5;
+    if (m <= 240)  return 4;
+    if (m <= 480)  return 3;
+    if (m <= 1440) return 2;
+    return 1;
+  };
+
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  const getGrade = score => {
+    if (score >= 4.0) return { label: '긴급', cls: 'critical' };
+    if (score >= 3.0) return { label: '높음', cls: 'high'     };
+    if (score >= 2.0) return { label: '중간', cls: 'medium'   };
+    return              { label: '낮음', cls: 'low'      };
+  };
+
+  /* ─── Load confirmed functions from BIA + Priority ─── */
+  const loadConfirmedFunctions = () => {
+    const confirmed = loadJSON('bcmsPriorityConfirmed', {});
+    const biaRows   = loadJSON('bcmsBIAData', []);
+    const risks     = loadJSON('bcmsRiskList', []);
+
+    /* resource → max normalized risk score */
+    const riskMap = new Map();
+    for (const r of risks) {
+      const raw   = Number(r.riskScore) || ((Number(r.likelihood) || 1) * (Number(r.impact) || 1));
+      const score = clamp(raw / 5, 1, 5);
+      for (const res of (r.resources || [])) {
+        if (!riskMap.has(res) || riskMap.get(res) < score) riskMap.set(res, score);
+      }
+    }
+
+    const fns = [];
+    for (const block of biaRows) {
+      const team = String(block.team || '').trim();
+      for (const fn of (block.functions || [])) {
+        if (!fn.name) continue;
+        const id = String(fn.biaId || fn.id || `${team}__${fn.name}`);
+        if (!confirmed[id]) continue;
+
+        const overallImpact = clamp(Number(fn.overallImpact || fn.impact || 3), 1, 5);
+        let maxRisk = 1;
+        for (const res of (fn.requiredResources || [])) {
+          if (riskMap.has(res)) maxRisk = Math.max(maxRisk, riskMap.get(res));
+        }
+
+        const mins    = rtoToMins(fn.rtoValue, fn.rtoUnit);
+        const urgency = rtoUrgency(mins);
+        const raw     = (overallImpact * 0.4) + (maxRisk * 0.4) + (urgency * 0.2);
+        const score   = Math.round(raw * 10) / 10;
+        const grade   = getGrade(score);
+        const rtoDisp = fn.rtoValue ? `${fn.rtoValue}${fn.rtoUnit || '분'}` : '-';
+
+        fns.push({
+          id, team, name: fn.name, grade, rtoDisp, score,
+          requiredResources: fn.requiredResources || [],
+        });
+      }
+    }
+
+    return fns.sort((a, b) => b.score - a.score);
+  };
+
+  /* ─── BCP Strategy state ─── */
+  let bcpMap = new Map(); /* id → {id, strategyType, strategyText, owner, contact, completed} */
+
+  const loadBcp = () => {
+    const arr = loadJSON('bcmsBCPStrategy', []);
+    bcpMap = new Map(arr.map(x => [String(x.id), x]));
+  };
+
+  const saveBcp = () => saveJSON('bcmsBCPStrategy', [...bcpMap.values()]);
+
+  const getBcp = id => bcpMap.get(id) || {};
+
+  const patchBcp = (id, patch) => {
+    const cur = bcpMap.get(id) || { id };
+    bcpMap.set(id, Object.assign(cur, { id }, patch));
+  };
+
+  /* ─── DRP state ─── */
+  let drpRows = [];
+  let drpSeq  = 1;
+
+  const loadDrp = () => {
+    drpRows = loadJSON('bcmsDRPData', []);
+    drpSeq  = drpRows.reduce((m, r) => Math.max(m, r._seq || 0), 0) + 1;
+  };
+
+  const saveDrp = () => saveJSON('bcmsDRPData', drpRows);
+
+  /* ─── App state ─── */
+  let ALL_FNS = [];
+
+  /* ─── Metrics ─── */
+  const renderMetrics = () => {
+    const total = ALL_FNS.length;
+    const done  = ALL_FNS.filter(f => !!getBcp(f.id).completed).length;
+    document.getElementById('mTarget').textContent    = total;
+    document.getElementById('mCompleted').textContent = done;
+    document.getElementById('mPending').textContent   = total - done;
+    document.getElementById('mDrp').textContent       = drpRows.length;
+  };
+
+  /* ─── Dept filter options ─── */
+  const populateDeptFilter = () => {
+    const sel   = document.getElementById('bcpDeptFilter');
+    const prev  = sel.value;
+    const depts = [...new Set(ALL_FNS.map(f => f.team).filter(Boolean))].sort();
+    sel.innerHTML = `<option value="">전체 부서</option>` +
+      depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+    if (prev) sel.value = prev;
+  };
+
+  /* ─── BCP card renderer ─── */
+  const renderBcpCards = () => {
+    const dept  = document.getElementById('bcpDeptFilter').value;
+    const grade = document.getElementById('bcpGradeFilter').value;
+    const comp  = document.getElementById('bcpCompletedFilter').value;
+
+    const filtered = ALL_FNS.filter(f => {
+      if (dept  && f.team !== dept)       return false;
+      if (grade && f.grade.cls !== grade) return false;
+      const done = !!getBcp(f.id).completed;
+      if (comp === 'yes' && !done) return false;
+      if (comp === 'no'  &&  done) return false;
+      return true;
+    });
+
+    const grid = document.getElementById('bcpCardGrid');
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="empty">BCP 수립 대상 업무가 없습니다.<br>우선순위 페이지에서 업무를 확정 처리해 주세요.</div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(f => {
+      const s    = getBcp(f.id);
+      const done = !!s.completed;
+      const res  = f.requiredResources;
+
+      const resHtml = res.length
+        ? res.map(r => `<span class="resBadge">${esc(r)}</span>`).join('')
+        : `<span class="resBadge empty-res">BIA 소요자원 없음</span>`;
+
+      const typeOptions = STRATEGY_TYPES.map(t =>
+        `<option value="${esc(t)}"${s.strategyType === t ? ' selected' : ''}>${esc(t)}</option>`
+      ).join('');
+
+      return `
+<div class="stratCard${done ? ' done' : ''}" data-fn-id="${esc(f.id)}">
+  <div class="cardHeader" data-toggle>
+    <span class="expandIcon" data-icon>▶</span>
+    <span class="fnNameBig">${esc(f.name)}</span>
+    <span class="teamTag">${esc(f.team)}</span>
+    <span class="chip">RTO ${esc(f.rtoDisp)}</span>
+    <span class="grade ${f.grade.cls}">${f.grade.label}</span>
+    <label class="toggle" onclick="event.stopPropagation()">
+      <input type="checkbox" class="doneToggle" data-fn-id="${esc(f.id)}"${done ? ' checked' : ''}>
+      <span class="toggleTrack"><span class="toggleKnob"></span></span>
+      <span class="toggleLabel">${done ? '전략 완료' : '미완료'}</span>
+    </label>
+  </div>
+  <div class="cardBody hidden" data-body>
+    <div class="fld full">
+      <label>복구전략 유형</label>
+      <select class="sType">
+        <option value="">선택하세요</option>
+        ${typeOptions}
+      </select>
+    </div>
+    <div class="fld full">
+      <label>복구 절차 요약</label>
+      <textarea class="sText" placeholder="업무 중단 시 복구 절차를 요약 입력하세요">${esc(s.strategyText || '')}</textarea>
+    </div>
+    <div class="fld">
+      <label>담당자</label>
+      <input type="text" class="sOwner" value="${esc(s.owner || '')}" placeholder="담당자 이름">
+    </div>
+    <div class="fld">
+      <label>비상연락처</label>
+      <input type="text" class="sContact" value="${esc(s.contact || '')}" placeholder="전화번호 / 이메일">
+    </div>
+    <div class="fld full">
+      <label>필요 소요자원 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3)">(BIA 연동)</span></label>
+      <div class="resBadgeRow">${resHtml}</div>
+    </div>
+  </div>
+  <div class="cardFoot hidden" data-foot>
+    <button class="btn" type="button" data-save>저장</button>
+  </div>
+</div>`;
+    }).join('');
+  };
+
+  /* ─── BCP card interactions (delegated) ─── */
+  document.getElementById('bcpCardGrid').addEventListener('click', e => {
+    /* expand / collapse */
+    const header = e.target.closest('[data-toggle]');
+    if (header && !e.target.closest('label') && !e.target.closest('button')) {
+      const card = header.closest('.stratCard');
+      const body = card.querySelector('[data-body]');
+      const foot = card.querySelector('[data-foot]');
+      const icon = card.querySelector('[data-icon]');
+      const open = !body.classList.contains('hidden');
+      body.classList.toggle('hidden', open);
+      foot.classList.toggle('hidden', open);
+      icon.textContent = open ? '▶' : '▼';
+      return;
+    }
+
+    /* save card */
+    const saveBtn = e.target.closest('[data-save]');
+    if (saveBtn) {
+      const card = saveBtn.closest('.stratCard');
+      const id   = card.getAttribute('data-fn-id');
+      patchBcp(id, {
+        strategyType: card.querySelector('.sType')?.value   || '',
+        strategyText: card.querySelector('.sText')?.value   || '',
+        owner:        card.querySelector('.sOwner')?.value  || '',
+        contact:      card.querySelector('.sContact')?.value || '',
+      });
+      saveBcp();
+      saveBtn.textContent = '저장됨';
+      setTimeout(() => { saveBtn.textContent = '저장'; }, 900);
+      renderMetrics();
+    }
+  });
+
+  /* ─── Done toggle ─── */
+  document.getElementById('bcpCardGrid').addEventListener('change', e => {
+    const toggle = e.target.closest('.doneToggle');
+    if (!toggle) return;
+    const id   = toggle.getAttribute('data-fn-id');
+    const done = toggle.checked;
+    patchBcp(id, { completed: done });
+    saveBcp();
+    const card  = toggle.closest('.stratCard');
+    const label = toggle.closest('.toggle')?.querySelector('.toggleLabel');
+    if (label) label.textContent = done ? '전략 완료' : '미완료';
+    if (card)  card.classList.toggle('done', done);
+    renderMetrics();
+  });
+
+  /* ─── Save all BCP ─── */
+  document.getElementById('bcpSaveAll').addEventListener('click', () => {
+    document.querySelectorAll('.stratCard[data-fn-id]').forEach(card => {
+      const id = card.getAttribute('data-fn-id');
+      if (!id) return;
+      patchBcp(id, {
+        strategyType: card.querySelector('.sType')?.value    || '',
+        strategyText: card.querySelector('.sText')?.value    || '',
+        owner:        card.querySelector('.sOwner')?.value   || '',
+        contact:      card.querySelector('.sContact')?.value || '',
+      });
+    });
+    saveBcp();
+    renderMetrics();
+    const btn = document.getElementById('bcpSaveAll');
+    btn.textContent = '저장됨';
+    setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
+  });
+
+  /* ─── BCP filter events ─── */
+  ['bcpDeptFilter', 'bcpGradeFilter', 'bcpCompletedFilter'].forEach(id => {
+    document.getElementById(id).addEventListener('change', renderBcpCards);
+  });
+
+  /* ─── DRP renderer ─── */
+  const renderDrpTable = () => {
+    const tbody = document.getElementById('drpTableBody');
+
+    if (!drpRows.length) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty">DRP 항목이 없습니다. "+ 시스템 추가" 버튼으로 추가하세요.</td></tr>`;
+      return;
+    }
+
+    const modeClass = m => m === 'Hot site' ? 'hot' : m === 'Warm site' ? 'warm' : 'cold';
+
+    tbody.innerHTML = drpRows.map((row, i) => `
+<tr data-drp-idx="${i}">
+  <td><input type="text"  class="drpF" data-f="systemName"    value="${esc(row.systemName    || '')}" placeholder="시스템명"></td>
+  <td><input type="text"  class="drpF" data-f="rto"           value="${esc(row.rto           || '')}" placeholder="예: 4시간"></td>
+  <td><input type="text"  class="drpF" data-f="rpo"           value="${esc(row.rpo           || '')}" placeholder="예: 1시간"></td>
+  <td>
+    <select class="drpF" data-f="recoveryMode">
+      ${RECOVERY_MODES.map(m => `<option value="${esc(m)}"${row.recoveryMode === m ? ' selected' : ''}>${esc(m)}</option>`).join('')}
+    </select>
+  </td>
+  <td><input type="text"  class="drpF" data-f="backupLocation" value="${esc(row.backupLocation || '')}" placeholder="백업 위치"></td>
+  <td><input type="text"  class="drpF" data-f="owner"          value="${esc(row.owner          || '')}" placeholder="담당자"></td>
+  <td>
+    <select class="drpF" data-f="status">
+      ${DRP_STATUS.map(s => `<option value="${esc(s)}"${row.status === s ? ' selected' : ''}>${esc(s)}</option>`).join('')}
+    </select>
+  </td>
+  <td>
+    <button class="btn" type="button" style="padding:4px 10px;font-size:12px" data-del-drp="${i}">삭제</button>
+  </td>
+</tr>`).join('');
+  };
+
+  /* ─── DRP: add row ─── */
+  document.getElementById('drpAddRow').addEventListener('click', () => {
+    drpRows.push({ _seq: drpSeq++, systemName: '', rto: '', rpo: '', recoveryMode: 'Warm site', backupLocation: '', owner: '', status: '초안' });
+    renderDrpTable();
+    renderMetrics();
+  });
+
+  /* ─── DRP: inline edit ─── */
+  const drpBody = document.getElementById('drpTableBody');
+
+  drpBody.addEventListener('input', e => {
+    const tr  = e.target.closest('tr[data-drp-idx]');
+    const fld = e.target.getAttribute('data-f');
+    if (!tr || !fld) return;
+    const idx = Number(tr.getAttribute('data-drp-idx'));
+    if (drpRows[idx]) drpRows[idx][fld] = e.target.value;
+  });
+
+  drpBody.addEventListener('change', e => {
+    const tr  = e.target.closest('tr[data-drp-idx]');
+    const fld = e.target.getAttribute('data-f');
+    if (!tr || !fld) return;
+    const idx = Number(tr.getAttribute('data-drp-idx'));
+    if (drpRows[idx]) drpRows[idx][fld] = e.target.value;
+  });
+
+  /* ─── DRP: delete row ─── */
+  drpBody.addEventListener('click', e => {
+    const btn = e.target.closest('[data-del-drp]');
+    if (!btn) return;
+    const idx = Number(btn.getAttribute('data-del-drp'));
+    drpRows.splice(idx, 1);
+    saveDrp();
+    renderDrpTable();
+    renderMetrics();
+  });
+
+  /* ─── DRP: save all ─── */
+  document.getElementById('drpSaveAll').addEventListener('click', () => {
+    saveDrp();
+    renderMetrics();
+    const btn = document.getElementById('drpSaveAll');
+    btn.textContent = '저장됨';
+    setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
+  });
+
+  /* ─── Matrix renderer ─── */
+  const renderMatrix = () => {
+    const mount = document.getElementById('matrixMount');
+
+    if (!ALL_FNS.length) {
+      mount.innerHTML = `<div class="empty">BCP 수립 대상 업무가 없습니다.<br>우선순위 페이지에서 업무를 확정 처리해 주세요.</div>`;
+      return;
+    }
+
+    const cols = RESOURCE_TYPES;
+
+    const headerCells = cols.map(c => `<th>${esc(c)}</th>`).join('');
+
+    const bodyRows = ALL_FNS.map(f => {
+      const s         = getBcp(f.id);
+      const typeShort = s.strategyType || '';
+      const textClip  = s.strategyText
+        ? (s.strategyText.length > 28 ? s.strategyText.slice(0, 28) + '…' : s.strategyText)
+        : '';
+      const summary   = typeShort
+        ? (textClip ? `${typeShort}<br><span style="font-size:10px;color:var(--text-3)">${esc(textClip)}</span>` : esc(typeShort))
+        : '';
+
+      const cells = cols.map(c => {
+        const hasRes = f.requiredResources.includes(c);
+        if (!hasRes) return `<td><span class="mcell nores">·</span></td>`;
+        if (summary) return `<td><span class="mcell filled">${summary}</span></td>`;
+        return `<td><span class="mcell nodata">전략 미입력</span></td>`;
+      }).join('');
+
+      return `<tr>
+        <td class="rhd">
+          <div>${esc(f.name)}</div>
+          <div class="sub">${esc(f.team)} · ${esc(f.rtoDisp)}</div>
+        </td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    mount.innerHTML = `
+<table class="matTbl" style="width:100%">
+  <thead>
+    <tr>
+      <th class="rhd">핵심업무 / 소요자원</th>
+      ${headerCells}
+    </tr>
+  </thead>
+  <tbody>${bodyRows}</tbody>
+</table>`;
+  };
+
+  /* ─── Tab switching ─── */
+  const TABS = [
+    { btn: 'tabBcp',    pane: 'paneBcp'    },
+    { btn: 'tabDrp',    pane: 'paneDrp'    },
+    { btn: 'tabMatrix', pane: 'paneMatrix' },
+  ];
+
+  TABS.forEach(({ btn, pane }) => {
+    document.getElementById(btn).addEventListener('click', () => {
+      TABS.forEach(t => {
+        document.getElementById(t.btn).classList.toggle('active',  t.btn === btn);
+        document.getElementById(t.pane).classList.toggle('hidden', t.pane !== pane);
+      });
+      if (pane === 'paneMatrix') renderMatrix();
+    });
+  });
+
+  /* ─── Demo seed ─── */
+  if (window.BCMSDemoSeed) {
+    window.BCMSDemoSeed.ensureDemoIfEmpty();
+    window.BCMSDemoSeed.mountBanner('.wrap');
+    const banner = document.querySelector('.wrap > div:first-child');
+    if (banner && banner.style.background) {
+      banner.className = 'demoBannerSmall';
+      banner.style.cssText = '';
+      const msg = banner.querySelector('span');
+      if (msg) msg.style.cssText = 'font-size:12px;font-weight:500;color:var(--text-2)';
+      banner.querySelectorAll('button').forEach(b => {
+        b.style.cssText = 'padding:3px 9px;border-radius:6px;border:0.5px solid var(--border-strong);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2)';
+      });
+    }
+  }
+
+  /* ─── Init ─── */
+  const init = () => {
+    ALL_FNS = loadConfirmedFunctions();
+    loadBcp();
+    loadDrp();
+    renderMetrics();
+    populateDeptFilter();
+    renderBcpCards();
+    renderDrpTable();
+  };
+
+  init();
+  </script>
 </body>
 </html>
