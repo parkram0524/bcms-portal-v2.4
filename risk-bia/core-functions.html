@@ -37,6 +37,11 @@
     .teamHead{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px; }
     .teamTitle{ margin:0; font-size:18px; font-weight:900; }
     .tag{ display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(37,99,235,.35); background:rgba(37,99,235,.10); color:#1d4ed8; font-size:11px; font-weight:900; padding:3px 8px; }
+    .tag.tag-bia{ border-color:rgba(124,58,237,.35); background:rgba(124,58,237,.10); color:#6d28d9; }
+    .tag.tag-core{ border-color:rgba(22,163,74,.35); background:rgba(22,163,74,.10); color:#15803d; }
+    .bia-sourced{ border-color:rgba(124,58,237,.2); }
+    .empty a{ color:#1d4ed8; font-weight:700; }
+    .empty a:hover{ text-decoration:underline; }
 
     .functionList{ margin:0; padding-left:18px; display:flex; flex-direction:column; gap:5px; }
     .functionList li{ font-size:15px; line-height:1.55; color:#0f172a; }
@@ -70,7 +75,7 @@
 
       <div class="topActions">
         <button id="addBtn" class="btn primary" type="button">핵심업무 추가</button>
-        <button id="resetBtn" class="btn" type="button">기본값 복원</button>
+        <a class="btn" href="../risk-bia/bia.html">BIA 페이지로 →</a>
       </div>
 
       <section class="summary">
@@ -118,196 +123,241 @@
 
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
-  <script src="../assets/demo-seed.js"></script>
   <script>
     (() => {
-      if (window.BCMSDemoSeed) {
-        window.BCMSDemoSeed.ensureDemoIfEmpty();
-        window.BCMSDemoSeed.mountBanner('.wrap');
-      }
+      'use strict';
 
+      const BIA_KEY  = 'bcmsBIAData';
       const CORE_KEY = 'bcmsCoreFunctions';
-      const ORG_KEY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
+      const ORG_KEY  = 'bcmsOrgRegistry';      // new people-based registry
+      const ORG_KEY_LEGACY = (window.DataStore && DataStore.KEY_ORG_REGISTRY) || 'bcms_org_registry_v1';
 
-      const defaultCoreFunctions = [
-        { team: 'SRE/플랫폼운영팀', functions: ['플랫폼 서비스 운영', '시스템 장애 대응 및 복구', '인프라 배포 및 구성 관리'] },
-        { team: '애플리케이션운영팀', functions: ['서비스 애플리케이션 운영', '애플리케이션 장애 대응', '서비스 배포 및 버전 관리'] },
-        { team: '데이터/DB운영팀', functions: ['데이터베이스 운영 관리', 'DB 장애 대응 및 복구', '데이터 백업 및 복구 관리'] },
-        { team: '네트워크운영팀', functions: ['데이터센터 네트워크 운영', '네트워크 장애 대응', '트래픽 및 네트워크 성능 관리'] },
-        { team: '전기팀', functions: ['데이터센터 전력 공급 운영', 'UPS 및 배터리 시스템 운영', '비상 발전기 운영', '전기설비 장애 대응', '전력 품질 및 부하 관리'] },
-        { team: '기계(냉각)팀', functions: ['데이터센터 냉각 시스템 운영', '냉동기 및 공조기 운영', '냉각수 및 냉각탑 운영', '온습도 환경 유지', '기계설비 장애 대응'] },
-        { team: '방재·소방팀', functions: ['화재 감지 및 경보 시스템 운영', '가스계 소화설비 운영', '화재 대응 및 초기 진압', '소방설비 점검 및 유지관리', '소방 훈련 운영'] },
-        { team: 'DC운영(NOC/관제)팀', functions: ['데이터센터 통합 모니터링', '장애 상황 감지 및 상황 전파', '운영 로그 및 장애 이력 관리'] },
-        { team: '정보보호팀', functions: ['정보보안 정책 운영', '보안 위협 탐지 및 대응', '취약점 관리 및 보안 점검', '접근통제 및 계정 관리', '보안 사고 대응'] },
-        { team: '고객지원팀', functions: ['고객 장애 접수 및 대응', '고객 커뮤니케이션 관리', '서비스 지원 요청 처리'] },
-        { team: '서비스품질팀', functions: ['서비스 품질 모니터링', 'SLA 관리', '서비스 품질 개선 활동'] },
-        { team: '재난안전(BCM)팀', functions: ['BCMS 운영 관리', 'BIA 및 리스크 평가 수행', 'BCP 및 재난 대응 훈련 운영'] },
-        { team: '감사·컴플라이언스팀', functions: ['내부 감사 수행', '컴플라이언스 관리', '외부 인증 및 심사 대응'] },
-        { team: '인사총무팀', functions: ['인력 운영 및 인사 관리', '비상 인력 지원 관리', '총무 및 행정 지원'] },
-        { team: '재무회계팀', functions: ['재무 회계 관리', '운영 비용 및 예산 관리'] },
-        { team: '구매·자산관리팀', functions: ['설비 및 자산 구매 관리', 'IT 및 설비 자산 관리', '재고 및 공급망 관리'] }
-      ];
+      /* ── Helpers ── */
+      const safeParse = (s, fb) => { try { return JSON.parse(s); } catch { return fb; } };
+      const normStr   = (s) => String(s || '').trim();
+      const uniq      = (arr) => [...new Set((arr || []).filter(Boolean))];
+      const normFns   = (arr) => uniq((arr || []).map((v) => normStr(v)).filter(Boolean));
+      const escHtml   = (s) => normStr(s).replace(/[&<>"']/g, (c) =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c]));
 
-      const store = (window.DataStore && DataStore.get && DataStore.set) ? DataStore : {
-        get: (k, f) => { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : f; } catch { return f; } },
-        set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
-      };
-
-      const cards = document.getElementById('cards');
-      const q = document.getElementById('q');
-      const matchFilter = document.getElementById('matchFilter');
-      const teamCount = document.getElementById('teamCount');
-      const functionCount = document.getElementById('functionCount');
-      const matchCount = document.getElementById('matchCount');
-      const addBtn = document.getElementById('addBtn');
-      const resetBtn = document.getElementById('resetBtn');
-
-      const modalWrap = document.getElementById('modalWrap');
-      const modalTitle = document.getElementById('modalTitle');
-      const teamInput = document.getElementById('teamInput');
+      /* ── DOM refs ── */
+      const cards        = document.getElementById('cards');
+      const q            = document.getElementById('q');
+      const matchFilter  = document.getElementById('matchFilter');
+      const teamCount    = document.getElementById('teamCount');
+      const functionCount= document.getElementById('functionCount');
+      const matchCount   = document.getElementById('matchCount');
+      const addBtn       = document.getElementById('addBtn');
+      const modalWrap    = document.getElementById('modalWrap');
+      const modalTitle   = document.getElementById('modalTitle');
+      const teamInput    = document.getElementById('teamInput');
       const functionsInput = document.getElementById('functionsInput');
-      const saveBtn = document.getElementById('saveBtn');
-      const cancelBtn = document.getElementById('cancelBtn');
-      const teamOptions = document.getElementById('teamOptions');
+      const saveBtn      = document.getElementById('saveBtn');
+      const cancelBtn    = document.getElementById('cancelBtn');
+      const teamOptions  = document.getElementById('teamOptions');
 
-      const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
-      const normalizeFunctions = (lines) => uniq((lines || []).map((v) => String(v || '').trim()).filter(Boolean));
-
-      const readOrgTeams = () => {
-        const org = store.get(ORG_KEY, { divisions: [] });
-        return uniq((org.divisions || []).flatMap((d) => (d.teams || []).map((t) => t.name)).filter(Boolean));
-      };
-
-      const seedIfEmpty = () => {
-        const rows = store.get(CORE_KEY, null);
-        if (!Array.isArray(rows) || !rows.length) {
-          store.set(CORE_KEY, defaultCoreFunctions);
-          return [...defaultCoreFunctions];
-        }
-        return rows.map((row) => ({ team: String(row.team || '').trim(), functions: normalizeFunctions(row.functions) })).filter((row) => row.team);
-      };
-
-      let rows = seedIfEmpty();
       let editingTeam = '';
 
-      const saveRows = () => {
-        rows = rows
-          .map((row) => ({ team: String(row.team || '').trim(), functions: normalizeFunctions(row.functions) }))
-          .filter((row) => row.team && row.functions.length);
-        store.set(CORE_KEY, rows);
+      /* ── Data readers ── */
+
+      /* bcmsBIAData → [{team, functions:[string,...], source:'bia'}] */
+      const readBIARows = () => {
+        const raw = safeParse(localStorage.getItem(BIA_KEY), []);
+        if (!Array.isArray(raw)) return [];
+        return raw
+          .map((row) => ({
+            team: normStr(row.team),
+            functions: uniq((row.functions || [])
+              .map((f) => typeof f === 'string' ? f : normStr(f?.name || f?.functionName))
+              .filter(Boolean)),
+            source: 'bia',
+          }))
+          .filter((r) => r.team && r.functions.length);
       };
 
+      /* bcmsCoreFunctions → [{team, functions:[string,...], source:'core'}] */
+      const readCoreRows = () => {
+        const raw = safeParse(localStorage.getItem(CORE_KEY), []);
+        if (!Array.isArray(raw)) return [];
+        return raw
+          .map((row) => ({
+            team: normStr(row.team),
+            functions: normFns(row.functions || []),
+            source: 'core',
+          }))
+          .filter((r) => r.team && r.functions.length);
+      };
+
+      /* Merge: BIA first, then CORE entries whose team is not already in BIA */
+      const mergeRows = () => {
+        const biaRows  = readBIARows();
+        const coreRows = readCoreRows();
+        const biaTeams = new Set(biaRows.map((r) => r.team));
+        const extraCore = coreRows.filter((r) => !biaTeams.has(r.team));
+        return [...biaRows, ...extraCore];
+      };
+
+      /* Teams for "조직 매칭" check – from new people registry (dept field) */
+      const readOrgTeams = () => {
+        // New org registry: array of people with .dept
+        const people = safeParse(localStorage.getItem(ORG_KEY), []);
+        if (Array.isArray(people) && people.length) {
+          return uniq(people.map((p) => p.dept).filter(Boolean));
+        }
+        // Legacy fallback: division→team structure
+        const org = safeParse(localStorage.getItem(ORG_KEY_LEGACY), { divisions: [] });
+        return uniq((org.divisions || [])
+          .flatMap((d) => (d.teams || []).map((t) => t.name))
+          .filter(Boolean));
+      };
+
+      /* ── Persist helpers (CORE_KEY only – BIA data is read-only here) ── */
+      const saveCoreRow = (team, functions) => {
+        const rows = readCoreRows();
+        const idx  = rows.findIndex((r) => r.team === team || r.team === editingTeam);
+        const item = { team, functions };
+        if (idx >= 0) rows[idx] = item;
+        else rows.unshift(item);
+        localStorage.setItem(CORE_KEY, JSON.stringify(rows));
+      };
+
+      const deleteCoreRow = (team) => {
+        const rows = readCoreRows().filter((r) => r.team !== team);
+        localStorage.setItem(CORE_KEY, JSON.stringify(rows));
+      };
+
+      /* ── Modal ── */
       const openModal = (mode, row = null) => {
         editingTeam = row ? row.team : '';
         modalTitle.textContent = mode === 'edit' ? '핵심업무 수정' : '핵심업무 추가';
         teamInput.value = row ? row.team : '';
         functionsInput.value = row ? row.functions.join('\n') : '';
         modalWrap.classList.add('open');
+        teamInput.focus();
       };
       const closeModal = () => {
         modalWrap.classList.remove('open');
         editingTeam = '';
       };
 
+      /* ── Render ── */
       const renderTeamOptions = (orgTeams) => {
-        teamOptions.innerHTML = orgTeams.map((name) => `<option value="${name}"></option>`).join('');
+        /* datalist includes org teams + BIA teams for convenience */
+        const biaTeams = readBIARows().map((r) => r.team);
+        const all = uniq([...orgTeams, ...biaTeams]).sort();
+        teamOptions.innerHTML = all.map((name) => `<option value="${escHtml(name)}"></option>`).join('');
       };
 
-      const renderMetrics = (viewRows, orgTeams) => {
-        const totalFunctions = rows.reduce((acc, row) => acc + row.functions.length, 0);
-        const matched = rows.filter((row) => orgTeams.includes(row.team)).length;
-        teamCount.textContent = String(rows.length);
-        functionCount.textContent = String(totalFunctions);
-        matchCount.textContent = `${matched}/${rows.length || 0}`;
+      const renderMetrics = (allRows, orgTeams) => {
+        const totalFns = allRows.reduce((acc, r) => acc + r.functions.length, 0);
+        const matched  = allRows.filter((r) => orgTeams.includes(r.team)).length;
+        teamCount.textContent    = String(allRows.length);
+        functionCount.textContent= String(totalFns);
+        matchCount.textContent   = `${matched}/${allRows.length || 0}`;
       };
 
       const renderCards = () => {
-        const orgTeams = readOrgTeams();
+        const orgTeams  = readOrgTeams();
+        const allRows   = mergeRows();
         renderTeamOptions(orgTeams);
 
         const keyword = (q.value || '').trim().toLowerCase();
-        const mode = matchFilter.value;
+        const mode    = matchFilter.value;
 
-        const viewRows = rows.filter((row) => {
+        const viewRows = allRows.filter((row) => {
           const matched = orgTeams.includes(row.team);
-          if (mode === 'matched' && !matched) return false;
-          if (mode === 'unmatched' && matched) return false;
+          if (mode === 'matched'   && !matched) return false;
+          if (mode === 'unmatched' &&  matched) return false;
           const inText = `${row.team} ${row.functions.join(' ')}`.toLowerCase();
           return !keyword || inText.includes(keyword);
         });
 
-        renderMetrics(viewRows, orgTeams);
+        renderMetrics(allRows, orgTeams);
 
+        /* Empty state: no data at all */
+        if (!allRows.length) {
+          cards.innerHTML = `
+            <div class="empty" style="grid-column:1/-1; padding:24px; line-height:2">
+              <p style="font-size:15px; font-weight:700; margin:0 0 6px">등록된 핵심업무가 없습니다.</p>
+              <p style="margin:0 0 4px">
+                <a href="../risk-bia/bia.html">📋 BIA 분석 페이지</a>에서 팀별 핵심업무를 먼저 등록해주세요.
+              </p>
+              <p style="margin:0; color:#94a3b8">
+                BIA에 등록된 업무는 이 페이지에 자동으로 반영됩니다.
+                직접 추가하려면 위 "핵심업무 추가" 버튼을 사용하세요.
+              </p>
+            </div>`;
+          return;
+        }
+
+        /* Search/filter empty */
         if (!viewRows.length) {
-          cards.innerHTML = '<div class="empty">조건에 맞는 핵심업무가 없습니다.</div>';
+          cards.innerHTML = '<div class="empty" style="grid-column:1/-1">조건에 맞는 핵심업무가 없습니다.</div>';
           return;
         }
 
         cards.innerHTML = viewRows.map((row) => {
           const matched = orgTeams.includes(row.team);
-          const demoTeam = row.isDemo === true || row.demoLabel === '예시';
+          const isBia   = row.source === 'bia';
+
+          const actionHtml = isBia
+            ? `<a class="btn" href="../risk-bia/bia.html" title="BIA 페이지에서 수정">BIA에서 수정 →</a>`
+            : `<button class="btn" type="button" data-edit="${escHtml(row.team)}">수정</button>
+               <button class="btn" type="button" data-delete="${escHtml(row.team)}">삭제</button>`;
+
           return `
-            <article class="teamCard" data-team="${row.team}">
+            <article class="teamCard ${isBia ? 'bia-sourced' : ''}">
               <div class="teamHead">
-                <h2 class="teamTitle">${row.team}</h2>
+                <h2 class="teamTitle">${escHtml(row.team)}</h2>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  ${isBia
+                    ? '<span class="tag tag-bia">BIA 연동</span>'
+                    : '<span class="tag tag-core">직접 등록</span>'}
                   <span class="tag">${matched ? '조직 매칭 완료' : '조직 미매칭'}</span>
-                  ${demoTeam ? '<span class="tag">예시</span>' : ''}
                 </div>
               </div>
               <ul class="functionList">
-                ${row.functions.map((fn) => `<li>${fn}</li>`).join('')}
+                ${row.functions.map((fn) => `<li>${escHtml(fn)}</li>`).join('')}
               </ul>
-              <div class="actions">
-                <button class="btn" type="button" data-edit="${row.team}">수정</button>
-                <button class="btn" type="button" data-delete="${row.team}">삭제</button>
-              </div>
-            </article>
-          `;
+              <div class="actions">${actionHtml}</div>
+            </article>`;
         }).join('');
       };
 
+      /* ── Save (modal submit) ── */
       const upsertRow = () => {
-        const team = String(teamInput.value || '').trim();
-        const functions = normalizeFunctions((functionsInput.value || '').split('\n'));
+        const team      = normStr(teamInput.value);
+        const functions = normFns((functionsInput.value || '').split('\n'));
         if (!team || !functions.length) {
           alert('팀명과 핵심업무를 입력해 주세요.');
           return;
         }
-
-        const existingIdx = rows.findIndex((row) => row.team === team || row.team === editingTeam);
-        const item = { team, functions };
-        if (existingIdx >= 0) rows[existingIdx] = item;
-        else rows.unshift(item);
-
-        saveRows();
+        saveCoreRow(team, functions);
         closeModal();
         renderCards();
       };
 
+      /* ── Events ── */
       addBtn.addEventListener('click', () => openModal('add'));
-      resetBtn.addEventListener('click', () => {
-        rows = [...defaultCoreFunctions];
-        saveRows();
-        renderCards();
-      });
       cancelBtn.addEventListener('click', closeModal);
       saveBtn.addEventListener('click', upsertRow);
       q.addEventListener('input', renderCards);
       matchFilter.addEventListener('change', renderCards);
 
       cards.addEventListener('click', (e) => {
-        const editTeam = e.target.getAttribute('data-edit');
+        const editTeam   = e.target.getAttribute('data-edit');
         const deleteTeam = e.target.getAttribute('data-delete');
+
         if (editTeam) {
-          const row = rows.find((item) => item.team === editTeam);
+          const row = readCoreRows().find((r) => r.team === editTeam);
           if (!row) return;
           openModal('edit', row);
           return;
         }
+
         if (deleteTeam) {
-          rows = rows.filter((item) => item.team !== deleteTeam);
-          saveRows();
+          if (!confirm(`'${deleteTeam}' 팀의 핵심업무를 삭제할까요?`)) return;
+          deleteCoreRow(deleteTeam);
           renderCards();
         }
       });
@@ -316,6 +366,12 @@
         if (e.target === modalWrap) closeModal();
       });
 
+      /* ── Auto-refresh when BIA data changes (cross-tab or same-tab) ── */
+      window.addEventListener('storage', (e) => {
+        if (e.key === BIA_KEY || e.key === CORE_KEY) renderCards();
+      });
+
+      /* ── Init ── */
       renderCards();
     })();
   </script>
