@@ -1,232 +1,777 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Portal - 문서체계</title>
-  <link rel="stylesheet" href="../assets/style.css"/>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>BCMS Portal - 문서체계</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 40px; }
 
-  <style>
-    /* ===== 레이아웃 FIX (docs에서만 화면 밀림 방지) ===== */
-    html, body{ height:auto !important; min-height:100% !important; }
-    .layout{
-      display:flex !important;
-      align-items:stretch !important;
-      justify-content:flex-start !important;
-      min-height:100vh !important;
-      height:auto !important;
-    }
-    .main{
-      display:block !important;
-      flex:1 1 auto !important;
-      min-height:100vh !important;
-      height:auto !important;
-      justify-content:flex-start !important;
-      align-items:stretch !important;
-      padding-top: 0 !important;
-      margin-top: 0 !important;
-    }
-    .main > *{ justify-content:flex-start !important; align-items:stretch !important; }
+  /* ── Hero ── */
+  .hero h1 { margin: 0; font-size: 24px; font-weight: 950; }
+  .hero p  { margin: 6px 0 0; color: var(--text-2); font-size: 14px; }
 
-    :root{
-      --cardBg: rgba(255,255,255,.03);
-      --cardBd: rgba(255,255,255,.12);
-      --muted: rgba(15,23,42,.62);
-      --muted2: rgba(15,23,42,.52);
-    }
+  /* ── KPI cards ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 18px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+  .kpi-label { font-size: 12px; font-weight: 700; color: var(--text-2); }
+  .kpi-value { font-size: 30px; font-weight: 950; margin: 6px 0 2px; line-height: 1; }
+  .kpi-sub   { font-size: 12px; color: var(--text-2); }
 
-    .wrap{ max-width:1200px; margin:0 auto; padding:24px 16px 60px; }
+  /* ── Tab bar ── */
+  .tab-bar { display: flex; border-bottom: 1px solid var(--border); margin-top: 22px; }
+  .tab-btn {
+    padding: 10px 22px; font-size: 14px; font-weight: 600; border: none;
+    background: transparent; cursor: pointer; color: var(--text-2);
+    border-bottom: 2.5px solid transparent; margin-bottom: -1px; transition: all .15s;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+  .tab-btn:hover:not(.active) { color: var(--text); background: rgba(0,0,0,.03); }
+  [data-theme="dark"] .tab-btn:hover:not(.active) { background: rgba(255,255,255,.04); }
+  .tab-pane { display: none; margin-top: 16px; }
+  .tab-pane.active { display: block; }
 
-    .pageTitle h1{ font-size:26px; margin:0; }
-    .pageTitle p{ margin-top:8px; color:var(--muted); line-height:1.6; }
+  /* ── Collapsible form ── */
+  .form-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; padding: 11px 16px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    margin-bottom: 10px; user-select: none;
+  }
+  .form-toggle:hover { background: var(--surface-hover); }
+  .form-toggle h3 { margin: 0; font-size: 14px; font-weight: 700; }
+  .toggle-chevron { font-size: 16px; transition: transform .2s; display: inline-block; }
+  .toggle-chevron.open { transform: rotate(180deg); }
+  .form-body {
+    display: none; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    margin-bottom: 14px;
+  }
+  .form-body.open { display: block; }
+  .form-title-edit { font-size: 13px; color: var(--accent); font-weight: 700; margin-left: 8px; }
 
-    .metaRow{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
-    .pill{
-      border:1px solid var(--cardBd);
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      background:rgba(255,255,255,.02);
-    }
+  .form-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .f-field { display: flex; flex-direction: column; gap: 5px; }
+  .f-field.span2 { grid-column: span 2; }
+  .f-field.span3 { grid-column: span 3; }
+  .f-label { font-size: 12px; font-weight: 700; color: var(--text-2); }
+  .f-inp, .f-sel {
+    padding: 8px 10px; font-size: 13px;
+    border: 1px solid var(--border-strong); border-radius: 8px;
+    background: var(--surface); color: var(--text);
+    font-family: inherit; outline: none; width: 100%; box-sizing: border-box;
+  }
+  .f-inp:focus, .f-sel:focus { border-color: var(--accent); }
+  .f-inp[readonly] { background: var(--surface-hover); color: var(--text-2); }
 
-    .board{
-      margin-top:20px;
-      border:1px solid var(--cardBd);
-      border-radius:18px;
-      padding:20px;
-      background:rgba(255,255,255,.02);
-    }
+  .iso-cbs { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 6px 0; }
+  .iso-cb  { display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .iso-cb input { cursor: pointer; accent-color: var(--accent); }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap:16px;
-      align-items:start;
-    }
-    @media(max-width:1020px){
-      .grid{ grid-template-columns:1fr; }
-    }
+  .form-actions { display: flex; gap: 8px; margin-top: 14px; }
 
-    /* ===== 좌측 스택형 레벨 ===== */
-    .stack{
-      position:relative;
-      padding-left:32px;
-    }
-    .stack::before{
-      content:"";
-      position:absolute;
-      left:14px;
-      top:0;
-      bottom:0;
-      width:2px;
-      background:linear-gradient(to bottom,
-        rgba(126,231,255,.55),
-        rgba(200,210,255,.45),
-        rgba(176,255,214,.45),
-        rgba(255,214,130,.45),
-        rgba(255,135,135,.55)
-      );
-      border-radius:2px;
-      opacity:.9;
-    }
+  /* ── Buttons ── */
+  .btn { padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .btn:hover { background: var(--surface-hover); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+  .btn-primary:hover { opacity: .9; background: var(--accent); }
+  .btn-danger  { background: #dc2626; color: #fff; border-color: transparent; }
+  .btn-danger:hover { opacity: .9; }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
 
-    .level{
-      position:relative;
-      border:1px solid var(--cardBd);
-      background:var(--cardBg);
-      border-radius:16px;
-      padding:16px 18px 16px 22px;
-      margin-bottom:16px;
-      box-shadow:0 14px 28px rgba(0,0,0,.15);
-      transition:.15s ease;
-    }
-    .level:hover{
-      transform:translateY(-2px);
-      box-shadow:0 20px 40px rgba(0,0,0,.22);
-    }
+  /* ── Filters ── */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .f-sel-sm { padding: 7px 10px; font-size: 13px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); }
+  .f-search  { padding: 7px 10px; font-size: 13px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); min-width: 190px; outline: none; }
+  .f-search:focus { border-color: var(--accent); }
 
-    .level::before{
-      content:attr(data-step);
-      position:absolute;
-      left:-18px;
-      top:18px;
-      width:30px;
-      height:30px;
-      border-radius:50%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:900;
-      font-size:12px;
-      color:#0b1220;
-      background:#7ee7ff;
-      box-shadow:0 0 0 4px rgba(0,0,0,.40);
-    }
+  /* ── Table ── */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1100px; }
+  th, td { padding: 10px 11px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { font-size: 11.5px; font-weight: 800; color: var(--text-2); background: var(--surface); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface-hover); }
+  .empty-row { text-align: center; color: var(--text-2); padding: 28px !important; font-size: 13px; }
 
-    .level.l1{ border-left:4px solid #7ee7ff; }
-    .level.l1::before{ background:#7ee7ff; }
+  /* ── Badges ── */
+  .bdg { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 9px; font-size: 11.5px; font-weight: 700; border: 1px solid; white-space: nowrap; }
+  .bdg-draft    { color: #64748b; background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); }
+  .bdg-review   { color: #d97706; background: rgba(217,119,6,.1);   border-color: rgba(217,119,6,.3);   }
+  .bdg-approved { color: #16a34a; background: rgba(22,163,74,.1);   border-color: rgba(22,163,74,.3);   }
+  .bdg-obsolete { color: #dc2626; background: rgba(220,38,38,.1);   border-color: rgba(220,38,38,.3);   }
+  .bdg-warn     { color: #b45309; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4);  }
+  .bdg-overdue  { color: #991b1b; background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.4);   }
 
-    .level.l2{ border-left:4px solid #c8d2ff; }
-    .level.l2::before{ background:#c8d2ff; }
+  /* ── ISO checklist tab ── */
+  .gauge-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+  .gauge-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .gauge-bar  { height: 12px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .gauge-fill { height: 100%; background: #22c55e; border-radius: 999px; transition: width .6s ease; }
 
-    .level.l3{ border-left:4px solid #b0ffd6; }
-    .level.l3::before{ background:#b0ffd6; }
+  .iso-list { display: flex; flex-direction: column; gap: 8px; }
+  .iso-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .iso-item.registered { border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.04); }
+  .iso-icon   { font-size: 22px; width: 30px; text-align: center; flex-shrink: 0; }
+  .iso-meta   { flex: 1; min-width: 0; }
+  .iso-name   { font-size: 14px; font-weight: 700; }
+  .iso-clause { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .iso-linked { font-size: 12px; color: #2563eb; margin-top: 4px; }
+  [data-theme="dark"] .iso-linked { color: #93c5fd; }
 
-    .level.l4{ border-left:4px solid #ffd682; }
-    .level.l4::before{ background:#ffd682; }
+  /* ── Pyramid tab ── */
+  .pyr-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+  .pyr-lv {
+    display: flex; align-items: center; justify-content: center;
+    position: relative; cursor: pointer; border-radius: 10px;
+    font-weight: 700; color: #fff; transition: filter .15s, transform .15s;
+    padding: 0 40px;
+  }
+  .pyr-lv:hover { filter: brightness(1.12); transform: scale(1.01); }
+  .pyr-lv.selected { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .pyr-lv-1 { width: 220px; height: 62px; background: #0f172a; font-size: 14px; }
+  .pyr-lv-2 { width: 350px; height: 60px; background: #1e40af; font-size: 14px; }
+  .pyr-lv-3 { width: 470px; height: 58px; background: #0891b2; font-size: 13.5px; }
+  .pyr-lv-4 { width: 580px; height: 56px; background: #047857; font-size: 13.5px; }
+  .pyr-lv-5 { width: 680px; height: 56px; background: #64748b; font-size: 13px; }
+  .pyr-text  { text-align: center; line-height: 1.35; }
+  .pyr-cnt   { position: absolute; right: 16px; font-size: 12px; opacity: .85; font-weight: 900; }
 
-    .level.l5{ border-left:4px solid #ff8787; }
-    .level.l5::before{ background:#ff8787; }
+  .pyr-result { margin-top: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .pyr-rtitle { font-size: 13px; font-weight: 700; color: var(--text-2); margin-bottom: 10px; }
+  .pyr-doc-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; margin-bottom: 6px; }
+  .pyr-doc-item:last-child { margin-bottom: 0; }
+  .pyr-doc-name { flex: 1; font-weight: 600; }
+  .pyr-doc-link { color: var(--accent); font-size: 12px; text-decoration: none; }
+  .pyr-doc-link:hover { text-decoration: underline; }
+  .pyr-empty { color: var(--text-2); font-size: 13px; }
 
-    .level b{ font-size:14px; }
-    .level small{ display:block; margin-top:6px; color:var(--muted); line-height:1.5; }
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(40px);
+    background: #0f172a; color: #fff; font-size: 13px; font-weight: 600;
+    padding: 9px 20px; border-radius: 999px; opacity: 0;
+    transition: all .25s; pointer-events: none; z-index: 9999; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  [data-theme="dark"] .toast { background: #f8fafc; color: #0f172a; }
 
-    /* ===== 오른쪽 패널 ===== */
-    .panel{
-      border:1px solid var(--cardBd);
-      border-radius:18px;
-      padding:20px;
-      background:rgba(255,255,255,.02);
-      min-height: 360px;
-    }
-    .panel h2{ margin:0; font-size:16px; }
-    .panel p{ margin-top:8px; color:var(--muted); line-height:1.6; }
-
-    .flow{
-      margin-top:14px;
-      padding:12px;
-      border:1px dashed rgba(255,255,255,.12);
-      border-radius:14px;
-      font-size:13px;
-      color:var(--muted);
-      background: rgba(255,255,255,.92);
-      line-height: 1.7;
-    }
-  </style>
+  @media (max-width: 900px) {
+    .kpi-grid  { grid-template-columns: repeat(2,1fr); }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .f-field.span3 { grid-column: span 2; }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid  { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .f-field.span2, .f-field.span3 { grid-column: span 1; }
+    .pyr-lv-1 { width: 160px; } .pyr-lv-2 { width: 230px; }
+    .pyr-lv-3 { width: 290px; } .pyr-lv-4 { width: 330px; }
+    .pyr-lv-5 { width: 360px; }
+  }
+</style>
 </head>
-
 <body>
-  <div class="layout">
-    <!-- ✅ 다른 페이지들과 동일하게 유지 -->
-    <aside id="sidebarMount"></aside>
+<aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-    <main class="main">
-      <div class="wrap">
-        <div class="pageTitle">
-          <h1>문서체계</h1>
-          <p>실행 기반 운영 + Records 자동 생성 구조</p>
-          <div class="metaRow">
-            <span class="pill">Documents = 기준</span>
-            <span class="pill">Procedures = 실행</span>
-            <span class="pill">Records = Evidence</span>
-          </div>
-        </div>
-
-        <section class="board">
-          <div class="grid">
-            <div class="stack">
-              <div class="level l1" data-step="1">
-                <b>Level 1. Governance</b>
-                <small>정책 · 범위 · 역할 정의</small>
-              </div>
-
-              <div class="level l2" data-step="2">
-                <b>Level 2. Risk &amp; BIA</b>
-                <small>우선순위 · RTO · 복구 기준</small>
-              </div>
-
-              <div class="level l3" data-step="3">
-                <b>Level 3. Strategy &amp; Plans</b>
-                <small>DRP / BCP 전략 및 계획</small>
-              </div>
-
-              <div class="level l4" data-step="4">
-                <b>Level 4. Procedures</b>
-                <small>실행 중심 절차</small>
-              </div>
-
-              <div class="level l5" data-step="5">
-                <b>Level 5. Records / Evidence</b>
-                <small>Logs · Audit · Improvement</small>
-              </div>
-            </div>
-
-            <div class="panel">
-              <h2>Records = Logs/Evidence (v2 핵심)</h2>
-              <p>Incident → Decision → 실행 → Logs → Audit → Improvement → Governance 환류 구조</p>
-              <div class="flow">
-                Incident → YES/NO Gate → DRP/EOP/BCP 실행 → Logs 생성 → Audit → Improvement → Governance 업데이트
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
+  <!-- Hero -->
+  <div class="hero">
+    <h1>📄 문서체계</h1>
+    <p>BCMS 관련 문서를 등록·관리하고 ISO 22301 필수문서 충족 현황을 확인합니다.</p>
   </div>
 
-  <!-- ✅ 사이드바는 기존 방식 그대로: defer/async 없이 로드 -->
-  <script src="../assets/sidebar.js"></script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">전체 문서</div>
+      <div class="kpi-value" id="kTotal">0</div>
+      <div class="kpi-sub">등록된 문서 수</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">ISO 22301 필수문서 등록률</div>
+      <div class="kpi-value" id="kIso">0%</div>
+      <div class="kpi-sub">12개 항목 기준</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">최근 개정 문서</div>
+      <div class="kpi-value" id="kRecent" style="font-size:18px;word-break:break-all;">-</div>
+      <div class="kpi-sub" id="kRecentSub">최근 30일 기준</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">만료 임박 문서</div>
+      <div class="kpi-value" id="kExpiring">0</div>
+      <div class="kpi-sub">30일 이내 검토 필요</div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="list">📋 문서 목록</button>
+    <button class="tab-btn" data-tab="iso">✅ ISO 22301 필수문서</button>
+    <button class="tab-btn" data-tab="hierarchy">🗂 문서 체계도</button>
+  </div>
+
+  <!-- ══ Tab 1: Document list ══ -->
+  <div class="tab-pane active" id="tab-list">
+
+    <!-- Collapsible form -->
+    <div class="form-toggle" id="formToggle">
+      <h3>➕ 문서 등록<span class="form-title-edit" id="editBadge" style="display:none">✏️ 수정 중</span></h3>
+      <span class="toggle-chevron" id="toggleChevron">▼</span>
+    </div>
+    <div class="form-body" id="formBody">
+      <div class="form-grid">
+        <div class="f-field">
+          <label class="f-label">문서 ID (자동생성)</label>
+          <input class="f-inp" id="fId" type="text" readonly placeholder="저장 시 자동 생성"/>
+        </div>
+        <div class="f-field span2">
+          <label class="f-label">문서명 *</label>
+          <input class="f-inp" id="fName" type="text" placeholder="예: BCMS 업무연속성 방침서"/>
+        </div>
+        <div class="f-field">
+          <label class="f-label">문서 유형</label>
+          <select class="f-sel" id="fType">
+            <option value="policy">정책서 (Policy)</option>
+            <option value="procedure">절차서 (Procedure)</option>
+            <option value="guideline">지침서 (Guideline)</option>
+            <option value="form">양식 (Form/Template)</option>
+            <option value="record">기록 (Record)</option>
+            <option value="plan">계획서 (Plan)</option>
+          </select>
+        </div>
+        <div class="f-field">
+          <label class="f-label">문서 레벨</label>
+          <select class="f-sel" id="fLevel">
+            <option value="1">Level 1 – 정책/방침</option>
+            <option value="2">Level 2 – 절차서</option>
+            <option value="3">Level 3 – 지침/매뉴얼</option>
+            <option value="4">Level 4 – 양식/기록</option>
+            <option value="5">Level 5 – 증적/기록</option>
+          </select>
+        </div>
+        <div class="f-field">
+          <label class="f-label">버전</label>
+          <input class="f-inp" id="fVersion" type="text" placeholder="v1.0"/>
+        </div>
+        <div class="f-field">
+          <label class="f-label">제·개정일</label>
+          <input class="f-inp" id="fRevDate" type="date"/>
+        </div>
+        <div class="f-field">
+          <label class="f-label">다음 검토 예정일</label>
+          <input class="f-inp" id="fReviewDate" type="date"/>
+        </div>
+        <div class="f-field">
+          <label class="f-label">담당 부서</label>
+          <input class="f-inp" id="fDept" type="text" placeholder="예: IT본부"/>
+        </div>
+        <div class="f-field">
+          <label class="f-label">작성자</label>
+          <input class="f-inp" id="fAuthor" type="text" placeholder="성명"/>
+        </div>
+        <div class="f-field">
+          <label class="f-label">문서 상태</label>
+          <select class="f-sel" id="fStatus">
+            <option value="draft">초안</option>
+            <option value="review">검토중</option>
+            <option value="approved">승인</option>
+            <option value="obsolete">폐기</option>
+          </select>
+        </div>
+        <div class="f-field span3">
+          <label class="f-label">문서 링크/경로 (URL 또는 파일 경로)</label>
+          <input class="f-inp" id="fLink" type="text" placeholder="https://... 또는 \\server\docs\..."/>
+        </div>
+        <div class="f-field span3">
+          <label class="f-label">ISO 22301 연계 조항 (복수 선택)</label>
+          <div class="iso-cbs" id="isoCbs"></div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btnSave">문서 저장</button>
+        <button class="btn" id="btnCancel">취소</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <select class="f-sel-sm" id="fltType">
+        <option value="">유형 전체</option>
+        <option value="policy">정책서</option>
+        <option value="procedure">절차서</option>
+        <option value="guideline">지침서</option>
+        <option value="form">양식</option>
+        <option value="record">기록</option>
+        <option value="plan">계획서</option>
+      </select>
+      <select class="f-sel-sm" id="fltLevel">
+        <option value="">레벨 전체</option>
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+        <option value="4">Level 4</option>
+        <option value="5">Level 5</option>
+      </select>
+      <select class="f-sel-sm" id="fltStatus">
+        <option value="">상태 전체</option>
+        <option value="draft">초안</option>
+        <option value="review">검토중</option>
+        <option value="approved">승인</option>
+        <option value="obsolete">폐기</option>
+      </select>
+      <select class="f-sel-sm" id="fltDept"><option value="">부서 전체</option></select>
+      <input class="f-search" id="fltSearch" type="text" placeholder="문서명 검색..."/>
+      <button class="btn btn-sm" id="btnClearFilter">초기화</button>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>문서 ID</th>
+            <th>문서명</th>
+            <th>유형</th>
+            <th>레벨</th>
+            <th>버전</th>
+            <th>제·개정일</th>
+            <th>검토 예정일</th>
+            <th>담당부서</th>
+            <th>상태</th>
+            <th>링크</th>
+            <th style="width:100px;">관리</th>
+          </tr>
+        </thead>
+        <tbody id="docTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ Tab 2: ISO 22301 checklist ══ -->
+  <div class="tab-pane" id="tab-iso">
+    <div class="gauge-card">
+      <div class="gauge-head">
+        <span>ISO 22301 필수문서 등록률</span>
+        <span id="gaugeText">0 / 12</span>
+      </div>
+      <div class="gauge-bar"><div class="gauge-fill" id="gaugeFill" style="width:0%"></div></div>
+    </div>
+    <div class="iso-list" id="isoListEl"></div>
+  </div>
+
+  <!-- ══ Tab 3: Pyramid hierarchy ══ -->
+  <div class="tab-pane" id="tab-hierarchy">
+    <p style="font-size:13px;color:var(--text-2);margin:0 0 18px;">레벨을 클릭하면 해당 레벨의 등록 문서를 확인합니다.</p>
+    <div class="pyr-wrap">
+      <div class="pyr-lv pyr-lv-1" data-level="1">
+        <div class="pyr-text">Level 1<br>정책서 (BCMS 방침)</div>
+        <span class="pyr-cnt" id="pc1">0</span>
+      </div>
+      <div class="pyr-lv pyr-lv-2" data-level="2">
+        <div class="pyr-text">Level 2<br>절차서 (BCP, DRP, EOP 등)</div>
+        <span class="pyr-cnt" id="pc2">0</span>
+      </div>
+      <div class="pyr-lv pyr-lv-3" data-level="3">
+        <div class="pyr-text">Level 3<br>지침서 / 매뉴얼</div>
+        <span class="pyr-cnt" id="pc3">0</span>
+      </div>
+      <div class="pyr-lv pyr-lv-4" data-level="4">
+        <div class="pyr-text">Level 4<br>양식 / 템플릿</div>
+        <span class="pyr-cnt" id="pc4">0</span>
+      </div>
+      <div class="pyr-lv pyr-lv-5" data-level="5">
+        <div class="pyr-text">Level 5<br>기록 / 증적</div>
+        <span class="pyr-cnt" id="pc5">0</span>
+      </div>
+    </div>
+    <div class="pyr-result" id="pyrResult" style="display:none">
+      <div class="pyr-rtitle" id="pyrRTitle"></div>
+      <div id="pyrRList"></div>
+    </div>
+  </div>
+
+</div><!-- .wrap -->
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="../assets/sidebar.js"></script>
+<script>
+'use strict';
+
+/* ── Constants ── */
+const KEY = 'bcmsDocuments';
+
+const ISO_REQ = [
+  { clause:'4.3',  name:'BCMS 적용 범위'             },
+  { clause:'5.2',  name:'업무연속성 방침'             },
+  { clause:'8.2',  name:'업무영향분석 결과'           },
+  { clause:'8.3',  name:'리스크 평가 결과'            },
+  { clause:'6.2',  name:'업무연속성 목표'             },
+  { clause:'7.2',  name:'역량 증거'                   },
+  { clause:'9.1',  name:'모니터링·측정 결과'          },
+  { clause:'9.2',  name:'내부심사 프로그램 및 결과'   },
+  { clause:'9.3',  name:'경영검토 결과'               },
+  { clause:'10.1', name:'부적합 및 시정조치 결과'     },
+  { clause:'8.4',  name:'BCP (업무연속성계획)'        },
+  { clause:'8.5',  name:'훈련 및 시험 결과'           },
+];
+
+const ALL_CLAUSES = ['4.3','5.2','6.2','7.2','8.2','8.3','8.4','8.5','9.1','9.2','9.3','10.1'];
+
+const TYPE_LBL   = { policy:'정책서', procedure:'절차서', guideline:'지침서', form:'양식', record:'기록', plan:'계획서' };
+const STATUS_LBL = { draft:'초안', review:'검토중', approved:'승인', obsolete:'폐기' };
+const LEVEL_LBL  = { '1':'Level 1', '2':'Level 2', '3':'Level 3', '4':'Level 4', '5':'Level 5' };
+const PYR_LBL    = { '1':'정책서 (Level 1)', '2':'절차서 (Level 2)', '3':'지침서 (Level 3)', '4':'양식 (Level 4)', '5':'증적 (Level 5)' };
+
+/* ── Storage ── */
+const loadDocs = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
+const saveDocs = (d)  => localStorage.setItem(KEY, JSON.stringify(d));
+
+/* ── Utilities ── */
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg, ms = 2400) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+function today() { return new Date().toISOString().slice(0, 10); }
+function daysDiff(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  return Math.round((d - new Date()) / 86400000);
+}
+function reviewStatus(dateStr) {
+  const diff = daysDiff(dateStr);
+  if (diff === null) return '';
+  if (diff < 0)    return '<span class="bdg bdg-overdue">기한 초과</span>';
+  if (diff <= 30)  return '<span class="bdg bdg-warn">검토 필요</span>';
+  return '';
+}
+function genId(docs) {
+  const year = new Date().getFullYear();
+  const prefix = `DOC-${year}-`;
+  const nums = docs.filter(d => d.id.startsWith(prefix)).map(d => parseInt(d.id.slice(-3))).filter(n => !isNaN(n));
+  return `${prefix}${String(nums.length ? Math.max(...nums) + 1 : 1).padStart(3, '0')}`;
+}
+
+/* ── State ── */
+let editingId = null;
+let selectedLevel = null;
+
+/* ── ISO checkbox builder ── */
+(function buildIsoCbs() {
+  const wrap = document.getElementById('isoCbs');
+  wrap.innerHTML = ALL_CLAUSES.map(c =>
+    `<label class="iso-cb"><input type="checkbox" name="iso" value="${c}"> ${c}</label>`
+  ).join('');
+})();
+
+/* ── Tab switching ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'iso')       renderIso();
+    if (btn.dataset.tab === 'hierarchy') renderPyramid();
+  });
+});
+
+/* ── Collapsible form ── */
+document.getElementById('formToggle').addEventListener('click', () => {
+  const body    = document.getElementById('formBody');
+  const chevron = document.getElementById('toggleChevron');
+  const open    = body.classList.toggle('open');
+  chevron.classList.toggle('open', open);
+  if (open && !editingId) document.getElementById('fId').value = '';
+});
+
+/* ── Form: save ── */
+document.getElementById('btnSave').addEventListener('click', () => {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { toast('문서명을 입력하세요.'); return; }
+
+  const docs = loadDocs();
+  const iso  = [...document.querySelectorAll('#isoCbs input[name="iso"]:checked')].map(el => el.value);
+
+  if (editingId) {
+    const idx = docs.findIndex(d => d.id === editingId);
+    if (idx !== -1) {
+      docs[idx] = { ...docs[idx], ...gatherForm(), isoArticles: iso };
+    }
+    toast('문서가 수정되었습니다 ✓');
+  } else {
+    const newDoc = { id: genId(docs), ...gatherForm(), isoArticles: iso };
+    docs.push(newDoc);
+    toast('문서가 등록되었습니다 ✓');
+  }
+
+  saveDocs(docs);
+  resetForm();
+  renderAll();
+});
+
+function gatherForm() {
+  return {
+    name:       document.getElementById('fName').value.trim(),
+    type:       document.getElementById('fType').value,
+    level:      document.getElementById('fLevel').value,
+    version:    document.getElementById('fVersion').value.trim(),
+    revDate:    document.getElementById('fRevDate').value,
+    reviewDate: document.getElementById('fReviewDate').value,
+    dept:       document.getElementById('fDept').value.trim(),
+    author:     document.getElementById('fAuthor').value.trim(),
+    status:     document.getElementById('fStatus').value,
+    link:       document.getElementById('fLink').value.trim(),
+  };
+}
+
+/* ── Form: cancel / reset ── */
+document.getElementById('btnCancel').addEventListener('click', resetForm);
+
+function resetForm() {
+  editingId = null;
+  document.getElementById('editBadge').style.display = 'none';
+  document.getElementById('btnSave').textContent = '문서 저장';
+  ['fId','fName','fVersion','fRevDate','fReviewDate','fDept','fAuthor','fLink']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fType').value   = 'policy';
+  document.getElementById('fLevel').value  = '1';
+  document.getElementById('fStatus').value = 'draft';
+  document.querySelectorAll('#isoCbs input[name="iso"]').forEach(el => el.checked = false);
+  const body    = document.getElementById('formBody');
+  const chevron = document.getElementById('toggleChevron');
+  body.classList.remove('open');
+  chevron.classList.remove('open');
+}
+
+/* ── Edit doc ── */
+function editDoc(id) {
+  const doc = loadDocs().find(d => d.id === id);
+  if (!doc) return;
+  editingId = id;
+  document.getElementById('editBadge').style.display = '';
+  document.getElementById('btnSave').textContent = '수정 저장';
+  document.getElementById('fId').value         = doc.id;
+  document.getElementById('fName').value        = doc.name;
+  document.getElementById('fType').value        = doc.type;
+  document.getElementById('fLevel').value       = doc.level;
+  document.getElementById('fVersion').value     = doc.version    || '';
+  document.getElementById('fRevDate').value     = doc.revDate    || '';
+  document.getElementById('fReviewDate').value  = doc.reviewDate || '';
+  document.getElementById('fDept').value        = doc.dept       || '';
+  document.getElementById('fAuthor').value      = doc.author     || '';
+  document.getElementById('fStatus').value      = doc.status;
+  document.getElementById('fLink').value        = doc.link       || '';
+  document.querySelectorAll('#isoCbs input[name="iso"]').forEach(el => {
+    el.checked = (doc.isoArticles || []).includes(el.value);
+  });
+  const body    = document.getElementById('formBody');
+  const chevron = document.getElementById('toggleChevron');
+  body.classList.add('open');
+  chevron.classList.add('open');
+  document.getElementById('formBody').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+/* ── Delete doc ── */
+function deleteDoc(id) {
+  if (!confirm('이 문서를 삭제하시겠습니까?')) return;
+  saveDocs(loadDocs().filter(d => d.id !== id));
+  if (editingId === id) resetForm();
+  renderAll();
+  toast('삭제되었습니다');
+}
+
+/* ── Filters ── */
+['fltType','fltLevel','fltStatus','fltDept','fltSearch'].forEach(id => {
+  document.getElementById(id).addEventListener(id === 'fltSearch' ? 'input' : 'change', renderTable);
+});
+document.getElementById('btnClearFilter').addEventListener('click', () => {
+  ['fltType','fltLevel','fltStatus','fltDept'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fltSearch').value = '';
+  renderTable();
+});
+
+function getFilters() {
+  return {
+    type:   document.getElementById('fltType').value,
+    level:  document.getElementById('fltLevel').value,
+    status: document.getElementById('fltStatus').value,
+    dept:   document.getElementById('fltDept').value,
+    q:      document.getElementById('fltSearch').value.trim().toLowerCase(),
+  };
+}
+
+/* ── Render: KPI ── */
+function renderKpi(docs) {
+  document.getElementById('kTotal').textContent = docs.length;
+
+  // ISO rate
+  const clauses = new Set(docs.flatMap(d => d.isoArticles || []));
+  const isoRate = ISO_REQ.filter(r => clauses.has(r.clause)).length;
+  document.getElementById('kIso').textContent = Math.round(isoRate / ISO_REQ.length * 100) + '%';
+
+  // Recent revision (last 30 days)
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+  const recent = docs.filter(d => d.revDate && new Date(d.revDate) >= cutoff)
+    .sort((a,b) => b.revDate.localeCompare(a.revDate));
+  if (recent.length) {
+    document.getElementById('kRecent').textContent    = recent[0].name;
+    document.getElementById('kRecentSub').textContent = recent[0].revDate + ' 개정';
+  } else {
+    document.getElementById('kRecent').textContent    = '-';
+    document.getElementById('kRecentSub').textContent = '최근 30일 기준';
+  }
+
+  // Expiring
+  const expiring = docs.filter(d => { const diff = daysDiff(d.reviewDate); return diff !== null && diff >= 0 && diff <= 30; });
+  document.getElementById('kExpiring').textContent = expiring.length;
+}
+
+/* ── Render: Department filter ── */
+function refreshDeptFilter(docs) {
+  const depts = [...new Set(docs.map(d => d.dept).filter(Boolean))].sort();
+  const sel   = document.getElementById('fltDept');
+  const cur   = sel.value;
+  sel.innerHTML = '<option value="">부서 전체</option>' +
+    depts.map(d => `<option value="${esc(d)}"${d === cur ? ' selected' : ''}>${esc(d)}</option>`).join('');
+}
+
+/* ── Render: Table ── */
+function renderTable() {
+  const docs = loadDocs();
+  refreshDeptFilter(docs);
+  const { type, level, status, dept, q } = getFilters();
+
+  const rows = docs.filter(d =>
+    (!type   || d.type === type) &&
+    (!level  || d.level === level) &&
+    (!status || d.status === status) &&
+    (!dept   || d.dept === dept) &&
+    (!q      || d.name.toLowerCase().includes(q) || (d.id||'').toLowerCase().includes(q))
+  );
+
+  const tbody = document.getElementById('docTbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-row">등록된 문서가 없습니다.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(d => {
+    const statusCls = { draft:'bdg-draft', review:'bdg-review', approved:'bdg-approved', obsolete:'bdg-obsolete' }[d.status] || 'bdg-draft';
+    const linkHtml  = d.link ? `<a href="${esc(d.link)}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;">열기 ↗</a>` : '-';
+    const reviewBdg = reviewStatus(d.reviewDate);
+    return `<tr>
+      <td style="font-size:12px;font-weight:700;color:var(--text-2);">${esc(d.id)}</td>
+      <td style="font-weight:600;">${esc(d.name)}</td>
+      <td>${esc(TYPE_LBL[d.type] || d.type)}</td>
+      <td>${esc(LEVEL_LBL[d.level] || d.level)}</td>
+      <td>${esc(d.version || '-')}</td>
+      <td style="white-space:nowrap;">${esc(d.revDate || '-')}</td>
+      <td style="white-space:nowrap;">${esc(d.reviewDate || '-')} ${reviewBdg}</td>
+      <td>${esc(d.dept || '-')}</td>
+      <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[d.status] || d.status)}</span></td>
+      <td>${linkHtml}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm" onclick="editDoc('${esc(d.id)}')">수정</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteDoc('${esc(d.id)}')">삭제</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Render: ISO checklist ── */
+function renderIso() {
+  const docs    = loadDocs();
+  const clauses = new Set(docs.flatMap(d => d.isoArticles || []));
+  const regCount = ISO_REQ.filter(r => clauses.has(r.clause)).length;
+  const pct      = Math.round(regCount / ISO_REQ.length * 100);
+
+  document.getElementById('gaugeText').textContent = `${regCount} / ${ISO_REQ.length}`;
+  document.getElementById('gaugeFill').style.width = pct + '%';
+
+  document.getElementById('isoListEl').innerHTML = ISO_REQ.map((req, i) => {
+    const registered = clauses.has(req.clause);
+    const linked = docs.filter(d => (d.isoArticles || []).includes(req.clause));
+    const linkedHtml = linked.length
+      ? `<div class="iso-linked">연계: ${linked.map(d => esc(d.name)).join(', ')}</div>`
+      : '';
+    return `<div class="iso-item${registered ? ' registered' : ''}">
+      <div class="iso-icon">${registered ? '✅' : '⬜'}</div>
+      <div class="iso-meta">
+        <div class="iso-name">${i+1}. ${esc(req.name)}</div>
+        <div class="iso-clause">ISO 22301 조항 ${esc(req.clause)}</div>
+        ${linkedHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Render: Pyramid ── */
+function renderPyramid() {
+  const docs = loadDocs();
+  [1,2,3,4,5].forEach(lv => {
+    const cnt = docs.filter(d => String(d.level) === String(lv)).length;
+    document.getElementById('pc' + lv).textContent = cnt;
+  });
+  if (selectedLevel) showPyrLevel(selectedLevel, docs);
+}
+
+function showPyrLevel(lv, docs) {
+  selectedLevel = lv;
+  document.querySelectorAll('.pyr-lv').forEach(el => el.classList.toggle('selected', el.dataset.level === String(lv)));
+  const filtered = (docs || loadDocs()).filter(d => String(d.level) === String(lv));
+  const result   = document.getElementById('pyrResult');
+  const title    = document.getElementById('pyrRTitle');
+  const list     = document.getElementById('pyrRList');
+  title.textContent = `${PYR_LBL[lv]} 문서 목록 (${filtered.length}건)`;
+  if (!filtered.length) {
+    list.innerHTML = '<div class="pyr-empty">등록된 문서가 없습니다.</div>';
+  } else {
+    list.innerHTML = filtered.map(d => {
+      const link = d.link ? `<a class="pyr-doc-link" href="${esc(d.link)}" target="_blank" rel="noopener">열기 ↗</a>` : '';
+      return `<div class="pyr-doc-item">
+        <span class="bdg ${({ draft:'bdg-draft', review:'bdg-review', approved:'bdg-approved', obsolete:'bdg-obsolete' }[d.status] || 'bdg-draft')}">${esc(STATUS_LBL[d.status] || d.status)}</span>
+        <span class="pyr-doc-name">${esc(d.name)}</span>
+        <span style="font-size:12px;color:var(--text-2);">${esc(d.id)}</span>
+        ${link}
+      </div>`;
+    }).join('');
+  }
+  result.style.display = '';
+}
+
+document.querySelectorAll('.pyr-lv').forEach(el => {
+  el.addEventListener('click', () => showPyrLevel(el.dataset.level));
+});
+
+/* ── Expose for inline onclick ── */
+window.editDoc   = editDoc;
+window.deleteDoc = deleteDoc;
+
+/* ── Render all ── */
+function renderAll() {
+  const docs = loadDocs();
+  renderKpi(docs);
+  renderTable();
+}
+
+renderAll();
+</script>
+
+<button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+<script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>
