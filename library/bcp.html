@@ -3,595 +3,843 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BCMS Portal - BCP (업무 연속)</title>
+<title>BCMS - 업무연속성계획서 (BCP)</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
-  .btn{
-    padding:10px 14px; border-radius:10px; cursor:pointer;
-    border:1px solid rgba(15,23,42,.12);
-    background:#60a5fa; color:#0b1220; font-weight:800; font-size:15px;
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .main { overflow-x: hidden; min-width: 0; }
+  .wrap { max-width: 1000px; margin: 0 auto; overflow-x: hidden; }
+
+  /* ── 버튼 ── */
+  .btn {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); text-decoration: none; white-space: nowrap;
+    transition: background .15s; display: inline-block;
   }
-  .btn2{
-    padding:10px 14px; border-radius:10px; cursor:pointer;
-    border:1px solid rgba(15,23,42,.12);
-    background:#ffffff; color:#0f172a; font-weight:700; font-size:15px;
+  .btn:hover { background: var(--surface-hover); }
+  .btn.primary { background: var(--accent,#0070f3); color:#fff; border-color: var(--accent,#0070f3); }
+  .btn.primary:hover { opacity:.88; }
+  .btn.sm { padding: 4px 10px; font-size: 12px; }
+  .btn.danger { border-color:#dc2626; color:#dc2626; }
+  .btn.danger:hover { background:#fef2f2; }
+  [data-theme="dark"] .btn.danger:hover { background:#2a0000; }
+
+  /* ── 헤더 ── */
+  .pageHeader {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
   }
-  .mini{ opacity:.8; font-size:14px; line-height:1.6; }
-  .tag{
-    display:inline-block; padding:4px 10px; border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    font-size:13px; color:rgba(15,23,42,.72);
+  .pageHeader h1 { font-size: 22px; font-weight: 700; margin: 0; }
+  .headerBtns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* ── 메타 카드 ── */
+  .metaCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 16px 20px; margin-bottom: 16px;
+  }
+  .metaCard h3 { font-size: 13px; font-weight: 700; margin: 0 0 12px 0; color: var(--text-2); }
+  .metaGrid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 700px) { .metaGrid { grid-template-columns: 1fr 1fr; } }
+  .metaField label { display: block; font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 3px; }
+  .metaField input {
+    width: 100%; box-sizing: border-box; padding: 6px 8px;
+    border-radius: 7px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px; outline: none; font-family: inherit;
+  }
+  .metaField input:focus { border-color: var(--accent,#0070f3); }
+
+  /* ── accordion 섹션 ── */
+  .section {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); margin-bottom: 10px; overflow: hidden;
+  }
+  .sectionHead {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 18px; cursor: pointer;
+    border-left: 3px solid var(--accent,#0070f3);
+    background: var(--surface-hover);
+    user-select: none;
+  }
+  .sectionHead:hover { filter: brightness(1.03); }
+  .sectionTitle { font-size: 14px; font-weight: 800; color: var(--text); margin: 0; }
+  .sectionMeta  { font-size: 11px; color: var(--text-2); margin-left: 8px; }
+  .sectionLeft  { display: flex; align-items: center; gap: 4px; }
+  .sectionRight { display: flex; align-items: center; gap: 8px; }
+  .chevron { font-size: 12px; color: var(--text-2); transition: transform .2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .sectionBody { display: none; padding: 16px 18px; }
+  .sectionBody.open { display: block; }
+
+  /* 자동생성 영역 */
+  .autoArea {
+    background: rgba(0,112,243,.03); border: 0.5px solid rgba(0,112,243,.15);
+    border-radius: 8px; padding: 12px; margin-bottom: 10px;
+  }
+  [data-theme="dark"] .autoArea { background: rgba(0,112,243,.06); }
+  .autoLabel {
+    font-size: 11px; font-weight: 700; color: var(--accent,#0070f3);
+    margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .deptBlock{ margin-top:16px; }
-  .deptHead{
-    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
-    align-items:center; margin-bottom:10px;
+  /* ── 테이블 ── */
+  .tableWrap { overflow-x: auto; }
+  table.doc {
+    width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px;
   }
-  .deptTitle{ font-size:18px; font-weight:800; }
+  table.doc th {
+    text-align: left; font-size: 11px; font-weight: 700; color: var(--text-2);
+    padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    background: var(--surface);
+  }
+  table.doc td {
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: top; line-height: 1.4;
+  }
+  table.doc tr:last-child td { border-bottom: none; }
+  .emptyRow td { text-align: center; color: var(--text-2); padding: 20px !important; }
 
-  .tableWrap{ overflow-x:auto; }
-  table.bcpTable{
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0;
-    overflow:hidden;
-    border-radius:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    table-layout:fixed;
-    min-width: 1320px;
+  /* 인라인 편집 인풋 */
+  .cellInput, .cellSel {
+    width: 100%; box-sizing: border-box; padding: 5px 7px;
+    border-radius: 6px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12px; outline: none; font-family: inherit;
   }
-  table.bcpTable col.c1{ width:260px; }
-  table.bcpTable col.c2{ width:90px; }
-  table.bcpTable col.c3{ width:90px; }
-  table.bcpTable col.c4{ width:120px; }
-  table.bcpTable col.c5{ width:260px; }
-  table.bcpTable col.c6{ width:260px; }
-  table.bcpTable col.c7{ width:330px; }
-  table.bcpTable col.c8{ width:190px; }
+  .cellInput:focus, .cellSel:focus { border-color: var(--accent,#0070f3); }
+  .cellTa {
+    width: 100%; box-sizing: border-box; padding: 5px 7px;
+    border-radius: 6px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12px; outline: none; font-family: inherit;
+    resize: vertical; min-height: 48px;
+  }
+  .cellTa:focus { border-color: var(--accent,#0070f3); }
 
-  table.bcpTable th, table.bcpTable td{
-    padding:12px 12px;
-    border-bottom:1px solid rgba(15,23,42,.10);
-    vertical-align:middle;
-    font-size:14px;
-    line-height:1.35;
+  /* ── textarea 전용 ── */
+  .sectionTa {
+    width: 100%; box-sizing: border-box; padding: 10px 12px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px; outline: none; font-family: inherit;
+    resize: vertical; line-height: 1.6;
   }
-  table.bcpTable th{
-    background: rgba(255,255,255,.96);
-    font-weight:800;
-    color:#0f172a;
-    white-space:nowrap;
-  }
-  table.bcpTable tr:last-child td{ border-bottom:none; }
+  .sectionTa:focus { border-color: var(--accent,#0070f3); }
 
-  .cellLeft{ text-align:left; }
-  .cellCenter{ text-align:center; }
-
-  .procName{
-    font-weight:800;
-    font-size:15px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+  /* ── 단계별 복구절차 ── */
+  .stepList { display: flex; flex-direction: column; gap: 10px; }
+  .stepItem {
+    border: 0.5px solid var(--border); border-radius: 10px;
+    background: var(--bg); padding: 14px;
   }
-
-  input, textarea{
-    width:100%;
-    padding:10px 10px;
-    border-radius:10px;
-    border:1px solid rgba(15,23,42,.12);
-    background:#ffffff;
-    color:#0f172a;
-    outline:none;
-    font-size:14px;
-    line-height:1.35;
+  .stepHead { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .stepNum {
+    width: 26px; height: 26px; border-radius: 999px; flex-shrink: 0;
+    background: var(--accent,#0070f3); color: #fff;
+    font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;
   }
-  textarea{ min-height:46px; resize:vertical; }
-
-  .lvl{
-    display:inline-block;
-    padding:6px 12px;
-    border-radius:999px;
-    font-weight:900;
-    font-size:12px;
-    border:1px solid rgba(15,23,42,.12);
-    white-space:nowrap;
+  .stepGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 640px) { .stepGrid { grid-template-columns: 1fr; } }
+  .stepField label { display: block; font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 3px; }
+  .stepField input, .stepField textarea {
+    width: 100%; box-sizing: border-box; padding: 6px 8px;
+    border-radius: 7px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12px; outline: none; font-family: inherit;
   }
-  .lvl.Critical{ color:#fecaca; border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.12); }
-  .lvl.High{ color:#fed7aa; border-color: rgba(249,115,22,.5); background: rgba(249,115,22,.12); }
-  .lvl.Medium{ color:#fde68a; border-color: rgba(234,179,8,.5); background: rgba(234,179,8,.12); }
-  .lvl.Low{ color:#bbf7d0; border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.12); }
+  .stepField textarea { resize: vertical; min-height: 56px; }
+  .stepField input:focus, .stepField textarea:focus { border-color: var(--accent,#0070f3); }
+  .stepField.full { grid-column: 1 / -1; }
 
-  .linkRow{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-  .chip{
-    display:inline-block;
-    padding:7px 10px;
-    border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    color:rgba(15,23,42,.72);
-    text-decoration:none;
-    font-size:13px;
-    font-weight:800;
+  /* ── 행 추가 버튼 ── */
+  .addRowBtn {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 8px; padding: 6px 0;
+    font-size: 12px; font-weight: 600; color: var(--accent,#0070f3);
+    cursor: pointer; border: none; background: none;
   }
-  .chip:hover{ filter:brightness(1.08); }
+  .addRowBtn:hover { opacity: .75; }
 
-  .debugBox{
-    margin-top:12px;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    color:rgba(15,23,42,.72);
-    font-size:13px;
-    line-height:1.55;
-    display:none;
-    max-height:220px;
-    overflow:auto;
+  /* ── 저장 토스트 ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    background: #16a34a; color: #fff; opacity: 0; pointer-events: none;
+    transition: opacity .3s;
   }
-  .debugBox pre{
-    margin:8px 0 0;
-    padding:10px;
-    border-radius:10px;
-    background: rgba(0,0,0,.25);
-    border:1px solid rgba(15,23,42,.10);
-    overflow:auto;
-    max-height:120px;
+  .toast.show { opacity: 1; }
+
+  /* ── 링크 스타일 ── */
+  .infoLink { font-size: 13px; color: var(--accent,#0070f3); }
+
+  /* ── 인쇄 ── */
+  @media print {
+    aside, .headerBtns, .sectionRight button, .addRowBtn,
+    #themeToggle, .autoLabel button, .btn { display: none !important; }
+    html, body { background: #fff !important; color: #000 !important; overflow: visible !important; }
+    .main { padding: 0 !important; }
+    .wrap { max-width: 100% !important; padding: 0 12px !important; }
+    .section { border: 1px solid #ccc !important; break-inside: avoid; margin-bottom: 12px !important; }
+    .sectionBody { display: block !important; }
+    .sectionHead { background: #f5f5f5 !important; border-left-color: #0070f3 !important; }
+    .metaCard { border: 1px solid #ccc !important; }
+    table.doc th, table.doc td { border-color: #ccc !important; }
+    .autoArea { background: #f9f9f9 !important; border-color: #ccc !important; }
+    .cellInput, .cellTa, .cellSel, .sectionTa,
+    .stepField input, .stepField textarea {
+      border: 1px solid #ccc !important; background: #fff !important; color: #000 !important;
+    }
+    @page { size: A4; margin: 15mm; }
   }
 
-  /* ===== 카드형 보기 ===== */
-  .viewToggle{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-  .pillBtn{
-    padding:10px 14px; border-radius:999px; cursor:pointer;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    color:#0f172a; font-weight:900; font-size:14px;
+  @media (max-width: 640px) {
+    .pageHeader { flex-direction: column; }
+    .headerBtns { width: 100%; }
   }
-  .pillBtn.active{
-    background:#60a5fa; color:#0b1220;
-    border-color: rgba(96,165,250,.6);
-  }
-
-  .cardGrid{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap:12px;
-    margin-top:12px;
-  }
-  @media (max-width: 1100px){
-    .cardGrid{ grid-template-columns: 1fr; }
-  }
-
-  .procCard{
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:14px;
-    padding:14px;
-  }
-  .procTop{
-    display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
-  }
-  .procMeta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; opacity:.9; font-size:13px; }
-  .kv{
-    display:inline-flex; gap:6px; align-items:center;
-    padding:4px 10px; border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-  }
-  .warn{
-    margin-top:10px;
-    padding:10px 12px;
-    border-radius:12px;
-    border:1px solid rgba(239,68,68,.35);
-    background: rgba(239,68,68,.10);
-    color:#fecaca;
-    font-weight:800;
-    font-size:13px;
-  }
-  .fieldGrid{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:10px;
-    margin-top:12px;
-  }
-  @media (max-width: 900px){
-    .fieldGrid{ grid-template-columns: 1fr; }
-  }
-  .field label{
-    display:block; margin:0 0 6px; font-size:12px; opacity:.8; font-weight:800;
-  }
-  .cardLinks{ margin-top:12px; display:flex; justify-content:flex-end; }
 </style>
 </head>
-
 <body>
-
 <aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-<div class="main">
-  <div class="page-title">📄 BCP (업무 연속)</div>
-
-  <div class="card">
-    <div class="toolbar">
-      <div>
-        <h3 style="margin:0;">부서별 BCP 핵심업무 시트</h3>
-        <div class="mini" style="margin-top:8px;">
-          • 데이터 원천: BIA에서 저장한 <b>bcp_core_processes</b> (sessionStorage 우선)<br/>
-          • 이 페이지에서 입력한 대체자원/수동절차는 <b>bcp_plans</b>에 저장됩니다.
-        </div>
-      </div>
-
-      <div class="linkRow" style="gap:10px;">
-        <div class="viewToggle">
-          <button class="pillBtn" id="btnSheet" onclick="setView('sheet')">부서별 시트</button>
-          <button class="pillBtn" id="btnCard" onclick="setView('card')">프로세스 카드</button>
-        </div>
-
-        <button class="btn2" onclick="toggleDebug()">데이터 확인</button>
-        <button class="btn2" onclick="reloadFromBIA()">BIA 다시 불러오기</button>
-        <button class="btn" onclick="savePlans(true)">저장</button>
-      </div>
-    </div>
-
-    <div class="debugBox" id="debugBox">
-      <div><b>저장소 상태</b> (sessionStorage → localStorage 순으로 확인)</div>
-      <div id="debugText" style="margin-top:6px;"></div>
-      <pre id="debugJson"></pre>
+  <!-- 헤더 -->
+  <div class="pageHeader">
+    <h1>📋 업무연속성계획서 (BCP)</h1>
+    <div class="headerBtns">
+      <button class="btn primary" id="btnSave">💾 저장</button>
+      <button class="btn" onclick="window.print()">🖨️ 인쇄</button>
+      <a href="./index.html" class="btn">← 라이브러리</a>
+      <button id="themeToggle" class="btn">🌙 다크모드</button>
     </div>
   </div>
 
-  <div class="card" id="emptyBox" style="display:none;">
-    <h3>데이터가 없습니다</h3>
-    <div class="mini" style="margin-top:10px;">
-      BIA에서 부서/업무를 등록한 뒤 다시 와주세요.<br/>
-      (BIA 저장 키: <b>bcp_core_processes</b>)
-    </div>
-    <div style="margin-top:12px;">
-      <a class="chip" href="../risk-bia/bia.html">→ BIA로 이동</a>
+  <!-- 문서 메타 -->
+  <div class="metaCard">
+    <h3>📌 문서 정보</h3>
+    <div class="metaGrid">
+      <div class="metaField">
+        <label>문서번호</label>
+        <input type="text" id="metaDocNo" placeholder="BCP-2026-001"/>
+      </div>
+      <div class="metaField">
+        <label>버전</label>
+        <input type="text" id="metaVersion" placeholder="v1.0"/>
+      </div>
+      <div class="metaField">
+        <label>작성일</label>
+        <input type="date" id="metaCreated"/>
+      </div>
+      <div class="metaField">
+        <label>검토일</label>
+        <input type="date" id="metaReview"/>
+      </div>
+      <div class="metaField">
+        <label>작성자</label>
+        <input type="text" id="metaAuthor" placeholder="작성자명"/>
+      </div>
+      <div class="metaField">
+        <label>승인자</label>
+        <input type="text" id="metaApprover" placeholder="승인자명"/>
+      </div>
     </div>
   </div>
 
-  <div id="bcpArea"></div>
+  <!-- 섹션1: 목적 및 적용범위 -->
+  <div class="section" id="sec1">
+    <div class="sectionHead" onclick="toggleSec('sec1')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">1. 목적 및 적용범위</span>
+      </div>
+      <div class="sectionRight">
+        <span class="chevron open" id="chev-sec1">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec1">
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="btn sm" id="btnLoadPolicy">정책에서 자동 채우기</button>
+      </div>
+      <textarea class="sectionTa" id="sec1Text" rows="6"
+        placeholder="이 계획서의 목적과 적용 조직·업무 범위를 기술하세요.&#10;&#10;예) 본 계획서는 ISO 22301:2019 기반으로 작성되었으며, [조직명]의 핵심업무 중단 시 복구 목표(RTO/RPO)를 달성하고 비즈니스 연속성을 유지하기 위한 절차를 규정합니다."></textarea>
+    </div>
+  </div>
+
+  <!-- 섹션2: 핵심업무 복구전략 (자동생성) -->
+  <div class="section" id="sec2">
+    <div class="sectionHead" onclick="toggleSec('sec2')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">2. 핵심업무 복구전략</span>
+        <span class="sectionMeta" id="sec2meta"></span>
+      </div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();loadBCPStrategy()">데이터 새로고침</button>
+        <span class="chevron open" id="chev-sec2">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec2">
+      <div class="autoArea">
+        <div class="autoLabel"><span>⚡ bcmsBCPStrategy / bcmsBCP에서 자동 로드</span></div>
+        <div class="tableWrap" id="sec2table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 섹션3: 발동 조건 -->
+  <div class="section" id="sec3">
+    <div class="sectionHead" onclick="toggleSec('sec3')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">3. 발동 조건 및 초기 행동</span>
+        <span class="sectionMeta" id="sec3meta"></span>
+      </div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();loadActivation()">연속성절차에서 로드</button>
+        <span class="chevron open" id="chev-sec3">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec3">
+      <div class="autoArea">
+        <div class="autoLabel"><span>⚡ bcmsActivationProc에서 자동 로드</span></div>
+        <div class="tableWrap" id="sec3table"></div>
+      </div>
+      <button class="addRowBtn" onclick="addActivationRow()">＋ 행 추가</button>
+    </div>
+  </div>
+
+  <!-- 섹션4: 팀별 역할 및 책임 -->
+  <div class="section" id="sec4">
+    <div class="sectionHead" onclick="toggleSec('sec4')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">4. 팀별 역할 및 책임</span>
+        <span class="sectionMeta" id="sec4meta"></span>
+      </div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();loadOrgRegistry()">담당자 관리에서 로드</button>
+        <span class="chevron open" id="chev-sec4">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec4">
+      <div class="tableWrap" id="sec4table"></div>
+      <button class="addRowBtn" onclick="addRoleRow()">＋ 행 추가</button>
+    </div>
+  </div>
+
+  <!-- 섹션5: 단계별 복구 절차 -->
+  <div class="section" id="sec5">
+    <div class="sectionHead" onclick="toggleSec('sec5')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">5. 단계별 복구 절차</span>
+      </div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();addStep()">＋ 단계 추가</button>
+        <span class="chevron open" id="chev-sec5">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec5">
+      <div class="stepList" id="stepList"></div>
+    </div>
+  </div>
+
+  <!-- 섹션6: 비상연락망 -->
+  <div class="section" id="sec6">
+    <div class="sectionHead" onclick="toggleSec('sec6')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">6. 비상연락망</span>
+        <span class="sectionMeta" id="sec6meta"></span>
+      </div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();loadContacts()">담당자 관리에서 로드</button>
+        <span class="chevron open" id="chev-sec6">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec6">
+      <div class="tableWrap" id="sec6table"></div>
+      <button class="addRowBtn" onclick="addContactRow()">＋ 행 추가</button>
+    </div>
+  </div>
+
+  <!-- 섹션7: 문서 이력 -->
+  <div class="section" id="sec7">
+    <div class="sectionHead" onclick="toggleSec('sec7')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">7. 문서 이력</span>
+      </div>
+      <div class="sectionRight">
+        <span class="chevron open" id="chev-sec7">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec7">
+      <div class="tableWrap" id="sec7table"></div>
+      <button class="addRowBtn" onclick="addHistRow()">＋ 이력 추가</button>
+    </div>
+  </div>
+
 </div>
+</main>
+<div class="toast" id="toast">✓ 저장되었습니다</div>
 
 <script src="../assets/sidebar.js"></script>
-
 <script>
-  const KEY_CORE = "bcp_core_processes";
-  const KEY_PLAN = "bcp_plans";
+(function () {
+  'use strict';
 
-  let currentView = sessionStorage.getItem("bcp_view") || "sheet";
+  const KEY_DOC  = 'bcmsBCPDoc';
+  const KEY_META = 'bcmsBCPMeta';
 
-  function setView(v){
-    currentView = v;
-    sessionStorage.setItem("bcp_view", v);
-    const bs = document.getElementById("btnSheet");
-    const bc = document.getElementById("btnCard");
-    if(bs) bs.classList.toggle("active", v==="sheet");
-    if(bc) bc.classList.toggle("active", v==="card");
-    render();
+  /* ── 유틸 ── */
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const $ = id => document.getElementById(id);
+
+  function load(key, def) {
+    try { const v = localStorage.getItem(key); if (!v) return def; const p = JSON.parse(v); return p ?? def; }
+    catch { return def; }
+  }
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+
+  /* ── accordion ── */
+  window.toggleSec = function (id) {
+    const body = $('body-' + id);
+    const chev = $('chev-' + id);
+    if (!body) return;
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    if (chev) chev.classList.toggle('open', !isOpen);
+  };
+
+  /* ── 토스트 ── */
+  function showToast(msg) {
+    const t = $('toast');
+    t.textContent = msg ?? '✓ 저장되었습니다';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
   }
 
-  /* ✅ SOP/EOP/DRP 링크에 BCP 컨텍스트 붙이기 */
-  function buildProcLink(type, dept, processName, level){
-    const params = new URLSearchParams();
-    if(dept) params.set("dept", dept);
-    if(processName) params.set("process", processName);
-    if(level) params.set("level", level);
-    params.set("from", "bcp");
-    return `./${type}.html?` + params.toString();
-  }
+  /* ── 오늘 날짜 ── */
+  function todayStr() { return new Date().toISOString().split('T')[0]; }
 
-  // ✅ 어떤 형태로 오든 표준 필드로 맞춘다
-  function normalizeItem(raw){
-    const department = raw.department ?? raw.dept ?? raw.team ?? "미분류";
-    const processName = raw.processName ?? raw.process ?? raw.name ?? raw.coreProcess ?? "";
-    const mtpd = raw.mtpd ?? raw.MTPD ?? raw.maxTolerablePeriod ?? raw.maxTolerable ?? "";
-    const rto = raw.rto ?? raw.RTO ?? raw.recoveryTimeObjective ?? "";
-    const level = raw.level ?? raw.criticality ?? raw.critical ?? raw.priority ?? "Medium";
+  /* ── 상태 (in-memory) ── */
+  let state = {
+    sec1Text:      '',
+    activationRows: [],
+    roleRows:       [],
+    steps:          [],
+    contactRows:    [],
+    histRows:       [],
+  };
 
-    const lv = (""+level).toLowerCase();
-    let fixed = "Medium";
-    if(lv.includes("critical") || lv.includes("치명")) fixed = "Critical";
-    else if(lv.includes("high") || lv.includes("높")) fixed = "High";
-    else if(lv.includes("low") || lv.includes("낮")) fixed = "Low";
-    else if(lv.includes("medium") || lv.includes("중")) fixed = "Medium";
+  /* ── 기본 단계 템플릿 ── */
+  const DEFAULT_STEPS = [
+    { title: '비상사태 선포 및 대응팀 소집',   detail: '', owner: '', duration: '' },
+    { title: '피해 현황 파악 및 영향 평가',     detail: '', owner: '', duration: '' },
+    { title: '대체 운영 체계 가동',             detail: '', owner: '', duration: '' },
+    { title: '핵심업무 복구 실행',              detail: '', owner: '', duration: '' },
+    { title: '정상화 선언 및 사후 검토',        detail: '', owner: '', duration: '' },
+  ];
 
-    return { department, processName, mtpd, rto, level: fixed };
-  }
+  /* ── 불러오기 ── */
+  function loadDoc() {
+    const doc  = load(KEY_DOC, null);
+    const meta = load(KEY_META, {});
 
-  function safeJsonParse(v, fallback){
-    try{ return JSON.parse(v); }catch(e){ return fallback; }
-  }
+    // 메타
+    $('metaDocNo').value    = meta.docNo     ?? '';
+    $('metaVersion').value  = meta.version   ?? '';
+    $('metaCreated').value  = meta.created   ?? '';
+    $('metaReview').value   = meta.review    ?? '';
+    $('metaAuthor').value   = meta.author    ?? '';
+    $('metaApprover').value = meta.approver  ?? '';
 
-  function loadCoreRaw(){
-    const s = sessionStorage.getItem(KEY_CORE);
-    if(s) return { source:"sessionStorage", value: safeJsonParse(s, []) };
-
-    const l = localStorage.getItem(KEY_CORE);
-    if(l) return { source:"localStorage", value: safeJsonParse(l, []) };
-
-    const legacyKeys = ["bcp_core_process", "bcp_core", "core_processes"];
-    for(const k of legacyKeys){
-      const sv = sessionStorage.getItem(k);
-      if(sv) return { source:`sessionStorage(${k})`, value: safeJsonParse(sv, []) };
-      const lv = localStorage.getItem(k);
-      if(lv) return { source:`localStorage(${k})`, value: safeJsonParse(lv, []) };
-    }
-    return { source:"none", value: [] };
-  }
-
-  function loadCore(){
-    const raw = loadCoreRaw();
-    const arr = Array.isArray(raw.value) ? raw.value : [];
-    const normalized = arr.map(normalizeItem).filter(x=>x.processName);
-    return { source: raw.source, data: normalized, raw: arr };
-  }
-
-  function loadPlans(){
-    return safeJsonParse(sessionStorage.getItem(KEY_PLAN) || "{}", {});
-  }
-
-  function savePlans(showAlert){
-    const plans = loadPlans();
-    document.querySelectorAll("[data-plankey]").forEach(el=>{
-      const key = el.getAttribute("data-plankey");
-      if(!plans[key]) plans[key] = {};
-      plans[key][el.name] = el.value;
-    });
-    sessionStorage.setItem(KEY_PLAN, JSON.stringify(plans));
-    if(showAlert) alert("BCP 입력값을 저장했습니다. (sessionStorage: bcp_plans)");
-  }
-
-  function reloadFromBIA(){ render(); }
-
-  function groupByDept(core){
-    const map = {};
-    core.forEach(item=>{
-      const dept = item.department || "미분류";
-      if(!map[dept]) map[dept] = [];
-      map[dept].push(item);
-    });
-    return map;
-  }
-
-  function planKey(dept, processName){
-    return (dept + "||" + processName).replace(/\s+/g," ").trim();
-  }
-
-  // ✅ 디버그 UI
-  function toggleDebug(){
-    const box = document.getElementById("debugBox");
-    box.style.display = (box.style.display === "none" || !box.style.display) ? "block" : "none";
-    if(box.style.display === "block") refreshDebug();
-  }
-
-  function refreshDebug(){
-    const { source, data, raw } = loadCore();
-    const keysS = Object.keys(sessionStorage).filter(k=>k.includes("bcp") || k.includes("core")).sort();
-    const keysL = Object.keys(localStorage).filter(k=>k.includes("bcp") || k.includes("core")).sort();
-
-    document.getElementById("debugText").innerHTML =
-      `• Core source: <b>${source}</b><br/>` +
-      `• core rows(normalized): <b>${data.length}</b><br/>` +
-      `• sessionStorage keys: ${keysS.length ? keysS.join(", ") : "(없음)"}<br/>` +
-      `• localStorage keys: ${keysL.length ? keysL.join(", ") : "(없음)"}`;
-
-    const sample = raw && raw.length ? raw.slice(0,3) : [];
-    document.getElementById("debugJson").textContent =
-      JSON.stringify({sample_raw: sample, sample_normalized: data.slice(0,3)}, null, 2);
-  }
-
-  function renderCardView(core, plans, area){
-    const grid = document.createElement("div");
-    grid.className = "cardGrid";
-
-    core.forEach(item=>{
-      const dept = item.department || "미분류";
-      const pName = item.processName || "";
-      const k = planKey(dept, pName);
-      const saved = plans[k] || {};
-      const lvl = item.level || "Medium";
-
-      const warn = (Number(item.rto) > Number(item.mtpd)) ? `
-        <div class="warn">⚠ RTO가 MTPD를 초과합니다 (RTO ${item.rto}h / MTPD ${item.mtpd}h)</div>
-      ` : "";
-
-      const card = document.createElement("div");
-      card.className = "procCard";
-      card.innerHTML = `
-        <div class="procTop">
-          <div>
-            <div style="font-weight:900; font-size:16px;">${pName}</div>
-            <div class="procMeta">
-              <span class="kv">🏷 <b>${dept}</b></span>
-              <span class="kv">MTPD <b>${item.mtpd}h</b></span>
-              <span class="kv">RTO <b>${item.rto}h</b></span>
-            </div>
-          </div>
-          <div><span class="lvl ${lvl}">${lvl}</span></div>
-        </div>
-        ${warn}
-
-        <div class="fieldGrid">
-          <div class="field">
-            <label>대체 인력</label>
-            <input data-plankey="${k}" name="altPeople"
-              placeholder="예: 당직조/백업 담당자"
-              value="${String(saved.altPeople||"").replace(/"/g,"&quot;")}"
-            />
-          </div>
-
-          <div class="field">
-            <label>대체 장소</label>
-            <input data-plankey="${k}" name="altSite"
-              placeholder="예: DR센터/재택/대체 사무실"
-              value="${String(saved.altSite||"").replace(/"/g,"&quot;")}"
-            />
-          </div>
-
-          <div class="field" style="grid-column:1 / -1;">
-            <label>수동 절차</label>
-            <textarea data-plankey="${k}" name="manualProcedure"
-              placeholder="예: 수동 처리 절차 요약(핵심 단계/체크리스트)">${String(saved.manualProcedure||"")}</textarea>
-          </div>
-        </div>
-
-        <div class="cardLinks">
-          <div class="linkRow">
-            <a class="chip" href="${buildProcLink('sop', dept, pName, lvl)}">SOP</a>
-            <a class="chip" href="${buildProcLink('eop', dept, pName, lvl)}">EOP</a>
-            <a class="chip" href="${buildProcLink('drp', dept, pName, lvl)}">DRP</a>
-          </div>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-
-    area.appendChild(grid);
-  }
-
-  function render(){
-    const corePack = loadCore();
-    const core = corePack.data;
-    const plans = loadPlans();
-
-    const emptyBox = document.getElementById("emptyBox");
-    const area = document.getElementById("bcpArea");
-    area.innerHTML = "";
-
-    const bs = document.getElementById("btnSheet");
-    const bc = document.getElementById("btnCard");
-    if(bs) bs.classList.toggle("active", currentView==="sheet");
-    if(bc) bc.classList.toggle("active", currentView==="card");
-
-    if(!core || core.length === 0){
-      emptyBox.style.display = "block";
-      refreshDebug();
-      return;
-    }
-    emptyBox.style.display = "none";
-
-    if(currentView === "card"){
-      renderCardView(core, plans, area);
-      refreshDebug();
-      return;
+    if (doc) {
+      state.sec1Text       = doc.sec1Text       ?? '';
+      state.activationRows = arr(doc.activationRows);
+      state.roleRows       = arr(doc.roleRows);
+      state.steps          = arr(doc.steps).length > 0 ? arr(doc.steps) : DEFAULT_STEPS.map(s => ({ ...s }));
+      state.contactRows    = arr(doc.contactRows);
+      state.histRows       = arr(doc.histRows);
+    } else {
+      state.steps = DEFAULT_STEPS.map(s => ({ ...s }));
     }
 
-    const byDept = groupByDept(core);
+    $('sec1Text').value = state.sec1Text;
+  }
 
-    Object.keys(byDept).forEach(dept=>{
-      const rows = byDept[dept];
+  /* ── 저장 ── */
+  function saveAll() {
+    collectState();
+    const meta = {
+      docNo:    $('metaDocNo').value.trim(),
+      version:  $('metaVersion').value.trim(),
+      created:  $('metaCreated').value,
+      review:   $('metaReview').value,
+      author:   $('metaAuthor').value.trim(),
+      approver: $('metaApprover').value.trim(),
+      updatedAt: todayStr(),
+      savedAt:   todayStr(),
+    };
+    save(KEY_META, meta);
+    save(KEY_DOC,  { ...state });
+    showToast('✓ 저장되었습니다');
+  }
 
-      const block = document.createElement("div");
-      block.className = "deptBlock";
+  function collectState() {
+    state.sec1Text = $('sec1Text').value;
+    // activation
+    state.activationRows = collectTableRows('sec3table', ['type','condition','authority']);
+    // role
+    state.roleRows = collectTableRows('sec4table', ['role','name','contact','duties']);
+    // steps — 별도 수집
+    state.steps = collectSteps();
+    // contacts
+    state.contactRows = collectTableRows('sec6table', ['position','name','phone','email']);
+    // hist
+    state.histRows = collectTableRows('sec7table', ['version','date','editor','summary']);
+  }
 
-      const head = document.createElement("div");
-      head.className = "deptHead";
-      head.innerHTML = `
-        <div class="deptTitle">🏷 ${dept}</div>
-        <div class="mini">총 ${rows.length}건 · <span class="tag">BIA→BCP 연계</span></div>
-      `;
-      block.appendChild(head);
-
-      const wrap = document.createElement("div");
-      wrap.className = "tableWrap";
-
-      const table = document.createElement("table");
-      table.className = "bcpTable";
-      table.innerHTML = `
-        <colgroup>
-          <col class="c1"/><col class="c2"/><col class="c3"/><col class="c4"/>
-          <col class="c5"/><col class="c6"/><col class="c7"/><col class="c8"/>
-        </colgroup>
-        <thead>
-          <tr>
-            <th class="cellLeft">핵심업무</th>
-            <th class="cellCenter">MTPD</th>
-            <th class="cellCenter">RTO</th>
-            <th class="cellCenter">중요도</th>
-            <th class="cellLeft">대체 인력</th>
-            <th class="cellLeft">대체 장소</th>
-            <th class="cellLeft">수동 절차</th>
-            <th class="cellCenter">관련 문서</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      `;
-
-      const tbody = table.querySelector("tbody");
-
-      rows.forEach(item=>{
-        const pName = item.processName || "";
-        const k = planKey(dept, pName);
-        const saved = plans[k] || {};
-        const lvl = item.level || "Medium";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="cellLeft"><div class="procName" title="${String(pName).replace(/"/g,"&quot;")}">${pName}</div></td>
-          <td class="cellCenter">${item.mtpd !== "" ? item.mtpd : ""}h</td>
-          <td class="cellCenter">${item.rto !== "" ? item.rto : ""}h</td>
-          <td class="cellCenter"><span class="lvl ${lvl}">${lvl}</span></td>
-
-          <td class="cellLeft">
-            <input
-              data-plankey="${k}"
-              name="altPeople"
-              placeholder="예: 당직조/백업 담당자"
-              value="${String(saved.altPeople||"").replace(/"/g,"&quot;")}"
-            />
-          </td>
-
-          <td class="cellLeft">
-            <input
-              data-plankey="${k}"
-              name="altSite"
-              placeholder="예: DR센터/재택/대체 사무실"
-              value="${String(saved.altSite||"").replace(/"/g,"&quot;")}"
-            />
-          </td>
-
-          <td class="cellLeft">
-            <textarea
-              data-plankey="${k}"
-              name="manualProcedure"
-              placeholder="예: 수동 처리 절차 요약(핵심 단계/체크리스트)"
-            >${String(saved.manualProcedure||"")}</textarea>
-          </td>
-
-          <td class="cellCenter">
-            <div class="linkRow">
-              <a class="chip" href="${buildProcLink('sop', dept, pName, lvl)}">SOP</a>
-              <a class="chip" href="${buildProcLink('eop', dept, pName, lvl)}">EOP</a>
-              <a class="chip" href="${buildProcLink('drp', dept, pName, lvl)}">DRP</a>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
+  function collectTableRows(tableId, fields) {
+    const rows = [];
+    const tbody = $(`${tableId}`)?.querySelector('tbody');
+    if (!tbody) return rows;
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const obj = {};
+      fields.forEach(f => {
+        const el = tr.querySelector(`[data-field="${f}"]`);
+        if (el) obj[f] = el.value ?? el.textContent;
       });
-
-      wrap.appendChild(table);
-      block.appendChild(wrap);
-      area.appendChild(block);
+      rows.push(obj);
     });
-
-    refreshDebug();
+    return rows;
   }
 
-  // 최초 로드: 저장된 뷰로 시작
-  setView(currentView);
+  function collectSteps() {
+    const items = [];
+    $('stepList').querySelectorAll('.stepItem').forEach((item, i) => {
+      items.push({
+        title:    item.querySelector('[data-sf="title"]')?.value    ?? '',
+        detail:   item.querySelector('[data-sf="detail"]')?.value   ?? '',
+        owner:    item.querySelector('[data-sf="owner"]')?.value    ?? '',
+        duration: item.querySelector('[data-sf="duration"]')?.value ?? '',
+      });
+    });
+    return items;
+  }
 
-  // 자동 저장(알림 없음)
-  window.addEventListener("beforeunload", ()=>{
-    try{ savePlans(false); }catch(e){}
+  /* ── 섹션2: BCP 전략 ── */
+  function loadBCPStrategy() {
+    const raw   = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
+    const items = arr(Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []));
+    const confirmed = arr(load('bcmsPriorityConfirmed', []));
+    const wrap = $('sec2table');
+
+    if (items.length === 0) {
+      wrap.innerHTML = `<p style="font-size:13px;color:var(--text-2);padding:8px 0">
+        BCP 전략 데이터가 없습니다.
+        <a href="../strategy-plans/index.html" class="infoLink">→ BCP 전략 페이지에서 전략을 먼저 수립하세요</a>
+      </p>`;
+      $('sec2meta').textContent = '';
+      return;
+    }
+
+    $('sec2meta').textContent = `(${items.length}건)`;
+    let html = `<table class="doc">
+      <thead><tr>
+        <th>팀</th><th>핵심업무</th><th>RTO</th>
+        <th>복구전략 유형</th><th>BCP 전략 내용</th><th>필요자원</th>
+      </tr></thead><tbody>`;
+    items.forEach(b => {
+      html += `<tr>
+        <td>${esc(b.team ?? b.dept ?? '—')}</td>
+        <td>${esc(b.functionName ?? b.name ?? b.title ?? '—')}</td>
+        <td>${esc(b.rto ?? b.RTO ?? '—')}</td>
+        <td>${esc(b.strategyType ?? b.strategy ?? '—')}</td>
+        <td>${esc(b.strategyText ?? b.description ?? b.detail ?? '—')}</td>
+        <td>${esc(b.resources ?? b.resource ?? '—')}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+  }
+
+  /* ── 섹션3: 발동 조건 ── */
+  function renderActivation() {
+    const wrap = $('sec3table');
+    let html = `<table class="doc">
+      <thead><tr><th style="width:130px">발동조건 유형</th><th>구체적 조건</th><th style="width:120px">발동 권한자</th><th style="width:50px"></th></tr></thead>
+      <tbody>`;
+    if (state.activationRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="4">행을 추가하거나 연속성절차에서 로드하세요</td></tr>`;
+    } else {
+      state.activationRows.forEach((r, i) => {
+        html += activationRowHtml(r, i);
+      });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    $('sec3meta').textContent = state.activationRows.length > 0 ? `(${state.activationRows.length}건)` : '';
+  }
+
+  function activationRowHtml(r, i) {
+    return `<tr>
+      <td><input class="cellInput" data-field="type"      value="${esc(r.type ?? '')}"      placeholder="화재/침수/사이버 등"/></td>
+      <td><input class="cellInput" data-field="condition" value="${esc(r.condition ?? '')}" placeholder="구체적 조건 기술"/></td>
+      <td><input class="cellInput" data-field="authority" value="${esc(r.authority ?? '')}" placeholder="발동 권한자"/></td>
+      <td><button class="btn sm danger" onclick="delActivationRow(${i})">✕</button></td>
+    </tr>`;
+  }
+
+  window.loadActivation = function () {
+    const data = arr(load('bcmsActivationProc', []));
+    if (data.length > 0) {
+      state.activationRows = data.map(r => ({
+        type:      r.type ?? r.triggerType ?? r.conditionType ?? '',
+        condition: r.condition ?? r.detail ?? r.description ?? '',
+        authority: r.authority ?? r.authorizer ?? r.approver ?? '',
+      }));
+    }
+    renderActivation();
+  };
+
+  window.addActivationRow = function () {
+    collectState();
+    state.activationRows.push({ type:'', condition:'', authority:'' });
+    renderActivation();
+  };
+
+  window.delActivationRow = function (i) {
+    collectState();
+    state.activationRows.splice(i, 1);
+    renderActivation();
+  };
+
+  /* ── 섹션4: 역할/책임 ── */
+  function renderRoles() {
+    const wrap = $('sec4table');
+    let html = `<table class="doc">
+      <thead><tr><th style="width:120px">역할</th><th style="width:100px">담당자명</th><th style="width:120px">연락처</th><th>주요 책임</th><th style="width:50px"></th></tr></thead>
+      <tbody>`;
+    if (state.roleRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="5">행을 추가하거나 담당자 관리에서 로드하세요</td></tr>`;
+    } else {
+      state.roleRows.forEach((r, i) => {
+        html += roleRowHtml(r, i);
+      });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    $('sec4meta').textContent = state.roleRows.length > 0 ? `(${state.roleRows.length}건)` : '';
+  }
+
+  function roleRowHtml(r, i) {
+    return `<tr>
+      <td><input class="cellInput" data-field="role"   value="${esc(r.role ?? '')}"   placeholder="역할명"/></td>
+      <td><input class="cellInput" data-field="name"   value="${esc(r.name ?? '')}"   placeholder="성명"/></td>
+      <td><input class="cellInput" data-field="contact" value="${esc(r.contact ?? '')}" placeholder="전화번호"/></td>
+      <td><input class="cellInput" data-field="duties" value="${esc(r.duties ?? '')}" placeholder="주요 책임 요약"/></td>
+      <td><button class="btn sm danger" onclick="delRoleRow(${i})">✕</button></td>
+    </tr>`;
+  }
+
+  window.loadOrgRegistry = function () {
+    const data = arr(load('bcmsOrgRegistry', []));
+    if (data.length > 0) {
+      state.roleRows = data.map(r => ({
+        role:    r.role ?? r.position ?? r.title ?? '',
+        name:    r.name ?? r.memberName ?? '',
+        contact: r.phone ?? r.contact ?? r.tel ?? '',
+        duties:  r.duties ?? r.responsibility ?? r.description ?? '',
+      }));
+    }
+    renderRoles();
+  };
+
+  window.addRoleRow = function () {
+    collectState();
+    state.roleRows.push({ role:'', name:'', contact:'', duties:'' });
+    renderRoles();
+  };
+
+  window.delRoleRow = function (i) {
+    collectState();
+    state.roleRows.splice(i, 1);
+    renderRoles();
+  };
+
+  /* ── 섹션5: 복구 단계 ── */
+  function renderSteps() {
+    const list = $('stepList');
+    list.innerHTML = state.steps.map((s, i) => stepItemHtml(s, i)).join('');
+  }
+
+  function stepItemHtml(s, i) {
+    return `<div class="stepItem" data-si="${i}">
+      <div class="stepHead">
+        <span class="stepNum">${i + 1}</span>
+        <input style="flex:1;padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:700;outline:none;font-family:inherit"
+          data-sf="title" value="${esc(s.title)}" placeholder="단계 제목"/>
+        <button class="btn sm danger" onclick="delStep(${i})" style="flex-shrink:0">✕</button>
+      </div>
+      <div class="stepGrid">
+        <div class="stepField full">
+          <label>상세 내용</label>
+          <textarea data-sf="detail" rows="3" placeholder="단계별 상세 수행 내용">${esc(s.detail)}</textarea>
+        </div>
+        <div class="stepField">
+          <label>담당자</label>
+          <input data-sf="owner" value="${esc(s.owner)}" placeholder="담당자/팀명"/>
+        </div>
+        <div class="stepField">
+          <label>소요 시간</label>
+          <input data-sf="duration" value="${esc(s.duration)}" placeholder="예: 30분, 2시간"/>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  window.addStep = function () {
+    collectState();
+    state.steps.push({ title:'', detail:'', owner:'', duration:'' });
+    renderSteps();
+  };
+
+  window.delStep = function (i) {
+    collectState();
+    state.steps.splice(i, 1);
+    renderSteps();
+  };
+
+  /* ── 섹션6: 비상연락망 ── */
+  function renderContacts() {
+    const wrap = $('sec6table');
+    let html = `<table class="doc">
+      <thead><tr><th style="width:120px">직책</th><th style="width:100px">성명</th><th style="width:130px">전화</th><th>이메일</th><th style="width:50px"></th></tr></thead>
+      <tbody>`;
+    if (state.contactRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="5">행을 추가하거나 담당자 관리에서 로드하세요</td></tr>`;
+    } else {
+      state.contactRows.forEach((r, i) => {
+        html += contactRowHtml(r, i);
+      });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    $('sec6meta').textContent = state.contactRows.length > 0 ? `(${state.contactRows.length}건)` : '';
+  }
+
+  function contactRowHtml(r, i) {
+    return `<tr>
+      <td><input class="cellInput" data-field="position" value="${esc(r.position ?? '')}" placeholder="직책"/></td>
+      <td><input class="cellInput" data-field="name"     value="${esc(r.name ?? '')}"     placeholder="성명"/></td>
+      <td><input class="cellInput" data-field="phone"    value="${esc(r.phone ?? '')}"    placeholder="전화번호"/></td>
+      <td><input class="cellInput" data-field="email"    value="${esc(r.email ?? '')}"    placeholder="이메일"/></td>
+      <td><button class="btn sm danger" onclick="delContactRow(${i})">✕</button></td>
+    </tr>`;
+  }
+
+  window.loadContacts = function () {
+    const data = arr(load('bcmsOrgRegistry', []));
+    if (data.length > 0) {
+      state.contactRows = data.map(r => ({
+        position: r.role ?? r.position ?? r.title ?? '',
+        name:     r.name ?? r.memberName ?? '',
+        phone:    r.phone ?? r.contact ?? r.tel ?? '',
+        email:    r.email ?? '',
+      }));
+    }
+    renderContacts();
+  };
+
+  window.addContactRow = function () {
+    collectState();
+    state.contactRows.push({ position:'', name:'', phone:'', email:'' });
+    renderContacts();
+  };
+
+  window.delContactRow = function (i) {
+    collectState();
+    state.contactRows.splice(i, 1);
+    renderContacts();
+  };
+
+  /* ── 섹션7: 문서 이력 ── */
+  function renderHist() {
+    const wrap = $('sec7table');
+    let html = `<table class="doc">
+      <thead><tr><th style="width:80px">버전</th><th style="width:110px">수정일</th><th style="width:100px">수정자</th><th>수정 내용</th><th style="width:50px"></th></tr></thead>
+      <tbody>`;
+    if (state.histRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="5">이력을 추가하세요</td></tr>`;
+    } else {
+      state.histRows.forEach((r, i) => {
+        html += histRowHtml(r, i);
+      });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+  }
+
+  function histRowHtml(r, i) {
+    return `<tr>
+      <td><input class="cellInput" data-field="version" value="${esc(r.version ?? '')}" placeholder="v1.0"/></td>
+      <td><input class="cellInput" type="date" data-field="date" value="${esc(r.date ?? '')}"/></td>
+      <td><input class="cellInput" data-field="editor"  value="${esc(r.editor ?? '')}"  placeholder="수정자"/></td>
+      <td><input class="cellInput" data-field="summary" value="${esc(r.summary ?? '')}" placeholder="수정 내용 요약"/></td>
+      <td><button class="btn sm danger" onclick="delHistRow(${i})">✕</button></td>
+    </tr>`;
+  }
+
+  window.addHistRow = function () {
+    collectState();
+    state.histRows.push({ version:'', date: todayStr(), editor:'', summary:'' });
+    renderHist();
+  };
+
+  window.delHistRow = function (i) {
+    collectState();
+    state.histRows.splice(i, 1);
+    renderHist();
+  };
+
+  /* ── 정책 자동채우기 ── */
+  $('btnLoadPolicy').addEventListener('click', () => {
+    const pol = load('bcmsPolicyData', null);
+    if (!pol) { showToast('bcmsPolicyData 없음'); return; }
+    const scope = pol.scope ?? pol.applicability ?? pol.범위 ?? '';
+    const purpose = pol.purpose ?? pol.목적 ?? '';
+    const current = $('sec1Text').value.trim();
+    const append = [purpose, scope].filter(Boolean).join('\n\n');
+    if (append) {
+      $('sec1Text').value = current ? current + '\n\n' + append : append;
+      showToast('정책 데이터를 불러왔습니다');
+    } else {
+      showToast('bcmsPolicyData에 목적/범위 필드가 없습니다');
+    }
   });
+
+  /* ── 저장 버튼 ── */
+  $('btnSave').addEventListener('click', saveAll);
+
+  /* ── 다크모드 ── */
+  const htmlEl = document.documentElement;
+  const themeBtn = $('themeToggle');
+  function applyTheme(t) {
+    htmlEl.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
+    try { localStorage.setItem('bcmsTheme', t); } catch {}
+  }
+  try { const s = localStorage.getItem('bcmsTheme'); if (s) applyTheme(s); } catch {}
+  themeBtn.addEventListener('click', () =>
+    applyTheme(htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
+  );
+
+  /* ── 초기 렌더 ── */
+  loadDoc();
+  loadBCPStrategy();
+  loadActivation();
+  renderRoles();
+  renderSteps();
+  renderContacts();
+  renderHist();
+
+})();
 </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>
