@@ -3,203 +3,697 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BCMS Portal - SOP (평시 운영)</title>
+<title>BCMS Portal - 표준운영절차서 (SOP)</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-.grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media (max-width: 1000px){ .grid{ grid-template-columns:1fr; } }
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .main { overflow-x: hidden; min-width: 0; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px 40px; }
 
-.pill{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid rgba(15,23,42,.12);
-  background: rgba(255,255,255,.96);
-  font-size:13px;
-  color:rgba(15,23,42,.72);
-  margin-right:8px;
-  margin-bottom:8px;
-}
+  /* ── 헤더 ── */
+  .pageHeader {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+  }
+  .pageHeader h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px 0; }
+  .pageHeader .desc { font-size: 13px; color: var(--text-2); margin: 0; }
+  .headerRight { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); text-decoration: none; white-space: nowrap;
+    transition: background .15s; display: inline-block;
+  }
+  .btn:hover { background: var(--surface-hover); }
+  .btn.primary { background: var(--accent, #0070f3); color: #fff; border-color: var(--accent, #0070f3); }
+  .btn.primary:hover { opacity: .88; }
+  .btn.danger { background: #dc2626; color: #fff; border-color: #dc2626; }
+  .btn.danger:hover { opacity: .85; }
 
-.mini{ opacity:.8; font-size:14px; line-height:1.6; }
+  /* ── 2열 레이아웃 ── */
+  .sopLayout {
+    display: flex; border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); overflow: hidden;
+    height: calc(100vh - 185px); min-height: 520px;
+  }
 
-.ctx{
-  display:none;
-  margin-top:12px;
-  padding:12px;
-  border-radius:14px;
-  border:1px solid rgba(15,23,42,.12);
-  background: rgba(255,255,255,.94);
-}
+  /* ── 좌측 목록 패널 ── */
+  .sopListPanel {
+    width: 280px; flex-shrink: 0;
+    border-right: 0.5px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .listSearch {
+    padding: 12px; border-bottom: 0.5px solid var(--border);
+    display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;
+  }
+  .listSearch input, .listSearch select {
+    width: 100%; box-sizing: border-box; padding: 6px 10px;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 12px; font-family: inherit;
+  }
+  .sopListItems { flex: 1; overflow-y: auto; }
+  .sopItem {
+    padding: 10px 14px; cursor: pointer;
+    border-bottom: 0.5px solid var(--border); transition: background .1s;
+  }
+  .sopItem:last-child { border-bottom: none; }
+  .sopItem:hover { background: var(--surface-hover); }
+  .sopItem.active {
+    background: rgba(0,112,243,.08);
+    border-left: 3px solid var(--accent, #0070f3);
+    padding-left: 11px;
+  }
+  .sopItemNo { font-size: 11px; color: var(--text-2); margin-bottom: 2px; font-weight: 600; }
+  .sopItemTitle {
+    font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .catBadge {
+    font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+    background: rgba(0,112,243,.08); color: var(--accent, #0070f3);
+    border: 1px solid rgba(0,112,243,.2); display: inline-block;
+  }
+  .emptyList {
+    padding: 24px 14px; font-size: 13px; color: var(--text-2);
+    text-align: center; line-height: 1.7;
+  }
 
-.docCard{
-  border:1px solid rgba(15,23,42,.12);
-  background: rgba(255,255,255,.94);
-  border-radius:14px;
-  padding:14px;
-  margin-top:12px;
-}
-.docTitle{
-  font-weight:900;
-  font-size:15px;
-}
-.docMeta{
-  margin-top:8px;
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
+  /* ── 우측 상세 편집 패널 ── */
+  .sopDetailPanel { flex: 1; min-width: 0; overflow-y: auto; padding: 24px; }
+  .emptyState { font-size: 14px; color: var(--text-2); padding: 60px 0; text-align: center; }
+
+  /* ── 폼 ── */
+  .detailForm { display: flex; flex-direction: column; gap: 14px; }
+  .formGrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .formGrid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .formField { display: flex; flex-direction: column; gap: 4px; }
+  .formField label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+  .formField input, .formField select, .formField textarea {
+    padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit;
+    transition: border-color .15s;
+  }
+  .formField input:focus, .formField select:focus, .formField textarea:focus {
+    border-color: var(--accent, #0070f3); outline: none;
+  }
+  .formField textarea { resize: vertical; }
+  .formField input.readonly {
+    background: rgba(0,0,0,.04); color: var(--text-2); cursor: default;
+  }
+  [data-theme="dark"] .formField input.readonly { background: rgba(255,255,255,.05); }
+
+  /* ── 단계별 절차 ── */
+  .stepsSection { display: flex; flex-direction: column; gap: 8px; }
+  .stepsSectionHeader {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .sectionLabel { font-size: 13px; font-weight: 700; color: var(--text); }
+  .btnSm {
+    padding: 4px 10px; font-size: 12px; font-weight: 600; border-radius: 6px;
+    cursor: pointer; border: 1px solid var(--accent, #0070f3);
+    background: transparent; color: var(--accent, #0070f3);
+  }
+  .btnSm:hover { background: rgba(0,112,243,.08); }
+  .tableWrap { overflow-x: auto; }
+  .stepsTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stepsTable th {
+    background: rgba(0,0,0,.04); font-size: 11px; font-weight: 700; padding: 6px 8px;
+    text-align: left; border-bottom: 1px solid var(--border); color: var(--text-2);
+  }
+  [data-theme="dark"] .stepsTable th { background: rgba(255,255,255,.05); }
+  .stepsTable td { padding: 3px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .stepsTable tr:last-child td { border-bottom: none; }
+  .stepsTable input[type="text"], .stepsTable input[type="number"] {
+    width: 100%; box-sizing: border-box; padding: 5px 7px;
+    border: 1px solid transparent; border-radius: 4px;
+    background: transparent; color: var(--text); font-size: 13px; font-family: inherit;
+  }
+  .stepsTable input[type="text"]:focus, .stepsTable input[type="number"]:focus {
+    border-color: var(--accent, #0070f3); background: var(--bg); outline: none;
+  }
+  .btnDel {
+    width: 26px; height: 26px; border-radius: 4px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-2); cursor: pointer; font-size: 12px;
+  }
+  .btnDel:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+  [data-theme="dark"] .btnDel:hover { background: rgba(220,38,38,.2); border-color: rgba(220,38,38,.4); }
+
+  /* ── 하단 버튼 ── */
+  .detailActions {
+    display: flex; gap: 8px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── 토스트 ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: #111; color: #fff; padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none;
+    transform: translateY(8px); transition: opacity .25s, transform .25s;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── 인쇄 전용 ── */
+  #printAll { display: none; }
+
+  @media print {
+    aside, .headerRight { display: none !important; }
+    .sopLayout { display: none !important; }
+    #printAll { display: block !important; }
+    .wrap { max-width: none; padding: 0; }
+    .pageHeader h1 { font-size: 18px; margin-bottom: 16px; }
+    .pageHeader .desc { display: none; }
+    .printSOP { page-break-inside: avoid; margin-bottom: 28px; }
+    .printSOP h2 { font-size: 15px; margin: 0 0 10px 0; font-weight: 700; }
+    .printMeta { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+    .printMeta td { padding: 4px 8px; border: 1px solid #ccc; }
+    .printSteps { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+    .printSteps th, .printSteps td { padding: 5px 8px; border: 1px solid #ccc; text-align: left; }
+    .printSteps th { background: #f0f0f0; font-weight: 700; }
+    .printDivider { border: none; border-top: 2px solid #555; margin: 24px 0; }
+    .printP { font-size: 12px; margin: 4px 0; }
+    .printRelated { font-size: 12px; margin-top: 8px; }
+  }
+
+  @media (max-width: 720px) {
+    .sopLayout { flex-direction: column; height: auto; min-height: unset; }
+    .sopListPanel { width: 100%; border-right: none; border-bottom: 0.5px solid var(--border); height: 220px; }
+    .formGrid2, .formGrid3 { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
-
 <body>
 <aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-<div class="main">
-  <div class="page-title">🧾 SOP (평시 운영)</div>
-
-  <!-- BCP 연계 컨텍스트 -->
-  <div class="card ctx" id="ctxBox">
-    <div><b>🔗 BCP 연계 컨텍스트로 진입했습니다</b></div>
-    <div class="mini" style="margin-top:6px;">
-      해당 부서/핵심업무 기준으로 SOP 문서를 자동 필터링합니다.
+  <!-- 헤더 -->
+  <div class="pageHeader">
+    <div>
+      <h1>📄 표준운영절차서 (SOP)</h1>
+      <p class="desc">BCMS 운영과 관련된 표준절차를 등록·관리합니다.</p>
     </div>
-    <div id="ctxBadges" style="margin-top:8px;"></div>
+    <div class="headerRight">
+      <button onclick="addSOP()" class="btn primary">+ 절차 추가</button>
+      <button onclick="saveAll()" class="btn">전체 저장</button>
+      <button onclick="window.print()" class="btn">🖨️ 인쇄</button>
+      <a href="./index.html" class="btn">← 라이브러리</a>
+      <button id="themeToggle" class="btn">🌙 다크모드</button>
+    </div>
   </div>
 
-  <!-- SOP 문서 목록 -->
-  <div class="card">
-    <h3>SOP 문서 목록</h3>
-    <div id="docList"></div>
+  <!-- 2열 레이아웃 -->
+  <div class="sopLayout">
+
+    <!-- 좌측: 목록 패널 -->
+    <div class="sopListPanel">
+      <div class="listSearch">
+        <input type="text" id="searchInput" placeholder="🔍 SOP 번호 또는 제목 검색"/>
+        <select id="categoryFilter">
+          <option value="">전체 카테고리</option>
+          <option value="훈련·점검">훈련·점검</option>
+          <option value="문서관리">문서관리</option>
+          <option value="리스크관리">리스크관리</option>
+          <option value="BCP운영">BCP운영</option>
+          <option value="비상대응">비상대응</option>
+          <option value="IT복구">IT복구</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="sopListItems" id="sopListItems"></div>
+    </div>
+
+    <!-- 우측: 상세 편집 패널 -->
+    <div class="sopDetailPanel" id="sopDetailPanel">
+      <div class="emptyState">← 좌측에서 절차를 선택하거나 [+ 절차 추가]를 클릭하세요.</div>
+    </div>
+
   </div>
+
+  <!-- 인쇄 전용 영역 -->
+  <div id="printAll"></div>
+
 </div>
+</main>
+
+<div id="toast" class="toast"></div>
 
 <script src="../assets/sidebar.js"></script>
-<script src="../assets/response-assets.js"></script>
-
 <script>
-/* ===============================
-   📚 더미 SOP 데이터 모델
-=================================*/
-const SOP_DATA = [
-  {
-    id:"SOP-001",
-    title:"IDC 일일 운영 점검 체크리스트",
-    dept:"IT 인프라팀",
-    process:"IDC 운영",
-    level:"Critical",
-    type:"일일점검",
-    version:"v1.0"
-  },
-  {
-    id:"SOP-002",
-    title:"IDC 백업 점검 절차",
-    dept:"IT 인프라팀",
-    process:"IDC 운영",
-    level:"Critical",
-    type:"백업관리",
-    version:"v1.1"
-  },
-  {
-    id:"SOP-003",
-    title:"침해사고 로그 분석 절차",
-    dept:"정보보안팀",
-    process:"침해사고 대응",
-    level:"Critical",
-    type:"보안운영",
-    version:"v2.0"
-  },
-  {
-    id:"SOP-004",
-    title:"고객 공지 작성 가이드",
-    dept:"고객지원팀",
-    process:"고객 공지/상담 운영",
-    level:"High",
-    type:"고객응대",
-    version:"v1.0"
-  },
-  {
-    id:"SOP-005",
-    title:"시설 정기 점검 체크리스트",
-    dept:"시설/안전팀",
-    process:"시설 점검/복구 지원",
-    level:"Medium",
-    type:"시설관리",
-    version:"v1.3"
-  }
-];
+(function () {
+  'use strict';
 
-/* ===============================
-   🔍 쿼리 읽기
-=================================*/
-const qs = new URLSearchParams(location.search);
-const dept = qs.get("dept");
-const process = qs.get("process");
-const level = qs.get("level");
-const focus = (window.ResponseAssetRegistry && ResponseAssetRegistry.readFocusTarget) ? ResponseAssetRegistry.readFocusTarget() : {};
-const focusMatched = focus.source === 'incident_recommendation' && focus.assetId === 'library-sop-main';
+  /* ── 유틸 ── */
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-/* ===============================
-   🔗 컨텍스트 표시
-=================================*/
-function renderContext(){
-  if(!(dept || process || level || focusMatched)) return;
-
-  document.getElementById("ctxBox").style.display="block";
-  const badges = document.getElementById("ctxBadges");
-  badges.innerHTML = '';
-
-  if(focusMatched) {
-    badges.innerHTML += `<span class="pill">Incident: ${focus.incidentId || '-'}</span>`;
-    if (focus.serviceName) badges.innerHTML += `<span class="pill">영향 서비스: ${focus.serviceName}</span>`;
+  function load(key, def) {
+    try {
+      const v = localStorage.getItem(key);
+      if (!v) return def;
+      const p = JSON.parse(v);
+      return (p !== null && p !== undefined) ? p : def;
+    } catch { return def; }
   }
 
-  if(dept) badges.innerHTML += `<span class="pill">부서: ${dept}</span>`;
-  if(process) badges.innerHTML += `<span class="pill">핵심업무: ${process}</span>`;
-  if(level) badges.innerHTML += `<span class="pill">중요도: ${level}</span>`;
-}
-
-/* ===============================
-   📄 문서 목록 렌더
-=================================*/
-function renderDocs(){
-  let filtered = SOP_DATA;
-
-  if(dept){
-    filtered = filtered.filter(d => d.dept === dept);
-  }
-  if(process){
-    filtered = filtered.filter(d => d.process === process);
+  function save(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
   }
 
-  const container = document.getElementById("docList");
-  container.innerHTML="";
+  /* ── BASE 경로 ── */
+  const BASE = (() => {
+    const p = window.location.pathname;
+    const m = p.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports)\/)/);
+    return m ? m[1] : '';
+  })();
 
-  if(filtered.length === 0){
-    container.innerHTML = `<div class="mini">조건에 맞는 SOP 문서가 없습니다.</div>`;
-    return;
+  /* ── 카테고리 목록 ── */
+  const CATEGORIES = ['훈련·점검','문서관리','리스크관리','BCP운영','비상대응','IT복구','기타'];
+
+  /* ── 기본 SOP 5개 템플릿 ── */
+  const DEFAULT_SOPS = [
+    {
+      id: 'SOP-001', title: 'BCMS 문서 검토 및 승인 절차', category: '문서관리',
+      version: '1.0', createdAt: '', reviewAt: '', author: '',
+      purpose: 'BCMS 관련 문서(정책서·절차서·지침서·양식)의 작성, 검토, 승인 절차를 표준화하여 문서 품질 및 일관성을 유지한다.',
+      scope: 'BCMS 범위 내 모든 관리 문서 (정책서, 절차서, 지침서, 양식 포함)',
+      steps: [
+        { no: 1, action: '문서 초안 작성 및 제출', owner: '문서 작성자', note: '양식 기준 준수' },
+        { no: 2, action: '부서장 1차 검토', owner: '부서장', note: '내용 적절성 확인' },
+        { no: 3, action: 'BCMS 담당자 적합성 검토', owner: 'BCMS 담당자', note: 'ISO 22301 요건 확인' },
+        { no: 4, action: '경영진 최종 승인', owner: '담당 임원', note: '주요 문서 한정' },
+        { no: 5, action: '문서 배포 및 전 직원 공지', owner: 'BCMS 담당자', note: '버전 관리 기록' },
+      ],
+      relatedDocs: 'BCMS 정책서, 문서관리 지침서',
+    },
+    {
+      id: 'SOP-002', title: '리스크 평가 주기적 검토 절차', category: '리스크관리',
+      version: '1.0', createdAt: '', reviewAt: '', author: '',
+      purpose: 'BCMS 리스크를 정기적으로 식별·평가·검토하여 경영환경 변화에 대응하고 핵심업무의 연속성을 확보한다.',
+      scope: 'BCMS 범위 내 모든 핵심업무 관련 리스크 (반기 1회 이상 실시)',
+      steps: [
+        { no: 1, action: '리스크 목록 현행화 (신규·변경 리스크 식별)', owner: 'BCMS 담당자', note: '반기 1회' },
+        { no: 2, action: '리스크 평가 워크숍 개최', owner: '부서별 담당자', note: '영향도·가능성 평가' },
+        { no: 3, action: '리스크 점수 산출 및 우선순위 결정', owner: 'BCMS 담당자', note: '리스크 매트릭스 적용' },
+        { no: 4, action: '리스크 대응 방안 검토 및 확정', owner: '관련 부서 협의', note: '수용·회피·경감·전가' },
+        { no: 5, action: '경영진 보고 및 승인', owner: 'BCMS 담당자', note: '반기 보고서 제출' },
+        { no: 6, action: '시스템 업데이트 및 모니터링 지속', owner: 'BCMS 담당자', note: '리스크 현황판 갱신' },
+      ],
+      relatedDocs: 'BIA 보고서, 리스크 평가 양식, BCMS 정책서',
+    },
+    {
+      id: 'SOP-003', title: 'BCP 훈련 계획 수립 절차', category: '훈련·점검',
+      version: '1.0', createdAt: '', reviewAt: '', author: '',
+      purpose: 'BCP 훈련의 목표·범위·시나리오·일정을 체계적으로 수립하여 훈련의 효과성과 실효성을 확보한다.',
+      scope: 'BCMS 범위 내 BCP 훈련 전반 (탁상 훈련, 모의훈련, 전체 훈련 포함)',
+      steps: [
+        { no: 1, action: '훈련 목표 및 범위 설정', owner: 'BCMS 담당자', note: '전년도 결과 반영' },
+        { no: 2, action: '훈련 시나리오 개발', owner: '훈련 기획팀', note: '현실적 시나리오 선정' },
+        { no: 3, action: '훈련 일정 및 참여 부서 확정', owner: '부서장 협의', note: '연간 계획에 포함' },
+        { no: 4, action: '훈련 사전 교육 실시', owner: 'BCMS 담당자', note: '훈련 1주 전 완료' },
+        { no: 5, action: '훈련 실시 및 결과 기록', owner: '훈련 진행자', note: '관찰 및 증거 수집' },
+        { no: 6, action: '훈련 결과 보고 및 개선사항 도출', owner: 'BCMS 담당자', note: '사후 보고서 작성' },
+      ],
+      relatedDocs: 'BCP 절차서, 훈련 계획서, CAPA 등록부',
+    },
+    {
+      id: 'SOP-004', title: '내부심사 실시 절차', category: 'BCP운영',
+      version: '1.0', createdAt: '', reviewAt: '', author: '',
+      purpose: 'ISO 22301 요건에 따라 BCMS 내부심사를 체계적으로 실시하고 부적합사항을 식별하여 지속적 개선을 도모한다.',
+      scope: 'BCMS 전 범위 (정책, 절차, 운영, 성과 포함, 연 1회 이상)',
+      steps: [
+        { no: 1, action: '연간 내부심사 계획 수립', owner: '내부심사팀장', note: '연 1회 이상' },
+        { no: 2, action: '심사원 선발 및 독립성 확보', owner: 'BCMS 담당자', note: '피심사 부서와 독립' },
+        { no: 3, action: '심사 체크리스트 준비', owner: '심사원', note: 'ISO 22301 조항 기준' },
+        { no: 4, action: '현장 심사 실시 (인터뷰·문서 검토)', owner: '심사팀', note: '증거 기록 필수' },
+        { no: 5, action: '부적합사항 정리 및 심사 보고서 작성', owner: '심사원', note: '근거 문서 포함' },
+        { no: 6, action: '시정조치 요청 및 CAPA 등록', owner: '내부심사팀장', note: '기한 지정 필수' },
+      ],
+      relatedDocs: 'BCMS 내부심사 절차, ISO 22301 체크리스트, CAPA 등록부',
+    },
+    {
+      id: 'SOP-005', title: 'CAPA 개선조치 처리 절차', category: 'BCP운영',
+      version: '1.0', createdAt: '', reviewAt: '', author: '',
+      purpose: '부적합사항 및 개선 기회에 대한 시정·예방 조치를 체계적으로 처리하여 BCMS의 지속적 개선을 실현한다.',
+      scope: '내부심사, 훈련, 경영검토, 리스크 평가에서 도출된 모든 개선항목',
+      steps: [
+        { no: 1, action: '부적합·개선 사항 식별 및 CAPA 등록', owner: 'BCMS 담당자', note: 'CAPA 번호 자동 부여' },
+        { no: 2, action: '근본 원인 분석 실시', owner: '해당 부서 담당자', note: '5-Why 또는 인과관계 분석' },
+        { no: 3, action: '시정조치 계획 수립 및 기한 설정', owner: '해당 부서 담당자', note: '책임자 지정 필수' },
+        { no: 4, action: '시정조치 이행', owner: '해당 부서 담당자', note: '이행 증거 확보' },
+        { no: 5, action: '이행 결과 검증 및 효과성 확인', owner: 'BCMS 담당자', note: '재발 방지 여부 확인' },
+        { no: 6, action: '종결 처리 및 기록 보관', owner: 'BCMS 담당자', note: '완료 일자 및 검증자 기록' },
+      ],
+      relatedDocs: 'CAPA 등록부, 내부심사 보고서, ISO 22301 10조',
+    },
+  ];
+
+  /* ── 상태 ── */
+  let sopData = load('bcmsSOPData', null);
+  if (!Array.isArray(sopData) || sopData.length === 0) {
+    sopData = DEFAULT_SOPS.map(s => ({ ...s, steps: s.steps.map(st => ({ ...st })) }));
+    save('bcmsSOPData', sopData);
   }
 
-  filtered.forEach(doc=>{
-    const div = document.createElement("div");
-    div.className="docCard";
-    div.innerHTML = `
-      <div class="docTitle">${doc.title}</div>
-      <div class="docMeta">
-        <span class="pill">${doc.id}</span>
-        <span class="pill">${doc.dept}</span>
-        <span class="pill">${doc.type}</span>
-        <span class="pill">${doc.version}</span>
+  let selectedId = sopData.length > 0 ? sopData[0].id : null;
+
+  /* ── 목록 렌더 ── */
+  function renderList() {
+    const search = (document.getElementById('searchInput')?.value ?? '').toLowerCase().trim();
+    const cat    = document.getElementById('categoryFilter')?.value ?? '';
+    const filtered = sopData.filter(s => {
+      const ms = !search || s.id.toLowerCase().includes(search) || s.title.toLowerCase().includes(search);
+      const mc = !cat || s.category === cat;
+      return ms && mc;
+    });
+
+    const el = document.getElementById('sopListItems');
+    if (!el) return;
+    if (filtered.length === 0) {
+      el.innerHTML = `<div class="emptyList">절차서가 없습니다.<br>+ 절차 추가를 클릭하세요.</div>`;
+      return;
+    }
+    el.innerHTML = filtered.map(s => `
+      <div class="sopItem${s.id === selectedId ? ' active' : ''}" onclick="selectSOP('${esc(s.id)}')">
+        <div class="sopItemNo">${esc(s.id)}</div>
+        <div class="sopItemTitle">${esc(s.title)}</div>
+        <span class="catBadge">${esc(s.category)}</span>
+      </div>
+    `).join('');
+  }
+
+  /* ── 상세 렌더 ── */
+  function renderDetail() {
+    const panel = document.getElementById('sopDetailPanel');
+    if (!panel) return;
+    const sop = sopData.find(s => s.id === selectedId);
+    if (!sop) {
+      panel.innerHTML = `<div class="emptyState">← 좌측에서 절차를 선택하거나 [+ 절차 추가]를 클릭하세요.</div>`;
+      return;
+    }
+
+    const catOpts = CATEGORIES.map(c =>
+      `<option${sop.category === c ? ' selected' : ''}>${esc(c)}</option>`
+    ).join('');
+
+    panel.innerHTML = `
+      <div class="detailForm">
+
+        <div class="formGrid2">
+          <div class="formField">
+            <label>SOP 번호</label>
+            <input type="text" id="f_id" value="${esc(sop.id)}" readonly class="readonly"/>
+          </div>
+          <div class="formField">
+            <label>버전</label>
+            <input type="text" id="f_version" value="${esc(sop.version)}" placeholder="예: 1.0"/>
+          </div>
+        </div>
+
+        <div class="formField">
+          <label>제목</label>
+          <input type="text" id="f_title" value="${esc(sop.title)}" placeholder="절차서 제목을 입력하세요"/>
+        </div>
+
+        <div class="formGrid3">
+          <div class="formField">
+            <label>카테고리</label>
+            <select id="f_category">${catOpts}</select>
+          </div>
+          <div class="formField">
+            <label>작성일</label>
+            <input type="date" id="f_createdAt" value="${esc(sop.createdAt)}"/>
+          </div>
+          <div class="formField">
+            <label>검토일</label>
+            <input type="date" id="f_reviewAt" value="${esc(sop.reviewAt)}"/>
+          </div>
+        </div>
+
+        <div class="formField">
+          <label>작성자</label>
+          <input type="text" id="f_author" value="${esc(sop.author)}" placeholder="작성자 이름"/>
+        </div>
+
+        <div class="formField">
+          <label>목적</label>
+          <textarea id="f_purpose" rows="2" placeholder="이 절차서의 목적을 입력하세요">${esc(sop.purpose)}</textarea>
+        </div>
+
+        <div class="formField">
+          <label>적용 범위</label>
+          <textarea id="f_scope" rows="2" placeholder="이 절차서의 적용 범위를 입력하세요">${esc(sop.scope)}</textarea>
+        </div>
+
+        <div class="stepsSection">
+          <div class="stepsSectionHeader">
+            <span class="sectionLabel">단계별 절차</span>
+            <button class="btnSm" onclick="addStep()">+ 단계 추가</button>
+          </div>
+          <div class="tableWrap">
+            <table class="stepsTable">
+              <thead>
+                <tr>
+                  <th style="width:52px;text-align:center">단계</th>
+                  <th>행동 내용</th>
+                  <th style="width:110px">담당자</th>
+                  <th style="width:130px">비고</th>
+                  <th style="width:38px"></th>
+                </tr>
+              </thead>
+              <tbody id="stepsBody">
+                ${(sop.steps ?? []).map(stepRow).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="formField">
+          <label>관련 문서 (쉼표로 구분)</label>
+          <input type="text" id="f_relatedDocs" value="${esc(sop.relatedDocs)}" placeholder="예: BCP 절차서, 리스크 평가 양식"/>
+        </div>
+
+        <div class="detailActions">
+          <button onclick="saveCurrent()" class="btn primary">저장</button>
+          <button onclick="deleteCurrent()" class="btn danger">삭제</button>
+        </div>
+
       </div>
     `;
-    container.appendChild(div);
-  });
-}
+  }
 
-renderContext();
-renderDocs();
+  function stepRow(st) {
+    return `
+      <tr>
+        <td style="text-align:center">
+          <input type="number" data-sf="no" value="${esc(String(st.no))}" style="width:44px;text-align:center"/>
+        </td>
+        <td><input type="text" data-sf="action" value="${esc(st.action)}" style="width:100%" placeholder="행동 내용"/></td>
+        <td><input type="text" data-sf="owner" value="${esc(st.owner)}" style="width:100%" placeholder="담당자"/></td>
+        <td><input type="text" data-sf="note" value="${esc(st.note)}" style="width:100%" placeholder="비고"/></td>
+        <td style="text-align:center">
+          <button onclick="this.closest('tr').remove()" class="btnDel">✕</button>
+        </td>
+      </tr>
+    `;
+  }
+
+  /* ── 데이터 수집 ── */
+  function collectCurrent() {
+    const steps = [];
+    document.querySelectorAll('#stepsBody tr').forEach((tr, i) => {
+      steps.push({
+        no:     parseInt(tr.querySelector('[data-sf="no"]')?.value ?? i + 1, 10) || i + 1,
+        action: tr.querySelector('[data-sf="action"]')?.value ?? '',
+        owner:  tr.querySelector('[data-sf="owner"]')?.value ?? '',
+        note:   tr.querySelector('[data-sf="note"]')?.value ?? '',
+      });
+    });
+    return {
+      title:       document.getElementById('f_title')?.value ?? '',
+      category:    document.getElementById('f_category')?.value ?? '',
+      version:     document.getElementById('f_version')?.value ?? '',
+      createdAt:   document.getElementById('f_createdAt')?.value ?? '',
+      reviewAt:    document.getElementById('f_reviewAt')?.value ?? '',
+      author:      document.getElementById('f_author')?.value ?? '',
+      purpose:     document.getElementById('f_purpose')?.value ?? '',
+      scope:       document.getElementById('f_scope')?.value ?? '',
+      steps,
+      relatedDocs: document.getElementById('f_relatedDocs')?.value ?? '',
+    };
+  }
+
+  function saveCurrentSilent() {
+    if (!selectedId || !document.getElementById('f_title')) return;
+    const idx = sopData.findIndex(s => s.id === selectedId);
+    if (idx < 0) return;
+    sopData[idx] = { ...sopData[idx], ...collectCurrent() };
+    save('bcmsSOPData', sopData);
+  }
+
+  /* ── 전역 함수 ── */
+  window.selectSOP = function (id) {
+    if (selectedId && selectedId !== id) saveCurrentSilent();
+    selectedId = id;
+    renderList();
+    renderDetail();
+  };
+
+  window.addSOP = function () {
+    if (selectedId) saveCurrentSilent();
+    const newId = nextId();
+    sopData.push({
+      id: newId, title: '새 표준운영절차', category: '기타',
+      version: '1.0', createdAt: '', reviewAt: '', author: '',
+      purpose: '', scope: '',
+      steps: [{ no: 1, action: '', owner: '', note: '' }],
+      relatedDocs: '',
+    });
+    selectedId = newId;
+    save('bcmsSOPData', sopData);
+    renderList();
+    renderDetail();
+    document.getElementById('f_title')?.focus();
+  };
+
+  window.saveCurrent = function () {
+    if (!selectedId) return;
+    const idx = sopData.findIndex(s => s.id === selectedId);
+    if (idx < 0) return;
+    sopData[idx] = { ...sopData[idx], ...collectCurrent() };
+    saveMeta();
+    save('bcmsSOPData', sopData);
+    renderList();
+    toast('저장되었습니다.');
+  };
+
+  window.deleteCurrent = function () {
+    if (!selectedId) return;
+    const sop = sopData.find(s => s.id === selectedId);
+    if (!confirm(`"${sop?.title ?? selectedId}" 절차를 삭제하시겠습니까?`)) return;
+    sopData = sopData.filter(s => s.id !== selectedId);
+    selectedId = sopData.length > 0 ? sopData[0].id : null;
+    save('bcmsSOPData', sopData);
+    renderList();
+    renderDetail();
+    toast('삭제되었습니다.');
+  };
+
+  window.saveAll = function () {
+    saveCurrentSilent();
+    saveMeta();
+    save('bcmsSOPData', sopData);
+    toast('전체 저장되었습니다.');
+  };
+
+  window.addStep = function () {
+    const tbody = document.getElementById('stepsBody');
+    if (!tbody) return;
+    const nextNo = tbody.querySelectorAll('tr').length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center">
+        <input type="number" data-sf="no" value="${nextNo}" style="width:44px;text-align:center"/>
+      </td>
+      <td><input type="text" data-sf="action" value="" style="width:100%" placeholder="행동 내용"/></td>
+      <td><input type="text" data-sf="owner" value="" style="width:100%" placeholder="담당자"/></td>
+      <td><input type="text" data-sf="note" value="" style="width:100%" placeholder="비고"/></td>
+      <td style="text-align:center">
+        <button onclick="this.closest('tr').remove()" class="btnDel">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    tr.querySelector('input[data-sf="action"]')?.focus();
+  };
+
+  /* ── 유틸 ── */
+  function nextId() {
+    const nums = sopData.map(s => {
+      const m = String(s.id).match(/(\d+)$/);
+      return m ? parseInt(m[1], 10) : 0;
+    });
+    return 'SOP-' + String((nums.length > 0 ? Math.max(...nums) : 0) + 1).padStart(3, '0');
+  }
+
+  function saveMeta() {
+    const meta = load('bcmsSOPMeta', {});
+    meta.updatedAt = new Date().toISOString().slice(0, 10);
+    meta.count = sopData.length;
+    save('bcmsSOPMeta', meta);
+  }
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  /* ── 인쇄 ── */
+  window.addEventListener('beforeprint', () => {
+    saveCurrentSilent();
+    const div = document.getElementById('printAll');
+    if (!div) return;
+    div.innerHTML = sopData.map(sop => `
+      <div class="printSOP">
+        <h2>${esc(sop.id)}: ${esc(sop.title)}</h2>
+        <table class="printMeta">
+          <tr>
+            <td><b>카테고리</b></td><td>${esc(sop.category)}</td>
+            <td><b>버전</b></td><td>${esc(sop.version) || '—'}</td>
+            <td><b>작성자</b></td><td>${esc(sop.author) || '—'}</td>
+          </tr>
+          <tr>
+            <td><b>작성일</b></td><td>${esc(sop.createdAt) || '—'}</td>
+            <td><b>검토일</b></td><td>${esc(sop.reviewAt) || '—'}</td>
+            <td></td><td></td>
+          </tr>
+        </table>
+        ${sop.purpose ? `<p class="printP"><b>목적:</b> ${esc(sop.purpose)}</p>` : ''}
+        ${sop.scope   ? `<p class="printP"><b>적용 범위:</b> ${esc(sop.scope)}</p>` : ''}
+        <table class="printSteps">
+          <thead>
+            <tr><th>단계</th><th>행동 내용</th><th>담당자</th><th>비고</th></tr>
+          </thead>
+          <tbody>
+            ${(sop.steps ?? []).map(st => `
+              <tr>
+                <td style="text-align:center;width:40px">${esc(String(st.no))}</td>
+                <td>${esc(st.action)}</td>
+                <td>${esc(st.owner)}</td>
+                <td>${esc(st.note)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        ${sop.relatedDocs ? `<p class="printRelated"><b>관련 문서:</b> ${esc(sop.relatedDocs)}</p>` : ''}
+      </div>
+    `).join('<hr class="printDivider"/>');
+  });
+
+  /* ── 이벤트 ── */
+  document.getElementById('searchInput')?.addEventListener('input', renderList);
+  document.getElementById('categoryFilter')?.addEventListener('change', renderList);
+
+  /* ── 초기화 ── */
+  renderList();
+  renderDetail();
+
+  /* ── 다크모드 ── */
+  const htmlEl  = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  function applyTheme(t) {
+    htmlEl.setAttribute('data-theme', t);
+    if (themeBtn) themeBtn.textContent = t === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
+    try { localStorage.setItem('bcmsTheme', t); } catch {}
+  }
+  try { const s = localStorage.getItem('bcmsTheme'); if (s) applyTheme(s); } catch {}
+  themeBtn?.addEventListener('click', () =>
+    applyTheme(htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
+  );
+
+})();
 </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>
