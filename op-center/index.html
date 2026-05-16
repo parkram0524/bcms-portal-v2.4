@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
 <meta charset="utf-8"/>
@@ -6,642 +6,622 @@
 <title>BCMS Portal - 운영센터</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-  .mini{ opacity:.85; font-size:14px; line-height:1.6; }
-  .kpiGrid{
-    display:grid;
-    grid-template-columns: repeat(4, minmax(0,1fr));
-    gap:12px;
-    margin-top:12px;
-  }
-  @media (max-width: 1100px){
-    .kpiGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-  }
-  @media (max-width: 700px){
-    .kpiGrid{ grid-template-columns: 1fr; }
-  }
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .main { overflow-x: hidden; min-width: 0; }
+  .wrap { max-width: 1400px; margin: 0 auto; overflow-x: hidden; }
 
-  .kpi{
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:14px;
-    padding:14px;
+  /* ── 페이지 헤더 ── */
+  .pageHeader {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
   }
-  .kpiLabel{ font-weight:900; font-size:13px; opacity:.85; }
-  .kpiValue{ font-weight:900; font-size:22px; margin-top:6px; }
-  .kpiHint{ margin-top:6px; opacity:.75; font-size:12px; line-height:1.45; }
+  .pageHeader .left h1 { font-size: 28px; font-weight: 900; margin: 0 0 4px 0; }
+  .pageHeader .left .sub { font-size: 14px; color: var(--text-2); margin: 0; }
+  .pageHeader .right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-  .grid2{
-    display:grid;
-    grid-template-columns: 1.2fr .8fr;
-    gap:12px;
-    margin-top:12px;
+  .statusBadge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 999px; font-size: 14px; font-weight: 700;
+    border: 1.5px solid currentColor;
   }
-  @media (max-width: 1100px){
-    .grid2{ grid-template-columns: 1fr; }
-  }
+  .statusBadge.green  { color: #16a34a; background: #f0fdf4; }
+  .statusBadge.yellow { color: #ca8a04; background: #fefce8; }
+  .statusBadge.red    { color: #dc2626; background: #fef2f2; }
+  [data-theme="dark"] .statusBadge.green  { background: #052e16; }
+  [data-theme="dark"] .statusBadge.yellow { background: #1c1400; }
+  [data-theme="dark"] .statusBadge.red    { background: #1c0202; }
 
-  .pill{
-    display:inline-block;
-    padding:6px 10px;
-    border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    font-size:13px;
-    color:rgba(15,23,42,.72);
-    margin-right:8px;
-    margin-bottom:8px;
-    white-space:nowrap;
+  .btnNav {
+    padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+    transition: background .15s;
   }
+  .btnNav:hover { background: var(--surface-hover); }
 
-  .btnRow{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-  .chipBtn{
-    display:inline-block;
-    padding:8px 12px;
-    border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    color:#0f172a;
-    text-decoration:none;
-    font-weight:900;
-    font-size:13px;
-    cursor:pointer;
-    white-space:nowrap;
+  /* ── KPI 카드 ── */
+  .kpiGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px; margin-bottom: 20px;
   }
-  .chipBtn:hover{ filter:brightness(1.08); }
-  .chipBtn.primary{ border-color: rgba(77,163,255,.35); background: rgba(77,163,255,.08); }
-  .chipBtn.danger{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+  @media (max-width: 1100px) { .kpiGrid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px)  { .kpiGrid { grid-template-columns: 1fr; } }
 
-  .logList{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
-  .logItem{
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(15,23,42,.04);
-    border-radius:14px;
-    padding:12px;
+  .kpiCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 16px 18px;
   }
-  .logTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
-  .logTitle{ font-weight:900; }
-  .logMeta{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+  .kpiCard .kLabel { font-size: 13px; color: var(--text-2); font-weight: 600; margin: 0 0 6px 0; }
+  .kpiCard .kValue { font-size: 32px; font-weight: 900; margin: 0 0 8px 0; line-height: 1; }
+  .kpiCard .kHint  { font-size: 12px; color: var(--text-3, var(--text-2)); margin: 4px 0 0 0; }
 
-  .logActions{
-    margin-top:10px;
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
+  .progressBar {
+    height: 6px; border-radius: 3px;
+    background: var(--border, rgba(0,0,0,.1)); overflow: hidden;
   }
+  .progressBar > span {
+    display: block; height: 100%; border-radius: 3px;
+    transition: width .4s ease;
+  }
+  .col-green  { color: #16a34a; }
+  .col-yellow { color: #ca8a04; }
+  .col-red    { color: #dc2626; }
+  .bg-green   { background: #22c55e; }
+  .bg-yellow  { background: #eab308; }
+  .bg-red     { background: #ef4444; }
+  .bg-blue    { background: var(--accent, #0070f3); }
 
-  .logSteps{
-    margin-top:10px;
-    padding-top:10px;
-    border-top:1px solid rgba(15,23,42,.10);
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:8px;
+  /* ── 3열 그리드 ── */
+  .triGrid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr 1fr;
+    gap: 14px; margin-bottom: 20px;
   }
-  @media (max-width: 900px){
-    .logSteps{ grid-template-columns: 1fr; }
-  }
-  .step{
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:12px;
-    padding:10px;
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:flex-start;
-  }
-  .stepTxt{ font-weight:800; font-size:13px; opacity:.95; line-height:1.4; }
-  .stepTime{ font-size:12px; opacity:.75; white-space:nowrap; }
+  @media (max-width: 1100px) { .triGrid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 700px)  { .triGrid { grid-template-columns: 1fr; } }
 
-  /* completion tags */
-  .tagGood{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color:#bbf7d0; }
-  .tagWarn{ border-color: rgba(234,179,8,.35); background: rgba(234,179,8,.10); color:#fde68a; }
-  .tagBad{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); color:#fecaca; }
-
-  /* severity tags */
-  .sev1{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); color:#fecaca; }
-  .sev2{ border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
-  .sev3{ border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
-  .sev4{ border-color: rgba(59,130,246,.40); background: rgba(59,130,246,.10); color:#bfdbfe; }
-  .sev5{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#0f172a; }
-
-  .empty{
-    margin-top:12px;
-    border:1px dashed rgba(255,255,255,.18);
-    border-radius:14px;
-    padding:14px;
-    opacity:.85;
-    line-height:1.7;
+  .card {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 18px;
   }
+  .card h3 { font-size: 15px; font-weight: 800; margin: 0 0 14px 0; }
 
-  code.k{ opacity:.85; }
+  /* ── 할 일 목록 ── */
+  .todoList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .todoList li a {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg, transparent);
+    color: var(--text); text-decoration: none; font-size: 13px; line-height: 1.4;
+    transition: background .15s;
+  }
+  .todoList li a:hover { background: var(--surface-hover); }
+  .todoList li a .ico { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+  .todoOk { padding: 12px 10px; border-radius: 8px; background: #f0fdf4;
+    color: #16a34a; font-size: 13px; font-weight: 600; }
+  [data-theme="dark"] .todoOk { background: #052e16; }
 
-  /* Severity 기준표 */
-  details.sevBox{
-    margin-top:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:14px;
-    padding:12px;
-  }
-  details.sevBox summary{
-    cursor:pointer;
-    list-style:none;
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:center;
-    font-weight:900;
-  }
-  details.sevBox summary::-webkit-details-marker{ display:none; }
-  table.sevTable{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-    border:1px solid rgba(15,23,42,.12);
-    border-radius:12px;
-    overflow:hidden;
-    background: rgba(15,23,42,.04);
-    font-size:14px;
-  }
-  table.sevTable th, table.sevTable td{
-    padding:10px 10px;
-    border-bottom:1px solid rgba(15,23,42,.10);
-    vertical-align:top;
-    line-height:1.5;
-  }
-  table.sevTable th{ color:rgba(15,23,42,.62); text-align:left; }
-  table.sevTable tr:last-child td{ border-bottom:none; }
+  /* ── PDCA 막대 ── */
+  .pdcaList { display: flex; flex-direction: column; gap: 12px; }
+  .pdcaRow { }
+  .pdcaRowHead { display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; margin-bottom: 5px; }
+  .pdcaLabel { font-weight: 700; color: var(--text); }
+  .pdcaSub   { font-size: 11px; color: var(--text-2); }
+  .pdcaPct   { font-size: 13px; font-weight: 800; }
+  .pdcaBar   { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+  .pdcaBar > span { display: block; height: 100%; border-radius: 4px; background: var(--accent, #0070f3); transition: width .4s; }
+  .pdcaTotal { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .pdcaTotalLabel { color: var(--text-2); font-weight: 600; }
+  .pdcaTotalVal   { font-size: 20px; font-weight: 900; color: var(--accent, #0070f3); }
 
+  /* ── 일정 ── */
+  .schedList { display: flex; flex-direction: column; gap: 8px; }
+  .schedItem { display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
+  .schedDate { font-size: 11px; color: var(--text-2); white-space: nowrap; padding-top: 2px; }
+  .schedName { flex: 1; font-weight: 600; color: var(--text); line-height: 1.4; }
+  .typeBadge { padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700;
+    background: rgba(0,112,243,.12); color: var(--accent, #0070f3); white-space: nowrap; }
+  .emptyMsg { color: var(--text-2); font-size: 13px; padding: 8px 0; }
+
+  /* ── 하단 2열 ── */
+  .dualGrid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .dualGrid { grid-template-columns: 1fr; } }
+
+  /* ── 테이블 ── */
+  .tableWrap { overflow-x: auto; border-radius: 8px; }
+  table.mini {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px; min-width: 520px;
+  }
+  table.mini th {
+    text-align: left; font-size: 12px; font-weight: 700;
+    color: var(--text-2); padding: 7px 10px;
+    border-bottom: 1px solid var(--border-strong, var(--border));
+    white-space: nowrap;
+  }
+  table.mini td {
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    vertical-align: top; color: var(--text); line-height: 1.4;
+  }
+  table.mini tr:last-child td { border-bottom: none; }
+  table.mini tr:hover td { background: var(--surface-hover); }
+
+  .riskScore {
+    display: inline-block; padding: 1px 7px; border-radius: 4px;
+    font-size: 12px; font-weight: 800;
+  }
+  .riskScore.high   { background: #fef2f2; color: #dc2626; }
+  .riskScore.medium { background: #fefce8; color: #ca8a04; }
+  .riskScore.low    { background: #f0fdf4; color: #16a34a; }
+  [data-theme="dark"] .riskScore.high   { background: #3b0202; }
+  [data-theme="dark"] .riskScore.medium { background: #2c1e00; }
+  [data-theme="dark"] .riskScore.low    { background: #052e16; }
+
+  .capaBadge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .capaBadge.done    { background: #f0fdf4; color: #16a34a; }
+  .capaBadge.wip     { background: rgba(0,112,243,.1); color: #0070f3; }
+  .capaBadge.delayed { background: #fef2f2; color: #dc2626; }
+  .capaBadge.pending { background: rgba(0,0,0,.07); color: var(--text-2); }
+  [data-theme="dark"] .capaBadge.done    { background: #052e16; }
+  [data-theme="dark"] .capaBadge.wip     { background: #001a3a; }
+  [data-theme="dark"] .capaBadge.delayed { background: #3b0202; }
+  [data-theme="dark"] .capaBadge.pending { background: rgba(255,255,255,.1); }
+
+  .yesTag { display:inline-block; padding:2px 7px; border-radius:4px;
+    font-size:11px; font-weight:700; background:#f0fdf4; color:#16a34a; }
+  .noTag  { display:inline-block; padding:2px 7px; border-radius:4px;
+    font-size:11px; font-weight:700; background:rgba(0,0,0,.06); color:var(--text-2); }
+  [data-theme="dark"] .yesTag { background:#052e16; }
+  [data-theme="dark"] .noTag  { background:rgba(255,255,255,.1); }
+
+  /* 반응형 */
+  @media (max-width: 700px) {
+    .pageHeader { flex-direction: column; }
+    .pageHeader .right { width: 100%; }
+  }
 </style>
 </head>
-
 <body>
 <aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-<div class="main">
-  <div class="page-title">🛰️ Operation Center (운영센터)</div>
-
-  <!-- ✅ Severity 기준표 -->
-  <details class="sevBox" open>
-    <summary>
-      <span>📌 Severity Level (상황등급) 기준표</span>
-      <span class="mini" style="margin:0;">(클릭하면 접기/펼치기)</span>
-    </summary>
-
-    <div class="mini" style="margin-top:10px;">
-      • SEV1이 가장 심각(전사 위기), SEV5는 정보성/관찰 수준입니다.<br/>
-      • DRP/EOP 실행 로그에 SEV가 저장되며, Audit에서 증적/필터로 활용됩니다.
+  <!-- ── 헤더 ── -->
+  <div class="pageHeader">
+    <div class="left">
+      <h1>🎛️ BCMS 운영센터</h1>
+      <p class="sub" id="todayLabel"></p>
     </div>
-
-    <table class="sevTable">
-      <thead>
-        <tr>
-          <th style="width:120px;">등급</th>
-          <th>정의(요약)</th>
-          <th>예시</th>
-          <th style="width:190px;">권장 대응</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><span class="pill sev1">SEV1 (최고)</span></td>
-          <td>전사/대규모 서비스 중단, 핵심 시스템 장시간 불가, 대외 리스크 가능</td>
-          <td>UPS/발전/수전 이상으로 서비스 전반 중단 위험</td>
-          <td>비상대응 체계 가동, War-room, 24/7 복구</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev2">SEV2 (높음)</span></td>
-          <td>핵심 기능 영향/부분 중단, 다수 사용자 영향</td>
-          <td>인증/전력 계통 일부 이상으로 핵심 존 영향</td>
-          <td>즉시 조치, 1~2시간 단위 보고</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev3">SEV3 (중간)</span></td>
-          <td>일부 기능 영향, 우회 가능, 제한된 사용자 영향</td>
-          <td>설비 경고/부분 성능저하</td>
-          <td>업무시간 내 복구, 재발방지 등록</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev4">SEV4 (낮음)</span></td>
-          <td>경미한 결함/지연, 영향 제한</td>
-          <td>비핵심 기능 오류/경고</td>
-          <td>계획 수리, 정기 배포로 수정</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev5">SEV5 (정보)</span></td>
-          <td>관찰/점검/정보성 이벤트</td>
-          <td>테스트 로그</td>
-          <td>기록 유지</td>
-        </tr>
-      </tbody>
-    </table>
-  </details>
-
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start;">
-      <div>
-        <h3 style="margin:0;">운영 지표 요약</h3>
-        <div class="mini" style="margin-top:8px;">
-          • DRP 실행 로그: <code class="k">localStorage: bcms_drp_exec_logs</code><br/>
-          • EOP 실행 로그: <code class="k">localStorage: bcms_eop_exec_logs</code><br/>
-          • BCP 계획 입력: <code class="k">sessionStorage: bcp_plans</code>
-        </div>
-      </div>
-      <div class="btnRow">
-        <a class="chipBtn primary" href="../audit/index.html?days=30">Audit Center (평가/감사)</a>
-        <button class="chipBtn" onclick="exportDRLogs()">DR 로그 Export</button>
-        <button class="chipBtn" onclick="exportEOPLogs()">EOP 로그 Export</button>
-        <button class="chipBtn danger" onclick="clearAllLogs()">로그 전체 삭제</button>
-      </div>
-    </div>
-
-    <div class="kpiGrid">
-      <div class="kpi">
-        <div class="kpiLabel">최근 DR 실행(총)</div>
-        <div class="kpiValue" id="kpiDrTotal">-</div>
-        <div class="kpiHint">DR Runbook 실행 로그 누적 건수</div>
-      </div>
-      <div class="kpi">
-        <div class="kpiLabel">최근 EOP 실행(총)</div>
-        <div class="kpiValue" id="kpiEopTotal">-</div>
-        <div class="kpiHint">설비/장비 기반 EOP 실행 로그 누적 건수</div>
-      </div>
-      <div class="kpi">
-        <div class="kpiLabel">최근 24h 실행</div>
-        <div class="kpiValue" id="kpiExec24h">-</div>
-        <div class="kpiHint">DR+EOP 합산(24시간)</div>
-      </div>
-      <div class="kpi">
-        <div class="kpiLabel">현재 최고 등급</div>
-        <div class="kpiValue" id="kpiSevMax">-</div>
-        <div class="kpiHint">최근 로그 기준 최고 Severity</div>
-      </div>
+    <div class="right">
+      <span class="statusBadge" id="globalBadge">— 산정 중</span>
+      <a href="../training/index.html" class="btnNav">훈련·점검 →</a>
+      <a href="../audit/index.html" class="btnNav">평가·감사 →</a>
+      <button id="themeToggle" class="btnNav">🌙 다크모드</button>
     </div>
   </div>
 
-  <div class="grid2">
-    <!-- 좌: 최근 실행 로그 -->
+  <!-- ── KPI 카드 ── -->
+  <div class="kpiGrid" id="kpiGrid"></div>
+
+  <!-- ── 3열: 할 일 / PDCA / 일정 ── -->
+  <div class="triGrid">
+
     <div class="card">
-      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;">
-        <h3 style="margin:0;">최근 실행 이력 (DR 5건 + EOP 5건)</h3>
-        <div class="btnRow">
-          <a class="chipBtn" href="../library/drp.html">DRP (재해복구계획)</a>
-          <a class="chipBtn" href="../library/eop.html">EOP (비상대응)</a>
-        </div>
-      </div>
-
-      <div class="mini" style="margin-top:10px;">
-        • 클릭 시 Audit로 이동하여 증적을 바로 확인할 수 있습니다.
-      </div>
-
-      <div class="logList" id="drLogList"></div>
-      <div class="logList" id="eopLogList"></div>
+      <h3>✅ 지금 해야 할 일</h3>
+      <ul class="todoList" id="todoList"></ul>
     </div>
 
-    <!-- 우: 통계 -->
     <div class="card">
-      <h3 style="margin:0;">실행 통계</h3>
-      <div class="mini" style="margin-top:10px;">
-        • 완료율 = 체크 완료 단계 / 전체 단계 평균 (DR/EOP 동일)<br/>
-        • EOP는 장비/설비 이벤트 기반 “초기대응(Action Card) 실행” 로그입니다.
-      </div>
-
-      <div style="margin-top:12px;">
-        <div class="pill" id="statCompletion">평균 완료율: -</div>
-        <div class="pill" id="statTopDept">최다 실행 부서: -</div>
-        <div class="pill" id="statTopAsset">최다 실행 대상(시스템/설비): -</div>
-      </div>
-
-      <div class="empty" style="margin-top:12px;">
-        다음 단계 추천<br/>
-        1) Audit에 EOP Evidence 섹션 추가(증적 조회)<br/>
-        2) EOP 실행 로그를 Training에 Attach(훈련 증적화)<br/>
-        3) 상황등급(SEV) 기반 자동 보고서/PDF Export
+      <h3>📋 BCMS 구축 현황 (PDCA)</h3>
+      <div class="pdcaList" id="pdcaList"></div>
+      <div class="pdcaTotal">
+        <span class="pdcaTotalLabel">전체 구축 완성도</span>
+        <span class="pdcaTotalVal" id="pdcaTotalVal">—</span>
       </div>
     </div>
+
+    <div class="card">
+      <h3>📅 예정 훈련 일정</h3>
+      <div class="schedList" id="schedList"></div>
+    </div>
+
   </div>
-</div>
 
+  <!-- ── 하단 2열: 리스크 / CAPA ── -->
+  <div class="dualGrid">
+
+    <div class="card">
+      <h3>⚠️ 중점관리 리스크 현황</h3>
+      <div class="tableWrap">
+        <table class="mini" id="riskTable">
+          <thead>
+            <tr>
+              <th>팀</th><th>리스크명</th><th>점수</th><th>중점관리</th><th>BCP전략</th>
+            </tr>
+          </thead>
+          <tbody id="riskTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔧 CAPA 개선조치 현황</h3>
+      <div class="tableWrap">
+        <table class="mini" id="capaTable">
+          <thead>
+            <tr>
+              <th>항목명</th><th>출처</th><th>담당자</th><th>목표일</th><th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="capaTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /wrap -->
+</main>
+
+<script src="../assets/demo-seed.js"></script>
 <script src="../assets/sidebar.js"></script>
 <script>
-  const DR_LOG_KEY = "bcms_drp_exec_logs";
-  const EOP_LOG_KEY = "bcms_eop_exec_logs";
-  const BCP_PLAN_KEY = "bcp_plans";
+(function () {
+  'use strict';
 
-  function safeParse(v, fallback){
-    try{ return JSON.parse(v); }catch(e){ return fallback; }
+  /* ── 유틸 ── */
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return (parsed !== null && parsed !== undefined) ? parsed : fallback;
+    } catch { return fallback; }
   }
 
-  function toTs(str){
-    if(!str || str === "-") return null;
-    const s = String(str).trim();
-    const iso = s.includes("T") ? s : s.replace(" ", "T");
-    const d = new Date(iso);
-    if(String(d) === "Invalid Date") return null;
-    return d.getTime();
+  function clamp(n) { return Math.max(0, Math.min(100, Math.round(n))); }
+
+  function pctColor(pct) {
+    if (pct >= 70) return 'green';
+    if (pct >= 50) return 'yellow';
+    return 'red';
   }
 
-  function fmt(s){ return (s && s !== "null" && s !== "undefined") ? String(s) : "-"; }
+  /* ── 날짜 ── */
+  const DAYS = ['일','월','화','수','목','금','토'];
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  $('todayLabel').textContent =
+    today.getFullYear() + '년 ' +
+    (today.getMonth()+1) + '월 ' +
+    today.getDate() + '일 (' + DAYS[today.getDay()] + ')';
 
-  function computeCompletion(steps){
-    const arr = Array.isArray(steps) ? steps : [];
-    if(!arr.length) return {done:0,total:0,pct:0};
-    const done = arr.filter(x=>x && x.checked).length;
-    const total = arr.length;
-    return {done,total,pct: Math.round((done/total)*100)};
+  /* ── 데이터 로드 ── */
+  const biaData      = loadJSON('bcmsBIAData', []);
+  const riskData     = loadJSON('bcmsRiskList', null) ?? loadJSON('bcmsRiskAssessment', []);
+  const bcpData      = loadJSON('bcmsBCPStrategy', null) ?? loadJSON('bcmsBCP', []);
+  const confirmed    = loadJSON('bcmsPriorityConfirmed', []);
+  const trainingData = loadJSON('bcmsTrainingData', []);
+  const capaItems    = loadJSON('bcmsCapaItems', []);
+  const gapData      = loadJSON('bcmsGapAnalysis', []);
+  const docsData     = loadJSON('bcmsDocuments', []);
+  const objectives   = loadJSON('bcmsObjectives', []);
+  const policyData   = loadJSON('bcmsPolicyData', null);
+  const requirements = loadJSON('bcmsRequirements', []);
+  const auditData    = loadJSON('bcmsAuditData', null);
+
+  /* ── KPI 계산 ── */
+
+  // 1. BCP 수립률
+  const confirmedCount = Array.isArray(confirmed) ? confirmed.length : 0;
+  const bcpArr = Array.isArray(bcpData) ? bcpData : (bcpData && typeof bcpData === 'object' ? Object.values(bcpData) : []);
+  const bcpWritten = bcpArr.filter(b => b && (b.strategyType || b.strategy || b.done)).length;
+  const bcpPct = confirmedCount > 0 ? clamp(bcpWritten / confirmedCount * 100) : 0;
+
+  // 2. 중점관리 리스크 수
+  const riskArr = Array.isArray(riskData) ? riskData : [];
+  const criticalRisks = riskArr.filter(r => r && ((r.riskScore ?? r.score ?? 0) >= 15 || r.critical));
+  const critRiskCount = criticalRisks.length;
+
+  // 3. 훈련 이행률
+  const trainArr = Array.isArray(trainingData) ? trainingData : [];
+  const trainTotal = trainArr.length;
+  const trainDone  = trainArr.filter(t => t && (t.status === '완료' || t.done === true || t.completed === true)).length;
+  const trainPct   = trainTotal > 0 ? clamp(trainDone / trainTotal * 100) : 0;
+
+  // 4. CAPA 완료율
+  const capaArr   = Array.isArray(capaItems) ? capaItems : [];
+  const capaDone  = capaArr.filter(c => c && (String(c.status ?? '').includes('완료') || c.status === 'done')).length;
+  const capaTotal = capaArr.length;
+  const capaPct   = capaTotal > 0 ? clamp(capaDone / capaTotal * 100) : 0;
+
+  // 5. ISO 22301 갭분석 충족률
+  const gapArr  = Array.isArray(gapData) ? gapData : [];
+  const gapYes  = gapArr.filter(g => g && (g.status === 'Yes' || g.met === true || g.fulfilled === true || String(g.status ?? '').toLowerCase() === 'yes')).length;
+  const gapTotal = gapArr.length;
+  const gapPct   = gapTotal > 0 ? clamp(gapYes / gapTotal * 100) : 0;
+
+  // 6. 문서 만료 임박
+  const docsArr   = Array.isArray(docsData) ? docsData : [];
+  const thirtyDays = new Date(); thirtyDays.setDate(thirtyDays.getDate() + 30);
+  const expiringDocs = docsArr.filter(d => {
+    if (!d || !d.expiryDate) return false;
+    const exp = new Date(d.expiryDate);
+    return !isNaN(exp) && exp <= thirtyDays && exp >= today;
+  }).length;
+
+  /* ── 전체 상태 배지 산정 ── */
+  const keyPcts = [bcpPct, trainPct, capaPct, gapPct];
+  let globalStatus = 'green';
+  for (const p of keyPcts) {
+    if (p < 50) { globalStatus = 'red'; break; }
+    if (p < 70)  globalStatus = 'yellow';
+  }
+  if (critRiskCount > 5) globalStatus = 'red';
+  else if (critRiskCount > 2 && globalStatus === 'green') globalStatus = 'yellow';
+
+  const badgeEl = $('globalBadge');
+  badgeEl.className = 'statusBadge ' + globalStatus;
+  badgeEl.textContent = globalStatus === 'green' ? '● 정상' :
+                        globalStatus === 'yellow' ? '● 주의' : '● 위험';
+
+  /* ── KPI 카드 렌더 ── */
+  function kpiCard({ label, value, hint, pct, colorClass, bgClass, noBar }) {
+    const barHtml = noBar ? '' : `
+      <div class="progressBar" style="margin-bottom:6px">
+        <span class="${bgClass}" style="width:${pct}%"></span>
+      </div>`;
+    return `
+      <div class="kpiCard">
+        <p class="kLabel">${esc(label)}</p>
+        <p class="kValue ${colorClass}">${esc(value)}</p>
+        ${barHtml}
+        <p class="kHint">${esc(hint)}</p>
+      </div>`;
   }
 
-  function stepTagClass(pct){
-    if(pct >= 80) return "tagGood";
-    if(pct >= 40) return "tagWarn";
-    return "tagBad";
+  const riskColor = critRiskCount === 0 ? 'col-green' : critRiskCount <= 3 ? 'col-yellow' : 'col-red';
+  const riskBg    = critRiskCount === 0 ? 'bg-green'  : critRiskCount <= 3 ? 'bg-yellow'  : 'bg-red';
+  const expiryColor = expiringDocs === 0 ? 'col-green' : expiringDocs <= 2 ? 'col-yellow' : 'col-red';
+  const expiryBg    = expiringDocs === 0 ? 'bg-green'  : expiringDocs <= 2 ? 'bg-yellow'  : 'bg-red';
+
+  $('kpiGrid').innerHTML = [
+    kpiCard({
+      label: '📌 BCP 수립률',
+      value: bcpPct + '%',
+      hint: `확정 핵심업무 ${confirmedCount}건 중 ${bcpWritten}건 작성`,
+      pct: bcpPct,
+      colorClass: 'col-' + pctColor(bcpPct),
+      bgClass: 'bg-' + pctColor(bcpPct),
+    }),
+    kpiCard({
+      label: '🔴 중점관리 리스크',
+      value: critRiskCount + '건',
+      hint: `리스크 점수 15점 이상 또는 critical 항목`,
+      pct: Math.min(100, critRiskCount * 10),
+      colorClass: riskColor,
+      bgClass: riskBg,
+    }),
+    kpiCard({
+      label: '🎯 훈련 이행률',
+      value: trainPct + '%',
+      hint: `전체 ${trainTotal}건 중 ${trainDone}건 완료`,
+      pct: trainPct,
+      colorClass: 'col-' + pctColor(trainPct),
+      bgClass: 'bg-' + pctColor(trainPct),
+    }),
+    kpiCard({
+      label: '🔧 CAPA 완료율',
+      value: capaPct + '%',
+      hint: `전체 ${capaTotal}건 중 ${capaDone}건 완료`,
+      pct: capaPct,
+      colorClass: 'col-' + pctColor(capaPct),
+      bgClass: 'bg-' + pctColor(capaPct),
+    }),
+    kpiCard({
+      label: '📊 ISO 22301 갭분석 충족률',
+      value: gapPct + '%',
+      hint: `전체 ${gapTotal}항목 중 ${gapYes}항목 충족`,
+      pct: gapPct,
+      colorClass: 'col-' + pctColor(gapPct),
+      bgClass: 'bg-' + pctColor(gapPct),
+    }),
+    kpiCard({
+      label: '📄 문서 만료 임박 (30일)',
+      value: expiringDocs + '건',
+      hint: expiringDocs === 0 ? '만료 임박 문서 없음' : `${expiringDocs}건의 문서가 30일 내 만료`,
+      pct: Math.min(100, expiringDocs * 20),
+      colorClass: expiryColor,
+      bgClass: expiryBg,
+    }),
+  ].join('');
+
+  /* ── 오늘 할 일 ── */
+  const BASE = (() => {
+    const p = window.location.pathname;
+    const m = p.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports)\/)/);
+    return m ? m[1] : '';
+  })();
+
+  const todos = [];
+  const bcpMissing = confirmedCount - bcpWritten;
+  if (bcpMissing > 0) todos.push({ text: `BCP 전략 ${bcpMissing}건 미작성`, href: BASE + '/strategy-plans/index.html', ico: '📋' });
+
+  const capaWip = capaArr.filter(c => c && !String(c.status ?? '').includes('완료') && c.status !== 'done').length;
+  if (capaWip > 0) todos.push({ text: `CAPA 개선조치 ${capaWip}건 진행중`, href: BASE + '/audit/capa.html', ico: '🔧' });
+
+  const gapMissing = gapTotal - gapYes;
+  if (gapMissing > 0) todos.push({ text: `ISO 22301 갭분석 미충족 ${gapMissing}항목`, href: BASE + '/audit/evidence.html', ico: '📊' });
+
+  if (trainTotal === 0) todos.push({ text: '훈련 계획 수립 필요', href: BASE + '/training/index.html', ico: '🎯' });
+
+  if (critRiskCount > 0) todos.push({ text: `중점관리 리스크 ${critRiskCount}건 전략 확인 필요`, href: BASE + '/risk-bia/risk.html', ico: '⚠️' });
+
+  const todoEl = $('todoList');
+  if (todos.length === 0) {
+    todoEl.innerHTML = `<li><div class="todoOk">✓ 오늘은 모든 항목이 정상입니다</div></li>`;
+  } else {
+    todoEl.innerHTML = todos.map(t =>
+      `<li><a href="${esc(t.href)}"><span class="ico">${t.ico}</span>${esc(t.text)}</a></li>`
+    ).join('');
   }
 
-  function sevClass(sev){
-    if(sev===1) return "sev1";
-    if(sev===2) return "sev2";
-    if(sev===3) return "sev3";
-    if(sev===4) return "sev4";
-    return "sev5";
-  }
-  function sevLabel(sev){
-    if(sev===1) return "SEV1";
-    if(sev===2) return "SEV2";
-    if(sev===3) return "SEV3";
-    if(sev===4) return "SEV4";
-    return "SEV5";
-  }
+  /* ── PDCA 구축 현황 ── */
+  const hasBIA      = biaData.length > 0;
+  const hasPolicy   = !!policyData || objectives.length > 0;
+  const hasReq      = requirements.length > 0;
+  const hasAudit    = !!auditData;
 
-  function inferSeverityFromLevel(level){
-    const v = String(level||"").toLowerCase();
-    if(v === "critical") return 1;
-    if(v === "high") return 2;
-    if(v === "medium") return 3;
-    if(v === "low") return 4;
-    return 5;
-  }
+  const planPct = clamp(((hasPolicy ? 50 : 0) + (hasReq ? 30 : 0) + (hasBIA ? 20 : 0)));
+  const doPct   = clamp((bcpPct * 0.6) + (trainPct * 0.4));
+  const checkPct= clamp((gapPct * 0.7) + (hasAudit ? 30 : 0));
+  const actPct  = clamp(capaPct);
+  const overallPct = clamp((planPct + doPct + checkPct + actPct) / 4);
 
-  function getSeverityFromDr(log){
-    const s = Number(log?.severity);
-    if([1,2,3,4,5].includes(s)) return s;
-    return inferSeverityFromLevel(log?.level);
-  }
+  const pdcaRows = [
+    { label: 'Plan (계획)', sub: '정책·목표·BIA', pct: planPct },
+    { label: 'Do (실행)',   sub: 'BCP전략·훈련이행', pct: doPct },
+    { label: 'Check (점검)', sub: '갭분석·감사', pct: checkPct },
+    { label: 'Act (개선)',  sub: 'CAPA 완료', pct: actPct },
+  ];
 
-  function getSeverityFromEop(log){
-    const s = Number(log?.severity);
-    if([1,2,3,4,5].includes(s)) return s;
-    return 3;
-  }
-
-  function loadDRLogs(){
-    const logs = safeParse(localStorage.getItem(DR_LOG_KEY) || "[]", []);
-    const arr = Array.isArray(logs) ? logs : [];
-    arr.sort((a,b)=>{
-      const ta = toTs(a.savedAt) || toTs(a.finishedAt) || toTs(a.startedAt) || 0;
-      const tb = toTs(b.savedAt) || toTs(b.finishedAt) || toTs(b.startedAt) || 0;
-      return tb - ta;
-    });
-    return arr;
-  }
-
-  function loadEOPLogs(){
-    const logs = safeParse(localStorage.getItem(EOP_LOG_KEY) || "[]", []);
-    const arr = Array.isArray(logs) ? logs : [];
-    arr.sort((a,b)=>{
-      const ta = toTs(a.savedAt) || toTs(a.finishedAt) || toTs(a.startedAt) || 0;
-      const tb = toTs(b.savedAt) || toTs(b.finishedAt) || toTs(b.startedAt) || 0;
-      return tb - ta;
-    });
-    return arr;
-  }
-
-  function loadBCPPlansCount(){
-    const plans = safeParse(sessionStorage.getItem(BCP_PLAN_KEY) || "{}", {});
-    return Object.keys(plans).length;
-  }
-
-  function downloadJson(filename, data){
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function exportDRLogs(){
-    downloadJson("bcms_drp_exec_logs.json", loadDRLogs());
-  }
-  function exportEOPLogs(){
-    downloadJson("bcms_eop_exec_logs.json", loadEOPLogs());
-  }
-
-  function clearAllLogs(){
-    if(!confirm("DR 로그 + EOP 로그를 모두 삭제할까요?")) return;
-    localStorage.removeItem(DR_LOG_KEY);
-    localStorage.removeItem(EOP_LOG_KEY);
-    refresh();
-    alert("삭제되었습니다.");
-  }
-
-  function pickMaxSev(drLogs, eopLogs){
-    let best = 5;
-    drLogs.forEach(l=>{ best = Math.min(best, getSeverityFromDr(l)); });
-    eopLogs.forEach(l=>{ best = Math.min(best, getSeverityFromEop(l)); });
-    return (drLogs.length || eopLogs.length) ? best : null;
-  }
-
-  function renderKPIs(drLogs, eopLogs){
-    document.getElementById("kpiDrTotal").textContent = drLogs.length;
-    document.getElementById("kpiEopTotal").textContent = eopLogs.length;
-
-    const now = Date.now();
-    const dayAgo = now - 24*60*60*1000;
-    const in24h =
-      drLogs.filter(l=>{
-        const t = toTs(l.savedAt) || toTs(l.finishedAt) || toTs(l.startedAt);
-        return t && t >= dayAgo;
-      }).length
-      +
-      eopLogs.filter(l=>{
-        const t = toTs(l.savedAt) || toTs(l.finishedAt) || toTs(l.startedAt);
-        return t && t >= dayAgo;
-      }).length;
-
-    document.getElementById("kpiExec24h").textContent = in24h;
-
-    const maxSev = pickMaxSev(drLogs, eopLogs);
-    document.getElementById("kpiSevMax").textContent = maxSev ? sevLabel(maxSev) : "-";
-  }
-
-  function renderStats(drLogs, eopLogs){
-    const logsAll = [...drLogs, ...eopLogs];
-    if(!logsAll.length){
-      document.getElementById("statCompletion").textContent = "평균 완료율: -";
-      document.getElementById("statTopDept").textContent = "최다 실행 부서: -";
-      document.getElementById("statTopAsset").textContent = "최다 실행 대상(시스템/설비): -";
-      return;
-    }
-
-    let sumPct = 0;
-    let cnt = 0;
-    const deptCount = {};
-    const assetCount = {};
-
-    // DR
-    drLogs.forEach(l=>{
-      const comp = computeCompletion(l.steps);
-      sumPct += comp.pct; cnt++;
-      const dept = l.dept || "미분류";
-      const asset = l.system || l.systemId || "Unknown";
-      deptCount[dept] = (deptCount[dept]||0) + 1;
-      assetCount[asset] = (assetCount[asset]||0) + 1;
-    });
-
-    // EOP
-    eopLogs.forEach(l=>{
-      const comp = computeCompletion(l.steps);
-      sumPct += comp.pct; cnt++;
-      const dept = l.dept || "미분류";
-      const asset = l.equipment || l.eopTitle || l.eopId || "EOP";
-      deptCount[dept] = (deptCount[dept]||0) + 1;
-      assetCount[asset] = (assetCount[asset]||0) + 1;
-    });
-
-    const avg = cnt ? Math.round(sumPct / cnt) : 0;
-    document.getElementById("statCompletion").textContent = `평균 완료율: ${avg}%`;
-
-    const topDept = Object.entries(deptCount).sort((a,b)=>b[1]-a[1])[0];
-    const topAsset = Object.entries(assetCount).sort((a,b)=>b[1]-a[1])[0];
-
-    document.getElementById("statTopDept").textContent = `최다 실행 부서: ${topDept ? topDept[0] : "-"}`;
-    document.getElementById("statTopAsset").textContent = `최다 실행 대상(시스템/설비): ${topAsset ? topAsset[0] : "-"}`;
-  }
-
-  function goAudit(params){
-    const qs = new URLSearchParams(params);
-    location.href = `../audit/index.html?${qs.toString()}`;
-  }
-
-  function renderDrList(drLogs){
-    const root = document.getElementById("drLogList");
-    root.innerHTML = "";
-
-    const list = drLogs.slice(0,5);
-    if(!list.length){
-      root.innerHTML = `
-        <div class="empty">
-          아직 DR 실행 로그가 없습니다.<br/>
-          DRP 페이지에서 실행 모드를 수행하고 “실행 완료”를 누르면 기록됩니다.
+  $('pdcaList').innerHTML = pdcaRows.map(r => `
+    <div class="pdcaRow">
+      <div class="pdcaRowHead">
+        <div>
+          <div class="pdcaLabel">${esc(r.label)}</div>
+          <div class="pdcaSub">${esc(r.sub)}</div>
         </div>
-      `;
-      return;
-    }
+        <span class="pdcaPct">${r.pct}%</span>
+      </div>
+      <div class="pdcaBar"><span style="width:${r.pct}%"></span></div>
+    </div>
+  `).join('');
 
-    list.forEach((l, idx)=>{
-      const comp = computeCompletion(l.steps);
-      const sev = getSeverityFromDr(l);
+  $('pdcaTotalVal').textContent = overallPct + '%';
 
-      const item = document.createElement("div");
-      item.className = "logItem";
-      item.innerHTML = `
-        <div class="logTop">
-          <div class="logTitle">DR ${idx+1}. ${fmt(l.system)}</div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <span class="pill ${sevClass(sev)}">${sevLabel(sev)} (SEV)</span>
-            <span class="pill ${stepTagClass(comp.pct)}">완료율 ${comp.pct}%</span>
-          </div>
-        </div>
+  /* ── 예정 일정 ── */
+  const upcoming = trainArr
+    .filter(t => t && t.date && !t.done && t.status !== '완료' && t.completed !== true)
+    .map(t => ({ ...t, _d: new Date(t.date) }))
+    .filter(t => !isNaN(t._d) && t._d >= today)
+    .sort((a, b) => a._d - b._d)
+    .slice(0, 5);
 
-        <div class="logMeta">
-          <span class="pill">${fmt(l.systemId)}</span>
-          <span class="pill">${fmt(l.dept)}</span>
-          <span class="pill">${fmt(l.process)}</span>
-          <span class="pill">${fmt(l.level)}</span>
-          <span class="pill">시작 ${fmt(l.startedAt)}</span>
-          <span class="pill">완료 ${fmt(l.finishedAt)}</span>
-        </div>
-
-        <div class="logActions">
-          <button class="chipBtn primary" onclick="goAudit({days:30, sev:${sev}, dept:'${encodeURIComponent(l.dept||"")}', level:'${encodeURIComponent(l.level||"")}', q:'${encodeURIComponent(l.process||l.system||"")}'})">Audit 증적 보기</button>
-          <a class="chipBtn" href="../library/drp.html">DRP 이동</a>
-        </div>
-      `;
-      root.appendChild(item);
-    });
+  const schedEl = $('schedList');
+  if (upcoming.length === 0) {
+    schedEl.innerHTML = `<p class="emptyMsg">예정된 훈련이 없습니다</p>`;
+  } else {
+    schedEl.innerHTML = upcoming.map(t => {
+      const d = t._d;
+      const dateLabel = `${d.getMonth()+1}/${d.getDate()} (${DAYS[d.getDay()]})`;
+      return `
+        <div class="schedItem">
+          <span class="schedDate">${esc(dateLabel)}</span>
+          <span class="schedName">${esc(t.name ?? t.title ?? '훈련')}</span>
+          <span class="typeBadge">${esc(t.type ?? t.trainingType ?? '훈련')}</span>
+        </div>`;
+    }).join('');
   }
 
-  function renderEopList(eopLogs){
-    const root = document.getElementById("eopLogList");
-    root.innerHTML = "";
+  /* ── 리스크 TOP 5 ── */
+  const top5Risks = riskArr
+    .filter(r => r)
+    .sort((a, b) => (b.riskScore ?? b.score ?? 0) - (a.riskScore ?? a.score ?? 0))
+    .slice(0, 5);
 
-    const list = eopLogs.slice(0,5);
-    if(!list.length){
-      root.innerHTML = `
-        <div class="empty">
-          아직 EOP 실행 로그가 없습니다.<br/>
-          EOP 페이지에서 설비/이벤트를 선택하고 “실행 완료”를 누르면 기록됩니다.
-        </div>
-      `;
-      return;
-    }
+  const bcpKeySet = new Set(
+    bcpArr.map(b => b && (b.functionId ?? b.id ?? b.team ?? '')).filter(Boolean)
+  );
+  const bcpTeamSet = new Set(
+    bcpArr.map(b => b && (b.team ?? b.dept ?? '')).filter(Boolean)
+  );
 
-    list.forEach((l, idx)=>{
-      const comp = computeCompletion(l.steps);
-      const sev = getSeverityFromEop(l);
-
-      const title = l.event || l.eopTitle || l.eopId || "EOP";
-      const asset = l.equipment || "-";
-      const loc = l.location || "-";
-
-      const item = document.createElement("div");
-      item.className = "logItem";
-      item.innerHTML = `
-        <div class="logTop">
-          <div class="logTitle">EOP ${idx+1}. ${fmt(title)}</div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <span class="pill ${sevClass(sev)}">${sevLabel(sev)} (SEV)</span>
-            <span class="pill ${stepTagClass(comp.pct)}">완료율 ${comp.pct}%</span>
-          </div>
-        </div>
-
-        <div class="logMeta">
-          <span class="pill">${fmt(asset)}</span>
-          <span class="pill">${fmt(loc)}</span>
-          <span class="pill">${fmt(l.category || "-")}</span>
-          <span class="pill">${fmt(l.dept || "-")}</span>
-          <span class="pill">시작 ${fmt(l.startedAt)}</span>
-          <span class="pill">완료 ${fmt(l.finishedAt)}</span>
-        </div>
-
-        ${l.memo ? `<div class="mini" style="margin-top:8px;">📝 메모: ${fmt(l.memo)}</div>` : ""}
-
-        <div class="logActions">
-          <button class="chipBtn primary" onclick="goAudit({days:30, sev:${sev}, dept:'${encodeURIComponent(l.dept||"")}', q:'${encodeURIComponent((l.event||l.eopTitle||l.eopId||""))}'})">Audit 증적 보기</button>
-          <a class="chipBtn" href="../library/eop.html">EOP 이동</a>
-        </div>
-      `;
-      root.appendChild(item);
-    });
+  function hasBCP(risk) {
+    const id   = risk.id ?? risk.functionId ?? '';
+    const team = risk.team ?? risk.dept ?? '';
+    return bcpKeySet.has(id) || bcpTeamSet.has(team);
   }
 
-  function refresh(){
-    const drLogs = loadDRLogs();
-    const eopLogs = loadEOPLogs();
-    renderKPIs(drLogs, eopLogs);
-    renderStats(drLogs, eopLogs);
-    renderDrList(drLogs);
-    renderEopList(eopLogs);
+  const riskTbody = $('riskTbody');
+  if (top5Risks.length === 0) {
+    riskTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:20px">리스크 데이터가 없습니다</td></tr>`;
+  } else {
+    riskTbody.innerHTML = top5Risks.map(r => {
+      const score = r.riskScore ?? r.score ?? 0;
+      const scoreClass = score >= 15 ? 'high' : score >= 9 ? 'medium' : 'low';
+      const isCritical = r.critical || score >= 15;
+      return `
+        <tr>
+          <td>${esc(r.team ?? r.dept ?? '—')}</td>
+          <td>${esc(r.name ?? r.riskName ?? r.title ?? '—')}</td>
+          <td><span class="riskScore ${scoreClass}">${esc(score)}</span></td>
+          <td>${isCritical ? '<span class="yesTag">●</span>' : '<span class="noTag">—</span>'}</td>
+          <td>${hasBCP(r) ? '<span class="yesTag">수립</span>' : '<span class="noTag">미수립</span>'}</td>
+        </tr>`;
+    }).join('');
   }
 
-  refresh();
+  /* ── CAPA 최근 5개 ── */
+  const recent5Capa = [...capaArr].reverse().slice(0, 5);
+
+  function capaStatus(c) {
+    const raw = String(c.status ?? '');
+    if (raw.includes('완료') || raw === 'done') return { label: '완료', cls: 'done' };
+    const due = c.dueDate ?? c.targetDate ?? '';
+    if (due && new Date(due) < today && !raw.includes('완료')) return { label: '지연', cls: 'delayed' };
+    if (raw.includes('진행') || raw === 'wip') return { label: '진행중', cls: 'wip' };
+    return { label: '미시작', cls: 'pending' };
+  }
+
+  const capaTbody = $('capaTbody');
+  if (recent5Capa.length === 0) {
+    capaTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:20px">CAPA 데이터가 없습니다</td></tr>`;
+  } else {
+    capaTbody.innerHTML = recent5Capa.map(c => {
+      const st = capaStatus(c);
+      const due = c.dueDate ?? c.targetDate ?? '';
+      return `
+        <tr>
+          <td>${esc(c.title ?? c.name ?? c.item ?? '—')}</td>
+          <td>${esc(c.source ?? c.origin ?? '—')}</td>
+          <td>${esc(c.owner ?? c.assignee ?? '—')}</td>
+          <td>${esc(due || '—')}</td>
+          <td><span class="capaBadge ${st.cls}">${st.label}</span></td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ── 다크모드 토글 ── */
+  const html = document.documentElement;
+  const btn  = $('themeToggle');
+  function applyTheme(t) {
+    html.setAttribute('data-theme', t);
+    btn.textContent = t === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
+    try { localStorage.setItem('bcmsTheme', t); } catch {}
+  }
+  try {
+    const saved = localStorage.getItem('bcmsTheme');
+    if (saved) applyTheme(saved);
+  } catch {}
+  btn.addEventListener('click', () => {
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+})();
 </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>
