@@ -8,186 +8,186 @@
 <style>
   html, body { overflow-x: hidden; max-width: 100%; }
   .main { overflow-x: hidden; min-width: 0; }
-  .wrap { max-width: 1400px; margin: 0 auto; overflow-x: hidden; }
+  .wrap { max-width: 1280px; margin: 0 auto; overflow-x: hidden; }
 
-  /* ── 페이지 헤더 ── */
+  /* ── 헤더 ── */
   .pageHeader {
     display: flex; align-items: flex-start; justify-content: space-between;
-    flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
   }
-  .pageHeader .left h1 { font-size: 28px; font-weight: 900; margin: 0 0 4px 0; }
-  .pageHeader .left .sub { font-size: 14px; color: var(--text-2); margin: 0; }
-  .pageHeader .right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pageHeader h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px 0; }
+  .pageHeader .dateLine { font-size: 13px; color: var(--text-2); margin: 0; }
+  .pageHeader .rightGroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
   .statusBadge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 14px; border-radius: 999px; font-size: 14px; font-weight: 700;
-    border: 1.5px solid currentColor;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    border: 1.5px solid currentColor; white-space: nowrap;
   }
-  .statusBadge.green  { color: #16a34a; background: #f0fdf4; }
-  .statusBadge.yellow { color: #ca8a04; background: #fefce8; }
-  .statusBadge.red    { color: #dc2626; background: #fef2f2; }
-  [data-theme="dark"] .statusBadge.green  { background: #052e16; }
-  [data-theme="dark"] .statusBadge.yellow { background: #1c1400; }
-  [data-theme="dark"] .statusBadge.red    { background: #1c0202; }
+  .badge-green  { color: #16a34a; background: #f0fdf4; }
+  .badge-yellow { color: #d97706; background: #fffbeb; }
+  .badge-red    { color: #dc2626; background: #fef2f2; }
+  [data-theme="dark"] .badge-green  { background: #052e16; }
+  [data-theme="dark"] .badge-yellow { background: #1c1400; }
+  [data-theme="dark"] .badge-red    { background: #2a0000; }
 
   .btnNav {
-    padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
     background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600;
-    cursor: pointer; text-decoration: none; white-space: nowrap;
-    transition: background .15s;
+    cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .15s;
   }
   .btnNav:hover { background: var(--surface-hover); }
 
-  /* ── KPI 카드 ── */
+  /* ── KPI 그리드 ── */
   .kpiGrid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px; margin-bottom: 20px;
   }
-  @media (max-width: 1100px) { .kpiGrid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 640px)  { .kpiGrid { grid-template-columns: 1fr; } }
+  @media (max-width: 960px) { .kpiGrid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .kpiGrid { grid-template-columns: 1fr; } }
 
   .kpiCard {
     border: 0.5px solid var(--border); border-radius: 12px;
     background: var(--surface); padding: 16px 18px;
   }
-  .kpiCard .kLabel { font-size: 13px; color: var(--text-2); font-weight: 600; margin: 0 0 6px 0; }
-  .kpiCard .kValue { font-size: 32px; font-weight: 900; margin: 0 0 8px 0; line-height: 1; }
-  .kpiCard .kHint  { font-size: 12px; color: var(--text-3, var(--text-2)); margin: 4px 0 0 0; }
+  .kpiCard .kLabel { font-size: 12px; color: var(--text-2); font-weight: 600; margin: 0 0 8px 0; }
+  .kpiCard .kValue { font-size: 30px; font-weight: 900; margin: 0 0 10px 0; line-height: 1; }
+  .kpiCard .kDesc  { font-size: 12px; color: var(--text-2); margin: 6px 0 0 0; }
 
-  .progressBar {
-    height: 6px; border-radius: 3px;
-    background: var(--border, rgba(0,0,0,.1)); overflow: hidden;
-  }
-  .progressBar > span {
-    display: block; height: 100%; border-radius: 3px;
-    transition: width .4s ease;
-  }
-  .col-green  { color: #16a34a; }
-  .col-yellow { color: #ca8a04; }
-  .col-red    { color: #dc2626; }
-  .bg-green   { background: #22c55e; }
-  .bg-yellow  { background: #eab308; }
-  .bg-red     { background: #ef4444; }
-  .bg-blue    { background: var(--accent, #0070f3); }
+  .pBar { height: 5px; border-radius: 999px; background: var(--border); overflow: hidden; }
+  .pBar > b { display: block; height: 100%; border-radius: 999px; transition: width .4s; }
+  .fg-green  { background: #16a34a; }
+  .fg-yellow { background: #d97706; }
+  .fg-red    { background: #dc2626; }
+  .fg-blue   { background: var(--accent, #0070f3); }
+  .tx-green  { color: #16a34a; }
+  .tx-yellow { color: #d97706; }
+  .tx-red    { color: #dc2626; }
 
   /* ── 3열 그리드 ── */
   .triGrid {
-    display: grid;
-    grid-template-columns: 1fr 1.1fr 1fr;
+    display: grid; grid-template-columns: 1fr 1.1fr 0.9fr;
     gap: 14px; margin-bottom: 20px;
   }
-  @media (max-width: 1100px) { .triGrid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 700px)  { .triGrid { grid-template-columns: 1fr; } }
+  @media (max-width: 960px) { .triGrid { grid-template-columns: 1fr; } }
 
   .card {
     border: 0.5px solid var(--border); border-radius: 12px;
-    background: var(--surface); padding: 18px;
+    background: var(--surface); padding: 18px 20px;
   }
-  .card h3 { font-size: 15px; font-weight: 800; margin: 0 0 14px 0; }
+  .card h3 { font-size: 14px; font-weight: 800; margin: 0 0 14px 0; }
 
-  /* ── 할 일 목록 ── */
-  .todoList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  /* ── 할 일 ── */
+  .todoList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .todoList li a {
     display: flex; align-items: flex-start; gap: 8px;
-    padding: 8px 10px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--bg, transparent);
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
     color: var(--text); text-decoration: none; font-size: 13px; line-height: 1.4;
     transition: background .15s;
   }
   .todoList li a:hover { background: var(--surface-hover); }
-  .todoList li a .ico { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
-  .todoOk { padding: 12px 10px; border-radius: 8px; background: #f0fdf4;
-    color: #16a34a; font-size: 13px; font-weight: 600; }
-  [data-theme="dark"] .todoOk { background: #052e16; }
+  .dot-red    { color: #dc2626; flex-shrink: 0; }
+  .dot-yellow { color: #d97706; flex-shrink: 0; }
+  .todoAllOk {
+    padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    color: #16a34a; background: #f0fdf4; font-weight: 600;
+  }
+  [data-theme="dark"] .todoAllOk { background: #052e16; }
 
-  /* ── PDCA 막대 ── */
-  .pdcaList { display: flex; flex-direction: column; gap: 12px; }
-  .pdcaRow { }
-  .pdcaRowHead { display: flex; justify-content: space-between; align-items: center;
-    font-size: 13px; margin-bottom: 5px; }
-  .pdcaLabel { font-weight: 700; color: var(--text); }
-  .pdcaSub   { font-size: 11px; color: var(--text-2); }
-  .pdcaPct   { font-size: 13px; font-weight: 800; }
-  .pdcaBar   { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
-  .pdcaBar > span { display: block; height: 100%; border-radius: 4px; background: var(--accent, #0070f3); transition: width .4s; }
-  .pdcaTotal { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-  .pdcaTotalLabel { color: var(--text-2); font-weight: 600; }
-  .pdcaTotalVal   { font-size: 20px; font-weight: 900; color: var(--accent, #0070f3); }
+  /* ── PDCA ── */
+  .pdcaRows { display: flex; flex-direction: column; gap: 13px; }
+  .pdcaItem { }
+  .pdcaHead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; margin-bottom: 5px;
+  }
+  .pdcaName { font-weight: 700; color: var(--text); }
+  .pdcaSub  { font-size: 11px; color: var(--text-2); margin-left: 4px; }
+  .pdcaPct  { font-weight: 800; font-size: 13px; }
+  .pdcaBarWrap { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+  .pdcaBarWrap > span { display: block; height: 100%; border-radius: 4px; transition: width .4s; background: var(--accent, #0070f3); }
+  .pdcaFooter {
+    margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; font-size: 12px;
+  }
+  .pdcaFooter .comment { color: var(--text-2); }
+  .pdcaFooter .totalPct { font-size: 22px; font-weight: 900; color: var(--accent, #0070f3); }
 
   /* ── 일정 ── */
-  .schedList { display: flex; flex-direction: column; gap: 8px; }
-  .schedItem { display: flex; align-items: flex-start; gap: 10px;
-    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
-  .schedDate { font-size: 11px; color: var(--text-2); white-space: nowrap; padding-top: 2px; }
+  .schedList { display: flex; flex-direction: column; gap: 7px; }
+  .schedItem {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;
+  }
+  .schedDate { font-size: 11px; color: var(--text-2); white-space: nowrap; padding-top: 2px; min-width: 52px; }
   .schedName { flex: 1; font-weight: 600; color: var(--text); line-height: 1.4; }
-  .typeBadge { padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700;
-    background: rgba(0,112,243,.12); color: var(--accent, #0070f3); white-space: nowrap; }
-  .emptyMsg { color: var(--text-2); font-size: 13px; padding: 8px 0; }
+  .typeBadge {
+    padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700;
+    background: rgba(0,112,243,.1); color: var(--accent, #0070f3); white-space: nowrap;
+  }
+  .emptyCard { color: var(--text-2); font-size: 13px; }
+  .emptyCard a { color: var(--accent, #0070f3); }
 
-  /* ── 하단 2열 ── */
+  /* ── 2열 하단 ── */
   .dualGrid {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: 14px; margin-bottom: 20px;
   }
-  @media (max-width: 900px) { .dualGrid { grid-template-columns: 1fr; } }
+  @media (max-width: 960px) { .dualGrid { grid-template-columns: 1fr; } }
 
   /* ── 테이블 ── */
-  .tableWrap { overflow-x: auto; border-radius: 8px; }
-  table.mini {
-    width: 100%; border-collapse: collapse;
-    font-size: 13px; min-width: 520px;
+  .tableWrap { overflow-x: auto; }
+  table.t {
+    width: 100%; border-collapse: collapse; font-size: 13px; min-width: 440px;
   }
-  table.mini th {
-    text-align: left; font-size: 12px; font-weight: 700;
-    color: var(--text-2); padding: 7px 10px;
-    border-bottom: 1px solid var(--border-strong, var(--border));
-    white-space: nowrap;
+  table.t th {
+    text-align: left; font-size: 11px; font-weight: 700; color: var(--text-2);
+    padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
   }
-  table.mini td {
+  table.t td {
     padding: 8px 10px; border-bottom: 1px solid var(--border);
     vertical-align: top; color: var(--text); line-height: 1.4;
   }
-  table.mini tr:last-child td { border-bottom: none; }
-  table.mini tr:hover td { background: var(--surface-hover); }
+  table.t tr:last-child td { border-bottom: none; }
+  table.t tr:hover td { background: var(--surface-hover); }
+  .emptyRow td { text-align: center; color: var(--text-2); padding: 20px !important; }
 
-  .riskScore {
-    display: inline-block; padding: 1px 7px; border-radius: 4px;
-    font-size: 12px; font-weight: 800;
+  .rTag {
+    display: inline-block; padding: 2px 6px; border-radius: 4px;
+    font-size: 11px; font-weight: 800;
   }
-  .riskScore.high   { background: #fef2f2; color: #dc2626; }
-  .riskScore.medium { background: #fefce8; color: #ca8a04; }
-  .riskScore.low    { background: #f0fdf4; color: #16a34a; }
-  [data-theme="dark"] .riskScore.high   { background: #3b0202; }
-  [data-theme="dark"] .riskScore.medium { background: #2c1e00; }
-  [data-theme="dark"] .riskScore.low    { background: #052e16; }
+  .rTag.high   { background: #fef2f2; color: #dc2626; }
+  .rTag.mid    { background: #fffbeb; color: #d97706; }
+  .rTag.low    { background: #f0fdf4; color: #16a34a; }
+  [data-theme="dark"] .rTag.high  { background: #2a0000; }
+  [data-theme="dark"] .rTag.mid   { background: #1c1400; }
+  [data-theme="dark"] .rTag.low   { background: #052e16; }
 
-  .capaBadge {
-    display: inline-block; padding: 2px 8px; border-radius: 4px;
+  .cTag {
+    display: inline-block; padding: 2px 7px; border-radius: 4px;
     font-size: 11px; font-weight: 700; white-space: nowrap;
   }
-  .capaBadge.done    { background: #f0fdf4; color: #16a34a; }
-  .capaBadge.wip     { background: rgba(0,112,243,.1); color: #0070f3; }
-  .capaBadge.delayed { background: #fef2f2; color: #dc2626; }
-  .capaBadge.pending { background: rgba(0,0,0,.07); color: var(--text-2); }
-  [data-theme="dark"] .capaBadge.done    { background: #052e16; }
-  [data-theme="dark"] .capaBadge.wip     { background: #001a3a; }
-  [data-theme="dark"] .capaBadge.delayed { background: #3b0202; }
-  [data-theme="dark"] .capaBadge.pending { background: rgba(255,255,255,.1); }
+  .cTag.done    { background: #f0fdf4; color: #16a34a; }
+  .cTag.wip     { background: rgba(0,112,243,.1); color: #0070f3; }
+  .cTag.delayed { background: #fef2f2; color: #dc2626; }
+  .cTag.pending { background: rgba(0,0,0,.07); color: var(--text-2); }
+  [data-theme="dark"] .cTag.done    { background: #052e16; }
+  [data-theme="dark"] .cTag.wip     { background: #001c3a; }
+  [data-theme="dark"] .cTag.delayed { background: #2a0000; }
+  [data-theme="dark"] .cTag.pending { background: rgba(255,255,255,.1); }
 
-  .yesTag { display:inline-block; padding:2px 7px; border-radius:4px;
-    font-size:11px; font-weight:700; background:#f0fdf4; color:#16a34a; }
-  .noTag  { display:inline-block; padding:2px 7px; border-radius:4px;
-    font-size:11px; font-weight:700; background:rgba(0,0,0,.06); color:var(--text-2); }
-  [data-theme="dark"] .yesTag { background:#052e16; }
-  [data-theme="dark"] .noTag  { background:rgba(255,255,255,.1); }
+  .ynTag {
+    display: inline-block; padding: 2px 6px; border-radius: 4px;
+    font-size: 11px; font-weight: 700;
+  }
+  .ynTag.y { background: #f0fdf4; color: #16a34a; }
+  .ynTag.n { background: rgba(0,0,0,.06); color: var(--text-2); }
+  [data-theme="dark"] .ynTag.y { background: #052e16; }
+  [data-theme="dark"] .ynTag.n { background: rgba(255,255,255,.1); }
 
-  /* 반응형 */
-  @media (max-width: 700px) {
+  @media (max-width: 640px) {
     .pageHeader { flex-direction: column; }
-    .pageHeader .right { width: 100%; }
+    .pageHeader .rightGroup { width: 100%; }
   }
 </style>
 </head>
@@ -196,81 +196,66 @@
 <main class="main">
 <div class="wrap">
 
-  <!-- ── 헤더 ── -->
+  <!-- 헤더 -->
   <div class="pageHeader">
-    <div class="left">
+    <div>
       <h1>🎛️ BCMS 운영센터</h1>
-      <p class="sub" id="todayLabel"></p>
+      <p class="dateLine" id="dateLineEl"></p>
     </div>
-    <div class="right">
-      <span class="statusBadge" id="globalBadge">— 산정 중</span>
+    <div class="rightGroup">
+      <span class="statusBadge" id="globalBadge"></span>
       <a href="../training/index.html" class="btnNav">훈련·점검 →</a>
       <a href="../audit/index.html" class="btnNav">평가·감사 →</a>
       <button id="themeToggle" class="btnNav">🌙 다크모드</button>
     </div>
   </div>
 
-  <!-- ── KPI 카드 ── -->
+  <!-- KPI 6개 -->
   <div class="kpiGrid" id="kpiGrid"></div>
 
-  <!-- ── 3열: 할 일 / PDCA / 일정 ── -->
+  <!-- 3열 -->
   <div class="triGrid">
-
     <div class="card">
-      <h3>✅ 지금 해야 할 일</h3>
+      <h3>✅ 오늘 할 일</h3>
       <ul class="todoList" id="todoList"></ul>
     </div>
-
     <div class="card">
-      <h3>📋 BCMS 구축 현황 (PDCA)</h3>
-      <div class="pdcaList" id="pdcaList"></div>
-      <div class="pdcaTotal">
-        <span class="pdcaTotalLabel">전체 구축 완성도</span>
-        <span class="pdcaTotalVal" id="pdcaTotalVal">—</span>
+      <h3>📋 BCMS PDCA 진행률</h3>
+      <div class="pdcaRows" id="pdcaRows"></div>
+      <div class="pdcaFooter">
+        <span class="comment" id="pdcaComment"></span>
+        <span class="totalPct" id="pdcaTotalPct"></span>
       </div>
     </div>
-
     <div class="card">
-      <h3>📅 예정 훈련 일정</h3>
+      <h3>📅 훈련 일정</h3>
       <div class="schedList" id="schedList"></div>
     </div>
-
   </div>
 
-  <!-- ── 하단 2열: 리스크 / CAPA ── -->
+  <!-- 하단 2열 -->
   <div class="dualGrid">
-
     <div class="card">
-      <h3>⚠️ 중점관리 리스크 현황</h3>
+      <h3>⚠️ 중점관리 리스크</h3>
       <div class="tableWrap">
-        <table class="mini" id="riskTable">
-          <thead>
-            <tr>
-              <th>팀</th><th>리스크명</th><th>점수</th><th>중점관리</th><th>BCP전략</th>
-            </tr>
-          </thead>
-          <tbody id="riskTbody"></tbody>
+        <table class="t">
+          <thead><tr><th>팀</th><th>리스크명</th><th>위험도</th><th>BCP수립</th></tr></thead>
+          <tbody id="riskBody"></tbody>
         </table>
       </div>
     </div>
-
     <div class="card">
-      <h3>🔧 CAPA 개선조치 현황</h3>
+      <h3>🔧 CAPA 개선조치</h3>
       <div class="tableWrap">
-        <table class="mini" id="capaTable">
-          <thead>
-            <tr>
-              <th>항목명</th><th>출처</th><th>담당자</th><th>목표일</th><th>상태</th>
-            </tr>
-          </thead>
-          <tbody id="capaTbody"></tbody>
+        <table class="t">
+          <thead><tr><th>항목명</th><th>담당자</th><th>목표일</th><th>상태</th></tr></thead>
+          <tbody id="capaBody"></tbody>
         </table>
       </div>
     </div>
-
   </div>
 
-</div><!-- /wrap -->
+</div>
 </main>
 
 <script src="../assets/demo-seed.js"></script>
@@ -280,346 +265,323 @@
   'use strict';
 
   /* ── 유틸 ── */
-  const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const clamp = n => Math.max(0, Math.min(100, Math.round(n || 0)));
 
-  function loadJSON(key, fallback) {
+  function load(key, def) {
     try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      const parsed = JSON.parse(raw);
-      return (parsed !== null && parsed !== undefined) ? parsed : fallback;
-    } catch { return fallback; }
+      const v = localStorage.getItem(key);
+      if (!v) return def;
+      const p = JSON.parse(v);
+      return (p !== null && p !== undefined) ? p : def;
+    } catch { return def; }
   }
 
-  function clamp(n) { return Math.max(0, Math.min(100, Math.round(n))); }
-
-  function pctColor(pct) {
-    if (pct >= 70) return 'green';
-    if (pct >= 50) return 'yellow';
-    return 'red';
-  }
+  function arr(v) { return Array.isArray(v) ? v : []; }
 
   /* ── 날짜 ── */
   const DAYS = ['일','월','화','수','목','금','토'];
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  $('todayLabel').textContent =
-    today.getFullYear() + '년 ' +
-    (today.getMonth()+1) + '월 ' +
-    today.getDate() + '일 (' + DAYS[today.getDay()] + ')';
+  const todayMs = today.setHours(0,0,0,0) || today.getTime();
+  const nowDate = new Date(todayMs);
+  document.getElementById('dateLineEl').textContent =
+    nowDate.getFullYear() + '년 ' + (nowDate.getMonth()+1) + '월 ' +
+    nowDate.getDate() + '일 ' + DAYS[nowDate.getDay()] + '요일';
 
   /* ── 데이터 로드 ── */
-  const biaData      = loadJSON('bcmsBIAData', []);
-  const riskData     = loadJSON('bcmsRiskList', null) ?? loadJSON('bcmsRiskAssessment', []);
-  const bcpData      = loadJSON('bcmsBCPStrategy', null) ?? loadJSON('bcmsBCP', []);
-  const confirmed    = loadJSON('bcmsPriorityConfirmed', []);
-  const trainingData = loadJSON('bcmsTrainingData', []);
-  const capaItems    = loadJSON('bcmsCapaItems', []);
-  const gapData      = loadJSON('bcmsGapAnalysis', []);
-  const docsData     = loadJSON('bcmsDocuments', []);
-  const objectives   = loadJSON('bcmsObjectives', []);
-  const policyData   = loadJSON('bcmsPolicyData', null);
-  const requirements = loadJSON('bcmsRequirements', []);
-  const auditData    = loadJSON('bcmsAuditData', null);
+  const biaData   = arr(load('bcmsBIAData', []));
+  const riskData  = arr(load('bcmsRiskList', null) ?? load('bcmsRiskAssessment', []));
+  const bcpRaw    = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
+  const bcpData   = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
+  const confirmed = arr(load('bcmsPriorityConfirmed', []));
+  const trainData = arr(load('bcmsTrainingData', []));
+  const capaData  = arr(load('bcmsCapaItems', []));
+  const gapData   = arr(load('bcmsGapAnalysis', []));
+  const docsData  = arr(load('bcmsDocuments', []));
+  const policyData   = load('bcmsPolicyData', null);
+  const objectives   = arr(load('bcmsObjectives', []));
+  const requirements = arr(load('bcmsRequirements', []));
 
   /* ── KPI 계산 ── */
 
-  // 1. BCP 수립률
-  const confirmedCount = Array.isArray(confirmed) ? confirmed.length : 0;
-  const bcpArr = Array.isArray(bcpData) ? bcpData : (bcpData && typeof bcpData === 'object' ? Object.values(bcpData) : []);
-  const bcpWritten = bcpArr.filter(b => b && (b.strategyType || b.strategy || b.done)).length;
-  const bcpPct = confirmedCount > 0 ? clamp(bcpWritten / confirmedCount * 100) : 0;
+  // ① BCP 수립률
+  const confirmedCnt = confirmed.length;
+  const bcpWritten   = bcpData.filter(b => b && (b.strategyText || b.strategyType || b.strategy || b.done)).length;
+  const bcpPct       = confirmedCnt > 0 ? clamp(bcpWritten / confirmedCnt * 100) : 0;
 
-  // 2. 중점관리 리스크 수
-  const riskArr = Array.isArray(riskData) ? riskData : [];
-  const criticalRisks = riskArr.filter(r => r && ((r.riskScore ?? r.score ?? 0) >= 15 || r.critical));
-  const critRiskCount = criticalRisks.length;
+  // ② 중점관리 리스크
+  const critRisks = riskData.filter(r => r && ((r.riskScore ?? r.score ?? 0) >= 15 || r.critical === true));
+  const critCnt   = critRisks.length;
 
-  // 3. 훈련 이행률
-  const trainArr = Array.isArray(trainingData) ? trainingData : [];
-  const trainTotal = trainArr.length;
-  const trainDone  = trainArr.filter(t => t && (t.status === '완료' || t.done === true || t.completed === true)).length;
+  // ③ 훈련 이행률
+  const trainTotal = trainData.length;
+  const trainDone  = trainData.filter(t => t && (String(t.status ?? '') === '완료' || t.done === true || t.completed === true)).length;
   const trainPct   = trainTotal > 0 ? clamp(trainDone / trainTotal * 100) : 0;
 
-  // 4. CAPA 완료율
-  const capaArr   = Array.isArray(capaItems) ? capaItems : [];
-  const capaDone  = capaArr.filter(c => c && (String(c.status ?? '').includes('완료') || c.status === 'done')).length;
-  const capaTotal = capaArr.length;
+  // ④ CAPA 완료율
+  const capaTotal = capaData.length;
+  const capaDone  = capaData.filter(c => c && (String(c.status ?? '').includes('완료') || String(c.status ?? '').toLowerCase() === 'closed')).length;
   const capaPct   = capaTotal > 0 ? clamp(capaDone / capaTotal * 100) : 0;
 
-  // 5. ISO 22301 갭분석 충족률
-  const gapArr  = Array.isArray(gapData) ? gapData : [];
-  const gapYes  = gapArr.filter(g => g && (g.status === 'Yes' || g.met === true || g.fulfilled === true || String(g.status ?? '').toLowerCase() === 'yes')).length;
-  const gapTotal = gapArr.length;
-  const gapPct   = gapTotal > 0 ? clamp(gapYes / gapTotal * 100) : 0;
+  // ⑤ ISO 갭분석 충족률
+  const gapTotal = gapData.length;
+  const gapMet   = gapData.filter(g => {
+    if (!g) return false;
+    const s = String(g.status ?? '').toLowerCase();
+    return s === '충족' || s === 'yes' || s === 'y' || g.met === true;
+  }).length;
+  const gapPct = gapTotal > 0 ? clamp(gapMet / gapTotal * 100) : 0;
 
-  // 6. 문서 만료 임박
-  const docsArr   = Array.isArray(docsData) ? docsData : [];
-  const thirtyDays = new Date(); thirtyDays.setDate(thirtyDays.getDate() + 30);
-  const expiringDocs = docsArr.filter(d => {
-    if (!d || !d.expiryDate) return false;
-    const exp = new Date(d.expiryDate);
-    return !isNaN(exp) && exp <= thirtyDays && exp >= today;
+  // ⑥ 문서 만료 임박
+  const soon = new Date(nowDate); soon.setDate(soon.getDate() + 30);
+  const expiringCnt = docsData.filter(d => {
+    if (!d) return false;
+    const raw = d.expiryDate ?? d.reviewDate ?? '';
+    if (!raw) return false;
+    const dt = new Date(raw);
+    return !isNaN(dt) && dt >= nowDate && dt <= soon;
   }).length;
 
-  /* ── 전체 상태 배지 산정 ── */
-  const keyPcts = [bcpPct, trainPct, capaPct, gapPct];
-  let globalStatus = 'green';
-  for (const p of keyPcts) {
-    if (p < 50) { globalStatus = 'red'; break; }
-    if (p < 70)  globalStatus = 'yellow';
+  /* ── 전체 상태 배지 ── */
+  const avgPct = clamp((bcpPct + trainPct + capaPct + gapPct) / 4);
+  const badgeEl = document.getElementById('globalBadge');
+  if (avgPct >= 70) {
+    badgeEl.textContent = '● 정상';
+    badgeEl.className = 'statusBadge badge-green';
+  } else if (avgPct >= 50) {
+    badgeEl.textContent = '● 주의';
+    badgeEl.className = 'statusBadge badge-yellow';
+  } else {
+    badgeEl.textContent = '● 점검필요';
+    badgeEl.className = 'statusBadge badge-red';
   }
-  if (critRiskCount > 5) globalStatus = 'red';
-  else if (critRiskCount > 2 && globalStatus === 'green') globalStatus = 'yellow';
-
-  const badgeEl = $('globalBadge');
-  badgeEl.className = 'statusBadge ' + globalStatus;
-  badgeEl.textContent = globalStatus === 'green' ? '● 정상' :
-                        globalStatus === 'yellow' ? '● 주의' : '● 위험';
 
   /* ── KPI 카드 렌더 ── */
-  function kpiCard({ label, value, hint, pct, colorClass, bgClass, noBar }) {
-    const barHtml = noBar ? '' : `
-      <div class="progressBar" style="margin-bottom:6px">
-        <span class="${bgClass}" style="width:${pct}%"></span>
-      </div>`;
+  function pctClass(p) { return p >= 70 ? 'green' : p >= 50 ? 'yellow' : 'red'; }
+
+  function kpiCard(label, valueHtml, pct, descHtml, noBar) {
+    const cls = pctClass(pct);
+    const barHtml = noBar ? '' :
+      `<div class="pBar" style="margin-bottom:6px"><b class="fg-${cls}" style="width:${pct}%"></b></div>`;
     return `
       <div class="kpiCard">
-        <p class="kLabel">${esc(label)}</p>
-        <p class="kValue ${colorClass}">${esc(value)}</p>
+        <p class="kLabel">${label}</p>
+        <p class="kValue tx-${cls}">${valueHtml}</p>
         ${barHtml}
-        <p class="kHint">${esc(hint)}</p>
+        <p class="kDesc">${descHtml}</p>
       </div>`;
   }
 
-  const riskColor = critRiskCount === 0 ? 'col-green' : critRiskCount <= 3 ? 'col-yellow' : 'col-red';
-  const riskBg    = critRiskCount === 0 ? 'bg-green'  : critRiskCount <= 3 ? 'bg-yellow'  : 'bg-red';
-  const expiryColor = expiringDocs === 0 ? 'col-green' : expiringDocs <= 2 ? 'col-yellow' : 'col-red';
-  const expiryBg    = expiringDocs === 0 ? 'bg-green'  : expiringDocs <= 2 ? 'bg-yellow'  : 'bg-red';
-
-  $('kpiGrid').innerHTML = [
-    kpiCard({
-      label: '📌 BCP 수립률',
-      value: bcpPct + '%',
-      hint: `확정 핵심업무 ${confirmedCount}건 중 ${bcpWritten}건 작성`,
-      pct: bcpPct,
-      colorClass: 'col-' + pctColor(bcpPct),
-      bgClass: 'bg-' + pctColor(bcpPct),
-    }),
-    kpiCard({
-      label: '🔴 중점관리 리스크',
-      value: critRiskCount + '건',
-      hint: `리스크 점수 15점 이상 또는 critical 항목`,
-      pct: Math.min(100, critRiskCount * 10),
-      colorClass: riskColor,
-      bgClass: riskBg,
-    }),
-    kpiCard({
-      label: '🎯 훈련 이행률',
-      value: trainPct + '%',
-      hint: `전체 ${trainTotal}건 중 ${trainDone}건 완료`,
-      pct: trainPct,
-      colorClass: 'col-' + pctColor(trainPct),
-      bgClass: 'bg-' + pctColor(trainPct),
-    }),
-    kpiCard({
-      label: '🔧 CAPA 완료율',
-      value: capaPct + '%',
-      hint: `전체 ${capaTotal}건 중 ${capaDone}건 완료`,
-      pct: capaPct,
-      colorClass: 'col-' + pctColor(capaPct),
-      bgClass: 'bg-' + pctColor(capaPct),
-    }),
-    kpiCard({
-      label: '📊 ISO 22301 갭분석 충족률',
-      value: gapPct + '%',
-      hint: `전체 ${gapTotal}항목 중 ${gapYes}항목 충족`,
-      pct: gapPct,
-      colorClass: 'col-' + pctColor(gapPct),
-      bgClass: 'bg-' + pctColor(gapPct),
-    }),
-    kpiCard({
-      label: '📄 문서 만료 임박 (30일)',
-      value: expiringDocs + '건',
-      hint: expiringDocs === 0 ? '만료 임박 문서 없음' : `${expiringDocs}건의 문서가 30일 내 만료`,
-      pct: Math.min(100, expiringDocs * 20),
-      colorClass: expiryColor,
-      bgClass: expiryBg,
-    }),
+  document.getElementById('kpiGrid').innerHTML = [
+    kpiCard(
+      '📌 BCP 수립률',
+      bcpPct + '%',
+      bcpPct,
+      `확정 핵심업무 ${confirmedCnt}건 중 ${bcpWritten}건 작성`
+    ),
+    kpiCard(
+      '🔴 중점관리 리스크',
+      critCnt + '건',
+      critCnt === 0 ? 100 : Math.max(0, 100 - critCnt * 10),
+      critCnt === 0 ? '<span class="tx-green">이상 없음</span>' : '<span class="tx-red">전략 수립 확인 필요</span>',
+      true
+    ),
+    kpiCard(
+      '🎯 훈련 이행률',
+      trainPct + '%',
+      trainPct,
+      `전체 ${trainTotal}건 중 ${trainDone}건 완료`
+    ),
+    kpiCard(
+      '🔧 CAPA 완료율',
+      capaPct + '%',
+      capaPct,
+      `전체 ${capaTotal}건 중 ${capaDone}건 완료`
+    ),
+    kpiCard(
+      '📊 ISO 22301 갭분석 충족률',
+      gapPct + '%',
+      gapPct,
+      `전체 ${gapTotal}항목 중 ${gapMet}항목 충족`
+    ),
+    kpiCard(
+      '📄 문서 만료 임박 (30일)',
+      expiringCnt + '건',
+      expiringCnt === 0 ? 100 : Math.max(20, 100 - expiringCnt * 20),
+      expiringCnt === 0 ? '<span class="tx-green">없음</span>' : `<span class="tx-yellow">${expiringCnt}건 확인 필요</span>`,
+      true
+    ),
   ].join('');
 
-  /* ── 오늘 할 일 ── */
+  /* ── BASE path (사이드바 동일 로직) ── */
   const BASE = (() => {
     const p = window.location.pathname;
     const m = p.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports)\/)/);
     return m ? m[1] : '';
   })();
+  const H = p => BASE + p;
 
+  /* ── 오늘 할 일 ── */
   const todos = [];
-  const bcpMissing = confirmedCount - bcpWritten;
-  if (bcpMissing > 0) todos.push({ text: `BCP 전략 ${bcpMissing}건 미작성`, href: BASE + '/strategy-plans/index.html', ico: '📋' });
+  const bcpMissing = confirmedCnt - bcpWritten;
+  if (bcpMissing > 0)
+    todos.push({ dot:'red', text:`BCP 전략 ${bcpMissing}건 미작성`, href: H('/strategy-plans/bcp.html') });
 
-  const capaWip = capaArr.filter(c => c && !String(c.status ?? '').includes('완료') && c.status !== 'done').length;
-  if (capaWip > 0) todos.push({ text: `CAPA 개선조치 ${capaWip}건 진행중`, href: BASE + '/audit/capa.html', ico: '🔧' });
+  const capaWip = capaTotal - capaDone;
+  if (capaWip > 0)
+    todos.push({ dot:'red', text:`CAPA 개선조치 ${capaWip}건 진행중`, href: H('/audit/index.html') });
 
-  const gapMissing = gapTotal - gapYes;
-  if (gapMissing > 0) todos.push({ text: `ISO 22301 갭분석 미충족 ${gapMissing}항목`, href: BASE + '/audit/evidence.html', ico: '📊' });
+  const gapMissing = gapTotal - gapMet;
+  if (gapMissing > 0)
+    todos.push({ dot:'yellow', text:`갭분석 미충족 ${gapMissing}항목`, href: H('/audit/index.html') });
 
-  if (trainTotal === 0) todos.push({ text: '훈련 계획 수립 필요', href: BASE + '/training/index.html', ico: '🎯' });
+  const trainWip = trainTotal - trainDone;
+  if (trainWip > 0)
+    todos.push({ dot:'yellow', text:`훈련 계획 ${trainWip}건 미이행`, href: H('/training/index.html') });
 
-  if (critRiskCount > 0) todos.push({ text: `중점관리 리스크 ${critRiskCount}건 전략 확인 필요`, href: BASE + '/risk-bia/risk.html', ico: '⚠️' });
+  if (critCnt > 0)
+    todos.push({ dot:'red', text:`중점관리 리스크 ${critCnt}건 전략 확인`, href: H('/strategy-plans/bcp.html') });
 
-  const todoEl = $('todoList');
+  if (expiringCnt > 0)
+    todos.push({ dot:'yellow', text:`만료 임박 문서 ${expiringCnt}건`, href: H('/governance/docs.html') });
+
+  const todoEl = document.getElementById('todoList');
   if (todos.length === 0) {
-    todoEl.innerHTML = `<li><div class="todoOk">✓ 오늘은 모든 항목이 정상입니다</div></li>`;
+    todoEl.innerHTML = `<li><div class="todoAllOk">✓ 오늘은 모든 항목이 정상입니다</div></li>`;
   } else {
     todoEl.innerHTML = todos.map(t =>
-      `<li><a href="${esc(t.href)}"><span class="ico">${t.ico}</span>${esc(t.text)}</a></li>`
+      `<li><a href="${esc(t.href)}">
+         <span class="dot-${t.dot}">●</span>${esc(t.text)}
+       </a></li>`
     ).join('');
   }
 
-  /* ── PDCA 구축 현황 ── */
-  const hasBIA      = biaData.length > 0;
-  const hasPolicy   = !!policyData || objectives.length > 0;
-  const hasReq      = requirements.length > 0;
-  const hasAudit    = !!auditData;
-
-  const planPct = clamp(((hasPolicy ? 50 : 0) + (hasReq ? 30 : 0) + (hasBIA ? 20 : 0)));
-  const doPct   = clamp((bcpPct * 0.6) + (trainPct * 0.4));
-  const checkPct= clamp((gapPct * 0.7) + (hasAudit ? 30 : 0));
-  const actPct  = clamp(capaPct);
-  const overallPct = clamp((planPct + doPct + checkPct + actPct) / 4);
+  /* ── PDCA 진행률 ── */
+  const planPct = clamp((policyData ? 34 : 0) + (objectives.length > 0 ? 33 : 0) + (requirements.length > 0 ? 33 : 0));
+  const doPct   = bcpPct;
+  const checkPct = gapPct;
+  const actPct   = capaPct;
+  const totalPct = clamp((planPct + doPct + checkPct + actPct) / 4);
 
   const pdcaRows = [
-    { label: 'Plan (계획)', sub: '정책·목표·BIA', pct: planPct },
-    { label: 'Do (실행)',   sub: 'BCP전략·훈련이행', pct: doPct },
-    { label: 'Check (점검)', sub: '갭분석·감사', pct: checkPct },
-    { label: 'Act (개선)',  sub: 'CAPA 완료', pct: actPct },
+    { name: 'Plan', sub: '정책·목표·요구사항', pct: planPct },
+    { name: 'Do',   sub: 'BCP 수립률',         pct: doPct   },
+    { name: 'Check', sub: 'ISO 갭분석 충족률', pct: checkPct },
+    { name: 'Act',  sub: 'CAPA 완료율',        pct: actPct  },
   ];
 
-  $('pdcaList').innerHTML = pdcaRows.map(r => `
-    <div class="pdcaRow">
-      <div class="pdcaRowHead">
+  document.getElementById('pdcaRows').innerHTML = pdcaRows.map(r => `
+    <div class="pdcaItem">
+      <div class="pdcaHead">
         <div>
-          <div class="pdcaLabel">${esc(r.label)}</div>
-          <div class="pdcaSub">${esc(r.sub)}</div>
+          <span class="pdcaName">${esc(r.name)}</span>
+          <span class="pdcaSub">${esc(r.sub)}</span>
         </div>
         <span class="pdcaPct">${r.pct}%</span>
       </div>
-      <div class="pdcaBar"><span style="width:${r.pct}%"></span></div>
+      <div class="pdcaBarWrap"><span style="width:${r.pct}%"></span></div>
     </div>
   `).join('');
 
-  $('pdcaTotalVal').textContent = overallPct + '%';
+  document.getElementById('pdcaTotalPct').textContent = totalPct + '%';
+  document.getElementById('pdcaComment').textContent =
+    totalPct >= 80 ? 'BCMS 체계가 잘 갖춰져 있습니다' :
+    totalPct >= 50 ? '주요 항목을 계속 보완해 주세요' :
+                     '핵심 항목부터 우선 수립하세요';
 
-  /* ── 예정 일정 ── */
-  const upcoming = trainArr
-    .filter(t => t && t.date && !t.done && t.status !== '완료' && t.completed !== true)
+  /* ── 훈련 일정 ── */
+  const upcoming = trainData
+    .filter(t => t && t.date && String(t.status ?? '') !== '완료' && t.done !== true && t.completed !== true)
     .map(t => ({ ...t, _d: new Date(t.date) }))
-    .filter(t => !isNaN(t._d) && t._d >= today)
+    .filter(t => !isNaN(t._d) && t._d >= nowDate)
     .sort((a, b) => a._d - b._d)
     .slice(0, 5);
 
-  const schedEl = $('schedList');
+  const schedEl = document.getElementById('schedList');
   if (upcoming.length === 0) {
-    schedEl.innerHTML = `<p class="emptyMsg">예정된 훈련이 없습니다</p>`;
+    schedEl.innerHTML = `<div class="emptyCard">예정된 훈련이 없습니다<br>
+      <a href="${H('/training/index.html')}">→ 훈련 계획 수립하기</a></div>`;
   } else {
     schedEl.innerHTML = upcoming.map(t => {
       const d = t._d;
-      const dateLabel = `${d.getMonth()+1}/${d.getDate()} (${DAYS[d.getDay()]})`;
-      return `
-        <div class="schedItem">
-          <span class="schedDate">${esc(dateLabel)}</span>
-          <span class="schedName">${esc(t.name ?? t.title ?? '훈련')}</span>
-          <span class="typeBadge">${esc(t.type ?? t.trainingType ?? '훈련')}</span>
-        </div>`;
+      const dateStr = (d.getMonth()+1) + '/' + d.getDate() + ' (' + DAYS[d.getDay()] + ')';
+      return `<div class="schedItem">
+        <span class="schedDate">${esc(dateStr)}</span>
+        <span class="schedName">${esc(t.name ?? t.title ?? '훈련')}</span>
+        <span class="typeBadge">${esc(t.type ?? t.trainingType ?? '훈련')}</span>
+      </div>`;
     }).join('');
   }
 
   /* ── 리스크 TOP 5 ── */
-  const top5Risks = riskArr
+  const top5 = riskData
     .filter(r => r)
     .sort((a, b) => (b.riskScore ?? b.score ?? 0) - (a.riskScore ?? a.score ?? 0))
     .slice(0, 5);
 
-  const bcpKeySet = new Set(
-    bcpArr.map(b => b && (b.functionId ?? b.id ?? b.team ?? '')).filter(Boolean)
-  );
-  const bcpTeamSet = new Set(
-    bcpArr.map(b => b && (b.team ?? b.dept ?? '')).filter(Boolean)
-  );
-
-  function hasBCP(risk) {
-    const id   = risk.id ?? risk.functionId ?? '';
-    const team = risk.team ?? risk.dept ?? '';
-    return bcpKeySet.has(id) || bcpTeamSet.has(team);
+  const bcpTeams = new Set(bcpData.map(b => b && (b.team ?? b.dept ?? '')).filter(Boolean));
+  const bcpIds   = new Set(bcpData.map(b => b && (b.id ?? b.functionId ?? '')).filter(Boolean));
+  function hasBcp(r) {
+    return bcpTeams.has(r.team ?? r.dept ?? '') || bcpIds.has(r.id ?? r.functionId ?? '');
   }
 
-  const riskTbody = $('riskTbody');
-  if (top5Risks.length === 0) {
-    riskTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:20px">리스크 데이터가 없습니다</td></tr>`;
+  const riskBody = document.getElementById('riskBody');
+  if (top5.length === 0) {
+    riskBody.innerHTML = `<tr class="emptyRow"><td colspan="4">리스크 평가 데이터가 없습니다</td></tr>`;
   } else {
-    riskTbody.innerHTML = top5Risks.map(r => {
+    riskBody.innerHTML = top5.map(r => {
       const score = r.riskScore ?? r.score ?? 0;
-      const scoreClass = score >= 15 ? 'high' : score >= 9 ? 'medium' : 'low';
-      const isCritical = r.critical || score >= 15;
-      return `
-        <tr>
-          <td>${esc(r.team ?? r.dept ?? '—')}</td>
-          <td>${esc(r.name ?? r.riskName ?? r.title ?? '—')}</td>
-          <td><span class="riskScore ${scoreClass}">${esc(score)}</span></td>
-          <td>${isCritical ? '<span class="yesTag">●</span>' : '<span class="noTag">—</span>'}</td>
-          <td>${hasBCP(r) ? '<span class="yesTag">수립</span>' : '<span class="noTag">미수립</span>'}</td>
-        </tr>`;
+      const cls   = score >= 15 ? 'high' : score >= 9 ? 'mid' : 'low';
+      const bcp   = hasBcp(r);
+      return `<tr>
+        <td>${esc(r.team ?? r.dept ?? '—')}</td>
+        <td>${esc(r.name ?? r.riskName ?? r.title ?? '—')}</td>
+        <td><span class="rTag ${cls}">${esc(score)}</span></td>
+        <td><span class="ynTag ${bcp ? 'y' : 'n'}">${bcp ? 'O' : 'X'}</span></td>
+      </tr>`;
     }).join('');
   }
 
   /* ── CAPA 최근 5개 ── */
-  const recent5Capa = [...capaArr].reverse().slice(0, 5);
+  const recent5 = [...capaData].reverse().slice(0, 5);
 
   function capaStatus(c) {
-    const raw = String(c.status ?? '');
-    if (raw.includes('완료') || raw === 'done') return { label: '완료', cls: 'done' };
+    const s = String(c.status ?? '').toLowerCase();
+    if (s.includes('완료') || s === 'closed' || s === 'done') return { label:'완료', cls:'done' };
     const due = c.dueDate ?? c.targetDate ?? '';
-    if (due && new Date(due) < today && !raw.includes('완료')) return { label: '지연', cls: 'delayed' };
-    if (raw.includes('진행') || raw === 'wip') return { label: '진행중', cls: 'wip' };
-    return { label: '미시작', cls: 'pending' };
+    if (due && new Date(due) < nowDate) return { label:'지연', cls:'delayed' };
+    if (s.includes('진행') || s === 'wip' || s === 'in progress') return { label:'진행중', cls:'wip' };
+    return { label:'미시작', cls:'pending' };
   }
 
-  const capaTbody = $('capaTbody');
-  if (recent5Capa.length === 0) {
-    capaTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:20px">CAPA 데이터가 없습니다</td></tr>`;
+  const capaBody = document.getElementById('capaBody');
+  if (recent5.length === 0) {
+    capaBody.innerHTML = `<tr class="emptyRow"><td colspan="4">CAPA 항목이 없습니다</td></tr>`;
   } else {
-    capaTbody.innerHTML = recent5Capa.map(c => {
-      const st = capaStatus(c);
-      const due = c.dueDate ?? c.targetDate ?? '';
-      return `
-        <tr>
-          <td>${esc(c.title ?? c.name ?? c.item ?? '—')}</td>
-          <td>${esc(c.source ?? c.origin ?? '—')}</td>
-          <td>${esc(c.owner ?? c.assignee ?? '—')}</td>
-          <td>${esc(due || '—')}</td>
-          <td><span class="capaBadge ${st.cls}">${st.label}</span></td>
-        </tr>`;
+    capaBody.innerHTML = recent5.map(c => {
+      const st  = capaStatus(c);
+      const due = c.dueDate ?? c.targetDate ?? '—';
+      return `<tr>
+        <td>${esc(c.title ?? c.name ?? c.item ?? '—')}</td>
+        <td>${esc(c.owner ?? c.assignee ?? '—')}</td>
+        <td>${esc(due)}</td>
+        <td><span class="cTag ${st.cls}">${st.label}</span></td>
+      </tr>`;
     }).join('');
   }
 
-  /* ── 다크모드 토글 ── */
+  /* ── 다크모드 ── */
   const html = document.documentElement;
-  const btn  = $('themeToggle');
+  const btn  = document.getElementById('themeToggle');
   function applyTheme(t) {
     html.setAttribute('data-theme', t);
     btn.textContent = t === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
     try { localStorage.setItem('bcmsTheme', t); } catch {}
   }
-  try {
-    const saved = localStorage.getItem('bcmsTheme');
-    if (saved) applyTheme(saved);
-  } catch {}
-  btn.addEventListener('click', () => {
-    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-  });
+  try { const s = localStorage.getItem('bcmsTheme'); if (s) applyTheme(s); } catch {}
+  btn.addEventListener('click', () =>
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
+  );
 
 })();
 </script>
