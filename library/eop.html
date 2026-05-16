@@ -3,1067 +3,859 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BCMS Portal - EOP (비상 대응)</title>
+<title>BCMS - 비상대응절차서 (EOP)</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-  .mini{ opacity:.85; font-size:14px; line-height:1.6; }
-  .hint{ opacity:.85; font-size:15px; line-height:1.6; }
-  .pill{
-    display:inline-block;
-    padding:6px 10px;
-    border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    font-size:13px;
-    color:rgba(15,23,42,.72);
-    margin-right:8px;
-    margin-bottom:8px;
-    white-space:nowrap;
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .main { overflow-x: hidden; min-width: 0; }
+  .wrap { max-width: 1000px; margin: 0 auto; overflow-x: hidden; }
+
+  /* ── 버튼 ── */
+  .btn {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); text-decoration: none; white-space: nowrap;
+    transition: background .15s; display: inline-block;
+  }
+  .btn:hover { background: var(--surface-hover); }
+  .btn.primary { background: var(--accent,#0070f3); color:#fff; border-color: var(--accent,#0070f3); }
+  .btn.primary:hover { opacity:.88; }
+  .btn.sm { padding: 4px 10px; font-size: 12px; }
+  .btn.danger { border-color:#dc2626; color:#dc2626; }
+  .btn.danger:hover { background:#fef2f2; }
+  [data-theme="dark"] .btn.danger:hover { background:#2a0000; }
+
+  /* ── 헤더 ── */
+  .pageHeader {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+  }
+  .pageHeader h1 { font-size: 22px; font-weight: 700; margin: 0; }
+  .headerBtns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* ── 메타 카드 ── */
+  .metaCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 16px 20px; margin-bottom: 16px;
+  }
+  .metaCard h3 { font-size: 13px; font-weight: 700; margin: 0 0 12px 0; color: var(--text-2); }
+  .metaGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 700px) { .metaGrid { grid-template-columns: 1fr 1fr; } }
+  .metaField label { display: block; font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 3px; }
+  .metaField input {
+    width: 100%; box-sizing: border-box; padding: 6px 8px;
+    border-radius: 7px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px; outline: none; font-family: inherit;
+  }
+  .metaField input:focus { border-color: var(--accent,#0070f3); }
+
+  /* ── accordion ── */
+  .section {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); margin-bottom: 10px; overflow: hidden;
+  }
+  .sectionHead {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 18px; cursor: pointer;
+    border-left: 3px solid var(--accent,#0070f3);
+    background: var(--surface-hover); user-select: none;
+  }
+  .sectionHead:hover { filter: brightness(1.03); }
+  .sectionTitle { font-size: 14px; font-weight: 800; color: var(--text); }
+  .sectionMeta  { font-size: 11px; color: var(--text-2); margin-left: 8px; }
+  .sectionLeft  { display: flex; align-items: center; gap: 4px; }
+  .sectionRight { display: flex; align-items: center; gap: 8px; }
+  .chevron { font-size: 12px; color: var(--text-2); transition: transform .2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .sectionBody { display: none; padding: 16px 18px; }
+  .sectionBody.open { display: block; }
+
+  /* 자동생성 영역 */
+  .autoArea {
+    background: rgba(0,112,243,.03); border: 0.5px solid rgba(0,112,243,.15);
+    border-radius: 8px; padding: 12px; margin-bottom: 10px;
+  }
+  [data-theme="dark"] .autoArea { background: rgba(0,112,243,.06); }
+  .autoLabel {
+    font-size: 11px; font-weight: 700; color: var(--accent,#0070f3);
+    margin-bottom: 8px;
   }
 
-  .ctx{
-    display:none;
-    margin-top:12px;
-    padding:12px;
-    border-radius:14px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
+  /* ── 테이블 ── */
+  .tableWrap { overflow-x: auto; }
+  table.doc {
+    width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px;
   }
-  .ctxTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
-  .ctxTitle{ font-weight:900; }
-  .ctxBadges{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  table.doc th {
+    text-align: left; font-size: 11px; font-weight: 700; color: var(--text-2);
+    padding: 7px 10px; border-bottom: 1px solid var(--border);
+    white-space: nowrap; background: var(--surface);
+  }
+  table.doc td {
+    padding: 7px 10px; border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: middle; line-height: 1.4;
+  }
+  table.doc tr:last-child td { border-bottom: none; }
+  .emptyRow td { text-align: center; color: var(--text-2); padding: 18px !important; }
 
-  .chipBtn{
-    display:inline-block;
-    padding:10px 14px;
-    border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    color:#0f172a;
-    text-decoration:none;
-    font-weight:900;
-    font-size:15px;
-    cursor:pointer;
-    white-space:nowrap;
+  /* 인라인 입력 */
+  .cellInput, .cellSel {
+    width: 100%; box-sizing: border-box; padding: 5px 7px;
+    border-radius: 6px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12px; outline: none; font-family: inherit;
   }
-  .chipBtn:hover{ filter:brightness(1.08); }
-  .chipBtn.primary{
-    background:#60a5fa;
-    color:#0b1220;
-    border-color: rgba(96,165,250,.6);
+  .cellInput:focus, .cellSel:focus { border-color: var(--accent,#0070f3); }
+  .cellTa {
+    width: 100%; box-sizing: border-box; padding: 5px 7px;
+    border-radius: 6px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12px; outline: none; font-family: inherit;
+    resize: vertical; min-height: 48px;
   }
-  .chipBtn.danger{
-    border-color: rgba(239,68,68,.35);
-    background: rgba(239,68,68,.10);
-    color:#fecaca;
-  }
+  .cellTa:focus { border-color: var(--accent,#0070f3); }
 
-  .sev1{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); color:#fecaca; }
-  .sev2{ border-color: rgba(249,115,22,.45); background: rgba(249,115,22,.12); color:#fed7aa; }
-  .sev3{ border-color: rgba(234,179,8,.45); background: rgba(234,179,8,.12); color:#fde68a; }
-  .sev4{ border-color: rgba(59,130,246,.40); background: rgba(59,130,246,.10); color:#bfdbfe; }
-  .sev5{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#0f172a; }
+  /* textarea */
+  .sectionTa {
+    width: 100%; box-sizing: border-box; padding: 10px 12px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px; outline: none; font-family: inherit;
+    resize: vertical; line-height: 1.6;
+  }
+  .sectionTa:focus { border-color: var(--accent,#0070f3); }
 
-  details.sevBox{
-    margin-top:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:14px;
-    padding:12px;
+  /* ── 체크리스트 ── */
+  .checkList { display: flex; flex-direction: column; gap: 6px; }
+  .checkItem {
+    display: grid;
+    grid-template-columns: 24px 1fr 130px 110px 40px;
+    gap: 8px; align-items: center;
+    padding: 7px 10px; border-radius: 8px;
+    border: 0.5px solid var(--border); background: var(--bg);
   }
-  details.sevBox summary{
-    cursor:pointer;
-    list-style:none;
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:center;
-    font-weight:900;
+  @media (max-width: 700px) { .checkItem { grid-template-columns: 24px 1fr 40px; } }
+  .checkItem input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+  .checkHead {
+    display: grid;
+    grid-template-columns: 24px 1fr 130px 110px 40px;
+    gap: 8px; padding: 4px 10px;
+    font-size: 11px; font-weight: 700; color: var(--text-2);
   }
-  details.sevBox summary::-webkit-details-marker{ display:none; }
-  table.sevTable{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-    border:1px solid rgba(15,23,42,.12);
-    border-radius:12px;
-    overflow:hidden;
-    background: rgba(15,23,42,.04);
-    font-size:14px;
-  }
-  table.sevTable th, table.sevTable td{
-    padding:10px 10px;
-    border-bottom:1px solid rgba(15,23,42,.10);
-    vertical-align:top;
-    line-height:1.5;
-  }
-  table.sevTable th{ color:rgba(15,23,42,.62); text-align:left; }
-  table.sevTable tr:last-child td{ border-bottom:none; }
+  @media (max-width: 700px) { .checkHead { display: none; } }
 
-  .toolbarRow{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
+  /* ── 시나리오 카드 ── */
+  .scenarioList { display: flex; flex-direction: column; gap: 10px; }
+  .scenarioCard {
+    border: 0.5px solid var(--border); border-radius: 10px;
+    background: var(--bg); padding: 14px;
   }
-  .filters{
-    margin-top:12px;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
+  .scenarioCardHead { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .scenarioNum {
+    width: 24px; height: 24px; border-radius: 999px; flex-shrink: 0;
+    background: #dc2626; color: #fff;
+    font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;
   }
-  .filters .field{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(15,23,42,.04);
-    padding:8px 10px;
-    border-radius:999px;
+  .scenarioGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 640px) { .scenarioGrid { grid-template-columns: 1fr; } }
+  .scField label { display: block; font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 3px; }
+  .scField input, .scField textarea {
+    width: 100%; box-sizing: border-box; padding: 6px 8px;
+    border-radius: 7px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12px; outline: none; font-family: inherit;
   }
-  .filters label{ color:rgba(15,23,42,.62); font-size:12px; font-weight:800; }
-  .filters select, .filters input{
-    border:none;
-    outline:none;
-    background: transparent;
-    color:#0f172a;
-    font-size:14px;
-    min-width:160px;
-  }
-  .filters input{ min-width:240px; }
+  .scField textarea { resize: vertical; min-height: 64px; }
+  .scField input:focus, .scField textarea:focus { border-color: var(--accent,#0070f3); }
+  .scField.full { grid-column: 1 / -1; }
 
-  .eopGrid{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap:12px;
-    margin-top:12px;
+  /* ── 행 추가 버튼 ── */
+  .addRowBtn {
+    display: flex; align-items: center; gap: 6px; margin-top: 8px;
+    font-size: 12px; font-weight: 600; color: var(--accent,#0070f3);
+    cursor: pointer; border: none; background: none; padding: 4px 0;
   }
-  @media (max-width: 1100px){
-    .eopGrid{ grid-template-columns: 1fr; }
-  }
-  .eopCard{
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:14px;
-    padding:14px;
-  }
-  .eopTitle{ font-weight:900; font-size:16px; }
-  .eopMeta{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
-  .eopDesc{ margin-top:10px; opacity:.88; line-height:1.6; font-size:13px; }
+  .addRowBtn:hover { opacity: .75; }
 
-  .actionCard{
-    margin-top:12px;
-    border-top:1px solid rgba(15,23,42,.10);
-    padding-top:12px;
+  /* ── 토스트 ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    background: #16a34a; color: #fff; opacity: 0; pointer-events: none;
+    transition: opacity .3s;
   }
-  .acTitle{
-    font-weight:900;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
+  .toast.show { opacity: 1; }
+
+  /* ── 인쇄 ── */
+  @media print {
+    aside, .headerBtns, .sectionRight button, .addRowBtn,
+    #themeToggle, .btn { display: none !important; }
+    html, body { background: #fff !important; color: #000 !important; overflow: visible !important; }
+    .main { padding: 0 !important; }
+    .wrap { max-width: 100% !important; padding: 0 12px !important; }
+    .section { border: 1px solid #ccc !important; break-inside: avoid; margin-bottom: 12px !important; }
+    .sectionBody { display: block !important; }
+    .sectionHead { background: #f5f5f5 !important; }
+    .metaCard { border: 1px solid #ccc !important; }
+    table.doc th, table.doc td { border-color: #ccc !important; }
+    .autoArea { background: #f9f9f9 !important; border-color: #ccc !important; }
+    .cellInput, .cellSel, .cellTa, .sectionTa,
+    .scField input, .scField textarea { border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; }
+    .checkItem { border-color: #ccc !important; background: #fff !important; }
+    @page { size: A4; margin: 15mm; }
   }
 
-  .execBox{
-    margin-top:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.94);
-    border-radius:14px;
-    padding:12px;
-    display:none;
+  @media (max-width: 640px) {
+    .pageHeader { flex-direction: column; }
+    .headerBtns { width: 100%; }
   }
-  .execTop{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
-    margin-bottom:10px;
-  }
-  .execTitle{ font-weight:900; }
-  .execMeta{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .execMeta .pill{ margin:0; }
-
-  .execGrid{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:10px;
-    margin-top:10px;
-  }
-  @media (max-width: 900px){
-    .execGrid{ grid-template-columns: 1fr; }
-  }
-
-  .field2 label{
-    display:block;
-    font-size:12px;
-    font-weight:900;
-    opacity:.85;
-    margin:0 0 6px;
-  }
-  .field2 textarea, .field2 select{
-    width:100%;
-    padding:10px 10px;
-    border-radius:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background:#ffffff;
-    color:#0f172a;
-    outline:none;
-    font-size:14px;
-    line-height:1.35;
-  }
-  .field2 textarea{
-    min-height:72px;
-    resize:vertical;
-  }
-
-  .checkList{
-    margin-top:10px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-  .checkItem{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:flex-start;
-    padding:10px;
-    border-radius:12px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(15,23,42,.04);
-  }
-  .checkLeft{ display:flex; gap:10px; align-items:flex-start; }
-  .checkLeft input{ margin-top:2px; }
-  .checkText{ font-weight:800; font-size:13px; opacity:.95; line-height:1.45; }
-  .checkTime{ font-size:12px; opacity:.75; white-space:nowrap; margin-top:2px; }
-
-  .execActions{
-    margin-top:8px;
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-  }
-
-  .empty{
-    margin-top:12px;
-    border:1px dashed rgba(255,255,255,.18);
-    border-radius:14px;
-    padding:14px;
-    opacity:.85;
-    line-height:1.7;
-  }
-
-  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 </style>
 </head>
-
 <body>
 <aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-<div class="main">
-  <div class="page-title">🚨 EOP (비상 대응)</div>
-
-  <details class="sevBox" open>
-    <summary>
-      <span>📌 Severity Level (상황등급) 기준표</span>
-      <span class="mini" style="margin:0;">(클릭하면 접기/펼치기)</span>
-    </summary>
-
-    <div class="mini" style="margin-top:10px;">
-      • EOP는 “설비/장비 이벤트” 기반으로 초기대응(Action Card)과 실행 체크리스트를 제공합니다.<br/>
-      • 실행 완료 시 선택한 상황등급이 로그로 저장되어 운영센터/감사에서 증적(Evidence)으로 활용됩니다.
-    </div>
-
-    <table class="sevTable">
-      <thead>
-        <tr>
-          <th style="width:120px;">등급</th>
-          <th>정의(요약)</th>
-          <th>예시</th>
-          <th style="width:190px;">권장 대응</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><span class="pill sev1">SEV1 (최고)</span></td>
-          <td>전사/대규모 서비스 중단 또는 DC 전력/냉각 핵심 상실, 대외 리스크 가능</td>
-          <td>UPS/발전/수전 이상으로 서비스 전반 중단 위험</td>
-          <td>비상대응(워룸) 가동, 즉시 복구/전환, 수시 보고</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev2">SEV2 (높음)</span></td>
-          <td>핵심 기능 영향/부분 중단, 다수 사용자 영향, 단기 내 복구 필요</td>
-          <td>일부 전원계통 이상으로 핵심 존 영향</td>
-          <td>우선순위 최상, 1~2시간 단위 보고</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev3">SEV3 (중간)</span></td>
-          <td>일부 기능 영향, 우회 가능, 제한된 사용자 영향</td>
-          <td>설비 경고/부분 성능저하</td>
-          <td>업무시간 내 복구, 재발방지 등록</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev4">SEV4 (낮음)</span></td>
-          <td>경미한 결함/지연, 영향 제한</td>
-          <td>센서 경고, 비핵심 장비 알람</td>
-          <td>계획 수리, 정기 점검/교체</td>
-        </tr>
-        <tr>
-          <td><span class="pill sev5">SEV5 (정보)</span></td>
-          <td>관찰/점검/정보성 이벤트</td>
-          <td>테스트 알림</td>
-          <td>기록 유지</td>
-        </tr>
-      </tbody>
-    </table>
-  </details>
-
-  <div class="card ctx" id="ctxBox">
-    <div class="ctxTop">
-      <div>
-        <div class="ctxTitle">🔗 BCP 연계 컨텍스트로 진입했습니다</div>
-        <div class="mini" style="margin-top:6px;">
-          아래 정보(부서/핵심업무)를 기준으로 EOP를 필터링할 수 있습니다.
-        </div>
-      </div>
-      <div class="ctxBadges" id="ctxBadges"></div>
-    </div>
-
-    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-      <a class="chipBtn" id="backToBcp" href="./bcp.html">← BCP (업무연속성계획)로</a>
-      <button class="chipBtn" onclick="clearCtx()">필터 해제</button>
+  <!-- 헤더 -->
+  <div class="pageHeader">
+    <h1>🚨 비상대응절차서 (EOP)</h1>
+    <div class="headerBtns">
+      <button class="btn primary" id="btnSave">💾 저장</button>
+      <button class="btn" onclick="window.print()">🖨️ 인쇄</button>
+      <a href="./index.html" class="btn">← 라이브러리</a>
+      <button id="themeToggle" class="btn">🌙 다크모드</button>
     </div>
   </div>
 
-  <div class="card">
-    <div class="toolbarRow">
-      <div>
-        <h3 style="margin:0;">EOP Catalog (설비/장비 기반)</h3>
-        <div class="mini" style="margin-top:6px;">
-          Registry 기반 설비 선택 → 해당 EOP(Action Card) 실행 → 실행 로그 저장<br/>
-          EOP 로그 키: <span class="mono">localStorage["bcms_eop_exec_logs"]</span><br/>
-          Registry 키: <span class="mono">localStorage["bcms_system_registry_v1"]</span>
-        </div>
-      </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="chipBtn" onclick="exportEopLogs()">📤 EOP 로그 Export</button>
-        <button class="chipBtn danger" onclick="clearEopLogs()">🧹 EOP 로그 삭제</button>
-      </div>
+  <!-- 메타 -->
+  <div class="metaCard">
+    <h3>📌 문서 정보</h3>
+    <div class="metaGrid">
+      <div class="metaField"><label>문서번호</label><input type="text" id="metaDocNo" placeholder="EOP-2026-001"/></div>
+      <div class="metaField"><label>버전</label><input type="text" id="metaVersion" placeholder="v1.0"/></div>
+      <div class="metaField"><label>작성일</label><input type="date" id="metaCreated"/></div>
+      <div class="metaField"><label>검토일</label><input type="date" id="metaReview"/></div>
+      <div class="metaField"><label>작성자</label><input type="text" id="metaAuthor" placeholder="작성자명"/></div>
+      <div class="metaField"><label>승인자</label><input type="text" id="metaApprover" placeholder="승인자명"/></div>
     </div>
-
-    <div class="filters">
-      <div class="field">
-        <label>카테고리</label>
-        <select id="f_cat"></select>
-      </div>
-      <div class="field">
-        <label>설비/장비(Registry)</label>
-        <select id="f_eq"></select>
-      </div>
-      <div class="field">
-        <label>이벤트</label>
-        <select id="f_evt"></select>
-      </div>
-      <div class="field">
-        <label>검색</label>
-        <input id="f_q" placeholder="키워드(장비/태그/절차)" />
-      </div>
-      <button class="chipBtn" onclick="resetFilters()">🔄 초기화</button>
-    </div>
-
-    <div id="eopList" class="eopGrid"></div>
   </div>
+
+  <!-- 섹션1: 목적 및 적용범위 -->
+  <div class="section" id="sec1">
+    <div class="sectionHead" onclick="toggleSec('sec1')">
+      <div class="sectionLeft"><span class="sectionTitle">1. 목적 및 적용범위</span></div>
+      <div class="sectionRight"><span class="chevron open" id="chev-sec1">▼</span></div>
+    </div>
+    <div class="sectionBody open" id="body-sec1">
+      <textarea class="sectionTa" id="sec1Text" rows="5"
+        placeholder="이 절차서의 목적과 적용 범위를 기술하세요.&#10;&#10;예) 본 절차서는 자연재해, IT 시스템 장애, 화재·폭발, 전력 중단 등 비상상황 발생 시 초기 대응절차를 규정하여 피해를 최소화하고 신속한 복구를 지원하기 위해 작성되었습니다."></textarea>
+    </div>
+  </div>
+
+  <!-- 섹션2: 비상상황 유형 및 발동기준 -->
+  <div class="section" id="sec2">
+    <div class="sectionHead" onclick="toggleSec('sec2')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">2. 비상상황 유형 및 발동기준</span>
+        <span class="sectionMeta" id="sec2meta"></span>
+      </div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();loadActivation()">자동 로드</button>
+        <span class="chevron open" id="chev-sec2">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec2">
+      <div class="tableWrap" id="sec2table"></div>
+      <button class="addRowBtn" onclick="addActivationRow()">＋ 행 추가</button>
+    </div>
+  </div>
+
+  <!-- 섹션3: 초기 대응 체크리스트 -->
+  <div class="section" id="sec3">
+    <div class="sectionHead" onclick="toggleSec('sec3')">
+      <div class="sectionLeft"><span class="sectionTitle">3. 초기 대응 체크리스트</span></div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();addCheckItem()">＋ 항목 추가</button>
+        <span class="chevron open" id="chev-sec3">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec3">
+      <div class="checkHead">
+        <span></span><span>행동 내용</span><span>담당 역할</span><span>시간 기준</span><span></span>
+      </div>
+      <div class="checkList" id="checkList"></div>
+    </div>
+  </div>
+
+  <!-- 섹션4: 비상조직 역할 및 책임 -->
+  <div class="section" id="sec4">
+    <div class="sectionHead" onclick="toggleSec('sec4')">
+      <div class="sectionLeft">
+        <span class="sectionTitle">4. 비상조직 역할 및 책임</span>
+        <span class="sectionMeta" id="sec4meta"></span>
+      </div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();loadOrgRegistry()">담당자 관리에서 로드</button>
+        <span class="chevron open" id="chev-sec4">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec4">
+      <div class="tableWrap" id="sec4table"></div>
+      <button class="addRowBtn" onclick="addOrgRow()">＋ 행 추가</button>
+    </div>
+  </div>
+
+  <!-- 섹션5: 상황별 대응 시나리오 -->
+  <div class="section" id="sec5">
+    <div class="sectionHead" onclick="toggleSec('sec5')">
+      <div class="sectionLeft"><span class="sectionTitle">5. 상황별 대응 시나리오</span></div>
+      <div class="sectionRight">
+        <button class="btn sm" onclick="event.stopPropagation();loadTrainingScenarios()">훈련 시나리오 불러오기</button>
+        <button class="btn sm" onclick="event.stopPropagation();addScenario()">＋ 시나리오 추가</button>
+        <span class="chevron open" id="chev-sec5">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec5">
+      <div class="scenarioList" id="scenarioList"></div>
+    </div>
+  </div>
+
+  <!-- 섹션6: 커뮤니케이션 절차 -->
+  <div class="section" id="sec6">
+    <div class="sectionHead" onclick="toggleSec('sec6')">
+      <div class="sectionLeft"><span class="sectionTitle">6. 커뮤니케이션 절차</span></div>
+      <div class="sectionRight">
+        <span class="chevron open" id="chev-sec6">▼</span>
+      </div>
+    </div>
+    <div class="sectionBody open" id="body-sec6">
+      <div class="tableWrap" id="sec6table"></div>
+      <button class="addRowBtn" onclick="addCommRow()">＋ 행 추가</button>
+    </div>
+  </div>
+
+  <!-- 섹션7: 문서 이력 -->
+  <div class="section" id="sec7">
+    <div class="sectionHead" onclick="toggleSec('sec7')">
+      <div class="sectionLeft"><span class="sectionTitle">7. 문서 이력</span></div>
+      <div class="sectionRight"><span class="chevron open" id="chev-sec7">▼</span></div>
+    </div>
+    <div class="sectionBody open" id="body-sec7">
+      <div class="tableWrap" id="sec7table"></div>
+      <button class="addRowBtn" onclick="addHistRow()">＋ 이력 추가</button>
+    </div>
+  </div>
+
 </div>
+</main>
+<div class="toast" id="toast"></div>
 
 <script src="../assets/sidebar.js"></script>
-<script src="../assets/response-assets.js"></script>
 <script>
-  const EOP_LOG_KEY = "bcms_eop_exec_logs";
-  const SYS_KEY = "bcms_system_registry_v1";
-  const openExecSet = new Set();
+(function () {
+  'use strict';
 
-  const qs = new URLSearchParams(location.search);
-  const ctxDept = qs.get("dept") || "";
-  const ctxProcess = qs.get("process") || "";
-  const ctxLevel = qs.get("level") || "";
-  const ctxFrom = qs.get("from") || "";
-  const focus = (window.ResponseAssetRegistry && ResponseAssetRegistry.readFocusTarget) ? ResponseAssetRegistry.readFocusTarget() : {};
-  const focusMatched = focus.source === 'incident_recommendation' && focus.assetId === 'library-eop-main';
+  const KEY_DOC  = 'bcmsEOPDoc';
+  const KEY_META = 'bcmsEOPMeta';
 
-  const EOP_DATA = [
-    {
-      id:"EOP-PWR-UPS-FAIL",
-      category:"Power (전력)",
-      equipment:"UPS (무정전전원장치)",
-      event:"UPS Failure (UPS 장애)",
-      location:"UPS Room (UPS실)",
-      tags:["UPS","EPMS","Battery","Bypass"],
-      trigger:["UPS 알람/고장 경보 발생","부하가 BYPASS로 전환되었거나 전환 위험","배터리/인버터 이상"],
-      action15:[
-        "안전 확인 후 현장 접근(전기 안전/출입 통제)",
-        "EPMS/모니터링에서 UPS 상태·부하·바이패스 여부 확인",
-        "전원 이중화/우회 가능 여부 확인(필요 시 운영센터 공유)",
-        "즉시 영향 범위(존/랙/부하) 파악 및 상황 공유",
-        "필요 시 절체/전환 절차로 이동(Transfer EOP 참조)"
-      ],
-      checklist:[
-        "EPMS에서 UPS 알람/상태 스크린샷 확보",
-        "BYPASS 여부 및 부하율 확인",
-        "배터리 모드 진입 여부 확인",
-        "전기실/UPS실 현장 점검(냄새/소음/온도)",
-        "유관부서/당직/벤더 콜",
-        "서비스 영향 여부 공유 및 조치 기록"
-      ],
-      defaultSev: 2
-    },
-    {
-      id:"EOP-PWR-GEN-FAIL",
-      category:"Power (전력)",
-      equipment:"Generator (비상발전기)",
-      event:"Generator Failure (발전기 장애)",
-      location:"Generator Room (발전기실)",
-      tags:["Generator","Fuel","ATS","EPMS"],
-      trigger:["정전 상황에서 발전기 기동 실패","연료/스타터/냉각/오일 압력 알람","ATS/절체 실패"],
-      action15:[
-        "EPMS에서 유틸리티/발전/ATS 상태 확인",
-        "발전기 자동 기동 여부 확인(기동 실패 원인 알람 확인)",
-        "연료/냉각/오일 관련 경보 확인 및 현장 점검",
-        "UPS/배터리 잔여시간 확인(서비스 영향 타임라인 공유)",
-        "필요 시 절체/우회 전원 시나리오 수행"
-      ],
-      checklist:[
-        "발전기 패널 알람 코드 기록",
-        "연료 잔량/공급 라인 확인",
-        "ATS 상태/절체 위치 확인",
-        "현장 안전 확보 후 벤더 호출",
-        "운영센터/책임자 보고",
-        "조치 후 안정화 여부 확인"
-      ],
-      defaultSev: 1
-    },
-    {
-      id:"EOP-PWR-UTIL-FAIL",
-      category:"Power (전력)",
-      equipment:"Utility (수전/상용전원)",
-      event:"Utility Failure (상용전원 장애)",
-      location:"Electrical Room (전기실)",
-      tags:["Utility","ATS","Switchgear","EPMS"],
-      trigger:["상용전원 상실/수전 경보","전기실 메인 스위치/차단기 트립","전원 계통 불안정"],
-      action15:[
-        "EPMS에서 수전/전압/주파수 상태 확인",
-        "영향 범위(존/부하) 파악 및 즉시 공유",
-        "발전/UPS/절체 상태 확인(백업 계통 정상 여부)",
-        "전기실 현장 점검(차단기/스위치 상태 확인)",
-        "필요 시 Transfer 절차 수행"
-      ],
-      checklist:[
-        "수전 상태/경보 스냅샷 확보",
-        "차단기 트립 여부 확인",
-        "백업 전원 계통 정상 여부 확인",
-        "안전 확보 및 출입 통제",
-        "벤더/전력사 연락",
-        "복구 후 안정화 모니터링"
-      ],
-      defaultSev: 1
-    },
-    {
-      id:"EOP-PWR-TOB-FAIL",
-      category:"Power (전력)",
-      equipment:"TOB / Switchgear (배전반/차단기)",
-      event:"TOB Failure (배전반/차단기 장애)",
-      location:"Electrical Room (전기실)",
-      tags:["TOB","Breaker","Switchgear","Trip"],
-      trigger:["특정 분전반/차단기 트립","부분 부하 상실","이상 발열/소음/냄새"],
-      action15:[
-        "영향 부하(랙/존/라인) 즉시 파악",
-        "현장 안전 확보(아크/감전 위험) 및 접근 통제",
-        "차단기 상태/트립 원인 기록",
-        "우회/대체 라인 가능 여부 확인",
-        "필요 시 Transfer 절차 수행 및 보고"
-      ],
-      checklist:[
-        "트립 위치/회로 번호 기록",
-        "과전류/누전 알람 확인",
-        "부하 분산/우회 라인 검토",
-        "벤더 호출 및 작업 승인 라인 확인",
-        "조치 후 부하 복구 확인",
-        "재발방지(CAPA) 등록"
-      ],
-      defaultSev: 2
-    },
-    {
-      id:"EOP-PWR-TRANSFER",
-      category:"Power (전력)",
-      equipment:"Transfer (절체/전원전환)",
-      event:"Transfer Procedure (절체 절차)",
-      location:"Electrical/UPS Room (전기실/UPS실)",
-      tags:["Transfer","ATS","Bypass","Changeover"],
-      trigger:["계통 이상으로 전원 전환 필요","UPS bypass/발전 전환","유틸리티↔발전 절체"],
-      action15:[
-        "전환 전 영향 범위/승인 라인 확인",
-        "EPMS로 현재 전원 경로 확인(유틸/UPS/발전)",
-        "우회/절체 시나리오 선택",
-        "전환 후 안정화(전압/부하/알람) 확인",
-        "운영센터에 결과 공유 및 기록"
-      ],
-      checklist:[
-        "전환 전/후 상태 스냅샷 확보",
-        "절체 스위치/ATS 위치 확인",
-        "부하율/알람 정상 여부 확인",
-        "관련자 보고(상태/시간/영향)",
-        "사후 모니터링 30분 이상",
-        "필요 시 원복 계획 수립"
-      ],
-      defaultSev: 2
-    }
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const $ = id => document.getElementById(id);
+
+  function load(key, def) {
+    try { const v = localStorage.getItem(key); if (!v) return def; return JSON.parse(v) ?? def; }
+    catch { return def; }
+  }
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+
+  function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+  /* ── 토스트 ── */
+  function showToast(msg) {
+    const t = $('toast');
+    t.textContent = msg ?? '✓ 저장되었습니다';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  /* ── accordion ── */
+  window.toggleSec = function (id) {
+    const body = $('body-' + id);
+    const chev = $('chev-' + id);
+    if (!body) return;
+    const open = body.classList.contains('open');
+    body.classList.toggle('open', !open);
+    if (chev) chev.classList.toggle('open', !open);
+  };
+
+  /* ── 재난 유형 옵션 ── */
+  const DISASTER_TYPES = ['자연재해','화재·폭발','IT시스템장애','전력중단','공급망차단','인력부재','기타'];
+  function disasterSel(val) {
+    return `<select class="cellSel" data-field="disasterType">
+      ${DISASTER_TYPES.map(t => `<option${val === t ? ' selected' : ''}>${t}</option>`).join('')}
+    </select>`;
+  }
+
+  /* ── 상태 ── */
+  let state = {
+    sec1Text:        '',
+    activationRows:  [],
+    checkItems:      [],
+    orgRows:         [],
+    scenarios:       [],
+    commRows:        [],
+    histRows:        [],
+  };
+
+  /* ── 기본 체크리스트 ── */
+  const DEFAULT_CHECKS = [
+    { action: '비상상황 인지 및 상황 파악',        role: '최초 발견자',       time: '5분 이내' },
+    { action: '초기 피해 규모 확인',               role: '현장 책임자',       time: '10분 이내' },
+    { action: '비상대응팀장에게 보고',              role: '현장 책임자',       time: '10분 이내' },
+    { action: 'BCP 발동 여부 판단',                role: '비상대응팀장',      time: '20분 이내' },
+    { action: '비상대응팀 소집',                   role: '비상대응팀장',      time: '30분 이내' },
+    { action: '이해관계자 초기 공지',              role: '커뮤니케이션 담당',  time: '1시간 이내' },
+    { action: '대체 운영 체계 확인',               role: 'IT/운영 담당',      time: '1시간 이내' },
+    { action: '외부 기관 신고/연락 (필요시)',       role: '담당 부서장',       time: '필요시 즉시' },
+    { action: '피해 현황 1차 기록',                role: '비상대응팀 서기',   time: '30분 이내' },
+    { action: '30분 단위 상황 업데이트 시작',      role: '비상대응팀장',      time: '지속' },
   ];
 
-  function escapeHtml(s){
-    return String(s ?? "").replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-    }[m]));
-  }
+  /* ── 기본 커뮤니케이션 ── */
+  const DEFAULT_COMM = [
+    { target:'경영진',      timing:'즉시',        method:'전화+문자',    owner:'비상대응팀장',   template:'' },
+    { target:'전 직원',     timing:'1시간 이내',   method:'사내 공지',    owner:'커뮤니케이션 담당', template:'' },
+    { target:'고객/파트너', timing:'2시간 이내',   method:'이메일+전화',  owner:'대외협력 담당',  template:'' },
+    { target:'관계기관',    timing:'필요시',       method:'공문+전화',    owner:'담당 부서장',    template:'' },
+    { target:'미디어',      timing:'필요시',       method:'공식 보도자료', owner:'CEO/홍보팀',    template:'' },
+  ];
 
-  function nowStr(){
-    const d = new Date();
-    const pad = n => String(n).padStart(2,"0");
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  }
+  /* ── 불러오기 ── */
+  function loadDoc() {
+    const doc  = load(KEY_DOC, null);
+    const meta = load(KEY_META, {});
 
-  function loadLogs(){
-    try{ return JSON.parse(localStorage.getItem(EOP_LOG_KEY) || "[]"); }
-    catch(e){ return []; }
-  }
-  function saveLogs(logs){
-    localStorage.setItem(EOP_LOG_KEY, JSON.stringify(logs));
-  }
-  function appendLog(log){
-    const logs = loadLogs();
-    logs.unshift(log);
-    saveLogs(logs);
-  }
+    $('metaDocNo').value    = meta.docNo     ?? '';
+    $('metaVersion').value  = meta.version   ?? '';
+    $('metaCreated').value  = meta.created   ?? '';
+    $('metaReview').value   = meta.review    ?? '';
+    $('metaAuthor').value   = meta.author    ?? '';
+    $('metaApprover').value = meta.approver  ?? '';
 
-  function exportEopLogs(){
-    const logs = loadLogs();
-    const blob = new Blob([JSON.stringify(logs, null, 2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "bcms_eop_exec_logs.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-  function clearEopLogs(){
-    if(!confirm("EOP 실행 로그를 모두 삭제할까요?")) return;
-    localStorage.removeItem(EOP_LOG_KEY);
-    alert("삭제되었습니다.");
-  }
-
-  function sevClass(sev){
-    if(sev===1) return "sev1";
-    if(sev===2) return "sev2";
-    if(sev===3) return "sev3";
-    if(sev===4) return "sev4";
-    return "sev5";
-  }
-
-  function renderCtx(){
-    const box = document.getElementById("ctxBox");
-    const badges = document.getElementById("ctxBadges");
-    if(!(ctxDept || ctxProcess || ctxLevel || ctxFrom || focusMatched)){
-      box.style.display = "none";
-      return;
-    }
-    box.style.display = "block";
-    badges.innerHTML = "";
-    if(focusMatched) {
-      badges.innerHTML += `<span class="pill">Incident: ${escapeHtml(focus.incidentId || '-')}</span>`;
-      if (focus.serviceName) badges.innerHTML += `<span class="pill">영향 서비스: ${escapeHtml(focus.serviceName)}</span>`;
-    }
-    if(ctxFrom) badges.innerHTML += `<span class="pill">from: ${escapeHtml(ctxFrom)}</span>`;
-    if(ctxDept) badges.innerHTML += `<span class="pill">부서: ${escapeHtml(ctxDept)}</span>`;
-    if(ctxProcess) badges.innerHTML += `<span class="pill">핵심업무: ${escapeHtml(ctxProcess)}</span>`;
-    if(ctxLevel) badges.innerHTML += `<span class="pill">중요도: ${escapeHtml(ctxLevel)}</span>`;
-  }
-
-  function clearCtx(){
-    history.replaceState({}, "", location.pathname);
-    location.reload();
-  }
-
-  // ============================
-  // ✅ Registry Loader (너 스키마에 맞춤)
-  // ============================
-  function safeParse(v, fallback){
-    try{ return JSON.parse(v); }catch(e){ return fallback; }
-  }
-
-  function loadRegistry(){
-    const raw = safeParse(localStorage.getItem(SYS_KEY) || "[]", []);
-    if(!Array.isArray(raw)) return [];
-    return raw.map(x=>({
-      regId: x.id || "",                 // Registry record id
-      category: x.category || "",
-      systemCode: x.systemId || "",      // 업무용 systemId
-      name: x.displayName || "",         // 표시명
-      owner: x.ownerDept || "",
-      criticality: x.criticality || "",
-      tags: Array.isArray(x.tags) ? x.tags : [],
-      definition: x.definition || "",
-      type: x.type || x.systemType || "",     // (추가필드 있으면 사용)
-      location: x.location || x.site || ""    // (추가필드 있으면 사용)
-    })).filter(x => x.regId && x.name);
-  }
-
-  function normCatLabel(cat){
-    const s = String(cat || "").toLowerCase();
-    if(s.includes("power") || s.includes("전력")) return "Power (전력)";
-    if(s.includes("facility") || s.includes("시설") || s.includes("설비")) return "Facility (시설)";
-    return cat || "";
-  }
-
-  function isPowerOrFacility(label){
-    const s = String(label || "").toLowerCase();
-    return s.includes("power") || s.includes("전력") || s.includes("facility") || s.includes("시설") || s.includes("설비");
-  }
-
-  function getSelectedRegId(){
-    return document.getElementById("f_eq").value || "__ALL__";
-  }
-
-  function getSelectedSystem(){
-    const id = getSelectedRegId();
-    if(id === "__ALL__") return null;
-    const reg = loadRegistry();
-    return reg.find(x=>x.regId===id) || null;
-  }
-
-  function inferTypeFromText(sys){
-    const t = `${sys.name} ${sys.systemCode} ${(sys.tags||[]).join(" ")}`.toLowerCase();
-    if(t.includes("ups")) return "ups";
-    if(t.includes("generator") || t.includes("발전")) return "generator";
-    if(t.includes("utility") || t.includes("수전")) return "utility";
-    if(t.includes("switchgear") || t.includes("breaker") || t.includes("배전") || t.includes("차단") || t.includes("tob")) return "switchgear";
-    if(t.includes("transfer") || t.includes("절체")) return "transfer";
-    return "";
-  }
-
-  function templateMatchesSystem(item, sys){
-    if(!sys) return true;
-    const tEquip = String(item.equipment || "").toLowerCase();
-    const tEvent = String(item.event || "").toLowerCase();
-
-    const inferred = (sys.type || "").toLowerCase() || inferTypeFromText(sys);
-
-    if(inferred){
-      if(tEquip.includes(inferred) || tEvent.includes(inferred)) return true;
-      if(inferred==="ups" && (tEquip.includes("ups") || tEvent.includes("ups"))) return true;
-      if(inferred==="generator" && (tEquip.includes("generator") || tEvent.includes("발전"))) return true;
-      if(inferred==="utility" && (tEquip.includes("utility") || tEvent.includes("수전"))) return true;
-      if(inferred==="switchgear" && (tEquip.includes("switch") || tEquip.includes("breaker") || tEquip.includes("배전") || tEquip.includes("차단") || tEquip.includes("tob"))) return true;
-      if(inferred==="transfer" && (tEquip.includes("transfer") || tEvent.includes("절체"))) return true;
+    if (doc) {
+      state.sec1Text       = doc.sec1Text       ?? '';
+      state.activationRows = arr(doc.activationRows);
+      state.checkItems     = arr(doc.checkItems).length > 0 ? arr(doc.checkItems) : DEFAULT_CHECKS.map(c => ({ ...c, checked: false }));
+      state.orgRows        = arr(doc.orgRows);
+      state.scenarios      = arr(doc.scenarios);
+      state.commRows       = arr(doc.commRows).length > 0 ? arr(doc.commRows) : DEFAULT_COMM.map(c => ({ ...c }));
+      state.histRows       = arr(doc.histRows);
+    } else {
+      state.checkItems = DEFAULT_CHECKS.map(c => ({ ...c, checked: false }));
+      state.commRows   = DEFAULT_COMM.map(c => ({ ...c }));
     }
 
-    // 마지막 폴백: 이름/ID에서 키워드 매칭
-    const sText = `${sys.name} ${sys.systemCode}`.toLowerCase();
-    const keys = ["ups","generator","utility","switchgear","breaker","tob","transfer","절체","배전","차단","수전","발전"];
-    const hit = keys.find(k => sText.includes(k) && (tEquip.includes(k) || tEvent.includes(k)));
-    if(hit) return true;
-
-    return false;
+    $('sec1Text').value = state.sec1Text;
   }
 
-  function uniq(arr){ return Array.from(new Set(arr)); }
-
-  function initFilters(){
-    const catSel = document.getElementById("f_cat");
-    const eqSel  = document.getElementById("f_eq");
-    const evSel  = document.getElementById("f_evt");
-
-    const reg = loadRegistry();
-    const regCats = uniq(reg.map(x=>normCatLabel(x.category)).filter(Boolean)).filter(isPowerOrFacility);
-    const tplCats = uniq(EOP_DATA.map(x=>x.category)).filter(isPowerOrFacility);
-
-    let cats = uniq([...tplCats, ...regCats]);
-    if(!cats.length) cats = ["Power (전력)"];
-
-    cats = ["__ALL__", ...cats];
-    catSel.innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">${c==="__ALL__"?"전체":escapeHtml(c)}</option>`).join("");
-
-    const evs = ["__ALL__", ...uniq(EOP_DATA.map(x=>x.event))];
-    evSel.innerHTML = evs.map(v=>`<option value="${escapeHtml(v)}">${v==="__ALL__"?"전체":escapeHtml(v)}</option>`).join("");
-
-    rebuildEquipmentOptions();
-  }
-
-  function rebuildEquipmentOptions(){
-    const eqSel  = document.getElementById("f_eq");
-    const cat = document.getElementById("f_cat").value;
-
-    const reg = loadRegistry();
-
-    // Registry 비어있으면 안내만
-    if(!reg.length){
-      eqSel.innerHTML = `<option value="__ALL__">전체 (Registry 비어있음)</option>`;
-      return;
-    }
-
-    let list = reg.map(x=>({ ...x, catLabel: normCatLabel(x.category) }));
-
-    if(cat !== "__ALL__"){
-      list = list.filter(x=>x.catLabel === cat);
-    }
-
-    list.sort((a,b)=>{
-      const an = (a.name||"").toLowerCase();
-      const bn = (b.name||"").toLowerCase();
-      return an < bn ? -1 : an > bn ? 1 : 0;
-    });
-
-    const opts = [];
-    opts.push(`<option value="__ALL__">전체</option>`);
-    list.forEach(x=>{
-      const label = `${x.name}${x.systemCode ? " · " + x.systemCode : ""}${x.location ? " · " + x.location : ""}`;
-      opts.push(`<option value="${escapeHtml(x.regId)}">${escapeHtml(label)}</option>`);
-    });
-
-    eqSel.innerHTML = opts.join("");
-  }
-
-  function resetFilters(){
-    document.getElementById("f_cat").value = "__ALL__";
-    rebuildEquipmentOptions();
-    document.getElementById("f_eq").value = "__ALL__";
-    document.getElementById("f_evt").value = "__ALL__";
-    document.getElementById("f_q").value = "";
-    renderList();
-  }
-
-  function matchFilters(item){
-    const cat = document.getElementById("f_cat").value;
-    const ev  = document.getElementById("f_evt").value;
-    const q   = (document.getElementById("f_q").value || "").trim().toLowerCase();
-
-    if(cat !== "__ALL__" && item.category !== cat) return false;
-    if(ev !== "__ALL__" && item.event !== ev) return false;
-
-    const sys = getSelectedSystem();
-    if(sys){
-      // 카테고리 전체 선택 상태일 때, 설비 카테고리와 템플릿 카테고리를 맞춰줌
-      const sysCat = normCatLabel(sys.category);
-      if(cat === "__ALL__" && sysCat && item.category !== sysCat) return false;
-
-      if(!templateMatchesSystem(item, sys)) return false;
-    }
-
-    if(!q) return true;
-
-    const sysText = sys ? `${sys.name} ${sys.systemCode} ${sys.location} ${sys.owner} ${(sys.tags||[]).join(" ")} ${sys.definition}` : "";
-
-    const hay = [
-      item.category, item.equipment, item.event, item.location,
-      sysText,
-      (item.tags||[]).join(" "),
-      (item.trigger||[]).join(" "),
-      (item.action15||[]).join(" "),
-      (item.checklist||[]).join(" ")
-    ].join(" ").toLowerCase();
-
-    return hay.includes(q);
-  }
-
-  function execKey(item){ return `eop_exec_state_${item.id}`; }
-
-  function loadExecState(item){
-    try{ return JSON.parse(sessionStorage.getItem(execKey(item)) || "null"); }
-    catch(e){ return null; }
-  }
-  function saveExecState(item, state){
-    sessionStorage.setItem(execKey(item), JSON.stringify(state));
-  }
-  function initExecState(item){
-    return {
-      startedAt: "",
-      finishedAt: "",
-      memo: "",
-      severity: String(item.defaultSev || 3),
-      steps: (item.checklist||[]).map((t, idx)=>({ idx, text:t, checked:false, checkedAt:"" }))
+  /* ── 저장 ── */
+  function saveAll() {
+    collectState();
+    const meta = {
+      docNo:    $('metaDocNo').value.trim(),
+      version:  $('metaVersion').value.trim(),
+      created:  $('metaCreated').value,
+      review:   $('metaReview').value,
+      author:   $('metaAuthor').value.trim(),
+      approver: $('metaApprover').value.trim(),
+      updatedAt: todayStr(), savedAt: todayStr(),
     };
+    save(KEY_META, meta);
+    save(KEY_DOC, { ...state });
+    showToast('✓ 저장되었습니다');
   }
 
-  function progress(state){
-    const total = state?.steps?.length || 0;
-    const done = state?.steps?.filter(s=>s.checked).length || 0;
-    const pct = total ? Math.round((done/total)*100) : 0;
-    return {done,total,pct};
+  function collectState() {
+    state.sec1Text       = $('sec1Text').value;
+    state.activationRows = collectTableRows('sec2table', ['disasterType','condition','authority','responseTime']);
+    state.checkItems     = collectCheckItems();
+    state.orgRows        = collectTableRows('sec4table', ['role','name','duties','contact']);
+    state.scenarios      = collectScenarios();
+    state.commRows       = collectTableRows('sec6table', ['target','timing','method','owner','template']);
+    state.histRows       = collectTableRows('sec7table', ['version','date','editor','summary']);
   }
 
-  function toggleExec(itemId){
-    const box = document.getElementById("exec_"+itemId);
-    if(!box) return;
-
-    const isOpen = !(box.style.display === "none" || !box.style.display);
-    if(isOpen){
-      box.style.display = "none";
-      openExecSet.delete(itemId);
-    }else{
-      box.style.display = "block";
-      openExecSet.add(itemId);
-    }
-  }
-
-  function onStart(item){
-    openExecSet.add(item.id);
-    const state = loadExecState(item) || initExecState(item);
-    if(!state.startedAt) state.startedAt = nowStr();
-    state.finishedAt = "";
-    saveExecState(item, state);
-    renderList();
-  }
-
-  function onCheck(item, idx, checked){
-    openExecSet.add(item.id);
-    const state = loadExecState(item) || initExecState(item);
-    const step = state.steps.find(s=>s.idx===idx);
-    if(step){
-      step.checked = checked;
-      step.checkedAt = checked ? nowStr() : "";
-    }
-    saveExecState(item, state);
-    renderList();
-  }
-
-  function onMemo(item, value){
-    openExecSet.add(item.id);
-    const state = loadExecState(item) || initExecState(item);
-    state.memo = value;
-    saveExecState(item, state);
-  }
-
-  function onSeverity(item, value){
-    openExecSet.add(item.id);
-    const state = loadExecState(item) || initExecState(item);
-    state.severity = value;
-    saveExecState(item, state);
-    renderList();
-  }
-
-  function onFinish(item){
-    openExecSet.add(item.id);
-    const state = loadExecState(item) || initExecState(item);
-    if(!state.startedAt) state.startedAt = nowStr();
-    state.finishedAt = nowStr();
-
-    const sev = Number(state.severity) || Number(item.defaultSev || 3);
-    saveExecState(item, state);
-
-    const sys = getSelectedSystem();
-
-    appendLog({
-      type:"EOP_EXEC",
-      eopId: item.id,
-      eopTitle: item.event,
-      category: item.category,
-      equipment: item.equipment,
-      event: item.event,
-      location: item.location,
-
-      // ✅ Registry 매칭용 핵심(둘 다 저장)
-      systemId: sys?.regId || "",        // Registry record id (고유키)
-      systemCode: sys?.systemCode || "", // 업무용 systemId (예: UPS-ROOM-01)
-      systemName: sys?.name || "",
-      systemCategory: sys ? normCatLabel(sys.category) : "",
-      systemOwner: sys?.owner || "",
-      systemCriticality: sys?.criticality || "",
-      systemLocation: sys?.location || "",
-      systemType: (sys?.type || "").toString(),
-      systemTags: sys?.tags || [],
-
-      dept: ctxDept || "",
-      process: ctxProcess || "",
-      level: ctxLevel || "",
-      severity: sev,
-      startedAt: state.startedAt,
-      finishedAt: state.finishedAt,
-      memo: state.memo || "",
-      steps: state.steps,
-      savedAt: nowStr()
+  function collectTableRows(tableId, fields) {
+    const rows = [];
+    const tbody = $(tableId)?.querySelector('tbody');
+    if (!tbody) return rows;
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const obj = {};
+      fields.forEach(f => {
+        const el = tr.querySelector(`[data-field="${f}"]`);
+        if (el) obj[f] = el.value ?? '';
+      });
+      rows.push(obj);
     });
-
-    alert("✅ EOP 실행 로그가 저장되었습니다. (localStorage: bcms_eop_exec_logs)");
-    renderList();
+    return rows;
   }
 
-  function onReset(item){
-    openExecSet.add(item.id);
-    sessionStorage.removeItem(execKey(item));
-    renderList();
+  function collectCheckItems() {
+    const items = [];
+    $('checkList').querySelectorAll('.checkItem').forEach(item => {
+      items.push({
+        checked: item.querySelector('input[type="checkbox"]')?.checked ?? false,
+        action:  item.querySelector('[data-cf="action"]')?.value  ?? '',
+        role:    item.querySelector('[data-cf="role"]')?.value    ?? '',
+        time:    item.querySelector('[data-cf="time"]')?.value    ?? '',
+      });
+    });
+    return items;
   }
 
-  function renderExecBox(item, state){
-    const st = state || initExecState(item);
-    const prog = progress(st);
+  function collectScenarios() {
+    const items = [];
+    $('scenarioList').querySelectorAll('.scenarioCard').forEach(card => {
+      items.push({
+        name:      card.querySelector('[data-sf="name"]')?.value     ?? '',
+        trigger:   card.querySelector('[data-sf="trigger"]')?.value  ?? '',
+        actions:   card.querySelector('[data-sf="actions"]')?.value  ?? '',
+        rto:       card.querySelector('[data-sf="rto"]')?.value      ?? '',
+      });
+    });
+    return items;
+  }
 
-    const sevVal = st.severity || String(item.defaultSev || 3);
-    const sevNum = Number(sevVal) || Number(item.defaultSev || 3);
+  /* ── 섹션2: 발동기준 ── */
+  function renderActivation() {
+    const wrap = $('sec2table');
+    let html = `<table class="doc">
+      <thead><tr>
+        <th style="width:130px">재난 유형</th>
+        <th>발동 기준 조건</th>
+        <th style="width:110px">발동 권한자</th>
+        <th style="width:110px">초기 대응 목표</th>
+        <th style="width:44px"></th>
+      </tr></thead><tbody>`;
+    if (state.activationRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="5">행을 추가하거나 자동 로드 버튼을 누르세요</td></tr>`;
+    } else {
+      state.activationRows.forEach((r, i) => { html += activationRowHtml(r, i); });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    $('sec2meta').textContent = state.activationRows.length > 0 ? `(${state.activationRows.length}건)` : '';
+  }
 
-    const sys = getSelectedSystem();
-    const sysBadge = sys
-      ? `<span class="pill">설비: ${escapeHtml(sys.name)}${sys.systemCode ? " · " + escapeHtml(sys.systemCode) : ""}</span>`
-      : `<span class="pill">설비: (미선택)</span>`;
+  function activationRowHtml(r, i) {
+    return `<tr>
+      <td>${disasterSel(r.disasterType ?? '자연재해')}</td>
+      <td><input class="cellInput" data-field="condition"    value="${esc(r.condition ?? '')}"    placeholder="구체적 발동 조건"/></td>
+      <td><input class="cellInput" data-field="authority"    value="${esc(r.authority ?? '')}"    placeholder="권한자"/></td>
+      <td><input class="cellInput" data-field="responseTime" value="${esc(r.responseTime ?? '')}" placeholder="예: 15분"/></td>
+      <td><button class="btn sm danger" onclick="delActivationRow(${i})">✕</button></td>
+    </tr>`;
+  }
 
-    return `
-      <div class="execBox" id="exec_${escapeHtml(item.id)}" style="display:none;">
-        <div class="execTop">
-          <div>
-            <div class="execTitle">🧩 실행 체크리스트 모드 (Execution Mode)</div>
-            <div class="mini" style="margin-top:6px;">진행률: <b>${prog.done}/${prog.total}</b> (${prog.pct}%)</div>
-          </div>
-          <div class="execMeta">
-            ${sysBadge}
-            <span class="pill">시작: ${escapeHtml(st.startedAt || "-")}</span>
-            <span class="pill">완료: ${escapeHtml(st.finishedAt || "-")}</span>
-            <span class="pill ${sevClass(sevNum)}">SEV${sevNum} (상황등급)</span>
-          </div>
+  window.loadActivation = function () {
+    const data = arr(load('bcmsActivationProc', []));
+    if (data.length > 0) {
+      state.activationRows = data.map(r => ({
+        disasterType: r.type ?? r.triggerType ?? r.conditionType ?? '기타',
+        condition:    r.condition ?? r.detail ?? r.description ?? '',
+        authority:    r.authority ?? r.authorizer ?? '',
+        responseTime: r.responseTime ?? r.targetTime ?? '',
+      }));
+      showToast(`${data.length}건 로드됨`);
+    } else {
+      showToast('bcmsActivationProc 데이터 없음');
+    }
+    renderActivation();
+  };
+
+  window.addActivationRow = function () {
+    collectState();
+    state.activationRows.push({ disasterType:'기타', condition:'', authority:'', responseTime:'' });
+    renderActivation();
+  };
+
+  window.delActivationRow = function (i) {
+    collectState();
+    state.activationRows.splice(i, 1);
+    renderActivation();
+  };
+
+  /* ── 섹션3: 체크리스트 ── */
+  function renderCheckList() {
+    $('checkList').innerHTML = state.checkItems.map((c, i) => checkItemHtml(c, i)).join('');
+  }
+
+  function checkItemHtml(c, i) {
+    return `<div class="checkItem" data-ci="${i}">
+      <input type="checkbox" ${c.checked ? 'checked' : ''}
+        onchange="toggleCheck(${i},this.checked)"/>
+      <input class="cellInput" data-cf="action" value="${esc(c.action)}" placeholder="행동 내용"/>
+      <input class="cellInput" data-cf="role"   value="${esc(c.role)}"   placeholder="담당 역할"/>
+      <input class="cellInput" data-cf="time"   value="${esc(c.time)}"   placeholder="시간 기준"/>
+      <button class="btn sm danger" onclick="delCheckItem(${i})">✕</button>
+    </div>`;
+  }
+
+  window.toggleCheck = function (i, checked) {
+    collectState();
+    if (state.checkItems[i]) state.checkItems[i].checked = checked;
+  };
+
+  window.addCheckItem = function () {
+    collectState();
+    state.checkItems.push({ checked: false, action:'', role:'', time:'' });
+    renderCheckList();
+  };
+
+  window.delCheckItem = function (i) {
+    collectState();
+    state.checkItems.splice(i, 1);
+    renderCheckList();
+  };
+
+  /* ── 섹션4: 비상조직 ── */
+  function renderOrg() {
+    const wrap = $('sec4table');
+    let html = `<table class="doc">
+      <thead><tr>
+        <th style="width:120px">역할명</th>
+        <th style="width:100px">담당자</th>
+        <th>주요 책임</th>
+        <th style="width:130px">비상연락처</th>
+        <th style="width:44px"></th>
+      </tr></thead><tbody>`;
+    if (state.orgRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="5">행을 추가하거나 담당자 관리에서 로드하세요</td></tr>`;
+    } else {
+      state.orgRows.forEach((r, i) => { html += orgRowHtml(r, i); });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    $('sec4meta').textContent = state.orgRows.length > 0 ? `(${state.orgRows.length}건)` : '';
+  }
+
+  function orgRowHtml(r, i) {
+    return `<tr>
+      <td><input class="cellInput" data-field="role"    value="${esc(r.role ?? '')}"    placeholder="역할명"/></td>
+      <td><input class="cellInput" data-field="name"    value="${esc(r.name ?? '')}"    placeholder="성명"/></td>
+      <td><input class="cellInput" data-field="duties"  value="${esc(r.duties ?? '')}"  placeholder="주요 책임"/></td>
+      <td><input class="cellInput" data-field="contact" value="${esc(r.contact ?? '')}" placeholder="연락처"/></td>
+      <td><button class="btn sm danger" onclick="delOrgRow(${i})">✕</button></td>
+    </tr>`;
+  }
+
+  window.loadOrgRegistry = function () {
+    const data = arr(load('bcmsOrgRegistry', []));
+    if (data.length > 0) {
+      state.orgRows = data.map(r => ({
+        role:    r.role ?? r.position ?? r.title ?? '',
+        name:    r.name ?? r.memberName ?? '',
+        duties:  r.duties ?? r.responsibility ?? r.description ?? '',
+        contact: r.phone ?? r.contact ?? r.tel ?? '',
+      }));
+      showToast(`${data.length}건 로드됨`);
+    } else {
+      showToast('bcmsOrgRegistry 데이터 없음');
+    }
+    renderOrg();
+  };
+
+  window.addOrgRow = function () {
+    collectState();
+    state.orgRows.push({ role:'', name:'', duties:'', contact:'' });
+    renderOrg();
+  };
+
+  window.delOrgRow = function (i) {
+    collectState();
+    state.orgRows.splice(i, 1);
+    renderOrg();
+  };
+
+  /* ── 섹션5: 시나리오 ── */
+  function renderScenarios() {
+    const list = $('scenarioList');
+    if (state.scenarios.length === 0) {
+      list.innerHTML = `<p style="font-size:13px;color:var(--text-2)">시나리오를 추가하거나 훈련 데이터에서 불러오세요.</p>`;
+      return;
+    }
+    list.innerHTML = state.scenarios.map((s, i) => scenarioCardHtml(s, i)).join('');
+  }
+
+  function scenarioCardHtml(s, i) {
+    return `<div class="scenarioCard" data-si="${i}">
+      <div class="scenarioCardHead">
+        <span class="scenarioNum">${i + 1}</span>
+        <input style="flex:1;padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:700;outline:none;font-family:inherit"
+          data-sf="name" value="${esc(s.name)}" placeholder="시나리오명 (예: IT 시스템 전면 장애)"/>
+        <button class="btn sm danger" onclick="delScenario(${i})">✕</button>
+      </div>
+      <div class="scenarioGrid">
+        <div class="scField">
+          <label>발동 조건</label>
+          <input data-sf="trigger" value="${esc(s.trigger)}" placeholder="이 시나리오의 발동 조건"/>
         </div>
-
-        <div class="execActions">
-          <button class="chipBtn" onclick="onStart(getItemById('${escapeHtml(item.id)}'))">시작</button>
-          <button class="chipBtn primary" onclick="onFinish(getItemById('${escapeHtml(item.id)}'))">실행 완료</button>
-          <button class="chipBtn" onclick="onReset(getItemById('${escapeHtml(item.id)}'))">초기화</button>
+        <div class="scField">
+          <label>복구 목표 시간 (RTO)</label>
+          <input data-sf="rto" value="${esc(s.rto)}" placeholder="예: 4시간"/>
         </div>
-
-        <div class="execGrid">
-          <div class="field2">
-            <label>상황등급 (Severity Level)</label>
-            <select onchange="onSeverity(getItemById('${escapeHtml(item.id)}'), this.value)">
-              <option value="1" ${String(sevVal)==="1"?"selected":""}>SEV1 (최고) - 전사/대규모 중단</option>
-              <option value="2" ${String(sevVal)==="2"?"selected":""}>SEV2 (높음) - 핵심 기능 영향</option>
-              <option value="3" ${String(sevVal)==="3"?"selected":""}>SEV3 (중간) - 일부 기능 영향</option>
-              <option value="4" ${String(sevVal)==="4"?"selected":""}>SEV4 (낮음) - 경미/운영 지속</option>
-              <option value="5" ${String(sevVal)==="5"?"selected":""}>SEV5 (정보) - 관찰/점검</option>
-            </select>
-            <div class="mini" style="margin-top:8px;">
-              ※ EOP 실행 완료 시 선택한 SEV가 로그에 저장되어 운영센터/감사에서 활용됩니다.
-            </div>
-          </div>
-
-          <div class="field2">
-            <label>실행 메모</label>
-            <textarea oninput="onMemo(getItemById('${escapeHtml(item.id)}'), this.value)">${escapeHtml(st.memo || "")}</textarea>
-          </div>
-        </div>
-
-        <div class="checkList">
-          ${(st.steps||[]).map(s=>`
-            <div class="checkItem">
-              <div class="checkLeft">
-                <input type="checkbox"
-                  ${s.checked ? "checked" : ""}
-                  onchange="onCheck(getItemById('${escapeHtml(item.id)}'), ${s.idx}, this.checked)"
-                />
-                <div class="checkText">${escapeHtml(s.text)}</div>
-              </div>
-              <div class="checkTime">${s.checkedAt ? escapeHtml(s.checkedAt) : ""}</div>
-            </div>
-          `).join("")}
+        <div class="scField full">
+          <label>주요 행동 절차</label>
+          <textarea data-sf="actions" rows="4" placeholder="시나리오별 단계적 대응 행동을 기술하세요">${esc(s.actions)}</textarea>
         </div>
       </div>
-    `;
+    </div>`;
   }
 
-  function getItemById(id){
-    return EOP_DATA.find(x=>x.id===id);
-  }
-
-  function renderList(){
-    const root = document.getElementById("eopList");
-    root.innerHTML = "";
-
-    const items = EOP_DATA.filter(matchFilters);
-
-    if(!items.length){
-      root.innerHTML = `<div class="empty">조건에 맞는 EOP가 없습니다. (카테고리/설비/이벤트 필터를 조정해보세요)</div>`;
-      return;
+  window.loadTrainingScenarios = function () {
+    const data = arr(load('bcmsTrainingData', []));
+    const scenarios = data
+      .filter(t => t && (t.scenario || t.name || t.title))
+      .map(t => ({
+        name:    t.scenario ?? t.name ?? t.title ?? '',
+        trigger: t.trigger ?? t.condition ?? '',
+        actions: t.actions ?? t.procedure ?? t.description ?? '',
+        rto:     t.rto ?? t.targetTime ?? '',
+      }));
+    if (scenarios.length > 0) {
+      collectState();
+      scenarios.forEach(s => {
+        if (!state.scenarios.some(e => e.name === s.name)) state.scenarios.push(s);
+      });
+      renderScenarios();
+      showToast(`${scenarios.length}건 로드됨`);
+    } else {
+      showToast('bcmsTrainingData에 시나리오 없음');
     }
+  };
 
-    const sys = getSelectedSystem();
+  window.addScenario = function () {
+    collectState();
+    state.scenarios.push({ name:'', trigger:'', actions:'', rto:'' });
+    renderScenarios();
+  };
 
-    items.forEach(item=>{
-      const div = document.createElement("div");
-      div.className = "eopCard";
+  window.delScenario = function (i) {
+    collectState();
+    state.scenarios.splice(i, 1);
+    renderScenarios();
+  };
 
-      const state = loadExecState(item);
-      const prog = progress(state);
-      const sevNum = state?.severity ? Number(state.severity) : Number(item.defaultSev || 3);
-
-      const sysLine = sys ? `<span class="pill">설비: ${escapeHtml(sys.name)}${sys.systemCode ? " · " + escapeHtml(sys.systemCode) : ""}</span>` : ``;
-
-      div.innerHTML = `
-        <div class="eopTitle">${escapeHtml(item.event)}</div>
-        <div class="eopMeta">
-          <span class="pill">${escapeHtml(item.category)}</span>
-          <span class="pill">${escapeHtml(item.equipment)}</span>
-          <span class="pill">${escapeHtml(item.location)}</span>
-          ${sysLine}
-          <span class="pill ${sevClass(sevNum)}">SEV${sevNum} (추천/설정)</span>
-          ${(item.tags||[]).slice(0,3).map(t=>`<span class="pill">${escapeHtml(t)}</span>`).join("")}
-          ${state && (state.startedAt || state.finishedAt) ? `<span class="pill">진행률 ${prog.pct}%</span>` : ``}
-        </div>
-
-        <div class="eopDesc">
-          <b>Trigger (징후)</b>: ${escapeHtml((item.trigger||[])[0] || "-")}<br/>
-          <b>15-min Action (초기조치)</b>: ${escapeHtml((item.action15||[])[0] || "-")}
-        </div>
-
-        <div class="actionCard">
-          <div class="acTitle">
-            <span>Action Card (초기 10~15분)</span>
-            <button class="chipBtn" onclick="toggleExec('${escapeHtml(item.id)}')">실행 모드</button>
-          </div>
-
-          <div class="mini" style="margin-top:8px;">
-            ${(item.action15||[]).slice(0,5).map(x=>`• ${escapeHtml(x)}`).join("<br/>")}
-          </div>
-
-          ${renderExecBox(item, state)}
-        </div>
-      `;
-
-      root.appendChild(div);
-    });
-
-    openExecSet.forEach(id=>{
-      const box = document.getElementById("exec_" + id);
-      if(box) box.style.display = "block";
-    });
+  /* ── 섹션6: 커뮤니케이션 ── */
+  function renderComm() {
+    const wrap = $('sec6table');
+    let html = `<table class="doc">
+      <thead><tr>
+        <th style="width:100px">대상</th>
+        <th style="width:100px">연락 시점</th>
+        <th style="width:110px">연락 방법</th>
+        <th style="width:120px">담당자</th>
+        <th>메시지 템플릿</th>
+        <th style="width:44px"></th>
+      </tr></thead><tbody>`;
+    if (state.commRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="6">행을 추가하세요</td></tr>`;
+    } else {
+      state.commRows.forEach((r, i) => { html += commRowHtml(r, i); });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
   }
 
-  renderCtx();
-  initFilters();
-  renderList();
+  function commRowHtml(r, i) {
+    return `<tr>
+      <td><input class="cellInput" data-field="target"   value="${esc(r.target ?? '')}"   placeholder="대상"/></td>
+      <td><input class="cellInput" data-field="timing"   value="${esc(r.timing ?? '')}"   placeholder="연락 시점"/></td>
+      <td><input class="cellInput" data-field="method"   value="${esc(r.method ?? '')}"   placeholder="연락 방법"/></td>
+      <td><input class="cellInput" data-field="owner"    value="${esc(r.owner ?? '')}"    placeholder="담당자"/></td>
+      <td><input class="cellInput" data-field="template" value="${esc(r.template ?? '')}" placeholder="메시지 템플릿 (선택)"/></td>
+      <td><button class="btn sm danger" onclick="delCommRow(${i})">✕</button></td>
+    </tr>`;
+  }
 
-  document.getElementById("f_cat").addEventListener("change", ()=>{
-    rebuildEquipmentOptions();
-    document.getElementById("f_eq").value = "__ALL__";
-    renderList();
-  });
-  document.getElementById("f_eq").addEventListener("change", renderList);
-  document.getElementById("f_evt").addEventListener("change", renderList);
+  window.addCommRow = function () {
+    collectState();
+    state.commRows.push({ target:'', timing:'', method:'', owner:'', template:'' });
+    renderComm();
+  };
 
-  document.getElementById("f_q").addEventListener("input", ()=>{
-    clearTimeout(window.__eopT);
-    window.__eopT = setTimeout(renderList, 120);
-  });
+  window.delCommRow = function (i) {
+    collectState();
+    state.commRows.splice(i, 1);
+    renderComm();
+  };
+
+  /* ── 섹션7: 문서 이력 ── */
+  function renderHist() {
+    const wrap = $('sec7table');
+    let html = `<table class="doc">
+      <thead><tr>
+        <th style="width:80px">버전</th>
+        <th style="width:110px">수정일</th>
+        <th style="width:100px">수정자</th>
+        <th>수정 내용</th>
+        <th style="width:44px"></th>
+      </tr></thead><tbody>`;
+    if (state.histRows.length === 0) {
+      html += `<tr class="emptyRow"><td colspan="5">이력을 추가하세요</td></tr>`;
+    } else {
+      state.histRows.forEach((r, i) => { html += histRowHtml(r, i); });
+    }
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+  }
+
+  function histRowHtml(r, i) {
+    return `<tr>
+      <td><input class="cellInput" data-field="version" value="${esc(r.version ?? '')}" placeholder="v1.0"/></td>
+      <td><input class="cellInput" type="date" data-field="date" value="${esc(r.date ?? '')}"/></td>
+      <td><input class="cellInput" data-field="editor"  value="${esc(r.editor ?? '')}"  placeholder="수정자"/></td>
+      <td><input class="cellInput" data-field="summary" value="${esc(r.summary ?? '')}" placeholder="수정 내용"/></td>
+      <td><button class="btn sm danger" onclick="delHistRow(${i})">✕</button></td>
+    </tr>`;
+  }
+
+  window.addHistRow = function () {
+    collectState();
+    state.histRows.push({ version:'', date: todayStr(), editor:'', summary:'' });
+    renderHist();
+  };
+
+  window.delHistRow = function (i) {
+    collectState();
+    state.histRows.splice(i, 1);
+    renderHist();
+  };
+
+  /* ── 저장 버튼 ── */
+  $('btnSave').addEventListener('click', saveAll);
+
+  /* ── 다크모드 ── */
+  const htmlEl = document.documentElement;
+  const themeBtn = $('themeToggle');
+  function applyTheme(t) {
+    htmlEl.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
+    try { localStorage.setItem('bcmsTheme', t); } catch {}
+  }
+  try { const s = localStorage.getItem('bcmsTheme'); if (s) applyTheme(s); } catch {}
+  themeBtn.addEventListener('click', () =>
+    applyTheme(htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
+  );
+
+  /* ── 초기 렌더 ── */
+  loadDoc();
+  loadActivation();
+  renderActivation();
+  renderCheckList();
+  renderOrg();
+  renderScenarios();
+  renderComm();
+  renderHist();
+
+})();
 </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
 </body>
 </html>
