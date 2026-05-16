@@ -109,7 +109,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>팀</th><th>핵심업무</th><th>업무등급</th><th>MTPD</th><th>RTO</th><th>중단 리스크</th><th>위험도</th><th>BIA 정보</th>
+                  <th>팀</th><th>핵심업무</th><th>업무등급</th><th>MTPD</th><th>RTO</th><th>중단 리스크</th><th>위험도</th>
                   <th>전략유형</th><th>BCP 전략</th><th>필요자원</th><th>상태</th><th>관리</th>
                 </tr>
               </thead>
@@ -349,11 +349,6 @@
               <td class="riskCell">${esc(row.risk)}<div class="riskMeta">${riskBadge}</div></td>
               <td><b>${esc(row.riskScore)}</b></td>
               <td>
-                중요도: ${esc(row.importance)}<br/>
-                영향도: ${esc(row.impact)}<br/>
-                Core Final: ${row.coreFinal ? 'Y' : 'N'}
-              </td>
-              <td>
                 <select data-field="strategyType">
                   <option value="">선택</option>
                   ${STRATEGY_TYPES.map((x) => `<option value="${esc(x)}" ${row.strategyType === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
@@ -375,7 +370,7 @@
           `;
         }).join('');
 
-        $('rows').innerHTML = html || '<tr><td colspan="13" class="empty">표시할 리스크가 없습니다. Risk Assessment 데이터를 확인해 주세요.</td></tr>';
+        $('rows').innerHTML = html || '<tr><td colspan="12" class="empty">표시할 리스크가 없습니다. Risk Assessment 데이터를 확인해 주세요.</td></tr>';
         renderKpi();
       }
 
