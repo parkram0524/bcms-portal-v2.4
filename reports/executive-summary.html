@@ -1,373 +1,625 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Portal - Executive Summary</title>
-  <link rel="stylesheet" href="../assets/style.css"/>
-  <style>
-    .main{ padding:20px; background:#f6f7fb; }
-    .wrap{ max-width:1280px; margin:0 auto; }
-    .head{ border:1px solid rgba(15,23,42,.12); border-radius:16px; background:#fff; padding:14px; margin-bottom:12px; }
-    .title{ margin:0; font-size:26px; font-weight:950; color:#0f172a; }
-    .desc{ margin:6px 0 0; color:#475569; font-size:13px; }
-    .meta{ margin-top:8px; color:#64748b; font-size:12px; }
-    .actions{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
-    .btn{ border:1px solid rgba(15,23,42,.16); border-radius:10px; background:#fff; color:#0f172a; padding:8px 12px; font-size:13px; font-weight:900; text-decoration:none; cursor:pointer; }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>BCMS 경영 현황 보고서</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<style>
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .main { overflow-x: hidden; min-width: 0; }
+  .wrap { max-width: 1200px; margin: 0 auto; overflow-x: hidden; }
 
-    .grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
-    .kpi{ grid-column:span 3; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:#fff; padding:12px; }
-    .k{ font-size:12px; color:#64748b; font-weight:900; }
-    .v{ margin-top:8px; font-size:30px; font-weight:950; color:#0f172a; }
-    .h{ margin-top:4px; font-size:12px; color:#64748b; }
+  /* ── 헤더 ── */
+  .pageHeader {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px; margin-bottom: 22px;
+  }
+  .headerLeft { display: flex; flex-direction: column; gap: 4px; }
+  .companyInput {
+    font-size: 13px; font-weight: 600; color: var(--text-2);
+    border: none; border-bottom: 1px dashed var(--border);
+    background: transparent; outline: none; padding: 2px 0;
+    width: 220px; font-family: inherit;
+  }
+  .companyInput:focus { border-bottom-color: var(--accent, #0070f3); color: var(--text); }
+  .pageHeader h1 { font-size: 22px; font-weight: 800; margin: 0; }
+  .pageHeader .sub { font-size: 13px; color: var(--text-2); margin: 2px 0 0 0; }
+  .headerRight { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); text-decoration: none; white-space: nowrap; transition: background .15s;
+  }
+  .btn:hover { background: var(--surface-hover); }
 
-    .panel{ grid-column:span 6; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:#fff; padding:12px; }
-    .panel.full{ grid-column:span 12; }
-    .panel h3{ margin:0 0 10px; font-size:16px; }
-    .list{ display:grid; gap:8px; }
-    .row{ border:1px solid rgba(15,23,42,.10); border-radius:10px; padding:9px; display:flex; justify-content:space-between; gap:10px; }
-    .muted{ color:#64748b; font-size:12px; }
-    .badge{ border:1px solid rgba(15,23,42,.12); border-radius:999px; padding:4px 9px; font-size:11px; font-weight:900; white-space:nowrap; }
-    .barList{ display:grid; gap:7px; }
-    .bar{ display:grid; grid-template-columns:140px 1fr 46px; gap:8px; align-items:center; }
-    .track{ height:8px; background:rgba(15,23,42,.08); border-radius:999px; overflow:hidden; }
-    .fill{ height:100%; background:rgba(37,99,235,.55); }
+  /* ── 종합 현황 요약 바 ── */
+  .summaryBar {
+    display: flex; flex-wrap: wrap; gap: 0;
+    border: 0.5px solid rgba(0,112,243,.2); border-radius: 12px;
+    background: rgba(0,112,243,.04); padding: 18px 0;
+    margin-bottom: 20px;
+  }
+  .sumItem {
+    flex: 1; min-width: 140px; text-align: center;
+    padding: 0 20px; border-right: 1px solid rgba(0,112,243,.15);
+  }
+  .sumItem:last-child { border-right: none; }
+  .sumLabel { font-size: 11px; color: var(--text-2); font-weight: 600; margin: 0 0 5px 0; }
+  .sumVal   { font-size: 24px; font-weight: 900; margin: 0; color: var(--accent, #0070f3); }
+  .sumSub   { font-size: 11px; color: var(--text-2); margin: 3px 0 0 0; }
 
-    @media (max-width:1080px){ .kpi{ grid-column:span 4; } .panel{ grid-column:span 12; } }
-    @media (max-width:760px){ .kpi{ grid-column:span 6; } }
-    @media (max-width:520px){ .kpi{ grid-column:span 12; } }
+  /* ── KPI 그리드 ── */
+  .kpiGrid {
+    display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px; margin-bottom: 20px;
+  }
+  @media (max-width: 960px) { .kpiGrid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .kpiGrid { grid-template-columns: 1fr; } }
 
-    @media print {
-      body{ background:#fff; }
-      .main{ padding:0; background:#fff; }
-      .actions, #sidebarMount{ display:none !important; }
-      .wrap{ max-width:100%; }
-      .head, .kpi, .panel, .row{ box-shadow:none !important; }
-      .head, .kpi, .panel, .row{ break-inside:avoid; }
-      @page { size: A4 portrait; margin: 12mm; }
+  .kpiCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 14px 16px;
+  }
+  .kpiCard .kTop { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .kpiCard .kIco { font-size: 16px; }
+  .kpiCard .kLabel { font-size: 12px; color: var(--text-2); font-weight: 600; }
+  .kpiCard .kVal { font-size: 26px; font-weight: 900; margin: 0 0 8px 0; line-height: 1; }
+  .kpiCard .kDesc { font-size: 11px; color: var(--text-2); margin: 4px 0 0 0; }
+  .pBar { height: 5px; border-radius: 999px; background: var(--border); overflow: hidden; margin-bottom: 4px; }
+  .pBar > b { display: block; height: 100%; border-radius: 999px; transition: width .4s; }
+  .fg-green  { background: #16a34a; }
+  .fg-yellow { background: #d97706; }
+  .fg-red    { background: #dc2626; }
+  .fg-blue   { background: var(--accent, #0070f3); }
+  .tx-green  { color: #16a34a; }
+  .tx-yellow { color: #d97706; }
+  .tx-red    { color: #dc2626; }
+  .tx-blue   { color: var(--accent, #0070f3); }
+
+  /* ── 섹션 제목 ── */
+  .secTitle {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    margin: 0 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+
+  /* ── 2열 그리드 ── */
+  .dualGrid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 20px;
+  }
+  @media (max-width: 960px) { .dualGrid { grid-template-columns: 1fr; } }
+
+  .card {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 18px 20px;
+  }
+  .card + .card { margin-top: 14px; }
+
+  /* ── 테이블 ── */
+  .tableWrap { overflow-x: auto; }
+  table.rep {
+    width: 100%; border-collapse: collapse; font-size: 13px; min-width: 380px;
+  }
+  table.rep th {
+    text-align: left; font-size: 11px; font-weight: 700; color: var(--text-2);
+    padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  table.rep td {
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: middle; line-height: 1.4;
+  }
+  table.rep tr:last-child td { border-bottom: none; }
+  table.rep tr:hover td { background: var(--surface-hover); }
+  .emptyRow td { text-align: center; color: var(--text-2); padding: 18px !important; }
+
+  /* ── 배지 ── */
+  .badge {
+    display: inline-block; padding: 2px 6px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .badge.red    { background: #fef2f2; color: #dc2626; }
+  .badge.yellow { background: #fffbeb; color: #d97706; }
+  .badge.gray   { background: rgba(0,0,0,.07); color: var(--text-2); }
+  .badge.green  { background: #f0fdf4; color: #16a34a; }
+  .badge.blue   { background: rgba(0,112,243,.1); color: #0070f3; }
+  [data-theme="dark"] .badge.red    { background: #2a0000; }
+  [data-theme="dark"] .badge.yellow { background: #1c1400; }
+  [data-theme="dark"] .badge.gray   { background: rgba(255,255,255,.1); }
+  [data-theme="dark"] .badge.green  { background: #052e16; }
+  [data-theme="dark"] .badge.blue   { background: #001c3a; }
+
+  .ynTag { display:inline-block; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700; }
+  .ynTag.y { background:#f0fdf4; color:#16a34a; }
+  .ynTag.n { background:rgba(0,0,0,.06); color:var(--text-2); }
+  [data-theme="dark"] .ynTag.y { background:#052e16; }
+  [data-theme="dark"] .ynTag.n { background:rgba(255,255,255,.1); }
+
+  /* ── 훈련 실적 ── */
+  .trainTypeRow { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .trainTypeChip {
+    padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600;
+    border:1px solid var(--border); color:var(--text-2);
+  }
+  .recentList { list-style:none; margin:10px 0 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
+  .recentList li { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .recentList li .rDate { color:var(--text-2); min-width:80px; }
+  .recentList li .rName { color:var(--text); font-weight:600; }
+
+  /* ── 누적 가로 바 ── */
+  .stackBar {
+    display:flex; height:10px; border-radius:999px; overflow:hidden;
+    background:var(--border); margin:10px 0;
+  }
+  .stackBar > span { display:block; height:100%; transition:width .4s; }
+
+  .gapStatRow { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:8px; }
+  .gapStat { font-size:12px; }
+  .gapStat .gsVal { font-size:18px; font-weight:900; display:block; }
+  .gapUnmet { margin-top:8px; }
+  .gapUnmet li { font-size:12px; color:var(--text-2); padding:3px 0; border-bottom:1px solid var(--border); }
+  .gapUnmet li:last-child { border-bottom:none; }
+
+  /* ── CAPA 요약 ── */
+  .capaStatRow { display:flex; gap:12px; flex-wrap:wrap; margin:0 0 10px 0; }
+  .capaStat { font-size:12px; text-align:center; }
+  .capaStat .csVal { font-size:20px; font-weight:900; display:block; }
+  .capaUpcoming { display:flex; flex-direction:column; gap:5px; margin-top:8px; }
+  .capaUpItem { display:flex; align-items:center; gap:8px; font-size:12px;
+    padding:5px 8px; border-radius:6px; border:1px solid var(--border); }
+  .capaUpItem .cuDate { color:var(--text-2); min-width:80px; }
+  .capaUpItem .cuTitle { flex:1; font-weight:600; color:var(--text); }
+
+  /* ── 경영진 코멘트 ── */
+  .commentCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 18px 20px; margin-bottom: 20px;
+  }
+  .commentCard textarea {
+    width: 100%; box-sizing: border-box; padding: 10px 12px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px; font-family: inherit;
+    resize: vertical; outline: none; line-height: 1.6;
+  }
+  .commentCard textarea:focus { border-color: var(--accent, #0070f3); }
+  .commentBtns { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+
+  /* ── 푸터 ── */
+  .reportFooter {
+    text-align: center; padding: 20px 0 10px;
+    border-top: 1px solid var(--border); color: var(--text-2); font-size: 12px;
+    line-height: 1.8;
+  }
+
+  /* ── 인쇄 스타일 ── */
+  @media print {
+    aside, .btn, #themeToggle, .headerRight, .commentBtns { display: none !important; }
+    html, body { background: #fff !important; color: #000 !important; overflow: visible !important; }
+    .main { padding: 0 !important; }
+    .wrap { max-width: 100% !important; padding: 0 12px !important; }
+    .dualGrid { grid-template-columns: 1fr 1fr !important; }
+    .kpiGrid  { grid-template-columns: repeat(4, 1fr) !important; }
+    .card, .kpiCard, .summaryBar, .commentCard {
+      background: #fff !important; border-color: #ccc !important;
+      box-shadow: none !important; break-inside: avoid;
     }
-  </style>
+    .dualGrid { page-break-before: auto; }
+    .commentTextarea { display: none !important; }
+    .commentPrint { display: block !important; font-size: 13px; line-height:1.6; }
+    [data-theme="dark"] * { background: #fff !important; color: #000 !important; }
+  }
+  .commentPrint { display: none; }
+
+  @media (max-width: 640px) {
+    .pageHeader { flex-direction: column; }
+    .summaryBar { flex-direction: column; gap: 12px; padding: 14px 20px; }
+    .sumItem { border-right: none; border-bottom: 1px solid rgba(0,112,243,.15); padding: 8px 0; text-align: left; }
+    .sumItem:last-child { border-bottom: none; }
+  }
+</style>
 </head>
 <body>
-  <aside id="sidebarMount"></aside>
-  <main class="main">
-    <div class="wrap">
-      <section class="head">
-        <h1 class="title">BCMS Executive Summary</h1>
-        <p class="desc">SJ Digital · 운영형 BCMS 현황 요약 / Incident, Risk, Continuity 상태 포함</p>
-        <div class="meta" id="reportTime">기준 시각: -</div>
-        <div class="actions">
-          <button class="btn" id="btnPrint" type="button">인쇄 / PDF 저장</button>
-          <a class="btn" href="../index.html">메인 대시보드</a>
-          <a class="btn" href="../op-center/ops-status.html">Ops Status</a>
-        </div>
-      </section>
+<aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-      <section class="grid" id="kpiGrid"></section>
-
-      <section class="grid" style="margin-top:12px;">
-        <article class="panel">
-          <h3>운영 리스크 요약</h3>
-          <div id="riskTop" class="list"></div>
-          <div class="muted" style="margin-top:8px; font-weight:900;">리스크 집중 팀 TOP 3</div>
-          <div id="riskTeamTop" class="barList"></div>
-        </article>
-
-        <article class="panel">
-          <h3>Incident / 복구 요약</h3>
-          <div id="incidentSummary" class="list"></div>
-        </article>
-
-        <article class="panel">
-          <h3>핵심업무 / BIA 요약</h3>
-          <div id="coreBiaSummary" class="list"></div>
-        </article>
-
-        <article class="panel">
-          <h3>Evidence / CAPA 요약</h3>
-          <div id="opsSummary" class="list"></div>
-        </article>
-
-        <article class="panel full">
-          <h3>BCP / 연속성 요약</h3>
-          <div id="bcpSummary" class="list"></div>
-        </article>
-
-        <article class="panel full">
-          <h3>자동 인사이트</h3>
-          <div id="insightList" class="list"></div>
-        </article>
-      </section>
+  <!-- 헤더 -->
+  <div class="pageHeader">
+    <div class="headerLeft">
+      <input class="companyInput" id="companyInput" type="text" placeholder="회사명 입력" maxlength="60"/>
+      <h1>BCMS 경영 현황 보고서</h1>
+      <p class="sub" id="reportSub"></p>
     </div>
-  </main>
+    <div class="headerRight">
+      <button class="btn" onclick="window.print()">🖨️ 인쇄</button>
+      <a href="../op-center/index.html" class="btn">운영센터 →</a>
+      <button id="themeToggle" class="btn">🌙 다크모드</button>
+    </div>
+  </div>
 
-  <script src="../assets/sidebar.js"></script>
-  <script src="../assets/data-store.js"></script>
-  <script>
-    (() => {
-      const safeParse = (raw, fallback = null) => { try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; } };
-      const asText = (v) => String(v || '').trim();
-      const asLower = (v) => asText(v).toLowerCase();
-      const hasValue = (v) => v !== null && v !== undefined && String(v).trim() !== '';
-      const toTime = (v) => { const t = new Date(v).getTime(); return Number.isFinite(t) ? t : 0; };
-      const uniq = (arr) => [...new Set((Array.isArray(arr) ? arr : []).filter(Boolean))];
-      const toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
-      const pickFirst = (obj, keys, fallback = null) => { for (const k of keys) { if (hasValue(obj?.[k])) return obj[k]; } return fallback; };
-      const fmt = (n) => Number(n || 0).toLocaleString('ko-KR');
-      const readArrayByKeys = (keys) => {
-        for (const key of keys) {
-          const parsed = safeParse(localStorage.getItem(key), null);
-          if (Array.isArray(parsed)) return parsed;
-        }
-        return [];
-      };
-      const parseHours = (value) => {
-        if (!hasValue(value)) return null;
-        if (typeof value === 'number' && Number.isFinite(value)) return value;
-        const s = String(value).trim().toLowerCase();
-        const m = s.match(/[0-9]+(?:\.[0-9]+)?/);
-        const n = m ? Number(m[0]) : NaN;
-        if (!Number.isFinite(n)) return null;
-        if (s.includes('일') || /\bd\b/.test(s)) return n * 24;
-        if (s.includes('시간') || s.includes('hour') || /\bh\b/.test(s)) return n;
-        if (s.includes('분') || s.includes('min')) return n / 60;
-        return n;
-      };
+  <!-- 종합 현황 요약 바 -->
+  <div class="summaryBar" id="summaryBar"></div>
 
-      const collectCore = () => {
-        const rows = readArrayByKeys(['bcmsCoreFunctions']);
-        const functions = rows.flatMap((r) => (Array.isArray(r?.functions) ? r.functions.map((f) => ({ ...f, team: r.team || '팀 미지정' })) : []));
-        const confirmed = functions.filter((f) => f?.coreFinal === true);
-        return { rows, functions, confirmed, teamTop: topCount(functions, (x) => x.team, 5) };
-      };
+  <!-- KPI 8개 -->
+  <div class="kpiGrid" id="kpiGrid"></div>
 
-      const collectBia = () => {
-        const rows = readArrayByKeys(['bcmsBIAData']);
-        const impacts = rows.map((r) => toNum(r?.impactScore ?? r?.impact ?? r?.overallImpact)).filter((n) => n > 0);
-        const avgImpact = impacts.length ? impacts.reduce((a, b) => a + b, 0) / impacts.length : 0;
-        const rto4h = rows.filter((r) => {
-          const h = parseHours(r?.rto || r?.rtoHours || r?.rtoTarget);
-          return h !== null && h <= 4;
-        }).length;
-        const highImpact = [...rows].sort((a,b)=> toNum(b?.impactScore ?? b?.impact ?? b?.overallImpact) - toNum(a?.impactScore ?? a?.impact ?? a?.overallImpact)).slice(0,5);
-        return { rows, avgImpact, rto4h, teamTop: topCount(rows, (x)=> x.team || x.ownerTeam || '팀 미지정', 5), highImpact };
-      };
+  <!-- 2열: 핵심업무·리스크 / 훈련·갭분석·CAPA -->
+  <div class="dualGrid">
 
-      const collectRisk = () => {
-        const rows = readArrayByKeys(['bcmsRiskAssessment']).map((r) => {
-          const riskScore = hasValue(r?.riskScore) ? toNum(r.riskScore) : toNum(r?.impact) * toNum(r?.likelihood);
-          const isPriority = riskScore >= 13 || r?.critical === true || r?.isPriority === true;
-          return {
-            team: asText(r?.team || '팀 미지정'),
-            functionName: asText(r?.functionName || r?.function || '-'),
-            threat: asText(r?.threat || r?.risk || r?.riskName || '-'),
-            riskScore,
-            isPriority
-          };
-        });
-        const top5 = [...rows].sort((a,b)=> b.riskScore - a.riskScore).slice(0,5);
-        const highByTeam = topCount(rows.filter((r)=>r.isPriority), (x)=>x.team, 3);
-        return { rows, top5, highByTeam, priorityCount: rows.filter((r)=>r.isPriority).length, maxScore: rows.length ? Math.max(...rows.map((r)=>r.riskScore)) : 0 };
-      };
+    <!-- 왼쪽 -->
+    <div>
+      <div class="card">
+        <p class="secTitle">📋 핵심업무 BIA 현황 (팀별)</p>
+        <div class="tableWrap">
+          <table class="rep" id="biaTable">
+            <thead><tr><th>팀명</th><th>BIA등록</th><th>핵심업무</th><th>BCP수립</th></tr></thead>
+            <tbody id="biaTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <p class="secTitle">⚠️ 중점관리 리스크 TOP 5</p>
+        <div class="tableWrap">
+          <table class="rep" id="riskTable">
+            <thead><tr><th>리스크명</th><th>위험도</th><th>팀</th><th>BCP수립</th></tr></thead>
+            <tbody id="riskTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-      const collectIncidents = () => {
-        let raw = [];
-        const unified = safeParse(localStorage.getItem('bcmsIncidents'), null);
-        if (Array.isArray(unified)) raw = raw.concat(unified);
-        if (unified && typeof unified === 'object') {
-          if (unified.currentIncident && typeof unified.currentIncident === 'object') raw.push(unified.currentIncident);
-          if (Array.isArray(unified.logs)) raw = raw.concat(unified.logs);
-        }
-        const legacy = safeParse(localStorage.getItem('bcms_incidents_v1'), null);
-        if (Array.isArray(legacy)) raw = raw.concat(legacy);
-        if (legacy && typeof legacy === 'object') {
-          if (legacy.currentIncident && typeof legacy.currentIncident === 'object') raw.push(legacy.currentIncident);
-          if (Array.isArray(legacy.logs)) raw = raw.concat(legacy.logs);
-        }
-        const execRows = readArrayByKeys(['bcmsIncidentExecution']);
-        execRows.forEach((r)=>{
-          const incidentId = asText(r?.incidentId || r?.id);
-          if(!incidentId) return;
-          raw.push({ incidentId, status:r?.status || '', severity:r?.severity || '', startedAt:r?.startedAt || r?.createdAt || '', endedAt:r?.endedAt || '', currentStage:r?.currentStage || r?.phase || '', relatedTeams:r?.relatedTeams || r?.relatedOrgUnits || [], affectedServices:r?.affectedServices || r?.services || [] });
-        });
+    <!-- 오른쪽 -->
+    <div>
+      <div class="card">
+        <p class="secTitle">🎯 훈련 실적 요약</p>
+        <div id="trainSummary"></div>
+      </div>
+      <div class="card">
+        <p class="secTitle">📊 ISO 22301 갭분석 현황</p>
+        <div id="gapSummary"></div>
+      </div>
+      <div class="card">
+        <p class="secTitle">🔧 CAPA 개선조치 현황</p>
+        <div id="capaSummary"></div>
+      </div>
+    </div>
 
-        const normalized = raw.map((row, idx) => {
-          const incidentId = asText(pickFirst(row, ['incidentId','id','incidentID','incidentRef','incidentCode'], `INC-${idx+1}`));
-          const status = asText(pickFirst(row, ['status','currentStatus','state'], '-'));
-          const statusLower = asLower(status);
-          const severity = asText(pickFirst(row, ['severity','level'], '-'));
-          const startedAt = pickFirst(row, ['startedAt','startTime','createdAt','incidentStartTime','openedAt'], null);
-          const endedAt = pickFirst(row, ['endedAt','endTime','closedAt','resolvedAt'], null);
-          const closedTokens = ['종료','종료됨','closed','resolved','종결','복구 완료'];
-          const isClosed = hasValue(endedAt) || closedTokens.some((token) => statusLower.includes(token));
-          return {
-            incidentId,
-            status,
-            severity,
-            affectedServices: uniq((Array.isArray(row?.affectedServices) ? row.affectedServices : (typeof row?.affectedServices === 'string' ? row.affectedServices.split(',') : row?.services || row?.serviceNames || []))).map(asText).filter(Boolean),
-            relatedTeams: uniq((Array.isArray(row?.relatedTeams) ? row.relatedTeams : (typeof row?.relatedTeams === 'string' ? row.relatedTeams.split(',') : row?.relatedOrgs || row?.relatedOrgUnits || []))).map(asText).filter(Boolean),
-            currentStage: asText(pickFirst(row, ['currentStage','responseStage','phase','step'], '-')),
-            startedAt,
-            endedAt,
-            isClosed
-          };
-        }).filter((x)=>x.incidentId);
+  </div>
 
-        const byId = new Map();
-        normalized.forEach((x)=> {
-          const p = byId.get(x.incidentId);
-          if (!p) { byId.set(x.incidentId, x); return; }
-          byId.set(x.incidentId, { ...p, ...x, affectedServices: x.affectedServices.length ? x.affectedServices : p.affectedServices, relatedTeams: x.relatedTeams.length ? x.relatedTeams : p.relatedTeams, startedAt: hasValue(x.startedAt) ? x.startedAt : p.startedAt, endedAt: hasValue(x.endedAt) ? x.endedAt : p.endedAt, isClosed: x.isClosed || p.isClosed });
-        });
+  <!-- 경영진 코멘트 -->
+  <div class="commentCard">
+    <p class="secTitle">💬 경영진 코멘트</p>
+    <textarea class="commentTextarea" id="execComment" rows="4"
+      placeholder="이번 분기 BCMS 운영 현황에 대한 경영진 의견"></textarea>
+    <div class="commentPrint" id="execCommentPrint"></div>
+    <div class="commentBtns">
+      <button class="btn" id="btnSaveComment">저장</button>
+    </div>
+  </div>
 
-        const rows = [...byId.values()];
-        const active = rows.filter((x)=>!x.isClosed).sort((a,b)=>toTime(b.startedAt)-toTime(a.startedAt));
-        const closed = rows.filter((x)=>x.isClosed).sort((a,b)=>toTime(b.endedAt)-toTime(a.endedAt));
-        const recent30 = rows.filter((x)=>toTime(x.startedAt) >= Date.now() - 30*24*60*60*1000);
-        const severeHigh = rows.filter((x)=>/심각|높음|critical|high/i.test(x.severity));
-        const mttrSamples = closed.filter((x)=>toTime(x.endedAt) && toTime(x.startedAt)).map((x)=>(toTime(x.endedAt)-toTime(x.startedAt))/3600000);
-        const mttr = mttrSamples.length ? (mttrSamples.reduce((a,b)=>a+b,0)/mttrSamples.length) : null;
-        return { rows, active, closed, recent30, severeHigh, mttr, teamTop: topCount(rows.flatMap((r)=>(r.relatedTeams||[]).map((t)=>({team:t}))), (x)=>x.team, 5) };
-      };
+  <!-- 푸터 -->
+  <div class="reportFooter" id="reportFooter"></div>
 
-      const collectEvidence = () => {
-        const rows = readArrayByKeys(['bcmsEvidenceItems','bcms_audit_evidence_v1']);
-        const pending = rows.filter((x)=> /미확인|pending|in\s*review/i.test(asText(x?.status)));
-        const latest5 = [...rows].sort((a,b)=>toTime(b?.createdAt || b?.updatedAt)-toTime(a?.createdAt || a?.updatedAt)).slice(0,5);
-        return { rows, pending, latest5 };
-      };
+</div>
+</main>
 
-      const collectCapa = () => {
-        const rows = readArrayByKeys(['bcmsActionItems','bcmsCapaItems','bcms_capa_v1']);
-        const open = rows.filter((x)=> !/완료|종료|종결|closed|done|resolved|complete/i.test(asText(x?.status)));
-        const urgent = open.filter((x)=> {
-          const due = toTime(x?.dueDate || x?.deadline || x?.targetDate);
-          return due > 0 && due <= Date.now() + 7*24*60*60*1000;
-        });
-        const latest5 = [...rows].sort((a,b)=>toTime(b?.updatedAt || b?.createdAt)-toTime(a?.updatedAt || a?.createdAt)).slice(0,5);
-        return { rows, open, urgent, latest5 };
-      };
+<script src="../assets/demo-seed.js"></script>
+<script src="../assets/sidebar.js"></script>
+<script>
+(function () {
+  'use strict';
 
-      const collectBcp = () => {
-        const rows = readArrayByKeys(['bcmsBcpAssessments']);
-        const std = rows.map((r)=>({ ...r, status: asText(r?.status).toLowerCase() || 'none' }));
-        const review = std.filter((x)=>x.status === 'review');
-        const recommended = std.filter((x)=>x.status === 'recommended');
-        const activated = std.filter((x)=>x.status === 'activated');
-        return { rows: std, review, recommended, activated };
-      };
+  /* ── 유틸 ── */
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const clamp = n => Math.max(0, Math.min(100, Math.round(n || 0)));
 
-      function topCount(rows, keyFn, limit){
-        const m = new Map();
-        rows.forEach((r)=>{ const k = asText(keyFn(r)); if(!k) return; m.set(k, (m.get(k)||0)+1); });
-        return [...m.entries()].map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value).slice(0,limit);
-      }
+  function load(key, def) {
+    try {
+      const v = localStorage.getItem(key);
+      if (!v) return def;
+      const p = JSON.parse(v);
+      return (p !== null && p !== undefined) ? p : def;
+    } catch { return def; }
+  }
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+  function arr(v) { return Array.isArray(v) ? v : []; }
 
-      function renderBars(el, items){
-        if (!items.length) { el.innerHTML = '<div class="muted">데이터 없음</div>'; return; }
-        const max = Math.max(...items.map((x)=>x.value), 1);
-        el.innerHTML = items.map((x)=>`
-          <div class="bar">
-            <div class="muted">${x.name}</div>
-            <div class="track"><div class="fill" style="width:${Math.round((x.value/max)*100)}%"></div></div>
-            <div class="muted" style="text-align:right; font-weight:900;">${fmt(x.value)}</div>
-          </div>`).join('');
-      }
+  /* ── 날짜 ── */
+  const DAYS = ['일','월','화','수','목','금','토'];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().split('T')[0];
+  document.getElementById('reportSub').textContent =
+    today.getFullYear() + '년 ' + (today.getMonth()+1) + '월 ' + today.getDate() + '일 (' + DAYS[today.getDay()] + ') 기준  ·  ISO 22301 기반 업무연속성관리체계 운영 현황';
+  document.getElementById('reportFooter').innerHTML =
+    `작성기준일: ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 &nbsp;|&nbsp; 작성부서: BCMS 담당부서 &nbsp;|&nbsp; 준거: ISO 22301:2019`;
 
-      function buildInsights(ctx){
-        const out = [];
-        out.push(`현재 진행중 Incident ${fmt(ctx.inc.active.length)}건, 심각/높음 Incident ${fmt(ctx.inc.severeHigh.length)}건입니다.`);
-        if (ctx.risk.highByTeam.length) out.push(`중점관리 리스크는 ${ctx.risk.highByTeam.slice(0,2).map((x)=>x.name).join(', ')}에 집중되어 있습니다.`);
-        out.push(`BCP 가동 권고 ${fmt(ctx.bcp.recommended.length)}건, BCP 가동 중 ${fmt(ctx.bcp.activated.length)}건입니다.`);
-        out.push(`미확인 증적 ${fmt(ctx.evd.pending.length)}건, 미완료 개선조치 ${fmt(ctx.capa.open.length)}건입니다.`);
-        if (ctx.inc.mttr !== null) out.push(`최근 종료 Incident 기준 평균 복구시간(MTTR)은 ${ctx.inc.mttr.toFixed(1)}시간입니다.`);
-        return out.slice(0,5);
-      }
+  /* ── 데이터 로드 ── */
+  const biaData   = arr(load('bcmsBIAData', []));
+  const riskData  = arr(load('bcmsRiskList', null) ?? load('bcmsRiskAssessment', []));
+  const bcpRaw    = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
+  const bcpData   = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
+  const confirmed = arr(load('bcmsPriorityConfirmed', []));
+  const trainData = arr(load('bcmsTrainingData', []));
+  const capaData  = arr(load('bcmsCapaItems', []));
+  const gapData   = arr(load('bcmsGapAnalysis', []));
+  const docsData  = arr(load('bcmsDocuments', []));
+  const policyData   = load('bcmsPolicyData', null);
+  const objectives   = arr(load('bcmsObjectives', []));
+  const meta         = load('bcmsReportMeta', {});
 
-      function render(){
-        document.getElementById('reportTime').textContent = `기준 시각: ${new Date().toLocaleString('ko-KR', { hour12:false })}`;
+  /* ── 메타 (회사명/코멘트) ── */
+  const companyEl = document.getElementById('companyInput');
+  const commentEl = document.getElementById('execComment');
+  const commentPrintEl = document.getElementById('execCommentPrint');
+  companyEl.value = meta.companyName ?? '';
+  commentEl.value = meta.executiveComment ?? '';
+  commentPrintEl.textContent = meta.executiveComment ?? '';
 
-        const core = collectCore();
-        const bia = collectBia();
-        const risk = collectRisk();
-        const inc = collectIncidents();
-        const evd = collectEvidence();
-        const capa = collectCapa();
-        const bcp = collectBcp();
+  companyEl.addEventListener('input', () => {
+    const m = load('bcmsReportMeta', {});
+    m.companyName = companyEl.value.trim();
+    save('bcmsReportMeta', m);
+  });
+  document.getElementById('btnSaveComment').addEventListener('click', () => {
+    const m = load('bcmsReportMeta', {});
+    m.executiveComment = commentEl.value.trim();
+    commentPrintEl.textContent = m.executiveComment;
+    save('bcmsReportMeta', m);
+    const btn = document.getElementById('btnSaveComment');
+    btn.textContent = '✓ 저장됨';
+    setTimeout(() => { btn.textContent = '저장'; }, 1500);
+  });
 
-        const kpis = [
-          ['확정 핵심업무 수', core.confirmed.length, 'coreFinal=true'],
-          ['BIA 등록 수', bia.rows.length, '영향 분석 등록'],
-          ['중점관리 리스크 수', risk.priorityCount, 'riskScore≥13/critical'],
-          ['진행중 Incident 수', inc.active.length, '종료 제외'],
-          ['최근 30일 Incident 수', inc.recent30.length, '발생일 기준'],
-          ['미확인 증적 수', evd.pending.length, '확인 필요'],
-          ['미완료 개선조치 수', capa.open.length, '완료 제외'],
-          ['BCP 권고/가동', `${fmt(bcp.recommended.length)} / ${fmt(bcp.activated.length)}`, 'recommended / activated']
-        ];
-        document.getElementById('kpiGrid').innerHTML = kpis.map(([k,v,h])=>`
-          <article class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="h">${h}</div></article>
-        `).join('');
+  /* ── KPI 계산 ── */
+  function pctClass(p) { return p >= 70 ? 'green' : p >= 50 ? 'yellow' : 'red'; }
 
-        const riskTop = document.getElementById('riskTop');
-        riskTop.innerHTML = risk.top5.length
-          ? risk.top5.map((r)=>`<div class="row"><div><b>${r.team}</b> / ${r.functionName}<div class="muted">${r.threat}</div></div><span class="badge">${fmt(r.riskScore)}</span></div>`).join('')
-          : '<div class="muted">리스크 데이터가 없습니다.</div>';
-        renderBars(document.getElementById('riskTeamTop'), risk.highByTeam);
+  // ① BIA 등록 수
+  const biaCnt = biaData.length;
 
-        const incidentSummary = document.getElementById('incidentSummary');
-        incidentSummary.innerHTML = `
-          ${inc.active.length ? inc.active.slice(0,5).map((x)=>`<div class="row"><div><b>${x.incidentId}</b><div class="muted">${x.status} / ${x.severity} / ${x.currentStage || '-'}</div></div><span class="badge">진행중</span></div>`).join('') : '<div class="muted">진행중 Incident 없음</div>'}
-          <div class="row"><div><b>최근 종료 Incident</b><div class="muted">${inc.closed.slice(0,3).map((x)=>x.incidentId).join(', ') || '-'}</div></div><span class="badge">MTTR ${inc.mttr === null ? '-' : `${inc.mttr.toFixed(1)}h`}</span></div>
-          <div class="row"><div><b>심각/높음 비중</b><div class="muted">전체 ${fmt(inc.rows.length)}건 중 ${fmt(inc.severeHigh.length)}건</div></div><span class="badge">${inc.rows.length ? Math.round((inc.severeHigh.length/inc.rows.length)*100) : 0}%</span></div>
-        `;
+  // ② 핵심업무 확정률
+  const confirmedCnt = confirmed.length;
+  const confirmPct   = biaCnt > 0 ? clamp(confirmedCnt / biaCnt * 100) : 0;
 
-        const coreBia = document.getElementById('coreBiaSummary');
-        coreBia.innerHTML = `
-          <div class="row"><div><b>팀별 확정 핵심업무</b><div class="muted">${core.teamTop.map((x)=>`${x.name} ${x.value}`).join(' · ') || '-'}</div></div><span class="badge">${fmt(core.confirmed.length)}건</span></div>
-          <div class="row"><div><b>팀별 BIA 등록</b><div class="muted">${bia.teamTop.map((x)=>`${x.name} ${x.value}`).join(' · ') || '-'}</div></div><span class="badge">${fmt(bia.rows.length)}건</span></div>
-          <div class="row"><div><b>RTO 4시간 이하 핵심업무</b><div class="muted">평균 영향도 ${bia.avgImpact.toFixed(1)}</div></div><span class="badge">${fmt(bia.rto4h)}건</span></div>
-          ${bia.highImpact.slice(0,3).map((x)=>`<div class="row"><div><b>${x.team || x.ownerTeam || '팀 미지정'}</b><div class="muted">${x.functionName || x.name || '핵심업무'} / 영향도 ${toNum(x.impactScore ?? x.impact ?? x.overallImpact)}</div></div><span class="badge">상위</span></div>`).join('') || ''}
-        `;
+  // ③ 중점관리 리스크
+  const critRisks = riskData.filter(r => r && ((r.riskScore ?? r.score ?? 0) >= 15 || r.critical === true));
+  const critCnt   = critRisks.length;
 
-        const ops = document.getElementById('opsSummary');
-        ops.innerHTML = `
-          <div class="row"><div><b>미확인 증적 5건</b><div class="muted">${evd.pending.slice(0,5).map((x)=>x.title || x.name || '증적').join(' · ') || '-'}</div></div><span class="badge">${fmt(evd.pending.length)}건</span></div>
-          <div class="row"><div><b>미완료 개선조치 5건</b><div class="muted">${capa.open.slice(0,5).map((x)=>x.title || x.actionName || '개선조치').join(' · ') || '-'}</div></div><span class="badge">${fmt(capa.open.length)}건</span></div>
-          <div class="row"><div><b>기한 임박 개선조치</b><div class="muted">7일 이내 마감 건수</div></div><span class="badge">${fmt(capa.urgent.length)}건</span></div>
-          <div class="row"><div><b>감사 대응 상태</b><div class="muted">증적 정리와 CAPA 이행 현황을 기준으로 평가</div></div><span class="badge">${(evd.pending.length + capa.open.length) > 0 ? '추가 정리 필요' : '양호'}</span></div>
-        `;
+  // ④ BCP 수립률
+  const bcpWritten = bcpData.filter(b => b && (b.strategyText || b.strategyType || b.strategy || b.done)).length;
+  const bcpPct     = confirmedCnt > 0 ? clamp(bcpWritten / confirmedCnt * 100) : 0;
 
-        const bcpSummary = document.getElementById('bcpSummary');
-        const continuityText = bcp.activated.length > 0
-          ? '일부 Incident는 현재 BCP 가동 상태입니다.'
-          : bcp.recommended.length > 0
-            ? 'BCP 가동 권고 Incident가 존재합니다.'
-            : bcp.review.length > 0
-              ? 'BCP 검토 대상 Incident가 있습니다.'
-              : '현재 continuity risk 신호는 제한적입니다.';
-        bcpSummary.innerHTML = `
-          <div class="row"><div><b>BCP 검토 필요</b><div class="muted">status=review</div></div><span class="badge">${fmt(bcp.review.length)}건</span></div>
-          <div class="row"><div><b>BCP 가동 권고</b><div class="muted">status=recommended</div></div><span class="badge">${fmt(bcp.recommended.length)}건</span></div>
-          <div class="row"><div><b>BCP 가동 중</b><div class="muted">status=activated</div></div><span class="badge">${fmt(bcp.activated.length)}건</span></div>
-          <div class="row"><div><b>Continuity Risk 요약</b><div class="muted">${continuityText}</div></div><span class="badge">요약</span></div>
-        `;
+  // ⑤ 훈련 이행률
+  const trainTotal = trainData.length;
+  const trainDone  = trainData.filter(t => t && (String(t.status ?? '') === '완료' || t.done === true || t.completed === true)).length;
+  const trainPct   = trainTotal > 0 ? clamp(trainDone / trainTotal * 100) : 0;
 
-        const insights = buildInsights({ core, bia, risk, inc, evd, capa, bcp });
-        const insightList = document.getElementById('insightList');
-        insightList.innerHTML = insights.length
-          ? insights.map((s)=>`<div class="row"><div>${s}</div></div>`).join('')
-          : '<div class="muted">현재 표시할 인사이트가 없습니다.</div>';
-      }
+  // ⑥ ISO 갭분석 충족률
+  const gapTotal = gapData.length;
+  const gapMet   = gapData.filter(g => { if (!g) return false; const s = String(g.status ?? '').toLowerCase(); return s === '충족' || s === 'yes' || s === 'y' || g.met === true; }).length;
+  const gapPct   = gapTotal > 0 ? clamp(gapMet / gapTotal * 100) : 0;
 
-      document.getElementById('btnPrint').addEventListener('click', () => window.print());
-      document.addEventListener('DOMContentLoaded', render);
-      window.addEventListener('focus', render);
-      window.addEventListener('storage', render);
-      render();
-    })();
-  </script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+  // ⑦ CAPA 완료율
+  const capaTotal = capaData.length;
+  const capaDone  = capaData.filter(c => c && (String(c.status ?? '').includes('완료') || String(c.status ?? '').toLowerCase() === 'closed')).length;
+  const capaPct   = capaTotal > 0 ? clamp(capaDone / capaTotal * 100) : 0;
+
+  // ⑧ 문서 최신화율
+  const docsTotal = docsData.length;
+  const docsCurrent = docsData.filter(d => {
+    if (!d) return false;
+    const raw = d.expiryDate ?? d.reviewDate ?? '';
+    if (!raw) return true;
+    const dt = new Date(raw);
+    return isNaN(dt) || dt >= today;
+  }).length;
+  const docsPct = docsTotal > 0 ? clamp(docsCurrent / docsTotal * 100) : 100;
+
+  /* ── 종합 요약 바 ── */
+  document.getElementById('summaryBar').innerHTML = [
+    { label: '핵심업무 확정', val: confirmedCnt + '건', sub: 'BIA 등록 ' + biaCnt + '건 中' },
+    { label: 'BCP 수립률', val: bcpPct + '%', sub: confirmedCnt + '건 中 ' + bcpWritten + '건 수립' },
+    { label: '중점관리 리스크', val: critCnt + '건', sub: '위험도 15점 이상' },
+    { label: '훈련 이행률', val: trainPct + '%', sub: trainTotal + '건 中 ' + trainDone + '건 완료' },
+    { label: 'ISO 22301 충족률', val: gapPct + '%', sub: gapTotal + '항목 中 ' + gapMet + '항목 충족' },
+  ].map(s => `
+    <div class="sumItem">
+      <p class="sumLabel">${esc(s.label)}</p>
+      <p class="sumVal">${esc(s.val)}</p>
+      <p class="sumSub">${esc(s.sub)}</p>
+    </div>`
+  ).join('');
+
+  /* ── KPI 카드 렌더 ── */
+  function kpiCard({ ico, label, val, pct, desc, noBar, valClass }) {
+    const cls = valClass ?? ('tx-' + pctClass(pct));
+    const barHtml = noBar ? '' :
+      `<div class="pBar"><b class="fg-${pctClass(pct)}" style="width:${pct}%"></b></div>`;
+    return `<div class="kpiCard">
+      <div class="kTop"><span class="kIco">${ico}</span><span class="kLabel">${esc(label)}</span></div>
+      <div class="kVal ${cls}">${esc(val)}</div>
+      ${barHtml}
+      <p class="kDesc">${desc}</p>
+    </div>`;
+  }
+
+  document.getElementById('kpiGrid').innerHTML = [
+    { ico:'📋', label:'BIA 등록 업무 수', val: biaCnt + '건',
+      pct: 100, noBar: true, desc:'전체 등록 업무 수' },
+    { ico:'✅', label:'핵심업무 확정률', val: confirmPct + '%',
+      pct: confirmPct, desc:`전체 ${biaCnt}건 중 ${confirmedCnt}건 확정` },
+    { ico:'⚠️', label:'중점관리 리스크 수', val: critCnt + '건',
+      pct: critCnt === 0 ? 100 : 0, noBar: true,
+      valClass: critCnt === 0 ? 'tx-green' : 'tx-red',
+      desc: critCnt === 0 ? '이상 없음' : '전략 수립 확인 필요' },
+    { ico:'🛡️', label:'BCP 전략 수립률', val: bcpPct + '%',
+      pct: bcpPct, desc:`확정 ${confirmedCnt}건 중 ${bcpWritten}건 수립` },
+    { ico:'🎯', label:'훈련 이행률', val: trainPct + '%',
+      pct: trainPct, desc:`전체 ${trainTotal}건 중 ${trainDone}건 완료` },
+    { ico:'📊', label:'ISO 갭분석 충족률', val: gapPct + '%',
+      pct: gapPct, desc:`${gapTotal}항목 중 ${gapMet}항목 충족` },
+    { ico:'🔧', label:'CAPA 완료율', val: capaPct + '%',
+      pct: capaPct, desc:`전체 ${capaTotal}건 중 ${capaDone}건 완료` },
+    { ico:'📄', label:'문서 최신화율', val: docsPct + '%',
+      pct: docsPct, desc:`전체 ${docsTotal}건 중 ${docsCurrent}건 유효` },
+  ].map(kpiCard).join('');
+
+  /* ── BIA 팀별 현황 ── */
+  const teamMap = {};
+  biaData.forEach(r => {
+    if (!r) return;
+    const team = String(r.team ?? r.dept ?? r.department ?? r['부서'] ?? r.teamName ?? '미지정').trim() || '미지정';
+    if (!teamMap[team]) teamMap[team] = { total: 0, confirmed: 0 };
+    teamMap[team].total++;
+    const id = r.id ?? r.functionId ?? '';
+    if (confirmed.some(c => c === id || c === r.name || (c && typeof c === 'object' && (c.id === id || c.name === r.name)))) {
+      teamMap[team].confirmed++;
+    }
+  });
+  const bcpTeams = new Set(bcpData.map(b => b && (b.team ?? b.dept ?? '')).filter(Boolean));
+
+  const teamRows = Object.entries(teamMap).slice(0, 10);
+  const biaTbody = document.getElementById('biaTbody');
+  if (teamRows.length === 0) {
+    biaTbody.innerHTML = `<tr class="emptyRow"><td colspan="4">BIA 데이터가 없습니다</td></tr>`;
+  } else {
+    biaTbody.innerHTML = teamRows.map(([team, d]) =>
+      `<tr>
+        <td>${esc(team)}</td>
+        <td style="text-align:center">${d.total}</td>
+        <td style="text-align:center">${d.confirmed}</td>
+        <td style="text-align:center"><span class="ynTag ${bcpTeams.has(team) ? 'y' : 'n'}">${bcpTeams.has(team) ? 'O' : 'X'}</span></td>
+      </tr>`
+    ).join('');
+  }
+
+  /* ── 리스크 TOP 5 ── */
+  const top5 = riskData
+    .filter(r => r)
+    .sort((a, b) => (b.riskScore ?? b.score ?? 0) - (a.riskScore ?? a.score ?? 0))
+    .slice(0, 5);
+  const bcpIds = new Set(bcpData.map(b => b && (b.id ?? b.functionId ?? '')).filter(Boolean));
+  function hasBcp(r) { return bcpTeams.has(r.team ?? r.dept ?? '') || bcpIds.has(r.id ?? r.functionId ?? ''); }
+
+  const riskTbody = document.getElementById('riskTbody');
+  if (top5.length === 0) {
+    riskTbody.innerHTML = `<tr class="emptyRow"><td colspan="4">리스크 데이터가 없습니다</td></tr>`;
+  } else {
+    riskTbody.innerHTML = top5.map(r => {
+      const score = r.riskScore ?? r.score ?? 0;
+      const cls   = score >= 15 ? 'red' : score >= 10 ? 'yellow' : 'gray';
+      return `<tr>
+        <td>${esc(r.name ?? r.riskName ?? r.title ?? '—')}</td>
+        <td><span class="badge ${cls}">${score}</span></td>
+        <td>${esc(r.team ?? r.dept ?? '—')}</td>
+        <td><span class="ynTag ${hasBcp(r) ? 'y' : 'n'}">${hasBcp(r) ? 'O' : 'X'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* ── 훈련 실적 ── */
+  const typeCount = {};
+  trainData.forEach(t => {
+    if (!t) return;
+    const tp = t.type ?? t.trainingType ?? '기타';
+    typeCount[tp] = (typeCount[tp] ?? 0) + 1;
+  });
+  const recentDone = trainData
+    .filter(t => t && (String(t.status ?? '') === '완료' || t.done === true))
+    .filter(t => t.date)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 3);
+
+  document.getElementById('trainSummary').innerHTML = `
+    <div style="font-size:22px;font-weight:900;color:var(--accent,#0070f3)">${trainDone}<span style="font-size:14px;font-weight:600;color:var(--text-2)"> / ${trainTotal}건 완료</span></div>
+    <div class="trainTypeRow">
+      ${Object.entries(typeCount).map(([t, n]) => `<span class="trainTypeChip">${esc(t)}: ${n}건</span>`).join('') || '<span style="font-size:12px;color:var(--text-2)">훈련 데이터 없음</span>'}
+    </div>
+    ${recentDone.length > 0 ? `
+    <div style="font-size:11px;font-weight:700;color:var(--text-2);margin:8px 0 4px">최근 완료 훈련</div>
+    <ul class="recentList">
+      ${recentDone.map(t => {
+        const d = new Date(t.date);
+        const dateStr = !isNaN(d) ? `${d.getMonth()+1}/${d.getDate()}` : t.date;
+        return `<li><span class="rDate">${esc(dateStr)}</span><span class="rName">${esc(t.name ?? t.title ?? '훈련')}</span></li>`;
+      }).join('')}
+    </ul>` : '<p style="font-size:12px;color:var(--text-2);margin-top:8px">완료된 훈련이 없습니다</p>'}`;
+
+  /* ── ISO 갭분석 ── */
+  const gapPartial = gapData.filter(g => { if (!g) return false; const s = String(g.status ?? '').toLowerCase(); return s === '부분충족' || s === 'partial'; }).length;
+  const gapUnmet   = gapData.filter(g => { if (!g) return false; const s = String(g.status ?? '').toLowerCase(); return s === '미충족' || s === 'no' || s === 'n' || g.met === false; }).length;
+  const gapMetW    = gapTotal > 0 ? clamp(gapMet     / gapTotal * 100) : 0;
+  const gapPartW   = gapTotal > 0 ? clamp(gapPartial / gapTotal * 100) : 0;
+  const gapUnmetW  = gapTotal > 0 ? clamp(gapUnmet   / gapTotal * 100) : 0;
+
+  const unmetItems = gapData
+    .filter(g => { if (!g) return false; const s = String(g.status ?? '').toLowerCase(); return s === '미충족' || s === 'no' || s === 'n' || g.met === false; })
+    .slice(0, 3);
+
+  document.getElementById('gapSummary').innerHTML = `
+    <div class="gapStatRow">
+      <div class="gapStat"><span class="gsVal tx-green">${gapMet}</span>충족</div>
+      <div class="gapStat"><span class="gsVal tx-yellow">${gapPartial}</span>부분충족</div>
+      <div class="gapStat"><span class="gsVal tx-red">${gapUnmet}</span>미충족</div>
+      <div class="gapStat"><span class="gsVal" style="color:var(--text-2)">${gapTotal}</span>전체</div>
+    </div>
+    <div class="stackBar">
+      <span style="width:${gapMetW}%;background:#16a34a"></span>
+      <span style="width:${gapPartW}%;background:#d97706"></span>
+      <span style="width:${gapUnmetW}%;background:#dc2626"></span>
+    </div>
+    ${unmetItems.length > 0 ? `
+    <div style="font-size:11px;font-weight:700;color:var(--text-2);margin:8px 0 4px">미충족 항목</div>
+    <ul class="gapUnmet">
+      ${unmetItems.map(g => `<li>${esc(g.clause ?? g.requirement ?? g.item ?? g.title ?? '항목')}</li>`).join('')}
+    </ul>` : '<p style="font-size:12px;color:var(--text-2);margin-top:6px">미충족 항목 없음</p>'}`;
+
+  /* ── CAPA 현황 ── */
+  function isDelayed(c) {
+    if (!c || !c.dueDate || String(c.status ?? '').includes('완료')) return false;
+    return new Date(c.dueDate) < today;
+  }
+  const capaWip     = capaData.filter(c => c && String(c.status ?? '').includes('진행')).length;
+  const capaPending = capaData.filter(c => c && String(c.status ?? '') === '미시작').length;
+  const capaDelayed = capaData.filter(c => isDelayed(c)).length;
+
+  const upcoming = capaData
+    .filter(c => c && !String(c.status ?? '').includes('완료') && c.dueDate)
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+    .slice(0, 3);
+
+  document.getElementById('capaSummary').innerHTML = `
+    <div class="capaStatRow">
+      <div class="capaStat"><span class="csVal">${capaTotal}</span>전체</div>
+      <div class="capaStat"><span class="csVal tx-green">${capaDone}</span>완료</div>
+      <div class="capaStat"><span class="csVal tx-blue">${capaWip}</span>진행중</div>
+      <div class="capaStat"><span class="csVal" style="color:var(--text-2)">${capaPending}</span>미시작</div>
+      <div class="capaStat"><span class="csVal tx-red">${capaDelayed}</span>지연</div>
+    </div>
+    ${upcoming.length > 0 ? `
+    <div style="font-size:11px;font-weight:700;color:var(--text-2);margin:8px 0 4px">목표일 임박 미완료</div>
+    <div class="capaUpcoming">
+      ${upcoming.map(c => `
+        <div class="capaUpItem">
+          <span class="cuDate">${esc(c.dueDate ?? '')}</span>
+          <span class="cuTitle">${esc(c.title ?? c.name ?? '—')}</span>
+          ${isDelayed(c) ? '<span class="badge red" style="font-size:10px">지연</span>' : ''}
+        </div>`).join('')}
+    </div>` : '<p style="font-size:12px;color:var(--text-2);margin-top:6px">미완료 CAPA 없음</p>'}`;
+
+  /* ── 다크모드 ── */
+  const htmlEl = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  function applyTheme(t) {
+    htmlEl.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
+    try { localStorage.setItem('bcmsTheme', t); } catch {}
+  }
+  try { const s = localStorage.getItem('bcmsTheme'); if (s) applyTheme(s); } catch {}
+  themeBtn.addEventListener('click', () =>
+    applyTheme(htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
+  );
+
+})();
+</script>
 </body>
 </html>
