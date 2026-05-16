@@ -3,162 +3,336 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BCMS Portal - 절차·문서 라이브러리</title>
+<title>BCMS Portal - 절차서 라이브러리</title>
 <link rel="stylesheet" href="../assets/style.css"/>
 <style>
-  .grid{
-    display:grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap:16px;
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .main { overflow-x: hidden; min-width: 0; }
+  .wrap { max-width: 960px; margin: 0 auto; overflow-x: hidden; }
+
+  /* ── 헤더 ── */
+  .pageHeader {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
   }
-  @media (max-width: 1000px){
-    .grid{ grid-template-columns: 1fr; }
+  .pageHeader h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px 0; }
+  .pageHeader .desc { font-size: 13px; color: var(--text-2); margin: 0; }
+  .headerRight { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); text-decoration: none; white-space: nowrap; transition: background .15s;
+    display: inline-block;
   }
-  .cardLink{
-    display:block;
-    text-decoration:none;
-    color:inherit;
+  .btn:hover { background: var(--surface-hover); }
+  .btn.primary {
+    background: var(--accent, #0070f3); color: #fff;
+    border-color: var(--accent, #0070f3);
   }
-  .box{
-    background:#ffffff;
-    border:1px solid rgba(15,23,42,.10);
-    border-radius:16px;
-    padding:18px;
-    transition:.15s;
-    min-height:150px;
+  .btn.primary:hover { opacity: .88; }
+
+  /* ── 카드 그리드 ── */
+  .docGrid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin-bottom: 24px;
   }
-  .box:hover{ filter:brightness(1.06); transform: translateY(-1px); }
-  .titleRow{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    margin-bottom:10px;
+  @media (max-width: 700px) { .docGrid { grid-template-columns: 1fr; } }
+
+  .docCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 20px;
+    display: flex; flex-direction: column; gap: 10px;
   }
-  .emoji{ font-size:22px; }
-  .title{
-    font-size:20px;
-    font-weight:800;
+
+  .docTop { display: flex; align-items: flex-start; gap: 10px; }
+  .docIco { font-size: 24px; flex-shrink: 0; line-height: 1; }
+  .docInfo { flex: 1; min-width: 0; }
+  .docName { font-size: 15px; font-weight: 800; margin: 0 0 3px 0; color: var(--text); }
+  .docDesc { font-size: 12px; color: var(--text-2); margin: 0; line-height: 1.5; }
+
+  .docMeta {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
   }
-  .desc{
-    font-size:16px;
-    line-height:1.7;
-    color:rgba(15,23,42,.72);
+  .metaTag {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+    border: 1px solid var(--border); color: var(--text-2); background: transparent;
   }
-  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  .chip{
-    display:inline-block;
-    padding:6px 10px;
-    border-radius:999px;
-    border:1px solid rgba(15,23,42,.12);
-    background: rgba(255,255,255,.96);
-    font-size:13px;
-    color:rgba(15,23,42,.72);
+  .metaTag.written { background: rgba(0,112,243,.08); color: var(--accent, #0070f3); border-color: rgba(0,112,243,.2); }
+  .metaTag.empty   { background: rgba(0,0,0,.05); color: var(--text-2); }
+  [data-theme="dark"] .metaTag.empty { background: rgba(255,255,255,.07); }
+
+  /* ── 진행바 ── */
+  .progressWrap { }
+  .progressLabel {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--text-2); margin-bottom: 4px;
   }
-  .hint{
-    font-size:14px;
-    opacity:.8;
-    margin-top:10px;
-    line-height:1.6;
+  .progressLabel .pct { font-weight: 700; }
+  .pBar { height: 5px; border-radius: 999px; background: var(--border); overflow: hidden; }
+  .pBar > b { display: block; height: 100%; border-radius: 999px; transition: width .4s; }
+  .fg-green  { background: #16a34a; }
+  .fg-yellow { background: #d97706; }
+  .fg-red    { background: #dc2626; }
+
+  /* ── 카드 하단 ── */
+  .docFooter {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: auto; padding-top: 4px;
+  }
+  .lastMod { font-size: 11px; color: var(--text-2); }
+
+  /* ── 최근 수정 이력 ── */
+  .historyCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 18px 20px;
+  }
+  .historyCard h3 { font-size: 13px; font-weight: 700; margin: 0 0 12px 0;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .historyList { list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; }
+  .historyItem {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .historyItem:last-child { border-bottom: none; }
+  .histIco  { font-size: 16px; flex-shrink: 0; }
+  .histName { font-weight: 600; color: var(--text); flex: 1; }
+  .histDate { font-size: 11px; color: var(--text-2); white-space: nowrap; }
+  .histBadge {
+    font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    background: rgba(0,112,243,.08); color: var(--accent, #0070f3);
+  }
+  .emptyHistory { font-size: 13px; color: var(--text-2); padding: 8px 0; }
+
+  @media (max-width: 640px) {
+    .pageHeader { flex-direction: column; }
+    .headerRight { width: 100%; }
   }
 </style>
 </head>
-
 <body>
-
 <aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
 
-<div class="main">
-  <div class="page-title">📚 Procedure Library (절차·문서 라이브러리)</div>
-
-  <div class="card">
-    <h3>라이브러리 구성</h3>
-    <div class="desc" style="margin-top:10px;">
-      SOP/EOP/BCP/DRP 문서를 표준 구조로 관리하고, Risk & BIA 결과(핵심업무·RTO)를 기반으로
-      계획서(BCP/DRP) 작성과 실행(EOP/Runbook)까지 연결합니다.
+  <!-- 헤더 -->
+  <div class="pageHeader">
+    <div>
+      <h1>📚 절차서 라이브러리</h1>
+      <p class="desc">BCP·EOP·SOP·DRP 절차서를 관리하고 인쇄합니다.</p>
     </div>
-    <div class="hint">
-      💡 현재 데모는 <b>BCP</b>부터 BIA 연계가 적용되어 있습니다.
+    <div class="headerRight">
+      <button id="themeToggle" class="btn">🌙 다크모드</button>
     </div>
   </div>
 
-  <div class="grid">
+  <!-- 문서 카드 4개 -->
+  <div class="docGrid" id="docGrid"></div>
 
-    <a class="cardLink" href="/library/sop.html">
-      <div class="box">
-        <div class="titleRow">
-          <div class="emoji">🧾</div>
-          <div class="title">SOP (평시 운영)</div>
-        </div>
-        <div class="desc">
-          부서별/업무별/시스템 운영 표준 절차와 체크리스트를 관리합니다.
-        </div>
-        <div class="chips">
-          <span class="chip">부서별</span>
-          <span class="chip">업무별</span>
-          <span class="chip">체크리스트</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="cardLink" href="/library/eop.html">
-      <div class="box">
-        <div class="titleRow">
-          <div class="emoji">🚨</div>
-          <div class="title">EOP (비상 대응)</div>
-        </div>
-        <div class="desc">
-          유형별(화재/정전/감염병/사이버) 초기대응 Action Card와 보고체계를 관리합니다.
-        </div>
-        <div class="chips">
-          <span class="chip">유형별</span>
-          <span class="chip">보고체계</span>
-          <span class="chip">Action Card</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="cardLink" href="/library/bcp.html">
-      <div class="box">
-        <div class="titleRow">
-          <div class="emoji">📄</div>
-          <div class="title">BCP (업무 연속)</div>
-        </div>
-        <div class="desc">
-          부서별 핵심업무·RTO를 기반으로 대체 인력/장소/수동절차를 정의합니다.
-          (BIA에서 자동 연계)
-        </div>
-        <div class="chips">
-          <span class="chip">부서별</span>
-          <span class="chip">핵심업무·RTO</span>
-          <span class="chip">대체자원</span>
-          <span class="chip">수동절차</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="cardLink" href="/library/drp.html">
-      <div class="box">
-        <div class="titleRow">
-          <div class="emoji">🛠️</div>
-          <div class="title">DRP (IT 복구)</div>
-        </div>
-        <div class="desc">
-          시스템 목록, RTO·RPO, 복구 절차, 백업 및 테스트 이력을 관리합니다.
-        </div>
-        <div class="chips">
-          <span class="chip">시스템 목록</span>
-          <span class="chip">RTO·RPO</span>
-          <span class="chip">Runbook</span>
-          <span class="chip">테스트 이력</span>
-        </div>
-      </div>
-    </a>
-
+  <!-- 최근 수정 이력 -->
+  <div class="historyCard">
+    <h3>🕒 최근 수정 이력</h3>
+    <ul class="historyList" id="historyList"></ul>
   </div>
+
 </div>
+</main>
 
 <script src="../assets/sidebar.js"></script>
-  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
-  <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+<script>
+(function () {
+  'use strict';
+
+  /* ── 유틸 ── */
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function load(key, def) {
+    try {
+      const v = localStorage.getItem(key);
+      if (!v) return def;
+      const p = JSON.parse(v);
+      return (p !== null && p !== undefined) ? p : def;
+    } catch { return def; }
+  }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+
+  /* ── BASE 경로 ── */
+  const BASE = (() => {
+    const p = window.location.pathname;
+    const m = p.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports)\/)/);
+    return m ? m[1] : '';
+  })();
+  const H = p => BASE + p;
+
+  /* ── 데이터 로드 ── */
+  const bcpRaw  = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
+  const bcpArr  = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
+  const bcpMeta = load('bcmsBCPMeta', null);
+
+  const eopArr  = arr(load('bcmsActivationProc', []));
+  const eopMeta = load('bcmsEOPMeta', null);
+
+  const sopArr  = arr(load('bcmsSOPData', []));
+  const sopMeta = load('bcmsSOPMeta', null);
+
+  const drpArr  = arr(load('bcmsDRPData', []));
+
+  const confirmed = arr(load('bcmsPriorityConfirmed', []));
+
+  /* ── 완성도 계산 ── */
+  function bcpPct() {
+    const total = confirmed.length;
+    if (total === 0) return bcpArr.length > 0 ? 40 : 0;
+    const written = bcpArr.filter(b => b && (b.strategyText || b.strategyType || b.strategy || b.done)).length;
+    return Math.max(0, Math.min(100, Math.round(written / total * 100)));
+  }
+
+  function eopPct() {
+    if (eopArr.length === 0) return 0;
+    const done = eopArr.filter(r => r && (r.status === '완료' || r.done === true)).length;
+    return eopArr.length > 0 ? Math.min(100, Math.round(done / eopArr.length * 100 + 30)) : 0;
+  }
+
+  function sopPct() {
+    if (sopArr.length === 0) return 0;
+    return Math.min(100, 30 + sopArr.length * 10);
+  }
+
+  function drpPct() {
+    if (drpArr.length === 0) return 0;
+    const hasRto = drpArr.filter(r => r && (r.rto || r.RTO)).length;
+    return Math.min(100, Math.round(hasRto / drpArr.length * 60 + 20));
+  }
+
+  /* ── 진행바 색상 ── */
+  function fgClass(pct) {
+    return pct >= 70 ? 'fg-green' : pct >= 50 ? 'fg-yellow' : 'fg-red';
+  }
+
+  /* ── 버전/날짜 추출 ── */
+  function metaVersion(meta) { return meta?.version ?? null; }
+  function metaDate(meta)    { return meta?.updatedAt ?? meta?.savedAt ?? null; }
+
+  /* ── 문서 정의 ── */
+  const docs = [
+    {
+      ico: '📋',
+      name: 'BCP 절차서',
+      sub: '업무연속성계획서',
+      desc: '핵심업무 중단 시 복구전략 및 대응절차',
+      pct: bcpPct(),
+      version: metaVersion(bcpMeta),
+      date: metaDate(bcpMeta),
+      dataCount: bcpArr.length,
+      href: H('/library/bcp.html'),
+    },
+    {
+      ico: '🚨',
+      name: 'EOP 비상대응절차서',
+      sub: '',
+      desc: '재난 발생 시 초기 대응 및 비상운영절차',
+      pct: eopPct(),
+      version: metaVersion(eopMeta),
+      date: metaDate(eopMeta),
+      dataCount: eopArr.length,
+      href: H('/library/eop.html'),
+    },
+    {
+      ico: '📄',
+      name: 'SOP 표준운영절차서',
+      sub: '',
+      desc: '평시 BCMS 운영 관련 표준절차 모음',
+      pct: sopPct(),
+      version: metaVersion(sopMeta),
+      date: metaDate(sopMeta),
+      dataCount: sopArr.length,
+      href: H('/library/sop.html'),
+    },
+    {
+      ico: '💻',
+      name: 'IT복구절차서',
+      sub: 'DRP',
+      desc: 'IT 시스템 재해복구 절차 및 RTO/RPO 관리',
+      pct: drpPct(),
+      version: null,
+      date: null,
+      dataCount: drpArr.length,
+      href: H('/strategy-plans/drp.html'),
+    },
+  ];
+
+  /* ── 카드 렌더 ── */
+  document.getElementById('docGrid').innerHTML = docs.map(d => {
+    const hasData   = d.dataCount > 0 || d.pct > 0;
+    const verLabel  = d.version ? `v${d.version}` : (hasData ? '작성중' : '미작성');
+    const verClass  = d.version ? 'written' : (hasData ? 'written' : 'empty');
+    const dateLabel = d.date ? d.date.slice(0, 10) : '—';
+    const pct       = d.pct;
+    const fullName  = d.sub ? `${d.name} <span style="font-size:11px;font-weight:600;color:var(--text-2)">(${esc(d.sub)})</span>` : esc(d.name);
+
+    return `
+      <div class="docCard">
+        <div class="docTop">
+          <span class="docIco">${d.ico}</span>
+          <div class="docInfo">
+            <p class="docName">${fullName}</p>
+            <p class="docDesc">${esc(d.desc)}</p>
+          </div>
+        </div>
+
+        <div class="docMeta">
+          <span class="metaTag ${verClass}">${esc(verLabel)}</span>
+          ${d.dataCount > 0 ? `<span class="metaTag written">데이터 ${d.dataCount}건</span>` : ''}
+        </div>
+
+        <div class="progressWrap">
+          <div class="progressLabel">
+            <span>완성도</span>
+            <span class="pct">${pct}%</span>
+          </div>
+          <div class="pBar"><b class="${fgClass(pct)}" style="width:${pct}%"></b></div>
+        </div>
+
+        <div class="docFooter">
+          <span class="lastMod">최종 수정: ${esc(dateLabel)}</span>
+          <a href="${esc(d.href)}" class="btn primary">열기 →</a>
+        </div>
+      </div>`;
+  }).join('');
+
+  /* ── 최근 수정 이력 ── */
+  const histItems = docs
+    .filter(d => d.date)
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+
+  const histEl = document.getElementById('historyList');
+  if (histItems.length === 0) {
+    histEl.innerHTML = `<li><span class="emptyHistory">수정 이력이 없습니다. 각 절차서를 열어 내용을 작성하면 이곳에 표시됩니다.</span></li>`;
+  } else {
+    histEl.innerHTML = histItems.map(d => `
+      <li class="historyItem">
+        <span class="histIco">${d.ico}</span>
+        <span class="histName">${esc(d.name)}</span>
+        <span class="histBadge">${esc(d.version ? 'v' + d.version : '작성중')}</span>
+        <span class="histDate">${esc(d.date?.slice(0, 10) ?? '')}</span>
+      </li>`
+    ).join('');
+  }
+
+  /* ── 다크모드 ── */
+  const htmlEl = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  function applyTheme(t) {
+    htmlEl.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
+    try { localStorage.setItem('bcmsTheme', t); } catch {}
+  }
+  try { const s = localStorage.getItem('bcmsTheme'); if (s) applyTheme(s); } catch {}
+  themeBtn.addEventListener('click', () =>
+    applyTheme(htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
+  );
+
+})();
+</script>
 </body>
 </html>
