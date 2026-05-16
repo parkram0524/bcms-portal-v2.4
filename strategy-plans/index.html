@@ -120,10 +120,10 @@
     .tableSection { margin-top: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
     .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 8px; }
     .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
-    .tableWrap { overflow-x: hidden; }
-    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    th { font-size: 11px; font-weight: 600; padding: 9px 10px; height: 36px; text-align: left; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    td { font-size: 13px; padding: 8px 10px; vertical-align: middle; border-bottom: 0.5px solid var(--border); color: var(--text); overflow: hidden; }
+    .tableWrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    th { font-size: 11px; font-weight: 600; padding: 9px 10px; height: 36px; text-align: left; background: var(--surface-hover); border-bottom: 0.5px solid var(--border); color: var(--text-2); white-space: nowrap; }
+    td { font-size: 13px; padding: 8px 10px; vertical-align: middle; border-bottom: 0.5px solid var(--border); color: var(--text); }
     tr:last-child td { border-bottom: none; }
     td input, td select { width: 100%; }
 
@@ -228,16 +228,6 @@
           </div>
           <div class="tableWrap">
             <table>
-              <colgroup>
-                <col style="width:22%">
-                <col style="width:8%">
-                <col style="width:8%">
-                <col style="width:13%">
-                <col style="width:19%">
-                <col style="width:14%">
-                <col style="width:9%">
-                <col style="width:7%">
-              </colgroup>
               <thead>
                 <tr>
                   <th>시스템명</th>
@@ -436,15 +426,21 @@
     document.getElementById('mDrp').textContent       = drpRows.length;
   };
 
-  /* ── Dept filter ── */
-  const populateDeptFilter = () => {
-    const sel     = document.getElementById('bcpDeptFilter');
+  /* ── Team filter (bcmsBIAData 동적 추출) ── */
+  const populateTeamFilter = () => {
+    const sel = document.getElementById('bcpDeptFilter');
+    if (!sel) return;
     const prev    = sel.value;
     const biaRows = loadJSON('bcmsBIAData', []);
-    const depts   = [...new Set(biaRows.map(b => String(b.team || '').trim()).filter(Boolean))].sort();
-    sel.innerHTML = `<option value="">전체 부서</option>` +
-      depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
-    if (prev && depts.includes(prev)) sel.value = prev;
+    const teams   = [...new Set(
+      biaRows
+        .map(b => b.team || b.dept || b.department || b['부서'] || b.teamName || '')
+        .map(t => String(t).trim())
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b, 'ko'));
+    sel.innerHTML = `<option value="">전체 팀</option>` +
+      teams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    if (prev && teams.includes(prev)) sel.value = prev;
   };
 
   /* ── Step HTML builder ── */
@@ -742,6 +738,7 @@
         document.getElementById(t.btn).classList.toggle('active', t.btn === btn);
         document.getElementById(t.pane).classList.toggle('hidden', t.pane !== pane);
       });
+      populateTeamFilter();
     });
   });
 
@@ -767,10 +764,14 @@
     loadBcp();
     loadDrp();
     renderMetrics();
-    populateDeptFilter();
+    populateTeamFilter();
     renderBcpCards();
     renderDrpTable();
   };
+
+  window.addEventListener('storage', e => {
+    if (e.key === 'bcmsBIAData') populateTeamFilter();
+  });
 
   init();
   </script>
