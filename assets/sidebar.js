@@ -91,7 +91,7 @@
     <div class="sidebar-section" data-section="admin">
       <a href="${H("/admin/index.html")}" class="sidebar-section-title">⚙️ 9. Admin (관리)</a>
       <div class="sub-menu">
-        <a href="${H("/admin/capa.html")}">CAPA 관리 (개선항목)</a>
+        <a href="${H("/admin/index.html")}">CAPA 관리</a>
       </div>
     </div>
 
