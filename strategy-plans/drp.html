@@ -1,616 +1,701 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BCMS Portal - DRP 절차 관리</title>
+  <title>BCMS Portal - 연속성 절차 관리</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    .wrap{ max-width:1460px; margin:0 auto; }
-    .topbar{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
-    .topbar h1{ margin:0; font-size:26px; font-weight:950; }
-    .desc{ margin:8px 0 0; color:rgba(15,23,42,.66); font-size:14px; line-height:1.6; max-width:1000px; }
+    html, body { overflow-x: hidden; }
+    .wrap { max-width: 1400px; margin: 0 auto; overflow-x: hidden; }
 
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
-    .btn{ text-decoration:none; padding:10px 13px; border:1px solid rgba(15,23,42,.14); border-radius:999px; background:#fff; color:#0f172a; font-size:14px; font-weight:900; cursor:pointer; }
-    .btn.primary{ background:rgba(96,165,250,.2); border-color:rgba(96,165,250,.45); }
+    /* Header */
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+    .topbar h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+    .desc { margin: 6px 0 0; color: var(--text-2); font-size: 13px; line-height: 1.6; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .actions a { text-decoration: none; }
 
-    .grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; }
-    .card{ border:1px solid rgba(15,23,42,.12); border-radius:16px; background:rgba(255,255,255,.95); padding:14px; }
-    .kpi{ grid-column:span 3; }
-    .full{ grid-column:span 12; }
-    @media (max-width:1080px){ .kpi{ grid-column:span 6; } }
-    @media (max-width:640px){ .kpi{ grid-column:span 12; } }
+    /* KPI */
+    .kpiStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpiCard { background: var(--surface); border: 1px solid rgba(15,23,42,.12); border-radius: 16px; padding: 16px 20px; }
+    .kpiTitle { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+    .kpiValue { margin-top: 8px; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
 
-    .kTitle{ margin:0; font-size:13px; color:rgba(15,23,42,.74); font-weight:900; }
-    .kValue{ margin:8px 0 0; font-size:31px; font-weight:950; }
+    /* Tabs */
+    .tabNav { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text-2); cursor: pointer; transition: all .15s; }
+    .tabBtn.active { background: var(--accent); color: #fff; border-color: transparent; }
+    .tabPane { display: none; }
+    .tabPane.active { display: block; }
 
-    .filters{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; align-items:end; }
-    .field label{ display:block; font-size:12px; font-weight:800; color:rgba(15,23,42,.74); margin-bottom:6px; }
-    .field select,.field input{ width:100%; padding:9px 10px; border:1px solid rgba(15,23,42,.2); border-radius:10px; background:#fff; }
-    .toggle{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:800; padding:8px 0; }
-    @media (max-width:1000px){ .filters{ grid-template-columns:1fr; } }
+    /* Section cards */
+    .sectionCard { background: var(--surface); border: 1px solid rgba(15,23,42,.12); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .sectionHead { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .sectionHead h2 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; }
+    .sectionSub { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+    .headBtns { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
 
-    .tableWrap{ overflow:auto; }
-    table{ width:100%; min-width:1500px; border-collapse:separate; border-spacing:0; border:1px solid rgba(15,23,42,.12); border-radius:12px; overflow:hidden; }
-    th,td{ padding:10px 9px; border-bottom:1px solid rgba(15,23,42,.08); font-size:13px; vertical-align:top; background:#fff; }
-    th{ text-align:left; background:#f8fafc; color:rgba(15,23,42,.76); font-size:12px; white-space:nowrap; }
-    tr:last-child td{ border-bottom:none; }
+    /* Table */
+    .tableWrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 11px; font-weight: 600; padding: 9px 10px; text-align: left; background: var(--surface-hover); border-bottom: 1px solid rgba(15,23,42,.1); color: var(--text-2); white-space: nowrap; }
+    td { font-size: 13px; padding: 7px 10px; vertical-align: middle; border-bottom: 1px solid rgba(15,23,42,.06); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    td input[type="text"], td input[type="number"], td select { width: 100%; }
+    td textarea { width: 100%; min-height: 56px; resize: vertical; font-family: inherit; font-size: 12px; }
 
-    .badge{ display:inline-flex; align-items:center; border:1px solid rgba(15,23,42,.16); border-radius:999px; padding:3px 8px; font-size:11px; font-weight:900; }
-    .high{ background:rgba(239,68,68,.12); color:#b91c1c; border-color:rgba(239,68,68,.38); }
-    .prio{ background:rgba(59,130,246,.12); color:#1d4ed8; border-color:rgba(59,130,246,.38); }
-    .ok{ background:rgba(34,197,94,.12); color:#166534; border-color:rgba(34,197,94,.35); }
+    /* Checklist */
+    .checkList { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+    .checkItem { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg); border: 0.5px solid var(--border); border-radius: 8px; }
+    .checkItem input[type="checkbox"] { flex-shrink: 0; accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+    .checkItem .ciLabel { flex: 1; min-width: 0; }
+    .checkItem .ciOwner { width: 110px; flex-shrink: 0; }
+    .checkItem .ciTime  { width: 100px; flex-shrink: 0; }
+    .ciDelBtn { flex-shrink: 0; padding: 3px 8px !important; font-size: 11px !important; }
 
-    .detailRow{ background:rgba(248,250,252,.6); }
-    .detailCell{ padding:12px; }
-    .detailGrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    .detailField label{ display:block; font-size:12px; font-weight:800; color:rgba(15,23,42,.74); margin-bottom:6px; }
-    .detailField input,.detailField textarea,.detailField select{ width:100%; padding:8px 10px; border:1px solid rgba(15,23,42,.2); border-radius:9px; background:#fff; font-size:13px; font-family:inherit; }
-    .detailField textarea{ min-height:66px; resize:vertical; }
-    .span2{ grid-column:1 / -1; }
+    .addItemBtn { font-size: 12px; font-weight: 600; color: var(--accent); border: 0.5px dashed var(--accent-border); background: rgba(0,112,243,.04); border-radius: 8px; padding: 8px 14px; cursor: pointer; width: 100%; text-align: center; transition: background .15s; }
+    .addItemBtn:hover { background: rgba(0,112,243,.09); }
 
-    .resourceBox{ display:flex; gap:8px; flex-wrap:wrap; }
-    .resourceChip{ border:1px solid rgba(15,23,42,.18); border-radius:999px; background:#fff; padding:5px 8px; font-size:11.5px; }
-    .resourceChip input{ margin-right:4px; vertical-align:middle; }
+    /* Empty */
+    .empty { padding: 32px 16px; text-align: center; color: var(--text-3); font-size: 13px; }
 
-    .steps{ display:flex; flex-direction:column; gap:7px; }
-    .stepItem{ display:grid; grid-template-columns:70px 1.8fr 1fr 100px 1.3fr auto; gap:6px; align-items:center; }
-    .stepItem input{ width:100%; padding:7px 8px; border:1px solid rgba(15,23,42,.2); border-radius:8px; font-size:12px; }
-    .miniBtn{ border:1px solid rgba(15,23,42,.16); border-radius:8px; background:#fff; padding:6px 8px; font-size:11.5px; font-weight:800; cursor:pointer; }
-    .miniBtn.primary{ background:rgba(59,130,246,.14); border-color:rgba(59,130,246,.35); }
-    .miniBtn.danger{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
+    /* Mini btn inside td */
+    .tdBtn { padding: 4px 8px !important; font-size: 11px !important; }
 
-    .rowActions{ display:flex; gap:6px; flex-wrap:wrap; }
-    .hidden{ display:none; }
-    .empty{ text-align:center; padding:25px 12px; color:rgba(15,23,42,.62); }
+    @media (max-width: 960px) { .kpiStrip { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .kpiStrip { grid-template-columns: 1fr 1fr; } .tabNav { flex-wrap: wrap; } }
   </style>
 </head>
 <body>
   <aside id="sidebarMount"></aside>
   <main class="main">
     <div class="wrap">
+
+      <!-- Header -->
       <div class="topbar">
         <div>
-          <h1>🧰 DRP 절차</h1>
-          <p class="desc">BCP 전략 기반 복구 절차를 관리합니다. 중점관리 리스크 중 전략이 작성된 항목을 대상으로, 발동 조건·사전 확인사항·단계별 실행 절차를 입력합니다.</p>
+          <h1>📋 연속성 절차 관리</h1>
+          <p class="desc">BCP 발동부터 정상화까지 전 단계 절차를 관리합니다. EOP·대체운영·IT복구·정상화 절차를 통합 관리하세요.</p>
         </div>
         <div class="actions">
-          <a class="btn" href="./index.html">전략·계획 홈</a>
-          <a class="btn" href="./bcp.html">BCP 전략</a>
-          <button class="btn primary" id="reloadBtn" type="button">최신 데이터 다시 불러오기</button>
+          <a class="btn" href="./index.html">전략·계획 홈 →</a>
+          <a class="btn" href="./bcp.html">BCP 전략 →</a>
         </div>
       </div>
-      <div class="card" id="focusBanner" style="display:none; margin-bottom:12px;"></div>
 
-      <div class="grid">
-        <section class="card kpi"><p class="kTitle">DRP 대상 리스크 수</p><div class="kValue" id="kTarget">0</div></section>
-        <section class="card kpi"><p class="kTitle">DR 절차 작성 수</p><div class="kValue" id="kWritten">0</div></section>
-        <section class="card kpi"><p class="kTitle">확정 절차 수</p><div class="kValue" id="kFinal">0</div></section>
-        <section class="card kpi"><p class="kTitle">미작성 절차 수</p><div class="kValue" id="kPending">0</div></section>
+      <!-- KPI -->
+      <div class="kpiStrip">
+        <div class="kpiCard"><div class="kpiTitle">발동 조건 수</div><div class="kpiValue" id="kpiActivation">0</div></div>
+        <div class="kpiCard"><div class="kpiTitle">대체운영 절차 수</div><div class="kpiValue" id="kpiAltOps">0</div></div>
+        <div class="kpiCard"><div class="kpiTitle">IT복구 시스템 수</div><div class="kpiValue" id="kpiDrp">0</div></div>
+        <div class="kpiCard"><div class="kpiTitle">정상화 체크리스트 수</div><div class="kpiValue" id="kpiRestore">0</div></div>
+      </div>
 
-        <section class="card full">
-          <div class="filters">
-            <div class="field">
-              <label for="teamFilter">팀 필터</label>
-              <select id="teamFilter"><option value="">전체 팀</option></select>
+      <!-- Tab nav -->
+      <div class="tabNav">
+        <button class="tabBtn active" data-tab="activation" type="button">발동 절차</button>
+        <button class="tabBtn" data-tab="altops"     type="button">대체운영 절차</button>
+        <button class="tabBtn" data-tab="itrecovery" type="button">IT복구 절차</button>
+        <button class="tabBtn" data-tab="restoration" type="button">정상화 절차</button>
+      </div>
+
+      <!-- ════════════════════════════════
+           Tab 1: 발동 절차
+      ════════════════════════════════ -->
+      <div id="pane-activation" class="tabPane active">
+
+        <!-- 발동 조건 -->
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div>
+              <h2>발동 조건</h2>
+              <div class="sectionSub">BCP를 발동할 수 있는 조건과 권한자를 정의합니다.</div>
             </div>
-            <div class="field">
-              <label for="drpStatusFilter">DRP 상태 필터</label>
-              <select id="drpStatusFilter">
-                <option value="">전체 상태</option>
-                <option value="초안">초안</option>
-                <option value="검토중">검토중</option>
-                <option value="확정">확정</option>
-              </select>
+            <div class="headBtns">
+              <button class="btn" id="actAddRow" type="button">+ 조건 추가</button>
+              <button class="btn primary" id="actSave" type="button">저장</button>
             </div>
-            <label class="toggle"><input type="checkbox" id="bcpFinalOnly"/> 확정 전략만 보기</label>
-            <label class="toggle"><input type="checkbox" id="criticalOnly" checked/> 중점관리 리스크만 보기</label>
-            <div style="text-align:right;"><button class="btn" type="button" id="saveAllBtn">전체 저장</button></div>
           </div>
-        </section>
-
-        <section class="card full">
           <div class="tableWrap">
-            <table>
+            <table style="min-width:860px">
               <thead>
                 <tr>
-                  <th>팀</th><th>핵심업무</th><th>업무등급</th><th>MTPD</th><th>RTO</th><th>중단 리스크</th><th>위험도</th><th>BCP 전략</th><th>DRP 상태</th><th>관리</th>
+                  <th style="width:130px">조건 유형</th>
+                  <th>구체적 조건</th>
+                  <th style="width:120px">발동 권한자</th>
+                  <th style="width:130px">연락 방법</th>
+                  <th style="width:140px">비고</th>
+                  <th style="width:52px">관리</th>
                 </tr>
               </thead>
-              <tbody id="tbody"></tbody>
+              <tbody id="actTbody"></tbody>
             </table>
           </div>
-        </section>
+        </div>
+
+        <!-- 초기 대응 행동 -->
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div>
+              <h2>초기 대응 행동</h2>
+              <div class="sectionSub">BCP 발동 직후 즉시 수행해야 할 행동 체크리스트입니다.</div>
+            </div>
+            <button class="btn primary" id="initSave" type="button">저장</button>
+          </div>
+          <div class="checkList" id="initCheckList"></div>
+          <button class="addItemBtn" id="initAddItem" type="button">+ 항목 추가</button>
+        </div>
       </div>
-    </div>
+
+      <!-- ════════════════════════════════
+           Tab 2: 대체운영 절차
+      ════════════════════════════════ -->
+      <div id="pane-altops" class="tabPane">
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div>
+              <h2>대체운영 절차</h2>
+              <div class="sectionSub">BIA 핵심업무별 대체운영 방법과 절차를 정의합니다. BIA 데이터가 있으면 자동으로 행이 생성됩니다.</div>
+            </div>
+            <div class="headBtns">
+              <button class="btn" id="altAddRow"  type="button">+ 행 추가</button>
+              <button class="btn primary" id="altSaveAll" type="button">전체 저장</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table style="min-width:1080px">
+              <thead>
+                <tr>
+                  <th style="width:90px">팀</th>
+                  <th style="width:140px">핵심업무</th>
+                  <th style="width:120px">대체운영 방법</th>
+                  <th>구체적 절차</th>
+                  <th style="width:110px">필요자원</th>
+                  <th style="width:95px">예상 소요시간</th>
+                  <th style="width:95px">담당자</th>
+                  <th style="width:82px">상태</th>
+                  <th style="width:80px">관리</th>
+                </tr>
+              </thead>
+              <tbody id="altTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════
+           Tab 3: IT복구 절차
+      ════════════════════════════════ -->
+      <div id="pane-itrecovery" class="tabPane">
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div>
+              <h2>IT 시스템 복구 계획 (DRP)</h2>
+              <div class="sectionSub">시스템별 복구 방식·순서·담당자를 관리합니다.</div>
+            </div>
+            <div class="headBtns">
+              <button class="btn" id="drpAddRow"  type="button">+ 시스템 추가</button>
+              <button class="btn primary" id="drpSaveAll" type="button">전체 저장</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table style="min-width:900px">
+              <thead>
+                <tr>
+                  <th>시스템명</th>
+                  <th style="width:80px">RTO</th>
+                  <th style="width:80px">RPO</th>
+                  <th style="width:110px">복구 방식</th>
+                  <th>백업 위치</th>
+                  <th style="width:110px">복구 담당자</th>
+                  <th style="width:72px">복구 순서</th>
+                  <th style="width:82px">상태</th>
+                  <th style="width:52px">관리</th>
+                </tr>
+              </thead>
+              <tbody id="drpTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════
+           Tab 4: 정상화 절차
+      ════════════════════════════════ -->
+      <div id="pane-restoration" class="tabPane">
+
+        <!-- 복구 완료 기준 -->
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div>
+              <h2>복구 완료 기준</h2>
+              <div class="sectionSub">정상화 선언 전 확인해야 할 기준을 정의합니다.</div>
+            </div>
+            <div class="headBtns">
+              <button class="btn" id="restAddRow" type="button">+ 기준 추가</button>
+              <button class="btn primary" id="restSave" type="button">저장</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table style="min-width:680px">
+              <thead>
+                <tr>
+                  <th>업무/시스템</th>
+                  <th>정상화 기준</th>
+                  <th style="width:150px">확인 방법</th>
+                  <th style="width:120px">확인 담당자</th>
+                  <th style="width:52px">관리</th>
+                </tr>
+              </thead>
+              <tbody id="restTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 사후 검토 항목 -->
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div>
+              <h2>사후 검토 항목</h2>
+              <div class="sectionSub">BCP 발동 후 반드시 검토해야 할 사항입니다.</div>
+            </div>
+            <button class="btn primary" id="postSave" type="button">저장</button>
+          </div>
+          <div class="checkList" id="postCheckList"></div>
+          <button class="addItemBtn" id="postAddItem" type="button">+ 항목 추가</button>
+        </div>
+      </div>
+
+    </div><!-- .wrap -->
   </main>
 
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/demo-seed.js"></script>
-  <script src="../assets/response-assets.js"></script>
   <script>
-    (() => {
-      if (window.BCMSDemoSeed) {
-        window.BCMSDemoSeed.ensureDemoIfEmpty();
-        window.BCMSDemoSeed.mountBanner('.wrap');
-      }
+  'use strict';
 
-      const KEY_BIA = 'bcmsBIAData';
-      const KEY_RISK = 'bcmsRiskAssessment';
-      const KEY_BCP = 'bcmsBCP';
-      const KEY_DRP = 'bcmsDRP';
+  /* ── Utilities ── */
+  const esc = s => String(s ?? '').replace(/[&<>"']/g,
+    m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const $   = id => document.getElementById(id);
+  const loadJSON = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch { return fb; } };
+  const saveJSON = (k, v)  => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
-      const STATUS_OPTIONS = ['초안', '검토중', '확정'];
-      const RESOURCE_OPTIONS = ['인력','시스템','데이터','설비','유틸리티','협력업체','예비부품','작업공간'];
-      const OWNER_HINT = '예: 전기팀, SRE/플랫폼운영팀';
+  /* ── Keys ── */
+  const KEY_ACT  = 'bcmsActivationProc';
+  const KEY_INIT = 'bcmsInitialResponse';
+  const KEY_ALT  = 'bcmsAltOperations';
+  const KEY_DRP  = 'bcmsDRPData';
+  const KEY_REST = 'bcmsRestorationProc';
+  const KEY_POST = 'bcmsPostReview';
+  const KEY_BIA  = 'bcmsBIAData';
 
-      const $ = (id) => document.getElementById(id);
-      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
-      const parseJSON = (raw, fallback) => { try { return JSON.parse(raw); } catch { return fallback; } };
-      const toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };
-      const txt = (v, fb='-') => { const s = String(v ?? '').trim(); return s || fb; };
-      const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
+  /* ── Constants ── */
+  const ACT_TYPES   = ['자연재해','화재/폭발','IT시스템 장애','전력 중단','공급망 차단','인력 대규모 부재','기타'];
+  const ALT_METHODS = ['수동처리','대체시스템','외부위탁','타사업장이전','상호협약'];
+  const DRP_MODES   = ['Hot site','Warm site','Cold site'];
+  const STATUS_LIST = ['초안','검토중','확정'];
+  const POST_DEFAULTS = [
+    '발동 시점 적절성 검토',
+    '대응 절차 효과성 평가',
+    '복구 목표(RTO/RPO) 달성 여부 확인',
+    '이해관계자 커뮤니케이션 적절성 검토',
+    '개선사항 CAPA 등록',
+  ];
 
-      const state = { rows: [] };
-      const renderFocusBanner = () => {
-        const banner = $('focusBanner');
-        if (!banner) return;
-        const focus = (window.ResponseAssetRegistry && ResponseAssetRegistry.readFocusTarget) ? ResponseAssetRegistry.readFocusTarget() : {};
-        const matched = focus.source === 'incident_recommendation' && focus.assetId === 'strategy-drp-main';
-        if (!matched) { banner.style.display = 'none'; return; }
-        banner.style.display = '';
-        banner.innerHTML = `<b>Incident ${esc(focus.incidentId || '-')}에서 추천된 DR 실행계획</b><div class="muted" style="margin-top:6px;">영향 서비스: ${esc(focus.serviceName || '-')}</div>`;
-      };
+  /* ── State ── */
+  let actRows   = [];
+  let initItems = [];
+  let altRows   = [];
+  let drpRows   = [];
+  let restRows  = [];
+  let postItems = [];
+  let drpSeq    = 1;
 
-      function get(key, fallback = []) {
-        const val = parseJSON(localStorage.getItem(key) || 'null', fallback);
-        return val ?? fallback;
-      }
+  /* ── Flash helpers ── */
+  const flashBtn = (id, msg) => {
+    const el = $(id); if (!el) return;
+    const orig = el.textContent; el.textContent = msg;
+    setTimeout(() => { el.textContent = orig; }, 900);
+  };
+  const flashEl = (el, msg) => {
+    const orig = el.textContent; el.textContent = msg;
+    setTimeout(() => { el.textContent = orig; }, 900);
+  };
 
-      function normalizeBia(raw) {
-        const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
-        return rows
-          .map((row) => ({
-            team: String(row.team || '').trim(),
-            functions: Array.isArray(row.functions) ? row.functions : []
-          }))
-          .filter((row) => row.team)
-          .flatMap((row) => row.functions.map((fn) => ({
-            team: row.team,
-            function: txt(fn.name || fn.function || fn.work, ''),
-            importance: txt(fn.importance, '일반'),
-            grade: txt(fn.grade, '일반'),
-            mtpd: txt(fn.mtpd, '-'),
-            rto: txt(fn.rto || `${fn.rtoValue ?? ''}${fn.rtoUnit ?? ''}`.trim(), '-'),
-            impact: toNum(fn.impact || fn.overallImpact) ?? 3,
-            coreFinal: !!fn.coreFinal
-          })))
-          .filter((x) => x.function);
-      }
+  /* ── KPI ── */
+  const updateKpi = () => {
+    $('kpiActivation').textContent = actRows.length;
+    $('kpiAltOps').textContent     = altRows.length;
+    $('kpiDrp').textContent        = drpRows.length;
+    $('kpiRestore').textContent    = restRows.length + postItems.length;
+  };
 
-      function normalizeRisk(raw) {
-        const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
-        return rows
-          .map((row) => ({ team: String(row.team || '').trim(), risks: Array.isArray(row.risks) ? row.risks : [] }))
-          .filter((row) => row.team)
-          .flatMap((row) => row.risks.map((risk) => {
-            const impact = toNum(risk.impact) ?? 3;
-            const likelihood = toNum(risk.likelihood || risk.like) ?? 1;
-            const riskScore = toNum(risk.riskScore) ?? (impact * likelihood);
-            const critical = risk.critical === undefined ? (riskScore >= 13) : !!risk.critical;
-            return {
-              team: row.team,
-              function: txt(risk.function || risk.process || risk.work, ''),
-              risk: txt(risk.risk || risk.threat || risk.hazard, ''),
-              likelihood,
-              riskScore,
-              critical,
-              riskLevel: txt(risk.riskLevel, riskScore >= 13 ? '높음' : (riskScore >= 6 ? '보통' : '낮음'))
-            };
-          }))
-          .filter((x) => x.function && x.risk);
-      }
+  /* ════════════════════════════════════════
+     Tab 1: 발동 조건
+  ════════════════════════════════════════ */
+  const renderActTable = () => {
+    const tb = $('actTbody');
+    if (!actRows.length) {
+      tb.innerHTML = `<tr><td colspan="6" class="empty">발동 조건이 없습니다. "+ 조건 추가"를 클릭하세요.</td></tr>`;
+      return;
+    }
+    tb.innerHTML = actRows.map((r, i) => `
+<tr data-i="${i}">
+  <td>
+    <select class="aF" data-f="type">
+      ${ACT_TYPES.map(t => `<option value="${esc(t)}"${r.type===t?' selected':''}>${esc(t)}</option>`).join('')}
+    </select>
+  </td>
+  <td><input type="text" class="aF" data-f="condition" value="${esc(r.condition||'')}" placeholder="구체적인 조건을 기술하세요"></td>
+  <td><input type="text" class="aF" data-f="authority" value="${esc(r.authority||'')}" placeholder="이름/직책"></td>
+  <td><input type="text" class="aF" data-f="contact"   value="${esc(r.contact||'')}"   placeholder="전화/이메일"></td>
+  <td><input type="text" class="aF" data-f="note"      value="${esc(r.note||'')}"      placeholder="비고"></td>
+  <td><button class="btn tdBtn" type="button" data-del-act="${i}">삭제</button></td>
+</tr>`).join('');
+  };
 
-      function normalizeBCP(raw) {
-        const rows = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? [raw] : []);
-        const out = [];
-        const push = (item, teamFallback = '') => {
-          const team = txt(item.team || teamFallback, '미지정 팀');
-          const strategyText = txt(item.strategyText || item.strategy || item.recovery, '');
-          out.push({
-            team,
-            function: txt(item.function || item.coreFunction || item.work, ''),
-            risk: txt(item.risk || item.riskName || item.threat, ''),
-            riskScore: toNum(item.riskScore),
-            critical: item.critical === undefined ? undefined : !!item.critical,
-            strategyType: txt(item.strategyType, '-'),
-            strategyText,
-            requiredResources: Array.isArray(item.requiredResources) ? item.requiredResources.filter(Boolean) : [],
-            bcpStatus: STATUS_OPTIONS.includes(item.status) ? item.status : '초안',
-            importance: txt(item.importance, '일반'),
-            grade: txt(item.grade, '일반'),
-            mtpd: txt(item.mtpd, '-'),
-            rto: txt(item.rto, '-'),
-            impact: toNum(item.impact),
-            coreFinal: !!item.coreFinal
-          });
-        };
+  $('actAddRow').addEventListener('click', () => {
+    actRows.push({ type: ACT_TYPES[0], condition:'', authority:'', contact:'', note:'' });
+    renderActTable(); updateKpi();
+  });
 
-        rows.forEach((row) => {
-          if (Array.isArray(row?.strategies)) row.strategies.forEach((s) => push(s, row.team || ''));
-          else if (row && typeof row === 'object') push(row, row.team || '');
-        });
+  $('actSave').addEventListener('click', () => {
+    document.querySelectorAll('#actTbody tr[data-i]').forEach(tr => {
+      const i = +tr.getAttribute('data-i');
+      tr.querySelectorAll('.aF').forEach(el => { actRows[i][el.getAttribute('data-f')] = el.value; });
+    });
+    saveJSON(KEY_ACT, actRows);
+    flashBtn('actSave', '저장됨');
+    updateKpi();
+  });
 
-        return out.filter((x) => x.function && x.risk);
-      }
+  $('actTbody').addEventListener('change', e => {
+    const tr = e.target.closest('tr[data-i]'); if (!tr) return;
+    actRows[+tr.getAttribute('data-i')][e.target.getAttribute('data-f')] = e.target.value;
+  });
 
-      function normalizeDRP(raw) {
-        const rows = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? [raw] : []);
-        const map = new Map();
+  $('actTbody').addEventListener('click', e => {
+    const btn = e.target.closest('[data-del-act]'); if (!btn) return;
+    actRows.splice(+btn.getAttribute('data-del-act'), 1);
+    saveJSON(KEY_ACT, actRows); renderActTable(); updateKpi();
+  });
 
-        const put = (team, item) => {
-          const key = `${team}||${txt(item.function, '')}||${txt(item.risk, '')}`;
-          if (!txt(item.function, '') || !txt(item.risk, '')) return;
-          const stepRaw = Array.isArray(item.steps) ? item.steps : [];
-          const steps = stepRaw.map((step, idx) => {
-            if (typeof step === 'string') {
-              return { stepNo: idx + 1, action: step, owner: '', targetTime: '', verification: '' };
-            }
-            return {
-              stepNo: toNum(step.stepNo) ?? (idx + 1),
-              action: txt(step.action, ''),
-              owner: txt(step.owner, ''),
-              targetTime: txt(step.targetTime, ''),
-              verification: txt(step.verification, '')
-            };
-          });
+  /* ── 초기 대응 체크리스트 ── */
+  const renderInitList = () => {
+    const list = $('initCheckList');
+    if (!initItems.length) { list.innerHTML = '<div class="empty">항목이 없습니다.</div>'; return; }
+    list.innerHTML = initItems.map((item, i) => `
+<div class="checkItem" data-ii="${i}">
+  <input type="checkbox" class="initChk"${item.checked?' checked':''}>
+  <input type="text" class="ciLabel" value="${esc(item.label||'')}" placeholder="초기 대응 행동을 입력하세요">
+  <input type="text" class="ciOwner" value="${esc(item.owner||'')}" placeholder="담당자">
+  <input type="text" class="ciTime"  value="${esc(item.time||'')}"  placeholder="완료시간">
+  <button class="btn ciDelBtn" type="button" data-del-init="${i}">×</button>
+</div>`).join('');
+  };
 
-          map.set(key, {
-            triggerCondition: txt(item.triggerCondition, ''),
-            recoveryOverview: txt(item.recoveryOverview, ''),
-            preChecks: Array.isArray(item.preChecks) ? item.preChecks : String(item.preChecks || '').split('\n').map((x) => x.trim()).filter(Boolean),
-            steps,
-            owners: Array.isArray(item.owners) ? item.owners.filter(Boolean) : String(item.owners || '').split(',').map((x) => x.trim()).filter(Boolean),
-            completionCriteria: txt(item.completionCriteria, ''),
-            notes: txt(item.notes, ''),
-            requiredResources: Array.isArray(item.requiredResources) ? item.requiredResources.filter(Boolean) : [],
-            status: STATUS_OPTIONS.includes(item.status) ? item.status : '초안'
-          });
-        };
+  $('initAddItem').addEventListener('click', () => {
+    initItems.push({ label:'', checked:false, owner:'', time:'' });
+    renderInitList();
+  });
 
-        rows.forEach((row) => {
-          if (Array.isArray(row?.procedures)) {
-            const team = txt(row.team, '미지정 팀');
-            row.procedures.forEach((p) => put(team, p));
-          } else if (row && typeof row === 'object') {
-            put(txt(row.team, '미지정 팀'), row);
-          }
-        });
+  $('initCheckList').addEventListener('click', e => {
+    const delBtn = e.target.closest('[data-del-init]');
+    if (delBtn) {
+      initItems.splice(+delBtn.getAttribute('data-del-init'), 1);
+      saveJSON(KEY_INIT, initItems); renderInitList(); return;
+    }
+    const chk = e.target.closest('.initChk');
+    if (chk) {
+      const i = +chk.closest('[data-ii]').getAttribute('data-ii');
+      initItems[i].checked = chk.checked;
+    }
+  });
 
-        return map;
-      }
+  $('initCheckList').addEventListener('input', e => {
+    const item = e.target.closest('[data-ii]'); if (!item) return;
+    const i = +item.getAttribute('data-ii');
+    if (e.target.classList.contains('ciLabel')) initItems[i].label = e.target.value;
+    if (e.target.classList.contains('ciOwner')) initItems[i].owner = e.target.value;
+    if (e.target.classList.contains('ciTime'))  initItems[i].time  = e.target.value;
+  });
 
-      function loadRows() {
-        const bia = normalizeBia(get(KEY_BIA, []));
-        const risk = normalizeRisk(get(KEY_RISK, []));
-        const bcp = normalizeBCP(get(KEY_BCP, []));
-        const drpMap = normalizeDRP(get(KEY_DRP, []));
+  $('initSave').addEventListener('click', () => {
+    saveJSON(KEY_INIT, initItems);
+    flashBtn('initSave', '저장됨');
+  });
 
-        const biaMap = new Map(bia.map((x) => [`${x.team}||${x.function}`, x]));
-        const riskMap = new Map(risk.map((x) => [`${x.team}||${x.function}||${x.risk}`, x]));
+  /* ════════════════════════════════════════
+     Tab 2: 대체운영 절차
+  ════════════════════════════════════════ */
+  const renderAltTable = () => {
+    const tb = $('altTbody');
+    if (!altRows.length) {
+      tb.innerHTML = `<tr><td colspan="9" class="empty">대체운영 절차가 없습니다. "+ 행 추가"를 클릭하거나 BIA 데이터를 확인하세요.</td></tr>`;
+      return;
+    }
+    tb.innerHTML = altRows.map((r, i) => `
+<tr data-ai="${i}">
+  <td><input type="text" class="alF" data-f="team"      value="${esc(r.team||'')}"      placeholder="팀명"></td>
+  <td><input type="text" class="alF" data-f="function"  value="${esc(r.function||'')}"  placeholder="핵심업무"></td>
+  <td>
+    <select class="alF" data-f="method">
+      ${ALT_METHODS.map(m => `<option value="${esc(m)}"${r.method===m?' selected':''}>${esc(m)}</option>`).join('')}
+    </select>
+  </td>
+  <td><textarea class="alF" data-f="procedure" placeholder="구체적인 절차">${esc(r.procedure||'')}</textarea></td>
+  <td><input type="text" class="alF" data-f="resources" value="${esc(r.resources||'')}" placeholder="필요자원"></td>
+  <td><input type="text" class="alF" data-f="duration"  value="${esc(r.duration||'')}"  placeholder="예: 2시간"></td>
+  <td><input type="text" class="alF" data-f="owner"     value="${esc(r.owner||'')}"     placeholder="담당자"></td>
+  <td>
+    <select class="alF" data-f="status">
+      ${STATUS_LIST.map(s => `<option value="${esc(s)}"${r.status===s?' selected':''}>${esc(s)}</option>`).join('')}
+    </select>
+  </td>
+  <td style="white-space:nowrap">
+    <button class="btn tdBtn" type="button" data-save-alt="${i}">저장</button>
+    <button class="btn tdBtn" type="button" style="margin-top:3px" data-del-alt="${i}">삭제</button>
+  </td>
+</tr>`).join('');
+  };
 
-        state.rows = bcp
-          .map((b) => {
-            const riskKey = `${b.team}||${b.function}||${b.risk}`;
-            const r = riskMap.get(riskKey) || {};
-            const bInfo = biaMap.get(`${b.team}||${b.function}`) || {};
-            const riskScore = toNum(r.riskScore ?? b.riskScore) ?? 0;
-            const critical = r.critical === undefined ? (b.critical === undefined ? riskScore >= 13 : !!b.critical) : !!r.critical;
-            const hasStrategy = !!txt(b.strategyText, '');
-            const statusDriven = ['검토중','확정'].includes(b.bcpStatus);
-
-            if (!(hasStrategy || statusDriven)) return null;
-            if (!(critical || riskScore >= 13)) return null;
-
-            const key = `${b.team}||${b.function}||${b.risk}`;
-            const d = drpMap.get(key) || {};
-            const steps = Array.isArray(d.steps) && d.steps.length
-              ? d.steps.map((s, i) => ({ ...s, stepNo: i + 1 }))
-              : [{ stepNo: 1, action: '', owner: '', targetTime: '', verification: '' }];
-
-            return {
-              key,
-              team: b.team,
-              function: b.function,
-              risk: b.risk,
-              likelihood: toNum(r.likelihood) ?? 1,
-              riskScore,
-              critical,
-              riskLevel: txt(r.riskLevel, riskScore >= 13 ? '높음' : '보통'),
-              importance: txt(bInfo.importance ?? b.importance, '일반'),
-              grade: txt(bInfo.grade ?? b.grade, '일반'),
-              mtpd: txt(bInfo.mtpd ?? b.mtpd, '-'),
-              rto: txt(bInfo.rto ?? b.rto, '-'),
-              impact: toNum(bInfo.impact ?? b.impact) ?? 3,
-              coreFinal: !!(bInfo.coreFinal ?? b.coreFinal),
-              strategyType: txt(b.strategyType, '-'),
-              strategyText: txt(b.strategyText, ''),
-              requiredResources: uniq([...(b.requiredResources || []), ...(d.requiredResources || [])]),
-              bcpStatus: b.bcpStatus,
-              drpStatus: STATUS_OPTIONS.includes(d.status) ? d.status : '초안',
-              recoveryOverview: txt(d.recoveryOverview, ''),
-              triggerCondition: txt(d.triggerCondition, ''),
-              preChecks: Array.isArray(d.preChecks) ? d.preChecks : [],
-              steps,
-              owners: Array.isArray(d.owners) ? d.owners : [],
-              completionCriteria: txt(d.completionCriteria, ''),
-              notes: txt(d.notes, '')
-            };
-          })
-          .filter(Boolean)
-          .sort((a, b) => (b.riskScore - a.riskScore) || a.team.localeCompare(b.team, 'ko'));
-      }
-
-      function setTeamFilterOptions() {
-        const teams = uniq(state.rows.map((r) => r.team));
-        $('teamFilter').innerHTML = '<option value="">전체 팀</option>' + teams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('');
-      }
-
-      function filteredRows() {
-        const team = $('teamFilter').value;
-        const drpStatus = $('drpStatusFilter').value;
-        const bcpFinalOnly = $('bcpFinalOnly').checked;
-        const criticalOnly = $('criticalOnly').checked;
-
-        return state.rows.filter((row) => {
-          if (team && row.team !== team) return false;
-          if (drpStatus && row.drpStatus !== drpStatus) return false;
-          if (bcpFinalOnly && row.bcpStatus !== '확정') return false;
-          if (criticalOnly && !(row.critical || row.riskScore >= 13)) return false;
-          return true;
-        });
-      }
-
-      function renderKpi() {
-        const target = state.rows.length;
-        const written = state.rows.filter((r) => r.steps.some((s) => txt(s.action, '') !== '')).length;
-        const finalCount = state.rows.filter((r) => r.drpStatus === '확정').length;
-        const pending = Math.max(target - written, 0);
-
-        $('kTarget').textContent = String(target);
-        $('kWritten').textContent = String(written);
-        $('kFinal').textContent = String(finalCount);
-        $('kPending').textContent = String(pending);
-      }
-
-      function buildStepRow(row, step, idx) {
-        return `
-          <div class="stepItem" data-step-index="${idx}">
-            <input data-step-field="stepNo" value="${esc(step.stepNo || idx + 1)}" readonly/>
-            <input data-step-field="action" value="${esc(step.action)}" placeholder="복구 실행 내용"/>
-            <input data-step-field="owner" value="${esc(step.owner)}" placeholder="담당"/>
-            <input data-step-field="targetTime" value="${esc(step.targetTime)}" placeholder="예: 10분"/>
-            <input data-step-field="verification" value="${esc(step.verification)}" placeholder="완료 확인 기준"/>
-            <button type="button" class="miniBtn danger" data-action="removeStep">삭제</button>
-          </div>
-        `;
-      }
-
-      function renderTable() {
-        const rows = filteredRows();
-        const html = rows.map((row) => {
-          const levelBadge = (row.critical || row.riskScore >= 13) ? '<span class="badge high">중점관리</span>' : '<span class="badge">일반</span>';
-          const prioBadge = row.bcpStatus === '확정' ? '<span class="badge prio">BCP 확정(우선 작성)</span>' : '<span class="badge">BCP ' + esc(row.bcpStatus) + '</span>';
-
-          const resources = RESOURCE_OPTIONS.map((res) => `
-            <label class="resourceChip"><input type="checkbox" data-detail-field="requiredResources" data-value="${esc(res)}" ${row.requiredResources.includes(res) ? 'checked' : ''}/> ${esc(res)}</label>
-          `).join('');
-
-          return `
-            <tr data-key="${esc(row.key)}">
-              <td>${esc(row.team)}</td>
-              <td>${esc(row.function)}</td>
-              <td>${esc(row.grade)}</td>
-              <td>${esc(row.mtpd)}</td>
-              <td>${esc(row.rto)}</td>
-              <td>${esc(row.risk)}<div style="margin-top:4px;">${levelBadge}</div></td>
-              <td>${esc(row.riskScore)}<div style="margin-top:4px;"><small>L:${esc(row.likelihood)} / ${esc(row.riskLevel)}</small></div></td>
-              <td>${esc(row.strategyText)}<div style="margin-top:4px;"><small>${esc(row.strategyType)}</small></div></td>
-              <td><span class="badge ok">${esc(row.drpStatus)}</span><div style="margin-top:4px;">${prioBadge}</div></td>
-              <td><div class="rowActions"><button class="miniBtn" type="button" data-action="toggle">상세 보기</button><button class="miniBtn primary" type="button" data-action="save">저장</button></div></td>
-            </tr>
-            <tr class="detailRow hidden" data-detail="${esc(row.key)}">
-              <td colspan="10" class="detailCell">
-                <div class="detailGrid">
-                  <div class="detailField"><label>복구 개요</label><input data-detail-field="recoveryOverview" value="${esc(row.recoveryOverview)}" placeholder="해당 리스크에 대한 복구 절차 개요"/></div>
-                  <div class="detailField"><label>발동 조건</label><input data-detail-field="triggerCondition" value="${esc(row.triggerCondition)}" placeholder="UPS 장애로 이중화 전환 실패 시"/></div>
-                  <div class="detailField"><label>담당 조직/역할 (쉼표 구분)</label><input data-detail-field="ownersText" value="${esc(row.owners.join(', '))}" placeholder="${esc(OWNER_HINT)}"/></div>
-                  <div class="detailField"><label>절차 상태</label><select data-detail-field="drpStatus">${STATUS_OPTIONS.map((s) => `<option value="${esc(s)}" ${row.drpStatus === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
-
-                  <div class="detailField span2"><label>사전 확인사항 (줄바꿈으로 구분)</label><textarea data-detail-field="preChecksText" placeholder="관련 알람 확인&#10;영향 범위 확인&#10;승인권자 연락">${esc(row.preChecks.join('\n'))}</textarea></div>
-
-                  <div class="detailField span2"><label>복구 절차 단계 목록</label><div class="steps" data-steps-box="1">${row.steps.map((step, idx) => buildStepRow(row, step, idx)).join('')}</div><div style="margin-top:6px;"><button class="miniBtn" type="button" data-action="addStep">단계 추가</button></div></div>
-
-                  <div class="detailField span2"><label>필요 자원</label><div class="resourceBox">${resources}</div></div>
-                  <div class="detailField span2"><label>완료 확인 기준</label><textarea data-detail-field="completionCriteria" placeholder="주요 경보 해제 확인 / 서비스 정상 응답 확인">${esc(row.completionCriteria)}</textarea></div>
-                  <div class="detailField span2"><label>비고</label><textarea data-detail-field="notes" placeholder="특이사항 기록">${esc(row.notes)}</textarea></div>
-
-                  <div class="detailField span2"><small>연동 정보: 중요도 ${esc(row.importance)} · 영향도 ${esc(row.impact)} · Core Final ${row.coreFinal ? 'Y' : 'N'} · BCP 상태 ${esc(row.bcpStatus)}</small></div>
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-        $('tbody').innerHTML = html || '<tr><td colspan="10" class="empty">DRP 대상이 없습니다. 중점관리 리스크에 BCP 전략을 먼저 입력해 주세요.</td></tr>';
-        renderKpi();
-      }
-
-      function updateRow(key, updater) {
-        const idx = state.rows.findIndex((r) => r.key === key);
-        if (idx < 0) return;
-        state.rows[idx] = updater({ ...state.rows[idx], steps: state.rows[idx].steps.map((s) => ({ ...s })) });
-      }
-
-      function saveToStorage() {
-        const teamMap = new Map();
-        state.rows.forEach((row) => {
-          if (!teamMap.has(row.team)) teamMap.set(row.team, { team: row.team, procedures: [] });
-          teamMap.get(row.team).procedures.push({
-            function: row.function,
-            risk: row.risk,
-            riskScore: row.riskScore,
-            critical: row.critical,
-            importance: row.importance,
-            grade: row.grade,
-            mtpd: row.mtpd,
-            rto: row.rto,
-            strategyType: row.strategyType,
-            strategyText: row.strategyText,
-            triggerCondition: row.triggerCondition,
-            recoveryOverview: row.recoveryOverview,
-            preChecks: row.preChecks,
-            steps: row.steps.map((step, i) => ({
-              stepNo: i + 1,
-              action: txt(step.action, ''),
-              owner: txt(step.owner, ''),
-              targetTime: txt(step.targetTime, ''),
-              verification: txt(step.verification, '')
-            })),
-            owners: row.owners,
-            requiredResources: row.requiredResources,
-            completionCriteria: row.completionCriteria,
-            status: row.drpStatus,
-            notes: row.notes
-          });
-        });
-
-        localStorage.setItem(KEY_DRP, JSON.stringify([...teamMap.values()]));
-      }
-
-      $('tbody').addEventListener('click', (e) => {
-        const mainTr = e.target.closest('tr[data-key]');
-        const detailTr = e.target.closest('tr[data-detail]');
-        const key = mainTr?.dataset.key || detailTr?.dataset.detail;
-        if (!key) return;
-
-        if (e.target.closest('[data-action="toggle"]')) {
-          const detail = document.querySelector(`tr[data-detail="${CSS.escape(key)}"]`);
-          if (detail) detail.classList.toggle('hidden');
-          return;
+  const loadBiaFunctions = () => {
+    const biaRows = loadJSON(KEY_BIA, []);
+    const saved = new Set(altRows.map(r => `${r.team}||${r.function}`));
+    for (const block of biaRows) {
+      const team = String(block.team || '').trim();
+      for (const fn of (block.functions || [])) {
+        const name = String(fn.name || fn.function || '').trim();
+        if (!name) continue;
+        const key = `${team}||${name}`;
+        if (!saved.has(key)) {
+          altRows.push({ team, function: name, method: ALT_METHODS[0], procedure:'', resources:'', duration:'', owner:'', status:'초안' });
+          saved.add(key);
         }
+      }
+    }
+  };
 
-        if (e.target.closest('[data-action="save"]')) {
-          saveToStorage();
-          const btn = e.target.closest('[data-action="save"]');
-          btn.textContent = '저장됨';
-          setTimeout(() => { btn.textContent = '저장'; }, 900);
-          return;
-        }
+  $('altAddRow').addEventListener('click', () => {
+    altRows.push({ team:'', function:'', method: ALT_METHODS[0], procedure:'', resources:'', duration:'', owner:'', status:'초안' });
+    renderAltTable(); updateKpi();
+  });
 
-        if (e.target.closest('[data-action="addStep"]')) {
-          updateRow(key, (row) => {
-            row.steps.push({ stepNo: row.steps.length + 1, action: '', owner: '', targetTime: '', verification: '' });
-            return row;
-          });
-          renderTable();
-          const detail = document.querySelector(`tr[data-detail="${CSS.escape(key)}"]`);
-          if (detail) detail.classList.remove('hidden');
-          return;
-        }
+  $('altTbody').addEventListener('input', e => {
+    const tr = e.target.closest('tr[data-ai]'); const f = e.target.getAttribute('data-f');
+    if (!tr || !f) return;
+    altRows[+tr.getAttribute('data-ai')][f] = e.target.value;
+  });
 
-        if (e.target.closest('[data-action="removeStep"]')) {
-          const stepItem = e.target.closest('.stepItem');
-          const idx = Number(stepItem?.dataset.stepIndex);
-          updateRow(key, (row) => {
-            if (row.steps.length <= 1) {
-              row.steps[0] = { stepNo: 1, action: '', owner: '', targetTime: '', verification: '' };
-              return row;
-            }
-            row.steps = row.steps.filter((_, i) => i !== idx).map((step, i) => ({ ...step, stepNo: i + 1 }));
-            return row;
-          });
-          renderTable();
-          const detail = document.querySelector(`tr[data-detail="${CSS.escape(key)}"]`);
-          if (detail) detail.classList.remove('hidden');
-        }
-      });
+  $('altTbody').addEventListener('change', e => {
+    const tr = e.target.closest('tr[data-ai]'); const f = e.target.getAttribute('data-f');
+    if (!tr || !f) return;
+    altRows[+tr.getAttribute('data-ai')][f] = e.target.value;
+  });
 
-      $('tbody').addEventListener('input', (e) => {
-        const detailTr = e.target.closest('tr[data-detail]');
-        if (!detailTr) return;
-        const key = detailTr.dataset.detail;
+  $('altTbody').addEventListener('click', e => {
+    const saveBtn = e.target.closest('[data-save-alt]');
+    if (saveBtn) { saveJSON(KEY_ALT, altRows); flashEl(saveBtn, '저장됨'); return; }
+    const delBtn = e.target.closest('[data-del-alt]');
+    if (delBtn) {
+      altRows.splice(+delBtn.getAttribute('data-del-alt'), 1);
+      saveJSON(KEY_ALT, altRows); renderAltTable(); updateKpi();
+    }
+  });
 
-        if (e.target.matches('[data-detail-field]')) {
-          const field = e.target.dataset.detailField;
-          updateRow(key, (row) => {
-            if (field === 'preChecksText') row.preChecks = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean);
-            else if (field === 'ownersText') row.owners = e.target.value.split(',').map((x) => x.trim()).filter(Boolean);
-            else if (field === 'drpStatus') row.drpStatus = e.target.value;
-            else row[field] = e.target.value;
-            return row;
-          });
-          renderKpi();
-          return;
-        }
+  $('altSaveAll').addEventListener('click', () => {
+    saveJSON(KEY_ALT, altRows);
+    flashBtn('altSaveAll', '저장됨'); updateKpi();
+  });
 
-        const stepItem = e.target.closest('.stepItem');
-        if (stepItem && e.target.matches('[data-step-field]')) {
-          const idx = Number(stepItem.dataset.stepIndex);
-          const field = e.target.dataset.stepField;
-          updateRow(key, (row) => {
-            if (!row.steps[idx]) return row;
-            row.steps[idx][field] = e.target.value;
-            return row;
-          });
-        }
-      });
+  /* ════════════════════════════════════════
+     Tab 3: IT복구 절차
+  ════════════════════════════════════════ */
+  const renderDrpTable = () => {
+    const tb = $('drpTbody');
+    if (!drpRows.length) {
+      tb.innerHTML = `<tr><td colspan="9" class="empty">IT복구 절차가 없습니다. "+ 시스템 추가"를 클릭하세요.</td></tr>`;
+      return;
+    }
+    tb.innerHTML = drpRows.map((r, i) => `
+<tr data-di="${i}">
+  <td><input type="text" class="dF" data-f="systemName"    value="${esc(r.systemName||'')}"    placeholder="시스템명"></td>
+  <td><input type="text" class="dF" data-f="rto"           value="${esc(r.rto||'')}"           placeholder="4시간"></td>
+  <td><input type="text" class="dF" data-f="rpo"           value="${esc(r.rpo||'')}"           placeholder="1시간"></td>
+  <td>
+    <select class="dF" data-f="recoveryMode">
+      ${DRP_MODES.map(m => `<option value="${esc(m)}"${r.recoveryMode===m?' selected':''}>${esc(m)}</option>`).join('')}
+    </select>
+  </td>
+  <td><input type="text" class="dF" data-f="backupLocation" value="${esc(r.backupLocation||'')}" placeholder="백업 위치"></td>
+  <td><input type="text" class="dF" data-f="owner"          value="${esc(r.owner||'')}"          placeholder="담당자"></td>
+  <td><input type="number" class="dF" data-f="priority"     value="${esc(String(r.priority??''))}" placeholder="1" min="1" style="width:56px"></td>
+  <td>
+    <select class="dF" data-f="status">
+      ${STATUS_LIST.map(s => `<option value="${esc(s)}"${r.status===s?' selected':''}>${esc(s)}</option>`).join('')}
+    </select>
+  </td>
+  <td><button class="btn tdBtn" type="button" data-del-drp="${i}">삭제</button></td>
+</tr>`).join('');
+  };
 
-      $('tbody').addEventListener('change', (e) => {
-        const detailTr = e.target.closest('tr[data-detail]');
-        if (!detailTr) return;
-        const key = detailTr.dataset.detail;
+  $('drpAddRow').addEventListener('click', () => {
+    drpRows.push({ _seq: drpSeq++, systemName:'', rto:'', rpo:'', recoveryMode:'Warm site', backupLocation:'', owner:'', priority:'', status:'초안' });
+    renderDrpTable(); updateKpi();
+  });
 
-        if (e.target.dataset.detailField === 'requiredResources') {
-          const selected = [...detailTr.querySelectorAll('input[data-detail-field="requiredResources"]:checked')].map((el) => el.dataset.value);
-          updateRow(key, (row) => {
-            row.requiredResources = selected;
-            return row;
-          });
-          return;
-        }
+  $('drpTbody').addEventListener('input', e => {
+    const tr = e.target.closest('tr[data-di]'); const f = e.target.getAttribute('data-f');
+    if (!tr || !f) return;
+    drpRows[+tr.getAttribute('data-di')][f] = e.target.value;
+  });
 
-        if (e.target.dataset.detailField === 'drpStatus') {
-          updateRow(key, (row) => {
-            row.drpStatus = e.target.value;
-            return row;
-          });
-          renderKpi();
-        }
-      });
+  $('drpTbody').addEventListener('change', e => {
+    const tr = e.target.closest('tr[data-di]'); const f = e.target.getAttribute('data-f');
+    if (!tr || !f) return;
+    drpRows[+tr.getAttribute('data-di')][f] = e.target.value;
+  });
 
-      ['teamFilter','drpStatusFilter','bcpFinalOnly','criticalOnly'].forEach((id) => {
-        $(id).addEventListener('change', renderTable);
-      });
+  $('drpTbody').addEventListener('click', e => {
+    const btn = e.target.closest('[data-del-drp]'); if (!btn) return;
+    drpRows.splice(+btn.getAttribute('data-del-drp'), 1);
+    saveJSON(KEY_DRP, drpRows); renderDrpTable(); updateKpi();
+  });
 
-      $('saveAllBtn').addEventListener('click', () => {
-        saveToStorage();
-        $('saveAllBtn').textContent = '전체 저장됨';
-        setTimeout(() => { $('saveAllBtn').textContent = '전체 저장'; }, 1000);
-      });
+  $('drpSaveAll').addEventListener('click', () => {
+    saveJSON(KEY_DRP, drpRows);
+    flashBtn('drpSaveAll', '저장됨'); updateKpi();
+  });
 
-      $('reloadBtn').addEventListener('click', () => {
-        loadRows();
-        setTeamFilterOptions();
-        renderTable();
-      });
+  /* ════════════════════════════════════════
+     Tab 4: 정상화 절차
+  ════════════════════════════════════════ */
 
-      loadRows();
-      setTeamFilterOptions();
-      renderFocusBanner();
-      renderTable();
-    })();
+  /* --- 복구 완료 기준 --- */
+  const renderRestTable = () => {
+    const tb = $('restTbody');
+    if (!restRows.length) {
+      tb.innerHTML = `<tr><td colspan="5" class="empty">복구 완료 기준이 없습니다. "+ 기준 추가"를 클릭하세요.</td></tr>`;
+      return;
+    }
+    tb.innerHTML = restRows.map((r, i) => `
+<tr data-ri="${i}">
+  <td><input type="text" class="rF" data-f="target"   value="${esc(r.target||'')}"   placeholder="업무 또는 시스템명"></td>
+  <td><input type="text" class="rF" data-f="criteria" value="${esc(r.criteria||'')}" placeholder="정상화 기준 기술"></td>
+  <td><input type="text" class="rF" data-f="method"   value="${esc(r.method||'')}"   placeholder="확인 방법"></td>
+  <td><input type="text" class="rF" data-f="owner"    value="${esc(r.owner||'')}"    placeholder="담당자"></td>
+  <td><button class="btn tdBtn" type="button" data-del-rest="${i}">삭제</button></td>
+</tr>`).join('');
+  };
+
+  $('restAddRow').addEventListener('click', () => {
+    restRows.push({ target:'', criteria:'', method:'', owner:'' });
+    renderRestTable(); updateKpi();
+  });
+
+  $('restTbody').addEventListener('input', e => {
+    const tr = e.target.closest('tr[data-ri]'); const f = e.target.getAttribute('data-f');
+    if (!tr || !f) return;
+    restRows[+tr.getAttribute('data-ri')][f] = e.target.value;
+  });
+
+  $('restTbody').addEventListener('click', e => {
+    const btn = e.target.closest('[data-del-rest]'); if (!btn) return;
+    restRows.splice(+btn.getAttribute('data-del-rest'), 1);
+    saveJSON(KEY_REST, restRows); renderRestTable(); updateKpi();
+  });
+
+  $('restSave').addEventListener('click', () => {
+    saveJSON(KEY_REST, restRows);
+    flashBtn('restSave', '저장됨'); updateKpi();
+  });
+
+  /* --- 사후 검토 체크리스트 --- */
+  const renderPostList = () => {
+    const list = $('postCheckList');
+    if (!postItems.length) { list.innerHTML = '<div class="empty">항목이 없습니다.</div>'; return; }
+    list.innerHTML = postItems.map((item, i) => `
+<div class="checkItem" data-pi="${i}">
+  <input type="checkbox" class="postChk"${item.checked?' checked':''}>
+  <input type="text" class="ciLabel" value="${esc(item.label||'')}" placeholder="검토 항목을 입력하세요">
+  <button class="btn ciDelBtn" type="button" data-del-post="${i}">×</button>
+</div>`).join('');
+  };
+
+  $('postAddItem').addEventListener('click', () => {
+    postItems.push({ label:'', checked:false });
+    saveJSON(KEY_POST, postItems); renderPostList(); updateKpi();
+  });
+
+  $('postCheckList').addEventListener('click', e => {
+    const del = e.target.closest('[data-del-post]');
+    if (del) {
+      postItems.splice(+del.getAttribute('data-del-post'), 1);
+      saveJSON(KEY_POST, postItems); renderPostList(); updateKpi(); return;
+    }
+    const chk = e.target.closest('.postChk');
+    if (chk) {
+      postItems[+chk.closest('[data-pi]').getAttribute('data-pi')].checked = chk.checked;
+    }
+  });
+
+  $('postCheckList').addEventListener('input', e => {
+    const item = e.target.closest('[data-pi]'); if (!item) return;
+    if (e.target.classList.contains('ciLabel'))
+      postItems[+item.getAttribute('data-pi')].label = e.target.value;
+  });
+
+  $('postSave').addEventListener('click', () => {
+    saveJSON(KEY_POST, postItems);
+    flashBtn('postSave', '저장됨');
+  });
+
+  /* ── Tab switching ── */
+  document.querySelectorAll('.tabBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.tabPane').forEach(p => p.classList.toggle('active', p.id === `pane-${tab}`));
+    });
+  });
+
+  /* ── Demo seed ── */
+  if (window.BCMSDemoSeed) {
+    window.BCMSDemoSeed.ensureDemoIfEmpty();
+    window.BCMSDemoSeed.mountBanner('.wrap');
+    const banner = document.querySelector('.wrap > div:first-child');
+    if (banner && banner.style.background) {
+      banner.style.cssText = 'margin-bottom:14px;padding:8px 14px;border:1px solid rgba(0,112,243,.2);background:rgba(0,112,243,.06);border-radius:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;';
+    }
+  }
+
+  /* ── Init ── */
+  const init = () => {
+    actRows   = loadJSON(KEY_ACT,  []);
+    initItems = loadJSON(KEY_INIT, []);
+    altRows   = loadJSON(KEY_ALT,  []);
+    drpRows   = loadJSON(KEY_DRP,  []);
+    restRows  = loadJSON(KEY_REST, []);
+
+    const savedPost = loadJSON(KEY_POST, null);
+    postItems = savedPost ?? POST_DEFAULTS.map(label => ({ label, checked: false }));
+
+    drpSeq = drpRows.reduce((m, r) => Math.max(m, r._seq || 0), 0) + 1;
+
+    loadBiaFunctions();
+
+    renderActTable();
+    renderInitList();
+    renderAltTable();
+    renderDrpTable();
+    renderRestTable();
+    renderPostList();
+    updateKpi();
+  };
+
+  init();
   </script>
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
   <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
