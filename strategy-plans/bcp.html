@@ -302,8 +302,11 @@
       }
 
       function setTeamFilterOptions() {
-        const biaRows = normalizeBiaRows(get(KEY_BIA, []));
-        const teams = unique(biaRows.map((r) => r.team));
+        const criticalOnly = $('criticalOnly').checked;
+        const sourceRows = criticalOnly
+          ? state.rows.filter((r) => r.critical || r.riskScore >= 13)
+          : state.rows;
+        const teams = unique(sourceRows.map((row) => row.team));
         $('teamFilter').innerHTML = '<option value="">전체 팀</option>' +
           teams.map((t) => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
       }
@@ -466,8 +469,12 @@
         setTimeout(() => { btn.textContent = '저장'; }, 800);
       });
 
-      ['teamFilter','statusFilter','criticalOnly'].forEach((id) => {
+      ['teamFilter','statusFilter'].forEach((id) => {
         $(id).addEventListener('change', () => renderTable());
+      });
+      $('criticalOnly').addEventListener('change', () => {
+        setTeamFilterOptions();
+        renderTable();
       });
 
       $('saveAllBtn').addEventListener('click', () => {
