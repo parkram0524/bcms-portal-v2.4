@@ -6,7 +6,8 @@
   <title>BCMS Portal - BCP 전략 관리</title>
   <link rel="stylesheet" href="../assets/style.css"/>
   <style>
-    .wrap{ max-width:1460px; margin:0 auto; }
+    html, body { overflow-x: hidden; }
+    .wrap{ max-width:1460px; margin:0 auto; overflow-x: hidden; }
     .topbar{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
     .topbar h1{ margin:0; font-size:26px; font-weight:950; }
     .desc{ margin:8px 0 0; color:rgba(15,23,42,.68); font-size:14px; line-height:1.6; }
@@ -301,8 +302,10 @@
       }
 
       function setTeamFilterOptions() {
-        const teams = unique(state.rows.map((row) => row.team));
-        $('teamFilter').innerHTML = '<option value="">전체 팀</option>' + teams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join('');
+        const biaRows = normalizeBiaRows(get(KEY_BIA, []));
+        const teams = unique(biaRows.map((r) => r.team));
+        $('teamFilter').innerHTML = '<option value="">전체 팀</option>' +
+          teams.map((t) => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
       }
 
       function filteredRows() {
