@@ -472,7 +472,7 @@
 
   function init() {
     const force = window.BCMS_FORCE_ONBOARDING === true;
-    if (!force && localStorage.getItem(DONE_KEY)) return;
+    if (!force && localStorage.getItem(DONE_KEY) !== null) return;
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', show);
     } else {
