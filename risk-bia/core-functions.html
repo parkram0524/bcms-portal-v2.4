@@ -126,8 +126,8 @@
 
       <section class="summary">
         <div class="summaryGrid">
-          <article class="metric"><div class="k">등록 팀 수</div><div id="teamCount" class="v">0</div></article>
-          <article class="metric"><div class="k">핵심업무 항목 수</div><div id="functionCount" class="v">0</div></article>
+          <article class="metric"><div class="k">확정 팀 수</div><div id="teamCount" class="v">0</div></article>
+          <article class="metric"><div class="k">확정 업무 수</div><div id="functionCount" class="v">0</div></article>
           <article class="metric"><div class="k">조직 레지스트리 매칭</div><div id="matchCount" class="v">0/0</div></article>
         </div>
       </section>
@@ -273,14 +273,34 @@
         .filter(Boolean));
     };
 
-    /* ── bcmsPriorityConfirmed 읽기 ── */
-    const readConfirmedIds = () => {
-      const raw = safeParse(localStorage.getItem(CONFIRMED_KEY), []);
-      if (!Array.isArray(raw)) return new Set();
-      /* 문자열 배열(ID 목록) 또는 객체 배열 모두 처리 */
-      return new Set(raw.map(v =>
-        typeof v === 'string' ? v : normStr(v?.id || v?.biaId || v?.functionId || '')
-      ).filter(Boolean));
+    /* ── bcmsPriorityConfirmed 읽기
+       형태: { "팀명__업무명": true, biaId: true } 객체
+       배열 형태도 폴백으로 처리
+    ── */
+    const readConfirmedMap = () => {
+      const raw = safeParse(localStorage.getItem(CONFIRMED_KEY), null);
+      if (!raw) return {};
+      if (typeof raw === 'object' && !Array.isArray(raw)) return raw;
+      /* 배열 폴백 */
+      if (Array.isArray(raw)) {
+        const map = {};
+        raw.forEach(v => {
+          if (typeof v === 'string' && v) { map[v] = true; return; }
+          if (v && typeof v === 'object') {
+            const key = normStr(v.id || v.biaId || v.functionId || '');
+            if (key) map[key] = true;
+          }
+        });
+        return map;
+      }
+      return {};
+    };
+
+    /* 업무가 확정됐는지 확인 — 두 가지 키 형태 모두 지원 */
+    const isConfirmed = (fn, teamName, confirmedMap) => {
+      if (fn.id && confirmedMap[fn.id] === true) return true;
+      if (confirmedMap[`${teamName}__${fn.name}`] === true) return true;
+      return false;
     };
 
     /* ── bcmsBIAData 쓰기 (추가/수정 모달용) ── */
@@ -337,27 +357,36 @@
         .map(n => `<option value="${escHtml(n)}"></option>`).join('');
     };
 
-    const renderMetrics = (allRows, orgTeams) => {
-      const totalFns = allRows.reduce((acc, r) => acc + r.functions.length, 0);
-      const matched  = allRows.filter(r => orgTeams.includes(r.team)).length;
-      teamCountEl.textContent  = String(allRows.length);
+    /* confirmedRows 기준으로 카운트 */
+    const renderMetrics = (confirmedRows, orgTeams) => {
+      const totalFns = confirmedRows.reduce((acc, r) => acc + r.functions.length, 0);
+      const matched  = confirmedRows.filter(r => orgTeams.includes(r.team)).length;
+      teamCountEl.textContent  = String(confirmedRows.length);
       fnCountEl.textContent    = String(totalFns);
-      matchCountEl.textContent = `${matched}/${allRows.length}`;
+      matchCountEl.textContent = `${matched}/${confirmedRows.length}`;
     };
 
     /* ── 카드 렌더 ── */
     const renderCards = () => {
-      const orgTeams    = readOrgTeams();
-      const allRows     = readBIARows();
-      const confirmedIds = readConfirmedIds();
+      const orgTeams     = readOrgTeams();
+      const allRows      = readBIARows();
+      const confirmedMap = readConfirmedMap();
 
       renderTeamOptions(orgTeams);
-      renderMetrics(allRows, orgTeams);
+
+      /* ── confirmed 필터링: 각 팀에서 confirmed=true인 업무만 남김 ── */
+      const confirmedRows = allRows.map(row => {
+        const confFns = row.functions.filter(fn => isConfirmed(fn, row.team, confirmedMap));
+        return confFns.length ? { ...row, functions: confFns } : null;
+      }).filter(Boolean);
+
+      /* KPI는 확정된 항목 기준 */
+      renderMetrics(confirmedRows, orgTeams);
 
       const keyword = (searchQ.value || '').trim().toLowerCase();
       const mode    = matchFilter.value;
 
-      /* 빈 상태 */
+      /* BIA 데이터 자체가 없는 경우 */
       if (!allRows.length) {
         cards.innerHTML = `
           <div class="empty" style="grid-column:1/-1;line-height:2">
@@ -365,14 +394,26 @@
             <p style="margin:0 0 4px">
               <a href="../risk-bia/bia.html">📋 BIA 페이지</a>에서 팀별 핵심업무를 먼저 등록해주세요.
             </p>
-            <p style="margin:0;color:var(--text-2)">
-              BIA에 등록된 업무는 이 페이지에 자동으로 반영됩니다.
-            </p>
           </div>`;
         return;
       }
 
-      const viewRows = allRows.filter(row => {
+      /* 확정된 항목이 없는 경우 */
+      if (!confirmedRows.length) {
+        cards.innerHTML = `
+          <div class="empty" style="grid-column:1/-1;line-height:2">
+            <p style="font-size:15px;font-weight:800;margin:0 0 6px">확정된 핵심업무가 없습니다.</p>
+            <p style="margin:0 0 6px">
+              통합 우선순위 페이지에서 핵심업무를 먼저 확정해주세요.
+            </p>
+            <a href="../risk-bia/priority.html" class="btn primary" style="display:inline-flex">
+              우선순위 페이지로 →
+            </a>
+          </div>`;
+        return;
+      }
+
+      const viewRows = confirmedRows.filter(row => {
         const matched = orgTeams.includes(row.team);
         if (mode === 'matched'   && !matched) return false;
         if (mode === 'unmatched' &&  matched) return false;
@@ -387,13 +428,13 @@
 
       cards.innerHTML = viewRows.map(row => {
         const matched = orgTeams.includes(row.team);
+        /* 이미 confirmed 필터링된 functions만 있으므로 전부 BCP 대상 */
         const fnRows = row.functions.map(fn => {
-          const isBcp = fn.coreFinal || confirmedIds.has(fn.id);
           return `
             <div class="fnRow">
               <div class="fnNameWrap">
                 <span class="fnName">${escHtml(fn.name)}</span>
-                ${isBcp ? '<span class="tag tag-core" style="font-size:10px;padding:2px 6px">BCP 대상</span>' : ''}
+                <span class="tag tag-core" style="font-size:10px;padding:2px 6px">BCP 대상</span>
               </div>
               <div class="fnMeta">
                 <span class="impBadge ${impBadgeCls(fn.importance)}">${escHtml(fn.importance)}</span>
