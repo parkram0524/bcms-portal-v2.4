@@ -750,20 +750,17 @@ window.ORG = (() => {
     const h = Math.min(150, Math.max(40, parseInt(document.getElementById('pNodeH').value) || 70));
     const newLabel = name + (sub ? '\n' + sub : '');
     if (newLabel) panelNode.data('label', newLabel);
+    // Persist style values in node data so cy.json() serialises them
     panelNode.data('sub', sub);
     panelNode.data('bannerColor', bannerColor);
-    const dk   = document.documentElement.getAttribute('data-theme') === 'dark';
-    const card = dk ? '#1f2937' : '#ffffff';
-    const stops = panelNode.style('background-gradient-stop-positions') || '0 28 28 100';
-    panelNode.style({
-      'background-fill': 'linear-gradient',
-      'background-gradient-stop-colors': `${bannerColor} ${bannerColor} ${card} ${card}`,
-      'background-gradient-direction': 'to-bottom',
-      'background-gradient-stop-positions': stops,
-      'font-size': fs,
-      width: w, height: h,
-      'border-width': panelNode.style('border-width') || 0,
-    });
+    panelNode.data('fontSize', fs);
+    panelNode.data('nodeW', w);
+    panelNode.data('nodeH', h);
+    // Apply inline style immediately for live feedback
+    applyNodeStyle(panelNode);
+    // Auto-save to localStorage
+    const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
+    saveJ(key, cy.json().elements);
     toast('적용되었습니다 ✓');
   }
   function deletePanelNode() {
@@ -788,6 +785,33 @@ window.ORG = (() => {
     if (!panelNode) return;
     panelNode.data('bgColor', bg); panelNode.data('fgColor', fg);
     toast('색상이 변경되었습니다');
+  }
+
+  /* ── Node style apply (persist across save/load) ─────────────── */
+  function applyNodeStyle(node) {
+    const bc = node.data('bannerColor');
+    const fs = node.data('fontSize');
+    const w  = node.data('nodeW');
+    const h  = node.data('nodeH');
+    if (!bc && !fs && !w && !h) return;
+    const dk   = document.documentElement.getAttribute('data-theme') === 'dark';
+    const card = dk ? '#1f2937' : '#ffffff';
+    const overrides = {};
+    if (bc) {
+      const stops = node.style('background-gradient-stop-positions') || '0 28 28 100';
+      overrides['background-fill'] = 'linear-gradient';
+      overrides['background-gradient-stop-colors'] = `${bc} ${bc} ${card} ${card}`;
+      overrides['background-gradient-direction'] = 'to-bottom';
+      overrides['background-gradient-stop-positions'] = stops;
+    }
+    if (fs) overrides['font-size'] = fs;
+    if (w)  overrides['width'] = w;
+    if (h)  overrides['height'] = h;
+    if (Object.keys(overrides).length) node.style(overrides);
+  }
+  function applyCustomNodeStyles() {
+    if (!cy) return;
+    cy.nodes().forEach(node => applyNodeStyle(node));
   }
 
   /* ── Tab style (JS-driven) ────────────────────────────────────── */
@@ -889,6 +913,7 @@ window.ORG = (() => {
   function save() {
     const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
     saveJ(key, cy.json().elements);
+    console.log('저장완료', localStorage.getItem(key)?.length);
     toast('저장되었습니다 ✓');
   }
 
@@ -908,6 +933,7 @@ window.ORG = (() => {
         els = buildNormal(ind);   // returns hardcoded 공공기관 when ind is unknown
       }
       initCy(els);
+      applyCustomNodeStyles();
     } else {
       const raw = loadJ(KEY_EOP, null);
       let els = null;
@@ -916,6 +942,7 @@ window.ORG = (() => {
         if (arr.length) els = arr;
       }
       initCy(els || buildEOP());
+      applyCustomNodeStyles();
     }
   }
 
