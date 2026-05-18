@@ -523,10 +523,9 @@
     .sort((a, b) => (b.riskScore ?? b.score ?? 0) - (a.riskScore ?? a.score ?? 0))
     .slice(0, 5);
 
-  const bcpTeams = new Set(bcpData.map(b => b && (b.team ?? b.dept ?? '')).filter(Boolean));
-  const bcpIds   = new Set(bcpData.map(b => b && (b.id ?? b.functionId ?? '')).filter(Boolean));
+  const bcpTeamSet = new Set(bcpTeams.map(t => t && String(t.team ?? t.dept ?? '')).filter(Boolean));
   function hasBcp(r) {
-    return bcpTeams.has(r.team ?? r.dept ?? '') || bcpIds.has(r.id ?? r.functionId ?? '');
+    return bcpTeamSet.has(String(r.team ?? r.dept ?? ''));
   }
 
   const riskBody = document.getElementById('riskBody');
