@@ -461,7 +461,10 @@
 
   window.BCMSDemoSeed = {
     KEYS,
-    ensureDemoIfEmpty: () => loadDemo({force:false}),
+    ensureDemoIfEmpty: () => {
+      console.log('현재 업종:', localStorage.getItem('bcmsIndustry'));
+      return loadDemo({force:false});
+    },
     loadDemo: () => loadDemo({force:true}),
     removeDemo,
     hasDemo,
