@@ -327,10 +327,10 @@
     helpSt.textContent = `
       #bcmsHelpBtn {
         position:fixed;right:24px;bottom:72px;z-index:999;
-        width:44px;height:44px;border-radius:50%;
+        width:40px;height:40px;border-radius:50%;
         background:#0070f3;color:#fff;
         border:none;cursor:pointer;
-        font-size:18px;font-weight:700;
+        font-size:20px;
         box-shadow:0 2px 12px rgba(0,112,243,.3);
         display:flex;align-items:center;justify-content:center;
         transition:transform .14s ease,box-shadow .14s ease;
@@ -340,6 +340,24 @@
         transform:scale(1.1);
         box-shadow:0 4px 18px rgba(0,112,243,.45);
       }
+      #bcmsHelpBtn::after {
+        content:"이 페이지 사용 가이드";
+        position:absolute;
+        right:calc(100% + 10px);
+        top:50%;
+        transform:translateY(-50%);
+        background:#333;
+        color:#fff;
+        font-size:12px;
+        font-weight:500;
+        padding:5px 10px;
+        border-radius:6px;
+        white-space:nowrap;
+        pointer-events:none;
+        opacity:0;
+        transition:opacity .14s ease;
+      }
+      #bcmsHelpBtn:hover::after { opacity:1; }
       .bcms-help-backdrop {
         position:fixed;inset:0;z-index:10000;
         background:rgba(0,0,0,.5);
@@ -412,7 +430,7 @@
     const btn = document.createElement("button");
     btn.id = "bcmsHelpBtn";
     btn.setAttribute("aria-label", "도움말");
-    btn.textContent = "?";
+    btn.textContent = "💡";
     document.body.appendChild(btn);
 
     let modalEl = null;
