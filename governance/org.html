@@ -26,19 +26,25 @@
   .ctrlRight { display: flex; align-items: center; gap: 6px; }
 
   /* ── Tab bar ── */
-  .tabBar { display: flex; align-items: stretch; height: 100%; }
+  .tabBar { display: flex; align-items: center; gap: 6px; height: 100%; }
   .tabBtn {
-    font-size: 13px; font-weight: 600; padding: 0 18px;
-    border: none; background: transparent; cursor: pointer;
-    color: var(--text-2); border-bottom: 2.5px solid transparent;
+    font-size: 13px; font-weight: 500; padding: 6px 16px;
+    border: 0.5px solid var(--border); background: var(--surface); cursor: pointer;
+    color: var(--text-2); border-radius: 999px;
     display: flex; align-items: center; gap: 6px;
-    transition: color .15s, border-color .15s, background .15s;
+    transition: color .15s, background .15s, border-color .15s, box-shadow .15s;
     white-space: nowrap; position: relative;
   }
-  .tabBtn:hover { background: rgba(0,0,0,.04); color: var(--text); }
-  [data-theme="dark"] .tabBtn:hover { background: rgba(255,255,255,.05); }
-  .tabBtn.normal.active    { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
-  .tabBtn.emergency.active { color: #dc2626; border-bottom-color: #dc2626; font-weight: 700; }
+  .tabBtn:hover { background: var(--surface-hover); color: var(--text); }
+  [data-theme="dark"] .tabBtn:hover { background: rgba(255,255,255,.08); }
+  .tabBtn.normal.active {
+    background: #0070f3; color: #fff; border-color: transparent;
+    font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  .tabBtn.emergency.active {
+    background: #dc2626; color: #fff; border-color: transparent;
+    font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
 
   .cBtn {
     font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: var(--r-sm);
@@ -447,14 +453,16 @@ window.ORG = (() => {
       { selector:'node[type="ceo"]', style:{
           ...gradNode(C.ceo, T.ceo, '0 30 30 100', 180, 80),
           ...shadow(8, 0.12, 2),
-          'font-size':'15px', 'font-weight':'600',
+          'font-size':'13px', 'font-weight':'600',
+          'text-wrap':'wrap', 'text-max-width':'110px',
       }},
 
       // ── 본부급 ──
       { selector:'node[type="division"]', style:{
           ...gradNode(C.div, T.div, '0 28 28 100', 160, 72),
           ...shadow(6, 0.10, 2),
-          'font-size':'14px', 'font-weight':'600',
+          'font-size':'13px', 'font-weight':'600',
+          'text-wrap':'wrap', 'text-max-width':'110px',
       }},
 
       // ── 팀급 ──
@@ -462,6 +470,7 @@ window.ORG = (() => {
           ...gradNode(C.team, T.team, '0 25 25 100', 140, 64),
           ...shadow(4, 0.08, 1),
           'font-size':'13px', 'font-weight':'600',
+          'text-wrap':'wrap', 'text-max-width':'110px',
       }},
 
       // ── EOP 루트 ──
