@@ -102,13 +102,13 @@
     .drHeader { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 0.5px solid var(--border); background: var(--surface-hover); }
     .drHeaderTitle { font-size: 14px; font-weight: 700; color: var(--text); }
     .drMaxScore { font-size: 11px; font-weight: 600; color: var(--text-3); background: var(--bg); border: 0.5px solid var(--border); padding: 2px 8px; border-radius: 5px; }
-    .drItemRow { display: grid; grid-template-columns: 1fr auto auto 200px; gap: 12px; align-items: start; padding: 14px 18px; border-bottom: 0.5px solid var(--border); }
+    .drItemRow { display: grid; grid-template-columns: 1fr auto minmax(180px, 220px); gap: 12px; align-items: start; padding: 14px 18px; border-bottom: 0.5px solid var(--border); }
     .drItemRow:last-child { border-bottom: none; }
     .drItemTitle { font-size: 13px; font-weight: 600; color: var(--text); }
     .drItemRef   { font-size: 11px; color: var(--text-3); margin-top: 3px; }
     .drScoreWrap { display: flex; flex-direction: column; gap: 4px; align-items: center; }
     .drScoreWrap label { font-size: 10px; font-weight: 600; color: var(--text-2); text-transform: uppercase; }
-    .drScoreInput { width: 70px; text-align: center; font-size: 14px; font-weight: 700; font-family: "SF Mono","Consolas",monospace; }
+    .drScoreInput { min-width: 160px; font-size: 12px; font-family: inherit; }
     .drMaxLabel { font-size: 11px; color: var(--text-3); margin-top: 2px; }
     .drEvidenceInput { font-size: 12px; resize: vertical; min-height: 48px; }
 
@@ -152,7 +152,7 @@
       .formGrid { grid-template-columns: 1fr 1fr; }
       .formGrid .full  { grid-column: 1/-1; }
       .formGrid .half2 { grid-column: 1/-1; }
-      .drItemRow { grid-template-columns: 1fr auto; }
+      .drItemRow { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       .metricsStrip { grid-template-columns: 1fr 1fr; }
@@ -231,7 +231,7 @@
           </div>
           <div class="drGaugeTrack"><div class="drGaugeFill" id="drGaugeFill" style="width:0%"></div></div>
           <span class="gradeBadge C" id="drGradeBadge">보통</span>
-          <span style="font-size:12px;color:var(--text-3)">(우수 80점↑ · 양호 60점↑ · 보통 60점 미만)</span>
+          <span style="font-size:12px;color:var(--text-3)">(우수 80점↑ · 양호 60점↑ · 미흡 60점 미만) | 2026 기업재난관리표준</span>
         </div>
       </div>
 
@@ -633,21 +633,49 @@
      Disaster Reduction definitions
   ═══════════════════════════════════════════ */
   const DR_FIELDS = [
-    { field: 1, title: '재해경감활동 기반구축', maxScore: 30, items: [
-      { id: '1-1', title: '재해경감 책임자 지정 및 조직구성', maxScore: 10, isoRef: 'ISO 22301 5.3 (역할·책임·권한)' },
-      { id: '1-2', title: '재해경감 활동계획 수립', maxScore: 10, isoRef: 'ISO 22301 6.2 (목표 및 달성 기획)' },
-      { id: '1-3', title: '예산 확보 및 집행', maxScore: 10, isoRef: 'ISO 22301 7.1 (자원)' },
+    { area: 1, title: '기업의 이해', chapter: '제3장', items: [
+      { id: '1-1', title: '대내·외 경영실태 분석 및 이해관계자 요구사항 파악' },
+      { id: '1-2', title: '법령·규제 요구사항 확인 및 문서화' },
+      { id: '1-3', title: '위험과 기회의 식별' },
+      { id: '1-4', title: '최고관리자 역할·조직 구성 및 내부방침 수립' },
     ]},
-    { field: 2, title: '재해예방활동', maxScore: 30, items: [
-      { id: '2-1', title: '위험요소 파악 및 개선', maxScore: 15, isoRef: 'ISO 22301 8.3 (리스크 평가)' },
-      { id: '2-2', title: '안전점검 실시', maxScore: 15, isoRef: 'ISO 22301 9.1 (모니터링·측정·분석·평가)' },
+    { area: 2, title: '업무영향분석 및 위험평가', chapter: '제4장', items: [
+      { id: '2-1', title: '핵심업무 식별 및 MTPD·RTO·RPO 설정 (업무영향분석)' },
+      { id: '2-2', title: '위험식별·분석·평가 및 최대추정손실액 산정' },
+      { id: '2-3', title: '재해경감활동계획 목표 설정 및 달성계획 수립' },
     ]},
-    { field: 3, title: '재해대응 및 복구활동', maxScore: 40, items: [
-      { id: '3-1', title: '비상대응계획 수립', maxScore: 15, isoRef: 'ISO 22301 8.5 (업무연속성 계획 및 절차)' },
-      { id: '3-2', title: '교육훈련 실시', maxScore: 15, isoRef: 'ISO 22301 8.6 (훈련 및 시험)' },
-      { id: '3-3', title: '복구계획 수립', maxScore: 10, isoRef: 'ISO 22301 8.4 (업무연속성 전략 및 솔루션)' },
+    { area: 3, title: '예방', chapter: '제5.1장', items: [
+      { id: '3-1', title: '사업연속성 전략 결정 및 선택' },
+      { id: '3-2', title: '전문인력(기업재난관리사 등) 및 예산 확보' },
+      { id: '3-3', title: '위험요인 관리·통제 및 물리적 예방조치' },
+      { id: '3-4', title: '필수 지원요소(전기·가스·수도·통신) 보호 및 사이버보안 조치' },
+    ]},
+    { area: 4, title: '대비', chapter: '제5.2장', items: [
+      { id: '4-1', title: '재해경감활동 절차 구축 및 소요자원 확보·관리' },
+      { id: '4-2', title: '재무관리 계획 수립' },
+      { id: '4-3', title: '비상연락망 현행화 및 대피계획 수립' },
+      { id: '4-4', title: '교육프로그램 운영 및 훈련·평가 실시 (연1회 이상)' },
+    ]},
+    { area: 5, title: '대응', chapter: '제5.3장', items: [
+      { id: '5-1', title: '재난(사고)대응체계 구축 (비상대응조직·위기관리총괄조직·사업복구조직)' },
+      { id: '5-2', title: '경보 및 의사소통 절차 구축·훈련' },
+      { id: '5-3', title: '긴급대응 절차 (위험전파·주민대피·지원요청·협조체계)' },
+    ]},
+    { area: 6, title: '복구', chapter: '제5.4장', items: [
+      { id: '6-1', title: '사업연속성확보계획(BCP) 수립' },
+      { id: '6-2', title: '평시 업무체제 복귀 절차 및 피해현황 파악·전파' },
+      { id: '6-3', title: '피해자 지원·재무영향 검토·폐기물 처리계획' },
+      { id: '6-4', title: '피해 재발방지대책 및 2차 피해 방지계획' },
+    ]},
+    { area: 7, title: '수행평가 및 개선', chapter: '제6~7장', items: [
+      { id: '7-1', title: '모니터링·측정·분석·평가 실시' },
+      { id: '7-2', title: '내부감사 및 경영진 검토 실시 (연1회 이상)' },
+      { id: '7-3', title: '계획 적합성 검증 및 개선조치 이행' },
     ]},
   ];
+  /* 25항목 × 5점 = 125점 만점 → 100점 환산 */
+  const DR_MAX_RAW = DR_FIELDS.reduce((s, f) => s + f.items.length * 5, 0);
+  const DR_SCORE_LABELS = ['미실시', '계획 수립', '일부 이행', '이행 중', '체계적 이행', '우수'];
 
   /* ═══════════════════════════════════════════
      Summary Metrics
@@ -671,12 +699,12 @@
 
     /* 재해경감우수기업 충족률 */
     const drData = loadJSON(DR_KEY, {});
-    let drTotal = 0;
+    let drRaw = 0;
     DR_FIELDS.forEach(f => f.items.forEach(i => {
-      drTotal += Number((drData[i.id] || {}).score || 0);
+      drRaw += Math.min(Number((drData[i.id] || {}).score || 0), 5);
     }));
-    const drPct = Math.round(drTotal);
-    document.getElementById('mDisaster').textContent = `${drPct}점 (${Math.round(drPct)}%)`;
+    const drPct = Math.round(drRaw / DR_MAX_RAW * 100);
+    document.getElementById('mDisaster').textContent = `${drPct}점`;
 
     /* 미완료 CAPA */
     const capas = loadJSON(CAPA_KEY, []);
@@ -855,23 +883,24 @@
     const mount = document.getElementById('drMount');
 
     mount.innerHTML = DR_FIELDS.map(f => {
-      const fieldScore = f.items.reduce((sum, i) =>
-        sum + Math.min(Number((data[i.id] || {}).score || 0), i.maxScore), 0);
+      const areaMax   = f.items.length * 5;
+      const areaScore = f.items.reduce((sum, i) =>
+        sum + Math.min(Number((data[i.id] || {}).score || 0), 5), 0);
 
       const itemsHtml = f.items.map(i => {
-        const entry = data[i.id] || {};
+        const entry    = data[i.id] || {};
+        const curScore = Number(entry.score ?? 0);
+        const opts = DR_SCORE_LABELS.map((lbl, v) =>
+          `<option value="${v}"${curScore === v ? ' selected' : ''}>${v} — ${lbl}</option>`
+        ).join('');
         return `<div class="drItemRow">
           <div>
-            <div class="drItemTitle">${esc(i.title)}</div>
-            <div class="drItemRef">${esc(i.isoRef)}</div>
+            <div class="drItemTitle"><span style="font-size:11px;font-weight:700;font-family:'SF Mono','Consolas',monospace;color:var(--accent);margin-right:6px">${esc(i.id)}</span>${esc(i.title)}</div>
           </div>
           <div class="drScoreWrap">
-            <label>자가평가</label>
-            <input type="number" class="drScoreInput" data-dr-id="${esc(i.id)}"
-              min="0" max="${i.maxScore}" step="1" value="${esc(entry.score ?? '')}">
-            <div class="drMaxLabel">/ ${i.maxScore}점</div>
+            <label>자가평가 (0~5)</label>
+            <select class="drScoreInput" data-dr-id="${esc(i.id)}">${opts}</select>
           </div>
-          <div></div>
           <textarea class="drEvidenceInput" data-dr-ev="${esc(i.id)}"
             placeholder="증거자료 링크·메모">${esc(entry.evidence || '')}</textarea>
         </div>`;
@@ -879,8 +908,8 @@
 
       return `<div class="sectionCard">
         <div class="drHeader">
-          <span class="drHeaderTitle">[${f.field}분야] ${esc(f.title)}</span>
-          <span class="drMaxScore">소계 ${fieldScore}점 / ${f.maxScore}점</span>
+          <span class="drHeaderTitle">[${f.area}영역] ${esc(f.title)} <span style="font-size:11px;font-weight:500;color:var(--text-3)">${esc(f.chapter)}</span></span>
+          <span class="drMaxScore">소계 ${areaScore}점 / ${areaMax}점</span>
         </div>
         <div>${itemsHtml}</div>
       </div>`;
@@ -891,33 +920,33 @@
 
   const updateDrGrade = (data) => {
     if (!data) data = loadJSON(DR_KEY, {});
-    let total = 0;
+    let rawTotal = 0;
     DR_FIELDS.forEach(f => f.items.forEach(i => {
-      total += Math.min(Number((data[i.id] || {}).score || 0), i.maxScore);
+      rawTotal += Math.min(Number((data[i.id] || {}).score || 0), 5);
     }));
-    document.getElementById('drTotalScore').textContent = total;
-    document.getElementById('drGaugeFill').style.width  = `${total}%`;
+    const score100 = Math.round(rawTotal / DR_MAX_RAW * 100);
+    document.getElementById('drTotalScore').textContent = score100;
+    document.getElementById('drGaugeFill').style.width  = `${score100}%`;
     const badge = document.getElementById('drGradeBadge');
-    if (total >= 80) {
+    if (score100 >= 80) {
       badge.textContent = '우수'; badge.className = 'gradeBadge A';
-    } else if (total >= 60) {
+    } else if (score100 >= 60) {
       badge.textContent = '양호'; badge.className = 'gradeBadge B';
     } else {
-      badge.textContent = '보통'; badge.className = 'gradeBadge C';
+      badge.textContent = '미흡'; badge.className = 'gradeBadge C';
     }
   };
 
-  document.getElementById('drMount').addEventListener('input', e => {
+  document.getElementById('drMount').addEventListener('change', e => {
     if (e.target.classList.contains('drScoreInput')) {
       const tempData = collectDrData();
       updateDrGrade(tempData);
-      /* update field sub-totals */
       document.querySelectorAll('.drMaxScore').forEach((el, fi) => {
         const f = DR_FIELDS[fi];
         if (!f) return;
         const sub = f.items.reduce((s, i) =>
-          s + Math.min(Number((tempData[i.id] || {}).score || 0), i.maxScore), 0);
-        el.textContent = `소계 ${sub}점 / ${f.maxScore}점`;
+          s + Math.min(Number((tempData[i.id] || {}).score || 0), 5), 0);
+        el.textContent = `소계 ${sub}점 / ${f.items.length * 5}점`;
       });
     }
   });
