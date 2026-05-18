@@ -334,12 +334,13 @@
     `작성기준일: ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 &nbsp;|&nbsp; 작성부서: BCMS 담당부서 &nbsp;|&nbsp; 준거: ISO 22301:2019`;
 
   /* ── 데이터 로드 ── */
-  const biaData   = arr(load('bcmsBIAData', []));
-  const riskData  = arr(load('bcmsRiskList', null) ?? load('bcmsRiskAssessment', []));
-  const bcpRaw    = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
-  const bcpData   = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
-  const confirmed = arr(load('bcmsPriorityConfirmed', []));
-  const trainData = arr(load('bcmsTrainingData', []));
+  const biaData      = arr(load('bcmsBIAData', []));
+  const riskData     = arr(load('bcmsRiskList', null) ?? load('bcmsRiskAssessment', []));
+  const bcpRaw       = load('bcmsBCP', null) ?? load('bcmsBCPStrategy', []);
+  const bcpTeamsArr  = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
+  const bcpData      = bcpTeamsArr.flatMap(t => arr(t && t.strategies));
+  const confirmedRaw = load('bcmsPriorityConfirmed', {});
+  const trainData    = arr(load('bcmsTrainingData', []));
   const capaData  = arr(load('bcmsCapaItems', []));
   const gapData   = arr(load('bcmsGapAnalysis', []));
   const docsData  = arr(load('bcmsDocuments', []));
@@ -373,11 +374,13 @@
   /* ── KPI 계산 ── */
   function pctClass(p) { return p >= 70 ? 'green' : p >= 50 ? 'yellow' : 'red'; }
 
-  // ① BIA 등록 수
-  const biaCnt = biaData.length;
+  // ① BIA 등록 수 (팀별 functions 합산, 없으면 팀 수)
+  const biaCnt = biaData.reduce((s, r) => s + (r ? arr(r.functions).length : 0), 0) || biaData.length;
 
-  // ② 핵심업무 확정률
-  const confirmedCnt = confirmed.length;
+  // ② 핵심업무 확정률 ({key:true} 객체에서 true인 항목 수)
+  const confirmedCnt = (confirmedRaw && typeof confirmedRaw === 'object' && !Array.isArray(confirmedRaw))
+    ? Object.values(confirmedRaw).filter(v => v === true).length
+    : arr(confirmedRaw).length;
   const confirmPct   = biaCnt > 0 ? clamp(confirmedCnt / biaCnt * 100) : 0;
 
   // ③ 중점관리 리스크
@@ -465,17 +468,26 @@
 
   /* ── BIA 팀별 현황 ── */
   const teamMap = {};
-  biaData.forEach(r => {
-    if (!r) return;
-    const team = String(r.team ?? r.dept ?? r.department ?? r['부서'] ?? r.teamName ?? '미지정').trim() || '미지정';
+  biaData.forEach(row => {
+    if (!row) return;
+    const team = String(row.team ?? row.dept ?? row.department ?? row['부서'] ?? row.teamName ?? '미지정').trim() || '미지정';
     if (!teamMap[team]) teamMap[team] = { total: 0, confirmed: 0 };
-    teamMap[team].total++;
-    const id = r.id ?? r.functionId ?? '';
-    if (confirmed.some(c => c === id || c === r.name || (c && typeof c === 'object' && (c.id === id || c.name === r.name)))) {
-      teamMap[team].confirmed++;
+    const fns = arr(row.functions);
+    if (fns.length) {
+      fns.forEach(fn => {
+        if (!fn) return;
+        teamMap[team].total++;
+        const key1 = `${team}__${String(fn.name ?? fn.function ?? '').trim()}`;
+        const key2 = String(fn.biaId ?? fn.id ?? '').trim();
+        if (confirmedRaw[key1] === true || (key2 && confirmedRaw[key2] === true)) {
+          teamMap[team].confirmed++;
+        }
+      });
+    } else {
+      teamMap[team].total++;
     }
   });
-  const bcpTeams = new Set(bcpData.map(b => b && (b.team ?? b.dept ?? '')).filter(Boolean));
+  const bcpTeamSet = new Set(bcpTeamsArr.map(t => t && String(t.team ?? t.dept ?? '')).filter(Boolean));
 
   const teamRows = Object.entries(teamMap).slice(0, 10);
   const biaTbody = document.getElementById('biaTbody');
@@ -487,7 +499,7 @@
         <td>${esc(team)}</td>
         <td style="text-align:center">${d.total}</td>
         <td style="text-align:center">${d.confirmed}</td>
-        <td style="text-align:center"><span class="ynTag ${bcpTeams.has(team) ? 'y' : 'n'}">${bcpTeams.has(team) ? 'O' : 'X'}</span></td>
+        <td style="text-align:center"><span class="ynTag ${bcpTeamSet.has(team) ? 'y' : 'n'}">${bcpTeamSet.has(team) ? 'O' : 'X'}</span></td>
       </tr>`
     ).join('');
   }
@@ -497,8 +509,7 @@
     .filter(r => r)
     .sort((a, b) => (b.riskScore ?? b.score ?? 0) - (a.riskScore ?? a.score ?? 0))
     .slice(0, 5);
-  const bcpIds = new Set(bcpData.map(b => b && (b.id ?? b.functionId ?? '')).filter(Boolean));
-  function hasBcp(r) { return bcpTeams.has(r.team ?? r.dept ?? '') || bcpIds.has(r.id ?? r.functionId ?? ''); }
+  function hasBcp(r) { return bcpTeamSet.has(String(r.team ?? r.dept ?? '')); }
 
   const riskTbody = document.getElementById('riskTbody');
   if (top5.length === 0) {
