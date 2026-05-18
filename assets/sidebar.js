@@ -474,4 +474,171 @@
     document.addEventListener("keydown", function(e){ if (e.key === "Escape" && modalEl) closeModal(); });
   })();
 
+  // =========================================================
+  // ✅ 페이지별 컨텍스트 배너
+  // =========================================================
+  (function initContextBanner() {
+    const BANNER_DATA = {
+      "governance/policy.html": {
+        iso: "📋 ISO 22301 5.2 · 6.2조",
+        task: "BCMS 정책 작성 후 경영진 서명을 받으세요",
+        nextLabel: "다음: 조직 관리",
+        nextHref: H("/governance/org.html"),
+      },
+      "governance/org.html": {
+        iso: "📋 ISO 22301 5.3조",
+        task: "평상시 조직도와 비상대응 조직도를 모두 작성하세요",
+        nextLabel: "다음: 문서체계",
+        nextHref: H("/governance/docs.html"),
+      },
+      "governance/docs.html": {
+        iso: "📋 ISO 22301 7.5조",
+        task: "BCMS 필수 문서를 등록하고 검토 주기를 설정하세요",
+        nextLabel: "다음: BIA 시작",
+        nextHref: H("/risk-bia/bia.html"),
+      },
+      "risk-bia/bia.html": {
+        iso: "📋 ISO 22301 8.2조",
+        task: "팀별 핵심업무를 등록하고 MTPD와 RTO를 설정하세요",
+        nextLabel: "다음: 리스크 평가",
+        nextHref: H("/risk-bia/risk.html"),
+      },
+      "risk-bia/risk.html": {
+        iso: "📋 ISO 22301 8.2조",
+        task: "핵심업무별 중단 위협을 식별하고 위험도를 산출하세요",
+        nextLabel: "다음: 우선순위 확정",
+        nextHref: H("/risk-bia/priority.html"),
+      },
+      "risk-bia/priority.html": {
+        iso: "📋 ISO 22301 8.2조",
+        task: "BCP 수립 대상 업무를 확정하고 토글을 ON으로 설정하세요",
+        nextLabel: "다음: BCP 전략 수립",
+        nextHref: H("/strategy-plans/bcp.html"),
+      },
+      "strategy-plans/bcp.html": {
+        iso: "📋 ISO 22301 8.3조",
+        task: "중점관리 리스크별 연속성 전략을 선택하고 내용을 입력하세요",
+        nextLabel: "다음: 연속성 절차",
+        nextHref: H("/strategy-plans/drp.html"),
+      },
+      "strategy-plans/drp.html": {
+        iso: "📋 ISO 22301 8.4조",
+        task: "BCP 발동 조건과 대체운영 절차를 등록하세요",
+        nextLabel: "다음: 훈련 계획",
+        nextHref: H("/training/index.html"),
+      },
+      "training/index.html": {
+        iso: "📋 ISO 22301 8.5조",
+        task: "연간 훈련 계획을 수립하고 훈련을 실시 후 결과를 기록하세요",
+        nextLabel: "다음: 갭분석 실시",
+        nextHref: H("/audit/index.html"),
+      },
+      "audit/index.html": {
+        iso: "📋 ISO 22301 9조",
+        task: "ISO 22301 조항별 갭분석을 실시하고 미충족 항목은 CAPA로 등록하세요",
+        nextLabel: "다음: 경영 보고서",
+        nextHref: H("/reports/executive-summary.html"),
+      },
+      "reports/executive-summary.html": {
+        iso: "📋 ISO 22301 9.3조",
+        task: "경영진 보고서를 작성하고 PDF로 출력해 경영진 서명을 받으세요",
+        nextLabel: "다음: 운영센터 확인",
+        nextHref: H("/op-center/index.html"),
+      },
+      "op-center/index.html": {
+        iso: "📋 ISO 22301 9.1조",
+        task: "BCMS 전체 진행률을 확인하고 오늘 할 일을 처리하세요",
+        nextLabel: null,
+        nextHref: null,
+      },
+      "library/bcp.html": {
+        iso: "📋 ISO 22301 8.4조",
+        task: "BCP 절차서를 작성하고 인쇄하여 심사 제출용으로 보관하세요",
+        nextLabel: "다음: EOP 절차서",
+        nextHref: H("/library/eop.html"),
+      },
+      "library/eop.html": {
+        iso: "📋 ISO 22301 8.4조",
+        task: "비상대응절차서를 작성하고 비상시 접근 가능한 곳에 보관하세요",
+        nextLabel: "다음: SOP 절차서",
+        nextHref: H("/library/sop.html"),
+      },
+      "library/sop.html": {
+        iso: "📋 ISO 22301 8.4조",
+        task: "BCMS 운영 관련 표준절차를 등록하세요",
+        nextLabel: "다음: 절차서 라이브러리",
+        nextHref: H("/library/index.html"),
+      },
+    };
+
+    const pagePath = window.location.pathname;
+    let bannerData = null;
+    for (const key of Object.keys(BANNER_DATA)) {
+      if (pagePath.includes(key)) { bannerData = BANNER_DATA[key]; break; }
+    }
+    if (!bannerData) return;
+
+    const bannerSt = document.createElement("style");
+    bannerSt.textContent = `
+      .contextBanner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 20px;
+        height: 36px;
+        background: rgba(0,112,243,0.06);
+        border-bottom: 0.5px solid rgba(0,112,243,0.15);
+        font-size: 12px;
+        color: var(--text-2);
+        flex-shrink: 0;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .isoTag {
+        font-weight: 700;
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+      .bannerDivider {
+        color: var(--border-strong);
+        flex-shrink: 0;
+      }
+      .bannerTask {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bannerNext {
+        font-weight: 600;
+        color: var(--accent);
+        text-decoration: none;
+        flex-shrink: 0;
+      }
+      .bannerNext:hover { text-decoration: underline; }
+      @media print { .contextBanner { display: none !important; } }
+    `;
+    document.head.appendChild(bannerSt);
+
+    const banner = document.createElement("div");
+    banner.className = "contextBanner";
+    banner.innerHTML =
+      `<span class="isoTag">${bannerData.iso}</span>` +
+      `<span class="bannerDivider">|</span>` +
+      `<span class="bannerTask">${bannerData.task}</span>` +
+      (bannerData.nextLabel
+        ? `<a class="bannerNext" href="${bannerData.nextHref}">→ ${bannerData.nextLabel} →</a>`
+        : "");
+
+    function tryInsert() {
+      const target = document.querySelector(".main") || document.querySelector(".wrap");
+      if (!target) return false;
+      target.prepend(banner);
+      return true;
+    }
+
+    if (!tryInsert()) {
+      document.addEventListener("DOMContentLoaded", tryInsert);
+    }
+  })();
+
 })();
