@@ -587,12 +587,13 @@
         padding: 0 20px;
         height: 36px;
         background: rgba(0,112,243,0.06);
-        border-bottom: 0.5px solid rgba(0,112,243,0.15);
+        box-shadow: 0 1px 0 rgba(0,112,243,0.15);
         font-size: 12px;
         color: var(--text-2);
         flex-shrink: 0;
         white-space: nowrap;
         overflow: hidden;
+        margin-bottom: 8px;
       }
       .isoTag {
         font-weight: 700;
@@ -632,7 +633,16 @@
     function tryInsert() {
       const target = document.querySelector(".main") || document.querySelector(".wrap");
       if (!target) return false;
-      target.prepend(banner);
+      const demoBanner = target.querySelector(".demoBanner") ||
+        Array.from(target.children).find(el =>
+          el !== banner &&
+          el.style && el.style.background && el.style.background.includes("rgba")
+        );
+      if (demoBanner) {
+        demoBanner.insertAdjacentElement("afterend", banner);
+      } else {
+        target.prepend(banner);
+      }
       return true;
     }
 
