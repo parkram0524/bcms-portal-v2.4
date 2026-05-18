@@ -107,6 +107,231 @@
     ]
   };
 
+  // ── 업종별 BIA + RISK 샘플 ──────────────────────────────────────
+  const INDUSTRY_DATA = {
+    'IDC': {
+      [KEYS.BIA]: DEMO[KEYS.BIA],
+      [KEYS.RISK]: DEMO[KEYS.RISK]
+    },
+    '제조업': {
+      [KEYS.BIA]: [
+        { team:'생산팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'생산라인 운영', importance:'핵심', overallImpact:5, impact:5, mtpd:'24h', rto:'8h', rtoValue:'8', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'품질검사', importance:'중요', overallImpact:3, impact:3, mtpd:'48h', rto:'24h', rtoValue:'24', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'물류팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'원자재 입고 관리', importance:'핵심', overallImpact:4, impact:4, mtpd:'24h', rto:'8h', rtoValue:'8', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'완제품 출하', importance:'핵심', overallImpact:5, impact:5, mtpd:'12h', rto:'4h', rtoValue:'4', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'설비팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'주요 설비 보전', importance:'중요', overallImpact:4, impact:4, mtpd:'48h', rto:'24h', rtoValue:'24', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG },
+          { name:'유틸리티 관리', importance:'일반', overallImpact:2, impact:2, mtpd:'72h', rto:'48h', rtoValue:'48', rtoUnit:'시간', grade:'일반', requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'구매팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'핵심 원자재 조달', importance:'핵심', overallImpact:4, impact:4, mtpd:'48h', rto:'24h', rtoValue:'24', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'품질팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'품질기준 관리', importance:'중요', overallImpact:3, impact:3, mtpd:'72h', rto:'48h', rtoValue:'48', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]}
+      ],
+      [KEYS.RISK]: [
+        { team:'생산팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'생산라인 운영', risk:'주요 설비 고장', likelihood:3, impact:5, riskScore:15, riskLevel:'높음', critical:true, ...DEMO_TAG },
+          { function:'생산라인 운영', risk:'원자재 공급 중단', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'물류팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'원자재 입고 관리', risk:'물류 시스템 장애', likelihood:2, impact:4, riskScore:8, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'완제품 출하', risk:'운송 차질', likelihood:3, impact:4, riskScore:12, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'설비팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'주요 설비 보전', risk:'전력 공급 중단', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'유틸리티 관리', risk:'용수 공급 중단', likelihood:1, impact:3, riskScore:3, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'구매팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'핵심 원자재 조달', risk:'핵심 공급업체 부도', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'품질팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'품질기준 관리', risk:'품질시스템 오류', likelihood:2, impact:3, riskScore:6, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]}
+      ]
+    },
+    '금융': {
+      [KEYS.BIA]: [
+        { team:'IT운영팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'핵심뱅킹시스템 운영', importance:'핵심', overallImpact:5, impact:5, mtpd:'2h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'배치처리 운영', importance:'핵심', overallImpact:4, impact:4, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'결제시스템팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'온라인결제 처리', importance:'핵심', overallImpact:5, impact:5, mtpd:'1h', rto:'30분', rtoValue:'30', rtoUnit:'분', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'ATM 네트워크 운영', importance:'핵심', overallImpact:4, impact:4, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'고객서비스팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'콜센터 운영', importance:'중요', overallImpact:3, impact:3, mtpd:'8h', rto:'4h', rtoValue:'4', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG },
+          { name:'인터넷뱅킹 서비스', importance:'핵심', overallImpact:5, impact:5, mtpd:'2h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'리스크관리팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'실시간 리스크 모니터링', importance:'핵심', overallImpact:4, impact:4, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'준법감시팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'금융거래 보고', importance:'중요', overallImpact:3, impact:3, mtpd:'24h', rto:'8h', rtoValue:'8', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]}
+      ],
+      [KEYS.RISK]: [
+        { team:'IT운영팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'핵심뱅킹시스템 운영', risk:'핵심 시스템 장애', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'배치처리 운영', risk:'배치 처리 실패', likelihood:3, impact:4, riskScore:12, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'결제시스템팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'온라인결제 처리', risk:'결제망 장애', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'ATM 네트워크 운영', risk:'ATM 네트워크 중단', likelihood:2, impact:4, riskScore:8, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'고객서비스팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'인터넷뱅킹 서비스', risk:'사이버 공격·해킹', likelihood:3, impact:5, riskScore:15, riskLevel:'높음', critical:true, ...DEMO_TAG },
+          { function:'콜센터 운영', risk:'인력 대규모 부재', likelihood:2, impact:3, riskScore:6, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'리스크관리팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'실시간 리스크 모니터링', risk:'데이터 손실', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'준법감시팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'금융거래 보고', risk:'시스템 오류로 보고 지연', likelihood:2, impact:3, riskScore:6, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]}
+      ]
+    },
+    '공공기관': {
+      [KEYS.BIA]: [
+        { team:'기획팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'비상연락·보고체계 운영', importance:'핵심', overallImpact:5, impact:5, mtpd:'1h', rto:'30분', rtoValue:'30', rtoUnit:'분', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'IT팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'행정전산망·네트워크 운영', importance:'핵심', overallImpact:4, impact:4, mtpd:'8h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'행정팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'내부결재·문서관리', importance:'핵심', overallImpact:4, impact:4, mtpd:'24h', rto:'8h', rtoValue:'8', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'민원팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'민원처리·대민서비스', importance:'핵심', overallImpact:4, impact:4, mtpd:'24h', rto:'8h', rtoValue:'8', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'재무팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'예산·회계 처리', importance:'중요', overallImpact:3, impact:3, mtpd:'48h', rto:'24h', rtoValue:'24', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'인사팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'인사·급여 관리', importance:'중요', overallImpact:3, impact:3, mtpd:'72h', rto:'48h', rtoValue:'48', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'시설팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'시설·보안 관리', importance:'중요', overallImpact:3, impact:3, mtpd:'4h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'중요', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]}
+      ],
+      [KEYS.RISK]: [
+        { team:'기획팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'비상연락·보고체계 운영', risk:'통신망 장애·중단', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'IT팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'행정전산망·네트워크 운영', risk:'행정전산망 장애·중단', likelihood:3, impact:5, riskScore:15, riskLevel:'높음', critical:true, ...DEMO_TAG },
+          { function:'행정전산망·네트워크 운영', risk:'랜섬웨어로 행정시스템 마비', likelihood:3, impact:5, riskScore:15, riskLevel:'높음', critical:true, ...DEMO_TAG }
+        ]},
+        { team:'행정팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'내부결재·문서관리', risk:'개인정보 대량 유출', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'민원팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'민원처리·대민서비스', risk:'민원시스템 장애', likelihood:2, impact:4, riskScore:8, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'재무팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'예산·회계 처리', risk:'회계시스템 장애', likelihood:2, impact:3, riskScore:6, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'인사팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'인사·급여 관리', risk:'감염병 확산으로 인력 운용 불가', likelihood:2, impact:4, riskScore:8, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'시설팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'시설·보안 관리', risk:'홍수·지진으로 청사 기능 마비', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]}
+      ]
+    },
+    '고속도로': {
+      [KEYS.BIA]: [
+        { team:'교통관제팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'교통관제시스템 운영', importance:'핵심', overallImpact:5, impact:5, mtpd:'1h', rto:'30분', rtoValue:'30', rtoUnit:'분', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'사고·긴급상황 대응', importance:'핵심', overallImpact:5, impact:5, mtpd:'30분', rto:'10분', rtoValue:'10', rtoUnit:'분', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'요금수납팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'하이패스 시스템 운영', importance:'핵심', overallImpact:4, impact:4, mtpd:'2h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'요금수납 처리', importance:'중요', overallImpact:3, impact:3, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'시설유지팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'터널·교량 안전관리', importance:'핵심', overallImpact:5, impact:5, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'도로 유지보수', importance:'중요', overallImpact:3, impact:3, mtpd:'24h', rto:'8h', rtoValue:'8', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'정보통신팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'도로전광표지 운영', importance:'핵심', overallImpact:4, impact:4, mtpd:'2h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'안전관리팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'재난·긴급상황 대응', importance:'핵심', overallImpact:5, impact:5, mtpd:'1h', rto:'30분', rtoValue:'30', rtoUnit:'분', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]}
+      ],
+      [KEYS.RISK]: [
+        { team:'교통관제팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'교통관제시스템 운영', risk:'관제시스템 전면 장애', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'사고·긴급상황 대응', risk:'대형 교통사고 발생', likelihood:3, impact:5, riskScore:15, riskLevel:'높음', critical:true, ...DEMO_TAG }
+        ]},
+        { team:'요금수납팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'하이패스 시스템 운영', risk:'하이패스 네트워크 장애', likelihood:3, impact:4, riskScore:12, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'요금수납 처리', risk:'수납시스템 장애', likelihood:2, impact:3, riskScore:6, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'시설유지팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'터널·교량 안전관리', risk:'터널 화재 발생', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'도로 유지보수', risk:'폭설·결빙으로 도로 폐쇄', likelihood:3, impact:4, riskScore:12, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'정보통신팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'도로전광표지 운영', risk:'전광표지 시스템 장애', likelihood:2, impact:4, riskScore:8, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'안전관리팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'재난·긴급상황 대응', risk:'홍수·산사태로 도로 차단', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]}
+      ]
+    },
+    '통신': {
+      [KEYS.BIA]: [
+        { team:'네트워크운영팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'핵심 네트워크 운영', importance:'핵심', overallImpact:5, impact:5, mtpd:'1h', rto:'30분', rtoValue:'30', rtoUnit:'분', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'인터넷 서비스 제공', importance:'핵심', overallImpact:5, impact:5, mtpd:'2h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'교환시스템팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'음성교환시스템 운영', importance:'핵심', overallImpact:5, impact:5, mtpd:'2h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG },
+          { name:'SMS·MMS 처리', importance:'중요', overallImpact:3, impact:3, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'고객지원팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'고객센터 운영', importance:'중요', overallImpact:3, impact:3, mtpd:'8h', rto:'4h', rtoValue:'4', rtoUnit:'시간', grade:'중요', requiredResources:[], ...DEMO_TAG },
+          { name:'장애접수·처리', importance:'핵심', overallImpact:4, impact:4, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'인프라팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'전산센터 운영', importance:'핵심', overallImpact:5, impact:5, mtpd:'2h', rto:'1h', rtoValue:'1', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]},
+        { team:'보안팀', isDemo:true, demoLabel:'예시', functions:[
+          { name:'보안관제', importance:'핵심', overallImpact:4, impact:4, mtpd:'4h', rto:'2h', rtoValue:'2', rtoUnit:'시간', grade:'핵심', coreFinal:true, requiredResources:[], ...DEMO_TAG }
+        ]}
+      ],
+      [KEYS.RISK]: [
+        { team:'네트워크운영팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'핵심 네트워크 운영', risk:'핵심 네트워크 노드 장애', likelihood:3, impact:5, riskScore:15, riskLevel:'높음', critical:true, ...DEMO_TAG },
+          { function:'인터넷 서비스 제공', risk:'해저케이블 절단', likelihood:1, impact:5, riskScore:5, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'교환시스템팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'음성교환시스템 운영', risk:'교환기 전면 장애', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'SMS·MMS 처리', risk:'스팸·DDoS 공격', likelihood:3, impact:3, riskScore:9, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'고객지원팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'장애접수·처리', risk:'대규모 동시 장애 접수', likelihood:2, impact:4, riskScore:8, riskLevel:'보통', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'인프라팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'전산센터 운영', risk:'전력 공급 중단', likelihood:2, impact:5, riskScore:10, riskLevel:'보통', critical:false, ...DEMO_TAG },
+          { function:'전산센터 운영', risk:'화재 발생', likelihood:1, impact:5, riskScore:5, riskLevel:'낮음', critical:false, ...DEMO_TAG }
+        ]},
+        { team:'보안팀', isDemo:true, demoLabel:'예시', risks:[
+          { function:'보안관제', risk:'대규모 사이버 공격', likelihood:3, impact:5, riskScore:15, riskLevel:'높음', critical:true, ...DEMO_TAG }
+        ]}
+      ]
+    }
+  };
+
   function parse(raw, fb){ try{ return JSON.parse(raw); }catch(e){ return fb; } }
   function getArr(key){ const v = parse(localStorage.getItem(key) || '[]', []); return Array.isArray(v) ? v : []; }
   function setArr(key, arr){
@@ -182,9 +407,14 @@
     const apply = force || allMainEmpty();
     if(!apply) return false;
 
+    const industry = (localStorage.getItem('bcmsIndustry') || 'IDC').trim();
+    const indData = INDUSTRY_DATA[industry] || INDUSTRY_DATA['IDC'];
+
     Object.values(KEYS).forEach((key)=>{
       const current = removeDemoFromList(key, getArr(key));
-      const demo = DEMO[key] || [];
+      const demo = (key === KEYS.BIA || key === KEYS.RISK)
+        ? (indData[key] || [])
+        : (DEMO[key] || []);
       let next;
       if(key === KEYS.CORE) {
         const teams = new Set(current.map((x)=>x.team));
