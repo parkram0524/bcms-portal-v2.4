@@ -411,10 +411,13 @@
     const indData = INDUSTRY_DATA[industry] || INDUSTRY_DATA['IDC'];
 
     Object.values(KEYS).forEach((key)=>{
+      // BIA/RISK: 업종별 데이터로 직접 덮어쓰기 (merge 없음)
+      if (key === KEYS.BIA || key === KEYS.RISK) {
+        setArr(key, indData[key] || []);
+        return;
+      }
       const current = removeDemoFromList(key, getArr(key));
-      const demo = (key === KEYS.BIA || key === KEYS.RISK)
-        ? (indData[key] || [])
-        : (DEMO[key] || []);
+      const demo = DEMO[key] || [];
       let next;
       if(key === KEYS.CORE) {
         const teams = new Set(current.map((x)=>x.team));

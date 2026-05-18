@@ -589,22 +589,17 @@
     if (selectedIndustry) localStorage.setItem(INDUSTRY_KEY, selectedIndustry);
     if (selectedGoal)     localStorage.setItem(GOAL_KEY, selectedGoal);
 
-    /* 기존 데이터 없을 때만 샘플 자동 로드 */
-    const hasSample = selectedIndustry && SAMPLE_DATA[selectedIndustry];
-    if (hasSample) {
-      try {
-        const biaRaw  = JSON.parse(localStorage.getItem(BIA_KEY)  || '[]');
-        const riskRaw = JSON.parse(localStorage.getItem(RISK_KEY) || '[]');
-        const hasData = (Array.isArray(biaRaw)  && biaRaw.length  > 0) ||
-                        (Array.isArray(riskRaw) && riskRaw.length > 0);
-        if (!hasData) loadSampleData(selectedIndustry);
-      } catch(e) {}
-    }
+    // 기존 BIA/리스크/BCP 데이터 초기화 (업종 변경 시 구 데이터 잔존 방지)
+    ['bcmsBIAData', 'bcmsRiskAssessment', 'bcmsRiskList',
+     'bcmsBCPStrategy', 'bcmsBCP', 'bcmsPriorityConfirmed'].forEach(k => localStorage.removeItem(k));
+
+    // 새 업종 샘플 강제 로드
+    const loaded = window.BCMSDemoSeed?.loadDemo({ force: true });
 
     if (rootEl) { rootEl.remove(); rootEl = null; }
 
     const redirect = window.BCMS_ONBOARDING_REDIRECT;
-    if (hasSample) {
+    if (loaded && selectedIndustry) {
       showToast(`✓ ${selectedIndustry} 샘플 데이터 로드 완료`);
       setTimeout(() => {
         if (redirect) window.location.href = redirect;
@@ -612,6 +607,8 @@
       }, 900);
     } else if (redirect) {
       window.location.href = redirect;
+    } else {
+      window.location.reload();
     }
   }
 
