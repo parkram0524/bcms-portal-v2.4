@@ -132,7 +132,7 @@
       }
 
       const KEY_BIA = 'bcmsBIAData';
-      const KEY_RISK = 'bcmsRiskAssessment';
+      const KEY_RISK = 'bcmsRiskList';
       const KEY_BCP = 'bcmsBCP';
 
       const STRATEGY_TYPES = ['예방/감축','대체 운영','대체 설비','수동 처리','우회 처리','외부 지원','자원 이중화','모니터링 강화'];
@@ -190,6 +190,27 @@
       }
 
       function normalizeRiskRows(raw) {
+        if (!Array.isArray(raw) || !raw.length) return [];
+
+        // bcmsRiskList: flat array (items have riskName, not team+risks)
+        const isFlat = raw[0].riskName !== undefined || (raw[0].team === undefined && raw[0].risks === undefined);
+        if (isFlat) {
+          const teamMap = new Map();
+          for (const item of raw) {
+            const riskName = normalizeText(item.riskName || item.risk || item.name, '');
+            if (!riskName) continue;
+            const team = normalizeText(item.riskType, '기타');
+            const impact = toNum(item.impact) ?? 3;
+            const likelihood = toNum(item.likelihood) ?? 1;
+            const riskScore = toNum(item.riskScore) ?? (impact * likelihood);
+            const critical = item.critical === undefined ? (riskScore >= 13) : !!item.critical;
+            if (!teamMap.has(team)) teamMap.set(team, []);
+            teamMap.get(team).push({ function: riskName, risk: riskName, riskScore, critical });
+          }
+          return [...teamMap.entries()].map(([team, risks]) => ({ team, risks }));
+        }
+
+        // bcmsRiskAssessment: team-based nested structure
         const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
         return rows
           .map((row) => ({
