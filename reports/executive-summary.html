@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>BCMS 경영 현황 보고서</title>
 <link rel="stylesheet" href="../assets/style.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
 <style>
   html, body { overflow-x: hidden; max-width: 100%; }
   .main { overflow-x: hidden; min-width: 0; }
@@ -353,6 +354,7 @@
     </div>
     <div class="headerRight">
       <button class="btn" onclick="window.print()">🖨️ 인쇄</button>
+      <button id="btnWordDownload" class="btn">📥 Word 다운로드</button>
       <a href="../op-center/index.html" class="btn">운영센터 →</a>
       <button id="themeToggle" class="btn">🌙 다크모드</button>
     </div>
@@ -737,6 +739,238 @@
           ${isDelayed(c) ? '<span class="badge red" style="font-size:10px">지연</span>' : ''}
         </div>`).join('')}
     </div>` : '<p style="font-size:12px;color:var(--text-2);margin-top:6px">미완료 CAPA 없음</p>'}`;
+
+  /* ── Word 다운로드 ── */
+  document.getElementById('btnWordDownload').addEventListener('click', async () => {
+    const btn = document.getElementById('btnWordDownload');
+    const orig = btn.textContent;
+    btn.textContent = '생성 중...';
+    btn.disabled = true;
+    try { await generateDocx(); }
+    catch (e) { alert('Word 파일 생성 중 오류가 발생했습니다.\n' + (e.message || e)); }
+    finally { btn.textContent = orig; btn.disabled = false; }
+  });
+
+  async function generateDocx() {
+    if (!window.docx) throw new Error('docx 라이브러리가 로드되지 않았습니다.');
+    const { Document, Paragraph, TextRun, Table, TableRow, TableCell,
+            WidthType, AlignmentType, Packer, BorderStyle } = window.docx;
+
+    const safeStr = v => String(v ?? '').trim();
+    const companyName = safeStr(meta.companyName || (document.getElementById('companyInput') || {}).value) || '회사명';
+
+    /* ── 헬퍼: 섹션 제목 ── */
+    const sTitle = text => new Paragraph({
+      children: [new TextRun({ text, bold: true, size: 28, color: '0070f3', font: '맑은 고딕' })],
+      spacing: { before: 280, after: 120 },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: 'CCE0FF', space: 4 } }
+    });
+
+    /* ── 헬퍼: 일반 단락 ── */
+    const para = (text, bold = false) => new Paragraph({
+      children: [new TextRun({ text: safeStr(text), size: 22, font: '맑은 고딕', bold })],
+      spacing: { line: 276, before: 0, after: 80 }
+    });
+
+    const emptyPara = () => new Paragraph({ children: [new TextRun({ text: '' })], spacing: { before: 0, after: 80 } });
+
+    /* ── 헬퍼: 표 ── */
+    const borderDef = { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC' };
+    const allBorders = {
+      top: borderDef, bottom: borderDef, left: borderDef, right: borderDef,
+      insideHorizontal: borderDef, insideVertical: borderDef
+    };
+
+    const tblCell = (text, isHeader) => new TableCell({
+      children: [new Paragraph({
+        children: [new TextRun({ text: safeStr(text), bold: !!isHeader, size: 20, font: '맑은 고딕' })],
+        spacing: { before: 60, after: 60 }
+      })],
+      shading: isHeader ? { fill: 'F0F0F0' } : undefined,
+      margins: { top: 60, bottom: 60, left: 100, right: 100 }
+    });
+
+    const tbl = (headers, rows) => new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: allBorders,
+      rows: [
+        new TableRow({ tableHeader: true, children: headers.map(h => tblCell(h, true)) }),
+        ...rows.map(row => new TableRow({ children: row.map(c => tblCell(c)) }))
+      ]
+    });
+
+    /* ── KPI 상태 텍스트 ── */
+    const kpiStatus = p => p >= 70 ? '양호' : p >= 50 ? '보통' : '미흡';
+
+    /* ── 경영진 코멘트 최신값 ── */
+    const execComment = safeStr((document.getElementById('execComment') || {}).value || (meta.executiveComment ?? ''));
+
+    /* ── 문서 내용 조립 ── */
+    const children = [];
+
+    /* 1. 표지 */
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: companyName, size: 24, color: '888888', font: '맑은 고딕' })],
+        alignment: AlignmentType.CENTER, spacing: { before: 1200, after: 240 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: 'BCMS 경영 현황 보고서', bold: true, size: 48, font: '맑은 고딕' })],
+        alignment: AlignmentType.CENTER, spacing: { after: 200 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: 'ISO 22301 기반 업무연속성관리체계 운영 현황', size: 24, color: '666666', font: '맑은 고딕' })],
+        alignment: AlignmentType.CENTER, spacing: { after: 200 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: '작성일: ' + todayStr, size: 22, color: '888888', font: '맑은 고딕' })],
+        alignment: AlignmentType.CENTER, spacing: { after: 600 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: ' ' })],
+        border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: '0070f3', space: 1 } },
+        spacing: { after: 400 }
+      })
+    );
+
+    /* 2. 종합 현황 */
+    children.push(sTitle('1. BCMS 종합 현황'));
+    children.push(tbl(
+      ['항목', '현황'],
+      [
+        ['핵심업무 확정 수', confirmedCnt + '건'],
+        ['BCP 수립률', bcpPct + '%'],
+        ['중점관리 리스크', critCnt + '건'],
+        ['훈련 이행률', trainPct + '%'],
+        ['ISO 22301 충족률', gapPct + '%'],
+      ]
+    ));
+
+    /* 3. KPI */
+    children.push(emptyPara());
+    children.push(sTitle('2. 핵심 성과지표 (KPI)'));
+    children.push(tbl(
+      ['지표명', '수치', '상태'],
+      [
+        ['BIA 등록 업무 수', biaCnt + '건', '—'],
+        ['핵심업무 확정률', confirmPct + '%', kpiStatus(confirmPct)],
+        ['중점관리 리스크 수', critCnt + '건', critCnt === 0 ? '이상없음' : '주의'],
+        ['BCP 전략 수립률', bcpPct + '%', kpiStatus(bcpPct)],
+        ['훈련 이행률', trainPct + '%', kpiStatus(trainPct)],
+        ['ISO 갭분석 충족률', gapPct + '%', kpiStatus(gapPct)],
+        ['CAPA 완료율', capaPct + '%', kpiStatus(capaPct)],
+        ['문서 최신화율', docsPct + '%', kpiStatus(docsPct)],
+      ]
+    ));
+
+    /* 4. 핵심업무 현황 */
+    children.push(emptyPara());
+    children.push(sTitle('3. 핵심업무 현황'));
+    if (teamRows.length > 0) {
+      children.push(tbl(
+        ['팀명', 'BIA 등록', '핵심업무 확정', 'BCP 수립'],
+        teamRows.map(([team, d]) => [team, d.total + '건', d.confirmed + '건', bcpTeamSet.has(team) ? 'O' : 'X'])
+      ));
+    } else {
+      children.push(para('BIA 데이터가 없습니다.'));
+    }
+
+    /* 5. 리스크 TOP5 */
+    children.push(emptyPara());
+    children.push(sTitle('4. 중점관리 리스크'));
+    if (top5.length > 0) {
+      children.push(tbl(
+        ['리스크명', '위험도', '팀', 'BCP 수립'],
+        top5.map(r => [
+          r.name ?? r.riskName ?? r.title ?? '—',
+          String(r.riskScore ?? r.score ?? 0),
+          r.team ?? r.dept ?? '—',
+          hasBcp(r) ? 'O' : 'X'
+        ])
+      ));
+    } else {
+      children.push(para('리스크 데이터가 없습니다.'));
+    }
+
+    /* 6. 훈련 실적 */
+    children.push(emptyPara());
+    children.push(sTitle('5. 훈련 실적 요약'));
+    children.push(para('완료: ' + trainDone + '건 / 전체: ' + trainTotal + '건 (이행률 ' + trainPct + '%)'));
+    if (recentDone.length > 0) {
+      children.push(para('최근 완료 훈련', true));
+      children.push(tbl(
+        ['훈련명', '날짜', '유형'],
+        recentDone.map(t => [t.name ?? t.title ?? '훈련', t.date ?? '—', t.type ?? t.trainingType ?? '—'])
+      ));
+    }
+
+    /* 7. 갭분석 */
+    children.push(emptyPara());
+    children.push(sTitle('6. ISO 22301 갭분석 현황'));
+    children.push(para('전체: ' + gapTotal + '항목 | 충족: ' + gapMet + ' | 부분충족: ' + gapPartial + ' | 미충족: ' + gapUnmet));
+    if (unmetItems.length > 0) {
+      children.push(para('미충족 항목', true));
+      children.push(tbl(
+        ['항목'],
+        unmetItems.map(g => [g.clause ?? g.requirement ?? g.item ?? g.title ?? '항목'])
+      ));
+    }
+
+    /* 8. CAPA */
+    children.push(emptyPara());
+    children.push(sTitle('7. CAPA 개선조치 현황'));
+    children.push(para('전체: ' + capaTotal + '건 | 완료: ' + capaDone + ' | 진행중: ' + capaWip + ' | 미시작: ' + capaPending + ' | 지연: ' + capaDelayed));
+    if (upcoming.length > 0) {
+      children.push(para('진행중·미완료 항목', true));
+      children.push(tbl(
+        ['제목', '목표일', '상태'],
+        upcoming.map(c => [c.title ?? c.name ?? '—', c.dueDate ?? '—', c.status ?? '미착수'])
+      ));
+    }
+
+    /* 9. 경영진 의견 */
+    children.push(emptyPara());
+    children.push(sTitle('8. 경영진 의견'));
+    children.push(para(execComment || '(내용 없음)'));
+
+    /* 10. 푸터 */
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: '본 문서는 BCMS Portal에서 자동 생성되었습니다. | ISO 22301 준거', size: 18, color: '888888', font: '맑은 고딕' })],
+        alignment: AlignmentType.CENTER,
+        border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 4 } },
+        spacing: { before: 400, after: 80 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: '생성일시: ' + new Date().toLocaleString('ko-KR'), size: 18, color: '888888', font: '맑은 고딕' })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 0 }
+      })
+    );
+
+    /* ── 문서 생성 ── */
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: {
+            size: { width: 11906, height: 16838 },
+            margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 }
+          }
+        },
+        children
+      }]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'BCMS_경영현황보고서_' + todayStr + '.docx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   /* ── 다크모드 ── */
   const htmlEl = document.documentElement;
