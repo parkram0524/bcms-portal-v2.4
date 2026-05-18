@@ -302,9 +302,9 @@
   <script src="../assets/sidebar.js"></script>
   <script>
     const LS = {
-      audits: "bcms_audits_v1",
+      audits: "bcmsAuditData",
       capa: "bcmsCapaItems",
-      iso: "bcms_iso_requirements_v1",
+      iso: "bcmsGapAnalysis",
     };
     const $ = (s) => document.querySelector(s);
     const safeParse = (v, fb) => { try{ return JSON.parse(v); } catch(e){ return fb; } };
@@ -318,7 +318,13 @@
     function isoScore(list){
       const clauses = ["4","5","6","7","8","9","10"];
       const weights = { "충족":1, "부분":0.5, "갭":0 };
-      const map = new Map((list||[]).map(x => [String(x.clause), String(x.status||"").trim()]));
+      const normalize = st => {
+        const s = String(st || "").trim().toLowerCase();
+        if (s === "충족" || s === "yes" || s === "y") return "충족";
+        if (s === "부분" || s === "partial") return "부분";
+        return "갭";
+      };
+      const map = new Map((list||[]).map(x => [String(x.clause), normalize(x.status)]));
       let score=0, ok=0, partial=0, gap=0;
       clauses.forEach(c => {
         const st = map.get(c) || "갭";
@@ -408,12 +414,6 @@
       localStorage.removeItem(LS.iso);
     }
 
-    function ensureSeedIfEmpty(){
-      const has = localStorage.getItem(LS.audits) || localStorage.getItem(LS.capa) || localStorage.getItem(LS.iso);
-      if(!has) seedDemo();
-    }
-
-    ensureSeedIfEmpty();
     document.getElementById("btnSeed").addEventListener("click", () => { seedDemo(); render(); });
     document.getElementById("btnClear").addEventListener("click", () => { clearData(); render(); });
     render();
