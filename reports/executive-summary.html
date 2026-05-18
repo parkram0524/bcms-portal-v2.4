@@ -193,20 +193,141 @@
 
   /* ── 인쇄 스타일 ── */
   @media print {
-    aside, .btn, #themeToggle, .headerRight, .commentBtns { display: none !important; }
-    html, body { background: #fff !important; color: #000 !important; overflow: visible !important; }
-    .main { padding: 0 !important; }
-    .wrap { max-width: 100% !important; padding: 0 12px !important; }
-    .dualGrid { grid-template-columns: 1fr 1fr !important; }
-    .kpiGrid  { grid-template-columns: repeat(4, 1fr) !important; }
-    .card, .kpiCard, .summaryBar, .commentCard {
-      background: #fff !important; border-color: #ccc !important;
-      box-shadow: none !important; break-inside: avoid;
+    /* 숨김 처리 */
+    aside, button, .btn, #themeToggle, .helpBtn,
+    .executiveComment textarea ~ button,
+    nav, .sidebarMount { display: none !important; }
+
+    /* 기본 레이아웃 */
+    html, body {
+      background: #fff !important;
+      color: #000 !important;
+      overflow: visible !important;
+      font-size: 11pt;
     }
-    .dualGrid { page-break-before: auto; }
-    .commentTextarea { display: none !important; }
-    .commentPrint { display: block !important; font-size: 13px; line-height:1.6; }
-    [data-theme="dark"] * { background: #fff !important; color: #000 !important; }
+    .main { padding: 0 !important; }
+    .wrap { max-width: 100% !important; padding: 0 15px !important; }
+
+    /* 보고서 헤더 */
+    .reportHeader {
+      border-bottom: 2px solid #0070f3 !important;
+      margin-bottom: 16px !important;
+      padding-bottom: 12px !important;
+    }
+    .companyInput {
+      border: none !important;
+      font-size: 14pt !important;
+      font-weight: 700 !important;
+      color: #000 !important;
+    }
+    h1 { font-size: 18pt !important; }
+
+    /* 종합 현황 요약 바 */
+    .summaryBar {
+      background: #f0f7ff !important;
+      border: 1px solid #cce0ff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      break-inside: avoid;
+      margin-bottom: 16px !important;
+    }
+
+    /* KPI 카드 그리드 */
+    .kpiGrid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 8px !important;
+      margin-bottom: 16px !important;
+    }
+    .kpiCard {
+      border: 1px solid #ddd !important;
+      break-inside: avoid;
+      padding: 10px !important;
+    }
+
+    /* 진행바 색상 유지 */
+    .progressBar, .progressFill {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* 2열 그리드 → 1열로 변환 */
+    .twoCol, .gridTwo {
+      display: block !important;
+    }
+    .twoCol > *, .gridTwo > * {
+      width: 100% !important;
+      margin-bottom: 12px !important;
+    }
+
+    /* 섹션 카드 */
+    .sectionCard, .card {
+      border: 1px solid #ddd !important;
+      break-inside: avoid;
+      margin-bottom: 12px !important;
+      page-break-inside: avoid;
+    }
+    .sectionTitle {
+      font-size: 11pt !important;
+      font-weight: 700 !important;
+      border-left: 3px solid #0070f3 !important;
+      padding-left: 8px !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* 테이블 */
+    table {
+      border-collapse: collapse !important;
+      width: 100% !important;
+      font-size: 10pt !important;
+    }
+    th, td {
+      border: 1px solid #ccc !important;
+      padding: 5px 7px !important;
+    }
+    th {
+      background: #f5f5f5 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* 경영진 코멘트 */
+    .executiveComment textarea {
+      border: 1px solid #ccc !important;
+      background: #fff !important;
+      color: #000 !important;
+      min-height: 60px !important;
+    }
+
+    /* 배지 색상 유지 */
+    .badge, .chip, .grade {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      border: 1px solid #ccc !important;
+    }
+
+    /* 푸터 */
+    .reportFooter {
+      border-top: 1px solid #ccc !important;
+      margin-top: 20px !important;
+      padding-top: 8px !important;
+      font-size: 9pt !important;
+      color: #666 !important;
+      text-align: center !important;
+    }
+
+    /* 페이지 나눔 */
+    .kpiGrid { page-break-after: avoid; }
+    .twoCol { page-break-before: auto; }
+    h2, h3 { page-break-after: avoid; }
+    tr { page-break-inside: avoid; }
+
+    /* A4 설정 */
+    @page {
+      size: A4;
+      margin: 15mm 12mm;
+    }
   }
   .commentPrint { display: none; }
 
