@@ -291,9 +291,13 @@
   /* ── 데이터 로드 ── */
   const biaData   = arr(load('bcmsBIAData', []));
   const riskData  = arr(load('bcmsRiskList', null) ?? load('bcmsRiskAssessment', []));
-  const bcpRaw    = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
-  const bcpData   = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
-  const confirmed = arr(load('bcmsPriorityConfirmed', []));
+  const bcpRaw    = load('bcmsBCP', null) ?? load('bcmsBCPStrategy', []);
+  const bcpTeams  = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
+  const bcpData   = bcpTeams.flatMap(t => arr(t && t.strategies));
+  const confirmedObj = load('bcmsPriorityConfirmed', {});
+  const confirmed = (confirmedObj && typeof confirmedObj === 'object' && !Array.isArray(confirmedObj))
+    ? Object.values(confirmedObj).filter(v => v === true)
+    : arr(confirmedObj);
   const trainData = arr(load('bcmsTrainingData', []));
   const capaData  = arr(load('bcmsCapaItems', []));
   const gapData   = arr(load('bcmsGapAnalysis', []));
