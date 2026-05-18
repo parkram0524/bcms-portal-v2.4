@@ -181,7 +181,7 @@
           <div class="kpiHead">
             <div>
               <p class="kpiTitle">개선항목(CAPA)</p>
-              <p class="kpiCaption">열림(Open) 기준</p>
+              <p class="kpiCaption">미시작·기한경과 기준</p>
             </div>
             <span class="pill" id="capaPill">로딩…</span>
           </div>
@@ -303,7 +303,7 @@
   <script>
     const LS = {
       audits: "bcms_audits_v1",
-      capa: "bcms_capa_v1",
+      capa: "bcmsCapaItems",
       iso: "bcms_iso_requirements_v1",
     };
     const $ = (s) => document.querySelector(s);
@@ -348,19 +348,19 @@
       $("#auditSub").textContent = `OK ${ok} / Partial ${partial} / Gap ${gap}`;
 
       // CAPA
-      const open = capa.filter(x=>x.status==="OPEN").length;
-      const inprog = capa.filter(x=>x.status==="IN_PROGRESS").length;
-      const done = capa.filter(x=>x.status==="DONE").length;
+      const done   = capa.filter(x => x.status === '완료').length;
+      const inprog = capa.filter(x => x.status === '진행중').length;
+      const open   = capa.filter(x => x.status !== '완료' && x.status !== '진행중').length;
 
       $("#capaPill").className = "pill " + ((open+inprog+done) ? "ok" : "warn");
-      $("#capaPill").textContent = `OPEN ${open} · 진행 ${inprog} · 완료 ${done}`;
+      $("#capaPill").textContent = `미시작 ${open} · 진행 ${inprog} · 완료 ${done}`;
       $("#capaOpen").textContent = String(open);
       $("#capaSub").textContent = `진행 ${inprog} · 완료 ${done}`;
 
       const now = new Date();
       const overdue = capa.filter(x =>
-        (x.status === "OPEN" || x.status === "IN_PROGRESS") &&
-        x.due && new Date(x.due) < now
+        x.status !== '완료' &&
+        (x.dueDate || x.due) && new Date(x.dueDate || x.due) < now
       ).length;
       $("#capaOverdue").textContent = `기한 경과 ${overdue}`;
 
@@ -382,9 +382,9 @@
       ];
 
       const demoCapa = [
-        { id:"CAPA-012", title:"ISO 6조 요구사항 갭 개선", status:"OPEN", source:"GAP", clause:"6", owner:"Risk Mgmt", created:d(2), due:new Date(now.getTime()+7*86400000).toISOString() },
-        { id:"CAPA-011", title:"ISO 9조 보완 개선", status:"IN_PROGRESS", source:"PARTIAL", clause:"9", owner:"BCMS PMO", created:d(10), due:new Date(now.getTime()-2*86400000).toISOString() },
-        { id:"CAPA-010", title:"DR 템플릿 표준화", status:"DONE", source:"AUDIT", clause:"8", owner:"Infra", created:d(30), due:d(10) },
+        { id:"CAPA-012", title:"ISO 6조 요구사항 갭 개선", status:"미시작", source:"GAP", clause:"6", owner:"Risk Mgmt", created:d(2), dueDate:new Date(now.getTime()+7*86400000).toISOString() },
+        { id:"CAPA-011", title:"ISO 9조 보완 개선", status:"진행중", source:"PARTIAL", clause:"9", owner:"BCMS PMO", created:d(10), dueDate:new Date(now.getTime()-2*86400000).toISOString() },
+        { id:"CAPA-010", title:"DR 템플릿 표준화", status:"완료", source:"AUDIT", clause:"8", owner:"Infra", created:d(30), dueDate:d(10) },
       ];
 
       const demoISO = [
