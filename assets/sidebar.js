@@ -95,6 +95,10 @@
       </div>
     </div>
 
+    <div class="sidebar-guide-wrap">
+      <button class="sidebar-guide-btn" id="bcmsGuideBtn" type="button">📋 수립 가이드</button>
+    </div>
+
   </div>
   `;
 
@@ -107,8 +111,44 @@
     .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; }
     .sidebar-brand-link:hover{ opacity:.95; }
     .sidebar-brand-link h1{ cursor:pointer; }
+    .sidebar-guide-wrap {
+      position:sticky;
+      bottom:0;
+      padding:10px 14px 14px;
+      background:inherit;
+    }
+    .sidebar-guide-btn {
+      display:block;
+      width:100%;
+      padding:9px 0;
+      text-align:center;
+      font-size:12.5px;
+      font-weight:600;
+      color:#60a5fa;
+      background:rgba(96,165,250,.1);
+      border:1px solid rgba(96,165,250,.22);
+      border-radius:8px;
+      cursor:pointer;
+      font-family:inherit;
+      transition:background .14s, border-color .14s;
+      white-space:nowrap;
+    }
+    .sidebar-guide-btn:hover {
+      background:rgba(96,165,250,.2);
+      border-color:rgba(96,165,250,.4);
+    }
   `;
   document.head.appendChild(st);
+
+  /* ── 수립 가이드 버튼: 클릭 시 Step 3 로드맵 팝업 ── */
+  const guideBtn = document.getElementById("bcmsGuideBtn");
+  if (guideBtn) {
+    guideBtn.addEventListener("click", () => {
+      if (window.BCMSOnboarding && typeof window.BCMSOnboarding.showRoadmap === "function") {
+        window.BCMSOnboarding.showRoadmap();
+      }
+    });
+  }
 
   // =========================================================
   // ✅ Active section detection (folder-based)

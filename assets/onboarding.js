@@ -639,13 +639,22 @@
 
   /* ── Public API ── */
   window.BCMSOnboarding = {
-    reset()     {
+    reset() {
       localStorage.removeItem(DONE_KEY);
       localStorage.removeItem(INDUSTRY_KEY);
       localStorage.removeItem(GOAL_KEY);
       show();
     },
     forceShow() { show(); },
+    showRoadmap() {
+      if (rootEl) { rootEl.remove(); rootEl = null; }
+      injectStyles();
+      currentStep = 3;
+      rootEl = document.createElement('div');
+      rootEl.id = 'bcmsOnboardingRoot';
+      document.body.appendChild(rootEl);
+      render();
+    },
   };
 
   init();
