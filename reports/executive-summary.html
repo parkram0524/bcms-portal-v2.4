@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>BCMS 경영 현황 보고서</title>
 <link rel="stylesheet" href="../assets/style.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <style>
   html, body { overflow-x: hidden; max-width: 100%; }
   .main { overflow-x: hidden; min-width: 0; }
@@ -752,9 +752,13 @@
   });
 
   async function generateDocx() {
-    if (!window.docx) throw new Error('docx 라이브러리가 로드되지 않았습니다.');
+    const docxLib = window.docx;
+    console.log('docx lib:', Object.keys(window).filter(k => k.toLowerCase().includes('docx')));
+    if (!docxLib || typeof docxLib.Document !== 'function') {
+      throw new Error('docx 라이브러리가 로드되지 않았습니다. (window.docx=' + typeof docxLib + ')');
+    }
     const { Document, Paragraph, TextRun, Table, TableRow, TableCell,
-            WidthType, AlignmentType, Packer, BorderStyle } = window.docx;
+            WidthType, AlignmentType, Packer, BorderStyle } = docxLib;
 
     const safeStr = v => String(v ?? '').trim();
     const companyName = safeStr(meta.companyName || (document.getElementById('companyInput') || {}).value) || '회사명';
