@@ -160,19 +160,19 @@
       </div>
 
       <section class="kpiRow">
-        <!-- Audit -->
+        <!-- Gap Analysis -->
         <section class="card kpi" id="kpiAudit">
           <div class="kpiHead">
             <div>
-              <p class="kpiTitle">최근 감사</p>
-              <p class="kpiCaption">최근 3건 기준 요약</p>
+              <p class="kpiTitle">갭분석 현황</p>
+              <p class="kpiCaption">ISO 22301 미충족 조항 기준</p>
             </div>
             <span class="pill" id="auditPill">로딩…</span>
           </div>
           <div class="kpiNum" id="auditScore">0</div>
           <p class="kpiCaption" id="auditSub">-</p>
           <div class="kpiActions">
-            <a class="chipBtn" href="../audit/index.html" style="padding:9px 12px; font-size:13px;">자세히 보기</a>
+            <a class="chipBtn" href="../audit/index.html?tab=gap" style="padding:9px 12px; font-size:13px;">자세히 보기</a>
           </div>
         </section>
 
@@ -338,20 +338,18 @@
     }
 
     function render(){
-      const audits = safeParse(localStorage.getItem(LS.audits), []);
       const capa = safeParse(localStorage.getItem(LS.capa), []);
-      const iso = safeParse(localStorage.getItem(LS.iso), []);
+      const iso  = safeParse(localStorage.getItem(LS.iso), []);
+      const agg  = isoScore(iso);
 
-      // Audit
-      const recent = [...audits].sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0,3);
-      const ok = recent.filter(x=>x.result==="OK").length;
-      const partial = recent.filter(x=>x.result==="PARTIAL").length;
-      const gap = recent.filter(x=>x.result==="GAP").length;
-
-      $("#auditPill").className = "pill " + (recent.length ? "ok" : "warn");
-      $("#auditPill").textContent = `OK ${ok} · Partial ${partial} · Gap ${gap}`;
-      $("#auditScore").textContent = String(recent.length);
-      $("#auditSub").textContent = `OK ${ok} / Partial ${partial} / Gap ${gap}`;
+      // 갭분석 현황 카드
+      const hasIso = iso.length > 0;
+      $("#auditPill").className = hasIso ? "pill ok" : "pill warn";
+      $("#auditPill").textContent = hasIso
+        ? `충족 ${agg.ok} · 부분 ${agg.partial} · 미충족 ${agg.gap}`
+        : "데이터 없음";
+      $("#auditScore").textContent = String(agg.gap);
+      $("#auditSub").textContent = `충족 ${agg.ok} · 부분충족 ${agg.partial} · 미충족 ${agg.gap}`;
 
       // CAPA
       const done   = capa.filter(x => x.status === '완료').length;
@@ -370,8 +368,7 @@
       ).length;
       $("#capaOverdue").textContent = `기한 경과 ${overdue}`;
 
-      // ISO
-      const agg = isoScore(iso);
+      // ISO 22301 충족률 게이지
       $("#isoPct").textContent = `${agg.pct}%`;
       $("#isoSub").textContent = `충족 ${agg.ok} · 부분 ${agg.partial} · 갭 ${agg.gap}`;
       setGaugePct(agg.pct);
