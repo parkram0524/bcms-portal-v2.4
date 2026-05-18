@@ -1,11 +1,15 @@
 /* ================================================================
-   BCMSOnboarding — First-visit industry selection popup
+   BCMSOnboarding — 3-step onboarding popup
+   Step 1: Industry selection
+   Step 2: Certification goal
+   Step 3: BCMS roadmap
    ================================================================ */
 (() => {
   'use strict';
 
   const DONE_KEY     = 'bcmsOnboardingDone';
   const INDUSTRY_KEY = 'bcmsIndustry';
+  const GOAL_KEY     = 'bcmsGoal';
   const BIA_KEY      = 'bcmsBIAData';
   const RISK_KEY     = 'bcmsRiskList';
 
@@ -16,6 +20,45 @@
     { key: '고속도로', icon: '🛣️', desc: '교통관제·요금수납·방재 중심 업무연속성 관리' },
     { key: '통신',     icon: '📡', desc: '네트워크·교환시스템 중심 업무연속성 관리' },
     { key: 'IDC',      icon: '🖥️', desc: '전력·항온항습·서버 중심 업무연속성 관리' },
+  ];
+
+  const GOALS = [
+    { key: 'iso22301', icon: '🛡️', label: 'ISO 22301 단독 취득',             desc: 'ISO 22301 국제인증 취득을 목표로 합니다' },
+    { key: 'drrb',     icon: '🏆', label: '재해경감우수기업 단독 인증',         desc: '국내 재해경감우수기업 인증을 목표로 합니다' },
+    { key: 'both',     icon: '🎯', label: 'ISO 22301 + 재해경감우수기업 동시', desc: '두 인증을 동시에 취득합니다' },
+  ];
+
+  const ROADMAP = [
+    {
+      num: 1, key: 'governance', title: '거버넌스 수립', period: '1~2주',
+      tasks: ['BCMS 정책 수립', '조직 및 역할 정의', '법규요구사항 검토'],
+      iso: '4, 5, 6조', path: '/governance/policy.html',
+    },
+    {
+      num: 2, key: 'bia', title: '업무영향분석 BIA', period: '2~3주',
+      tasks: ['핵심업무 식별 및 영향 분석', '복구목표(RTO/MTPD) 설정'],
+      iso: '8.2조', path: '/risk-bia/bia.html',
+    },
+    {
+      num: 3, key: 'risk', title: '리스크 평가', period: '1~2주',
+      tasks: ['업무 중단 위협 식별', '리스크 매트릭스 작성'],
+      iso: '8.2조', path: '/risk-bia/risk.html',
+    },
+    {
+      num: 4, key: 'bcp', title: 'BCP 전략 수립', period: '2~4주',
+      tasks: ['핵심업무 우선순위 확정', '연속성 전략 수립'],
+      iso: '8.3조', path: '/strategy-plans/bcp.html',
+    },
+    {
+      num: 5, key: 'training', title: '훈련 및 점검', period: '진행 중 수시',
+      tasks: ['훈련 계획 수립 및 실시', '훈련 결과 기록'],
+      iso: '8.5조', path: '/training/index.html',
+    },
+    {
+      num: 6, key: 'audit', title: '성과평가 및 개선', period: '분기별',
+      tasks: ['ISO 22301 갭분석', '내부심사 실시', 'CAPA 등록 및 관리'],
+      iso: '9, 10조', path: '/audit/index.html',
+    },
   ];
 
   /* ── Duration helpers ── */
@@ -220,8 +263,42 @@
 
   /* ── Modal state ── */
   let selectedIndustry = null;
-  let currentStep = 1;
-  let rootEl = null;
+  let selectedGoal     = null;
+  let currentStep      = 1;
+  let rootEl           = null;
+
+  /* ── Portal base URL (for roadmap links) ── */
+  function portalBase() {
+    const p = window.location.pathname;
+    const m = p.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports|assets)\/)/);
+    return m ? m[1] : '';
+  }
+
+  /* ── Check if roadmap step is done ── */
+  function isStepDone(key) {
+    try {
+      const raw = localStorage.getItem('bcmsCompletedSteps');
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (Array.isArray(c))                          return c.includes(key);
+        if (typeof c === 'object' && c !== null)       return c[key] === true;
+      }
+      const dataMap = {
+        governance: 'bcmsPolicyData',
+        bia:        'bcmsBIAData',
+        risk:       'bcmsRiskList',
+        bcp:        'bcmsBCP',
+        training:   'bcmsTrainingData',
+        audit:      'bcmsGapAnalysis',
+      };
+      const k = dataMap[key];
+      if (!k) return false;
+      const v = localStorage.getItem(k);
+      if (!v) return false;
+      const parsed = JSON.parse(v);
+      return Array.isArray(parsed) ? parsed.length > 0 : !!parsed;
+    } catch { return false; }
+  }
 
   /* ── Inject CSS ── */
   function injectStyles() {
@@ -236,87 +313,135 @@
         position:fixed;inset:0;z-index:9999;
         background:rgba(0,0,0,.52);
         backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-        display:flex;align-items:center;justify-content:center;padding:20px;
+        display:flex;align-items:center;justify-content:center;
+        padding:20px;overflow-y:auto;
         animation:ob-fade .2s ease;
       }
       .ob-card {
         background:#ffffff;border-radius:16px;
         box-shadow:0 24px 64px rgba(0,0,0,.2);
-        width:100%;max-width:560px;overflow:hidden;
+        width:100%;max-width:560px;
+        display:flex;flex-direction:column;
+        max-height:calc(100vh - 40px);
         animation:ob-slide .25s cubic-bezier(.4,0,.2,1);
       }
-      .ob-card.wide{max-width:700px}
+      .ob-card.wide  { max-width:700px }
+      .ob-card.xwide { max-width:860px }
       .ob-head {
         background:linear-gradient(135deg,#0070f3 0%,#0050d4 100%);
-        padding:28px 32px 22px;color:#fff;
+        padding:28px 32px 22px;color:#fff;flex-shrink:0;
+        border-radius:16px 16px 0 0;
       }
-      .ob-logo{font-size:22px;font-weight:800;letter-spacing:-.02em;word-break:keep-all}
-      .ob-tagline{font-size:12px;opacity:.82;margin-top:3px;word-break:keep-all}
-      .ob-dots{display:flex;gap:5px;margin-top:16px}
-      .ob-dot{height:5px;width:5px;border-radius:3px;background:rgba(255,255,255,.35);transition:all .2s}
-      .ob-dot.active{width:18px;background:#fff}
-      .ob-body{padding:28px 32px}
-      .ob-title{font-size:17px;font-weight:700;color:#111;letter-spacing:-.02em;margin-bottom:8px;word-break:keep-all}
-      .ob-desc{font-size:13px;color:#666;line-height:1.75;word-break:keep-all;margin-bottom:24px}
-      .ob-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
-      .ob-btn{
-        font-family:inherit;font-size:13px;font-weight:600;
-        padding:9px 20px;border-radius:8px;border:1px solid rgba(0,0,0,.12);
-        background:#fff;color:#111;cursor:pointer;transition:all .12s;white-space:nowrap;
-      }
-      .ob-btn:hover{background:#f5f5f5}
-      .ob-btn.primary{background:#0070f3;color:#fff;border-color:transparent}
-      .ob-btn.primary:hover{background:#0060df}
-      .ob-btn:disabled{opacity:.42;cursor:not-allowed;pointer-events:none}
+      .ob-logo    { font-size:22px;font-weight:800;letter-spacing:-.02em;word-break:keep-all }
+      .ob-tagline { font-size:12px;opacity:.82;margin-top:3px;word-break:keep-all }
+      .ob-dots    { display:flex;gap:5px;margin-top:16px }
+      .ob-dot     { height:5px;width:5px;border-radius:3px;background:rgba(255,255,255,.35);transition:all .2s }
+      .ob-dot.active { width:18px;background:#fff }
 
-      .ob-ind-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-      @media(max-width:580px){.ob-ind-grid{grid-template-columns:repeat(2,1fr)}}
-      .ob-ind-card{
-        border:1.5px solid rgba(0,0,0,.1);border-radius:10px;
-        padding:14px 12px;cursor:pointer;
-        display:flex;flex-direction:column;gap:5px;
-        transition:all .14s;background:#fff;text-align:left;
-        font-family:inherit;width:100%;
-      }
-      .ob-ind-card:hover{border-color:#0070f3;background:rgba(0,112,243,.04)}
-      .ob-ind-card.selected{border-color:#0070f3;background:rgba(0,112,243,.08);box-shadow:0 0 0 2px rgba(0,112,243,.22)}
-      .ob-ind-icon{font-size:22px;line-height:1}
-      .ob-ind-name{font-size:13px;font-weight:700;color:#111;letter-spacing:-.01em;word-break:keep-all}
-      .ob-ind-desc{font-size:11px;color:#777;line-height:1.4;word-break:keep-all}
-      .ob-ind-check{
-        width:16px;height:16px;border-radius:50%;
-        background:#0070f3;color:#fff;font-size:9px;font-weight:800;
-        display:none;align-items:center;justify-content:center;align-self:flex-end;margin-top:2px;
-      }
-      .ob-ind-card.selected .ob-ind-check{display:flex}
+      .ob-body    { padding:28px 32px;overflow-y:auto;border-radius:0 0 16px 16px }
+      .ob-title   { font-size:17px;font-weight:700;color:#111;letter-spacing:-.02em;margin-bottom:6px;word-break:keep-all }
+      .ob-desc    { font-size:13px;color:#666;line-height:1.7;word-break:keep-all;margin-bottom:18px }
+      .ob-actions { display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap }
 
-      .ob-confirm-box{
-        background:rgba(0,112,243,.07);border:1px solid rgba(0,112,243,.2);
-        border-radius:10px;padding:14px 16px;margin-bottom:20px;
-      }
-      .ob-confirm-industry{font-size:20px;font-weight:800;color:#0070f3;letter-spacing:-.02em;word-break:keep-all}
-      .ob-confirm-desc{font-size:12px;color:#555;margin-top:3px;word-break:keep-all}
+      .ob-btn { font-family:inherit;font-size:13px;font-weight:600;padding:9px 20px;border-radius:8px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#111;cursor:pointer;transition:all .12s;white-space:nowrap }
+      .ob-btn:hover { background:#f5f5f5 }
+      .ob-btn.primary { background:#0070f3;color:#fff;border-color:transparent }
+      .ob-btn.primary:hover { background:#0060df }
+      .ob-btn:disabled { opacity:.42;cursor:not-allowed;pointer-events:none }
 
-      .ob-toast{
+      /* ── Step 1: Industry cards ── */
+      .ob-ind-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px }
+      @media(max-width:580px){ .ob-ind-grid { grid-template-columns:repeat(2,1fr) } }
+      .ob-ind-card {
+        border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:14px 12px;cursor:pointer;
+        display:flex;flex-direction:column;gap:5px;transition:all .14s;background:#fff;
+        text-align:left;font-family:inherit;width:100%;
+      }
+      .ob-ind-card:hover   { border-color:#0070f3;background:rgba(0,112,243,.04) }
+      .ob-ind-card.selected{ border-color:#0070f3;background:rgba(0,112,243,.08);box-shadow:0 0 0 2px rgba(0,112,243,.22) }
+      .ob-ind-icon  { font-size:22px;line-height:1 }
+      .ob-ind-name  { font-size:13px;font-weight:700;color:#111;letter-spacing:-.01em;word-break:keep-all }
+      .ob-ind-desc  { font-size:11px;color:#777;line-height:1.4;word-break:keep-all }
+      .ob-ind-check { width:16px;height:16px;border-radius:50%;background:#0070f3;color:#fff;font-size:9px;font-weight:800;display:none;align-items:center;justify-content:center;align-self:flex-end;margin-top:2px }
+      .ob-ind-card.selected .ob-ind-check { display:flex }
+
+      /* ── Step 2: Goal cards ── */
+      .ob-goal-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px }
+      @media(max-width:620px){ .ob-goal-grid { grid-template-columns:1fr } }
+      .ob-goal-card {
+        border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:16px 14px;cursor:pointer;
+        display:flex;flex-direction:column;gap:6px;transition:all .14s;background:#fff;
+        text-align:left;font-family:inherit;width:100%;
+      }
+      .ob-goal-card:hover    { border-color:#0070f3;background:rgba(0,112,243,.04) }
+      .ob-goal-card.selected { border-color:#0070f3;background:rgba(0,112,243,.08);box-shadow:0 0 0 2px rgba(0,112,243,.22) }
+      .ob-goal-icon  { font-size:22px;line-height:1 }
+      .ob-goal-label { font-size:13px;font-weight:700;color:#111;word-break:keep-all }
+      .ob-goal-desc  { font-size:11px;color:#777;line-height:1.4;word-break:keep-all;flex:1 }
+      .ob-goal-check { width:16px;height:16px;border-radius:50%;background:#0070f3;color:#fff;font-size:9px;font-weight:800;display:none;align-items:center;justify-content:center;align-self:flex-end;margin-top:4px }
+      .ob-goal-card.selected .ob-goal-check { display:flex }
+
+      /* ── Step 3: Roadmap ── */
+      .ob-roadmap-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px }
+      @media(max-width:620px){ .ob-roadmap-grid { grid-template-columns:1fr } }
+      .ob-rm-card {
+        border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:14px;
+        display:flex;flex-direction:column;gap:8px;background:#fafafa;
+      }
+      .ob-rm-head   { display:flex;align-items:center;gap:8px;flex-wrap:nowrap }
+      .ob-rm-num {
+        width:26px;height:26px;border-radius:50%;flex-shrink:0;
+        background:#0070f3;color:#fff;font-size:11px;font-weight:800;
+        display:flex;align-items:center;justify-content:center;
+      }
+      .ob-rm-num.done { background:#16a34a }
+      .ob-rm-title  { font-size:13px;font-weight:700;color:#111;word-break:keep-all;flex:1;min-width:0 }
+      .ob-rm-period {
+        font-size:10px;color:#0070f3;font-weight:600;white-space:nowrap;
+        padding:2px 7px;border-radius:99px;background:rgba(0,112,243,.1);flex-shrink:0;
+      }
+      .ob-rm-tasks  { list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px }
+      .ob-rm-tasks li { font-size:11.5px;color:#555;padding-left:12px;position:relative;word-break:keep-all;line-height:1.5 }
+      .ob-rm-tasks li::before { content:'·';position:absolute;left:2px;color:#999 }
+      .ob-rm-footer { display:flex;align-items:center;justify-content:space-between;margin-top:2px;gap:6px }
+      .ob-rm-iso    { font-size:10.5px;color:#999 }
+      .ob-rm-link {
+        font-size:11px;font-weight:600;color:#0070f3;text-decoration:none;
+        padding:3px 9px;border-radius:5px;border:1px solid rgba(0,112,243,.25);
+        background:rgba(0,112,243,.06);white-space:nowrap;
+      }
+      .ob-rm-link:hover { background:rgba(0,112,243,.12) }
+
+      /* ── Toast ── */
+      .ob-toast {
         position:fixed;bottom:24px;right:24px;z-index:10000;
-        background:#111;color:#fff;padding:12px 20px;
-        border-radius:10px;font-size:13px;font-weight:600;
+        background:#111;color:#fff;padding:12px 20px;border-radius:10px;
+        font-size:13px;font-weight:600;
         font-family:"Pretendard","Inter",system-ui,sans-serif;
-        box-shadow:0 8px 24px rgba(0,0,0,.28);animation:ob-fade .2s ease;
-        word-break:keep-all;
+        box-shadow:0 8px 24px rgba(0,0,0,.28);animation:ob-fade .2s ease;word-break:keep-all;
       }
 
-      [data-theme="dark"] .ob-card{background:#111}
-      [data-theme="dark"] .ob-title{color:#ededed}
-      [data-theme="dark"] .ob-desc{color:#888}
-      [data-theme="dark"] .ob-btn{background:#1c1c1c;color:#ededed;border-color:rgba(255,255,255,.12)}
-      [data-theme="dark"] .ob-btn:hover{background:#252525}
-      [data-theme="dark"] .ob-ind-card{background:#1c1c1c;border-color:rgba(255,255,255,.1)}
-      [data-theme="dark"] .ob-ind-card:hover{background:rgba(0,112,243,.12)}
-      [data-theme="dark"] .ob-ind-card.selected{background:rgba(0,112,243,.16)}
-      [data-theme="dark"] .ob-ind-name{color:#ededed}
-      [data-theme="dark"] .ob-ind-desc{color:#888}
-      [data-theme="dark"] .ob-confirm-box{background:rgba(0,112,243,.12)}
+      /* ── Dark mode ── */
+      [data-theme="dark"] .ob-card    { background:#111 }
+      [data-theme="dark"] .ob-body    { background:#111 }
+      [data-theme="dark"] .ob-title   { color:#ededed }
+      [data-theme="dark"] .ob-desc    { color:#888 }
+      [data-theme="dark"] .ob-btn     { background:#1c1c1c;color:#ededed;border-color:rgba(255,255,255,.12) }
+      [data-theme="dark"] .ob-btn:hover { background:#252525 }
+      [data-theme="dark"] .ob-ind-card  { background:#1c1c1c;border-color:rgba(255,255,255,.1) }
+      [data-theme="dark"] .ob-ind-card:hover    { background:rgba(0,112,243,.12) }
+      [data-theme="dark"] .ob-ind-card.selected { background:rgba(0,112,243,.16) }
+      [data-theme="dark"] .ob-ind-name { color:#ededed }
+      [data-theme="dark"] .ob-ind-desc { color:#888 }
+      [data-theme="dark"] .ob-goal-card  { background:#1c1c1c;border-color:rgba(255,255,255,.1) }
+      [data-theme="dark"] .ob-goal-card:hover    { background:rgba(0,112,243,.12) }
+      [data-theme="dark"] .ob-goal-card.selected { background:rgba(0,112,243,.16) }
+      [data-theme="dark"] .ob-goal-label { color:#ededed }
+      [data-theme="dark"] .ob-goal-desc  { color:#888 }
+      [data-theme="dark"] .ob-rm-card  { background:#1c1c1c;border-color:rgba(255,255,255,.08) }
+      [data-theme="dark"] .ob-rm-title { color:#ededed }
+      [data-theme="dark"] .ob-rm-tasks li { color:#aaa }
+      [data-theme="dark"] .ob-rm-iso   { color:#666 }
     `;
     document.head.appendChild(s);
   }
@@ -329,19 +454,6 @@
   }
 
   function buildStep1() {
-    return `
-      <div class="ob-title">BCMS Portal에 오신 것을 환영합니다! 👋</div>
-      <div class="ob-desc">
-        ISO 22301 기반 업무연속성관리 시스템입니다.<br>
-        귀사의 업무연속성 계획을 체계적으로 수립·관리할 수 있도록 돕습니다.<br>
-        시작하기 전, 몇 가지 초기 설정을 도와드리겠습니다.
-      </div>
-      <div class="ob-actions">
-        <button class="ob-btn primary" id="obNext">시작하기 →</button>
-      </div>`;
-  }
-
-  function buildStep2() {
     const cards = INDUSTRIES.map(ind => `
       <button class="ob-ind-card${selectedIndustry === ind.key ? ' selected' : ''}" type="button" data-ind="${ind.key}">
         <span class="ob-ind-icon">${ind.icon}</span>
@@ -354,36 +466,67 @@
       <div class="ob-desc">업종에 맞는 샘플 데이터와 용어로 빠르게 시작할 수 있습니다.</div>
       <div class="ob-ind-grid">${cards}</div>
       <div class="ob-actions">
-        <button class="ob-btn" type="button" id="obBack">← 이전</button>
         <button class="ob-btn primary" type="button" id="obNext"${!selectedIndustry ? ' disabled' : ''}>다음 →</button>
       </div>`;
   }
 
-  function buildStep3() {
-    const ind = INDUSTRIES.find(i => i.key === selectedIndustry) || {};
+  function buildStep2() {
+    const cards = GOALS.map(g => `
+      <button class="ob-goal-card${selectedGoal === g.key ? ' selected' : ''}" type="button" data-goal="${g.key}">
+        <span class="ob-goal-icon">${g.icon}</span>
+        <span class="ob-goal-label">${g.label}</span>
+        <span class="ob-goal-desc">${g.desc}</span>
+        <span class="ob-goal-check">✓</span>
+      </button>`).join('');
     return `
-      <div class="ob-confirm-box">
-        <div class="ob-confirm-industry">${ind.icon || ''} ${selectedIndustry || ''}</div>
-        <div class="ob-confirm-desc">${ind.desc || ''}</div>
-      </div>
-      <div class="ob-title">${selectedIndustry} 기준 샘플 데이터를 불러올까요?</div>
-      <div class="ob-desc">
-        업종에 맞는 핵심업무·리스크 샘플이 자동으로 입력됩니다.<br>
-        이후 실제 데이터로 수정하시면 됩니다.
-      </div>
+      <div class="ob-title">어떤 인증을 목표로 하시나요?</div>
+      <div class="ob-desc">목표 인증에 맞춘 관리 방향을 안내해 드립니다.</div>
+      <div class="ob-goal-grid">${cards}</div>
       <div class="ob-actions">
         <button class="ob-btn" type="button" id="obBack">← 이전</button>
-        <button class="ob-btn" type="button" id="obSkip">직접 입력할게요</button>
-        <button class="ob-btn primary" type="button" id="obLoad">샘플 데이터로 시작</button>
+        <button class="ob-btn primary" type="button" id="obNext"${!selectedGoal ? ' disabled' : ''}>다음 →</button>
+      </div>`;
+  }
+
+  function buildStep3() {
+    const base = portalBase();
+    const cards = ROADMAP.map(step => {
+      const done = isStepDone(step.key);
+      return `
+        <div class="ob-rm-card">
+          <div class="ob-rm-head">
+            <div class="ob-rm-num${done ? ' done' : ''}">${done ? '✓' : step.num}</div>
+            <div class="ob-rm-title">${step.num}단계 ${step.title}</div>
+            <span class="ob-rm-period">${step.period}</span>
+          </div>
+          <ul class="ob-rm-tasks">
+            ${step.tasks.map(t => `<li>${t}</li>`).join('')}
+          </ul>
+          <div class="ob-rm-footer">
+            <span class="ob-rm-iso">ISO 22301: ${step.iso}</span>
+            <a href="${base}${step.path}" class="ob-rm-link">바로가기 →</a>
+          </div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="ob-title">BCMS 수립 로드맵</div>
+      <div class="ob-desc">아래 순서대로 진행하시면 됩니다. 예상 소요기간: 3~6개월</div>
+      <div class="ob-roadmap-grid">${cards}</div>
+      <div class="ob-actions">
+        <button class="ob-btn" type="button" id="obBack">← 이전</button>
+        <button class="ob-btn primary" type="button" id="obStart">🚀 시작하기</button>
       </div>`;
   }
 
   function render() {
     if (!rootEl) return;
-    const body = currentStep === 1 ? buildStep1() : currentStep === 2 ? buildStep2() : buildStep3();
+    const body = currentStep === 1 ? buildStep1()
+               : currentStep === 2 ? buildStep2()
+               :                     buildStep3();
+    const widthCls = currentStep === 3 ? ' xwide' : currentStep === 2 ? ' wide' : '';
     rootEl.innerHTML = `
       <div class="ob-overlay">
-        <div class="ob-card${currentStep === 2 ? ' wide' : ''}">
+        <div class="ob-card${widthCls}">
           <div class="ob-head">
             <div class="ob-logo">🛡 BCMS Portal</div>
             <div class="ob-tagline">ISO 22301 기반 업무연속성관리 시스템</div>
@@ -396,30 +539,28 @@
   }
 
   function attachEvents() {
-    const next = document.getElementById('obNext');
-    const back = document.getElementById('obBack');
-    const skip = document.getElementById('obSkip');
-    const load = document.getElementById('obLoad');
+    const next  = document.getElementById('obNext');
+    const back  = document.getElementById('obBack');
+    const start = document.getElementById('obStart');
 
-    if (next) next.addEventListener('click', () => { currentStep++; render(); });
-    if (back) back.addEventListener('click', () => { currentStep--; render(); });
-    if (skip) skip.addEventListener('click', () => finish(false));
-    if (load) load.addEventListener('click', () => {
-      try {
-        const biaRaw  = JSON.parse(localStorage.getItem(BIA_KEY)  || '[]');
-        const riskRaw = JSON.parse(localStorage.getItem(RISK_KEY) || '[]');
-        const hasData = (Array.isArray(biaRaw)  && biaRaw.length  > 0) ||
-                        (Array.isArray(riskRaw) && riskRaw.length > 0);
-        if (hasData && !confirm('기존 데이터가 있습니다. 덮어쓸까요?')) return;
-      } catch(e) {}
-      loadSampleData(selectedIndustry);
-      finish(true);
-    });
+    if (next)  next.addEventListener('click',  () => { currentStep++; render(); });
+    if (back)  back.addEventListener('click',  () => { currentStep--; render(); });
+    if (start) start.addEventListener('click', () => finish());
 
     rootEl.querySelectorAll('.ob-ind-card').forEach(card => {
       card.addEventListener('click', () => {
         selectedIndustry = card.getAttribute('data-ind');
         rootEl.querySelectorAll('.ob-ind-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        const n = document.getElementById('obNext');
+        if (n) n.disabled = false;
+      });
+    });
+
+    rootEl.querySelectorAll('.ob-goal-card').forEach(card => {
+      card.addEventListener('click', () => {
+        selectedGoal = card.getAttribute('data-goal');
+        rootEl.querySelectorAll('.ob-goal-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         const n = document.getElementById('obNext');
         if (n) n.disabled = false;
@@ -442,13 +583,27 @@
     setTimeout(() => t.remove(), 3000);
   }
 
-  function finish(withSample) {
+  function finish() {
     localStorage.setItem(DONE_KEY, 'true');
     if (selectedIndustry) localStorage.setItem(INDUSTRY_KEY, selectedIndustry);
+    if (selectedGoal)     localStorage.setItem(GOAL_KEY, selectedGoal);
+
+    /* 기존 데이터 없을 때만 샘플 자동 로드 */
+    const hasSample = selectedIndustry && SAMPLE_DATA[selectedIndustry];
+    if (hasSample) {
+      try {
+        const biaRaw  = JSON.parse(localStorage.getItem(BIA_KEY)  || '[]');
+        const riskRaw = JSON.parse(localStorage.getItem(RISK_KEY) || '[]');
+        const hasData = (Array.isArray(biaRaw)  && biaRaw.length  > 0) ||
+                        (Array.isArray(riskRaw) && riskRaw.length > 0);
+        if (!hasData) loadSampleData(selectedIndustry);
+      } catch(e) {}
+    }
+
     if (rootEl) { rootEl.remove(); rootEl = null; }
 
     const redirect = window.BCMS_ONBOARDING_REDIRECT;
-    if (withSample) {
+    if (hasSample) {
       showToast(`✓ ${selectedIndustry} 샘플 데이터 로드 완료`);
       setTimeout(() => {
         if (redirect) window.location.href = redirect;
@@ -460,10 +615,11 @@
   }
 
   function show() {
-    if (rootEl) return; // already showing
+    if (rootEl) return;
     injectStyles();
-    currentStep = 1;
+    currentStep      = 1;
     selectedIndustry = null;
+    selectedGoal     = null;
     rootEl = document.createElement('div');
     rootEl.id = 'bcmsOnboardingRoot';
     document.body.appendChild(rootEl);
@@ -482,7 +638,12 @@
 
   /* ── Public API ── */
   window.BCMSOnboarding = {
-    reset()     { localStorage.removeItem(DONE_KEY); localStorage.removeItem(INDUSTRY_KEY); show(); },
+    reset()     {
+      localStorage.removeItem(DONE_KEY);
+      localStorage.removeItem(INDUSTRY_KEY);
+      localStorage.removeItem(GOAL_KEY);
+      show();
+    },
     forceShow() { show(); },
   };
 
