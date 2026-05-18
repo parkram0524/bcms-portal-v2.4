@@ -221,8 +221,10 @@
   const getBIA       = () => loadJ('bcmsBIAData', []);
   const getCore      = () => loadJ('bcmsCoreFunctions', []);
   const getRisks     = () => loadJ('bcmsRiskList', []);
-  const getBCP       = () => loadJ('bcmsBCPStrategy', []);
+  const getBCP       = () => loadJ('bcmsBCP', []);
   const getTraining  = () => loadJ('bcmsTrainingData', []);
+  const getPriorityConfirmed = () => loadJ('bcmsPriorityConfirmed', {});
+  const bcpAllStrategies = () => getBCP().flatMap(t => Array.isArray(t.strategies) ? t.strategies : []);
   const getCapas     = () => loadJ('bcmsCapaItems', []);
   const getGap       = () => loadJ('bcmsGapAnalysis', {});
   const getDR        = () => loadJ('bcmsDisasterReduction', {});
@@ -284,9 +286,9 @@
   };
 
   const confirmedBCP = () => {
-    const bcp = getBCP();
-    if (!bcp.length) return { done: 0, total: 0 };
-    return { done: bcp.filter(s => s.status === '확정').length, total: bcp.length };
+    const strats = bcpAllStrategies();
+    if (!strats.length) return { done: 0, total: 0 };
+    return { done: strats.filter(s => s.status === '확정').length, total: strats.length };
   };
 
   /* ── Header ── */
@@ -312,7 +314,6 @@
     const biaFns  = biaFunctions();
     const coreFns = coreFunctions();
     const risks   = getRisks();
-    const bcp     = getBCP();
     const tr      = trainYear();
     const gap     = getGap();
     const late    = lateCapas();
@@ -332,9 +333,9 @@
     }
 
     /* 3. BCP 전략 미완료 */
-    const bcpInfo = confirmedBCP();
-    const bcpTotal = bcp.length;
-    const bcpDone  = bcp.filter(s => s.status === '확정').length;
+    const bcpStrats = bcpAllStrategies();
+    const bcpTotal  = bcpStrats.length;
+    const bcpDone   = bcpStrats.filter(s => s.status === '확정').length;
     if (bcpTotal > 0 && bcpDone < bcpTotal) {
       actions.push({ urg: 1, icon: '🛡️', title: `BCP 전략 수립 필요`, desc: `${bcpTotal - bcpDone}개 전략이 미확정 상태입니다. 핵심업무별 복구 전략을 확정하세요.`, href: 'strategy-plans/index.html', urgLabel: '중요' });
     } else if (bcpTotal === 0 && biaFns.length > 0) {
@@ -411,7 +412,6 @@
     const biaFns  = biaFunctions();
     const coreFns = coreFunctions();
     const risks   = getRisks();
-    const bcp     = getBCP();
     const tr      = trainYear();
 
     /* Step completion % */
@@ -421,11 +421,14 @@
 
     const riskPct = risks.length > 0 ? Math.min(100, Math.round(risks.length / Math.max(biaFns.length, 1) * 100)) : 0;
 
-    const coreFinal = biaFns.filter(f => f.coreFinal).length;
-    const priorPct  = biaFns.length > 0 ? Math.round(coreFinal / biaFns.length * 100) : 0;
+    const confirmed  = getPriorityConfirmed();
+    const cfCount    = Object.values(confirmed).filter(v => v === true).length;
+    const coreFinal  = cfCount > 0 ? cfCount : biaFns.filter(f => f.coreFinal).length;
+    const priorPct   = biaFns.length > 0 ? Math.round(coreFinal / biaFns.length * 100) : 0;
 
-    const bcpDone   = bcp.filter(s => s.status === '확정').length;
-    const bcpPct    = bcp.length > 0 ? Math.round(bcpDone / bcp.length * 100) : 0;
+    const bcpStrats  = bcpAllStrategies();
+    const bcpDone    = bcpStrats.filter(s => s.status === '확정').length;
+    const bcpPct     = bcpStrats.length > 0 ? Math.round(bcpDone / bcpStrats.length * 100) : 0;
 
     const trainPct  = tr.total > 0 ? Math.round(tr.done / tr.total * 100) : 0;
 
@@ -455,20 +458,20 @@
   /* ── KPI Cards ── */
   const renderKPI = () => {
     const biaFns   = biaFunctions();
-    const risks    = getRisks();
-    const bcp      = getBCP();
-    const tr       = trainYear();
-    const open     = openCapas();
-    const dr       = drTotal();
-    const nd       = nextAuditDday();
-    const pct      = isoPct();
-    const bcpConf  = bcp.filter(s => s.status === '확정').length;
+    const risks     = getRisks();
+    const bcpStrats = bcpAllStrategies();
+    const tr        = trainYear();
+    const open      = openCapas();
+    const dr        = drTotal();
+    const nd        = nextAuditDday();
+    const pct       = isoPct();
+    const bcpConf   = bcpStrats.filter(s => s.status === '확정').length;
 
     const cards = [
       /* Row 1 */
       { k: '등록된 핵심업무',   v: biaFns.length,  cls: 'accent', m: 'bcmsBIAData 기준',           href: 'risk-bia/bia.html' },
       { k: '등록된 리스크',     v: risks.length,   cls: risks.length ? 'accent' : 'warn', m: 'bcmsRiskList 기준', href: 'risk-bia/risk.html' },
-      { k: 'BCP 전략 확정',    v: bcpConf,        cls: bcpConf ? 'ok' : 'warn', m: `전체 ${bcp.length}개 중`, href: 'strategy-plans/index.html' },
+      { k: 'BCP 전략 확정',    v: bcpConf,        cls: bcpConf ? 'ok' : 'warn', m: `전체 ${bcpStrats.length}개 중`, href: 'strategy-plans/index.html' },
       { k: 'ISO 22301 충족률', v: `${pct}%`,      cls: 'accent', m: '갭분석 기준', word: true,      href: 'audit/index.html' },
       /* divider inserted via JS */
       /* Row 2 */
