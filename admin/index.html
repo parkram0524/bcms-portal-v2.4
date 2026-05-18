@@ -187,6 +187,20 @@
 <main class="main">
 <div class="wrap">
 
+  <!-- ── 데이터 관리 섹션 ── -->
+  <div style="margin-bottom:24px;padding:18px 20px;border:1px solid var(--border);border-radius:12px;background:var(--surface);">
+    <h2 style="font-size:15px;font-weight:700;margin:0 0 6px 0;">⚙️ 데이터 관리</h2>
+    <p style="font-size:12px;color:var(--text-2);margin:0 0 14px 0;">
+      실제 데이터 입력 후에는 초기화를 사용하지 마세요.
+      업종 변경이 필요하면 '업종 재선택'을 사용하세요.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <button type="button" class="btn primary" id="btnReOnboard">🔄 업종 재선택 (온보딩 다시 시작)</button>
+      <button type="button" id="btnReloadSample" style="padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.1);color:#92400e;">📥 샘플 데이터 다시 불러오기</button>
+      <button type="button" id="btnFullReset" style="padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.1);color:#991b1b;">🗑️ 전체 데이터 초기화</button>
+    </div>
+  </div>
+
   <!-- 헤더 -->
   <div class="pageHeader">
     <div>
@@ -578,6 +592,24 @@
   }
 
   function closeModal() { document.getElementById('modalBackdrop').classList.remove('open'); }
+
+  /* ── 데이터 관리 버튼 ── */
+  document.getElementById('btnReOnboard').addEventListener('click', () => {
+    localStorage.removeItem('bcmsOnboardingDone');
+    location.href = '../index.html';
+  });
+  document.getElementById('btnReloadSample').addEventListener('click', () => {
+    if (!confirm('현재 데이터를 샘플로 덮어씁니다. 계속하시겠습니까?')) return;
+    window.BCMSDemoSeed?.loadDemo({ force: true });
+    location.reload();
+  });
+  document.getElementById('btnFullReset').addEventListener('click', () => {
+    if (!confirm('모든 BCMS 데이터가 삭제됩니다. 되돌릴 수 없습니다. 계속하시겠습니까?')) return;
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('bcms'))
+      .forEach(k => localStorage.removeItem(k));
+    location.href = '../index.html';
+  });
 
   document.getElementById('btnAdd').addEventListener('click', openModal);
   document.getElementById('btnAddEmpty').addEventListener('click', openModal);

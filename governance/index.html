@@ -412,7 +412,13 @@
     }
 
     document.getElementById("btnSeed").addEventListener("click", () => { seedDemo(); render(); });
-    document.getElementById("btnClear").addEventListener("click", () => { clearData(); render(); });
+    document.getElementById("btnClear").addEventListener("click", () => {
+      if (!confirm('모든 BCMS 데이터를 초기화합니다. 계속하시겠습니까?')) return;
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('bcms'))
+        .forEach(k => localStorage.removeItem(k));
+      location.href = '../index.html';
+    });
     render();
   </script>
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
