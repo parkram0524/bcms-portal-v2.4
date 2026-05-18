@@ -315,20 +315,19 @@
         backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
         display:flex;align-items:center;justify-content:center;
         padding:20px;overflow-y:auto;overflow-x:hidden;
+        box-sizing:border-box;
         animation:ob-fade .2s ease;
       }
       .ob-card {
         background:#ffffff;border-radius:16px;
         box-shadow:0 24px 64px rgba(0,0,0,.2);
-        width:100%;max-width:560px;
+        width:92vw;max-width:min(860px,92vw);
+        box-sizing:border-box;
         display:flex;flex-direction:column;
         max-height:calc(100vh - 40px);
-        overflow-x:hidden;
+        overflow:hidden;
         animation:ob-slide .25s cubic-bezier(.4,0,.2,1);
       }
-      .ob-card.ind-wide { max-width:680px }
-      .ob-card.wide     { max-width:700px }
-      .ob-card.xwide    { max-width:860px }
       .ob-head {
         background:linear-gradient(135deg,#0070f3 0%,#0050d4 100%);
         padding:28px 32px 22px;color:#fff;flex-shrink:0;
@@ -340,7 +339,7 @@
       .ob-dot     { height:5px;width:5px;border-radius:3px;background:rgba(255,255,255,.35);transition:all .2s }
       .ob-dot.active { width:18px;background:#fff }
 
-      .ob-body    { padding:28px 28px;overflow-y:auto;overflow-x:hidden;border-radius:0 0 16px 16px }
+      .ob-body    { padding:28px 28px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;border-radius:0 0 16px 16px }
       .ob-title   { font-size:17px;font-weight:700;color:#111;letter-spacing:-.02em;margin-bottom:6px;word-break:keep-all }
       .ob-desc    { font-size:13px;color:#666;line-height:1.7;word-break:keep-all;margin-bottom:18px }
       .ob-actions { display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap }
@@ -352,12 +351,12 @@
       .ob-btn:disabled { opacity:.42;cursor:not-allowed;pointer-events:none }
 
       /* ── Step 1: Industry cards ── */
-      .ob-ind-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;min-width:0 }
+      .ob-ind-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-width:0;overflow:hidden }
       @media(max-width:580px){ .ob-ind-grid { grid-template-columns:repeat(2,1fr) } }
       .ob-ind-card {
         border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:12px 10px;cursor:pointer;
         display:flex;flex-direction:column;gap:5px;transition:all .14s;background:#fff;
-        text-align:left;font-family:inherit;width:100%;min-width:0;overflow:hidden;
+        text-align:left;font-family:inherit;width:100%;min-width:0;overflow:hidden;box-sizing:border-box;
       }
       .ob-ind-card:hover   { border-color:#0070f3;background:rgba(0,112,243,.04) }
       .ob-ind-card.selected{ border-color:#0070f3;background:rgba(0,112,243,.08);box-shadow:0 0 0 2px rgba(0,112,243,.22) }
@@ -368,27 +367,28 @@
       .ob-ind-card.selected .ob-ind-check { display:flex }
 
       /* ── Step 2: Goal cards ── */
-      .ob-goal-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px }
+      .ob-goal-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;overflow:hidden }
       @media(max-width:620px){ .ob-goal-grid { grid-template-columns:1fr } }
       .ob-goal-card {
         border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:16px 14px;cursor:pointer;
         display:flex;flex-direction:column;gap:6px;transition:all .14s;background:#fff;
-        text-align:left;font-family:inherit;width:100%;
+        text-align:left;font-family:inherit;width:100%;min-width:0;overflow:hidden;box-sizing:border-box;
       }
       .ob-goal-card:hover    { border-color:#0070f3;background:rgba(0,112,243,.04) }
       .ob-goal-card.selected { border-color:#0070f3;background:rgba(0,112,243,.08);box-shadow:0 0 0 2px rgba(0,112,243,.22) }
       .ob-goal-icon  { font-size:22px;line-height:1 }
-      .ob-goal-label { font-size:13px;font-weight:700;color:#111;word-break:keep-all }
-      .ob-goal-desc  { font-size:11px;color:#777;line-height:1.4;word-break:keep-all;flex:1 }
+      .ob-goal-label { font-size:13px;font-weight:700;color:#111;word-break:keep-all;overflow:hidden;text-overflow:ellipsis }
+      .ob-goal-desc  { font-size:11px;color:#777;line-height:1.4;word-break:keep-all;flex:1;overflow:hidden }
       .ob-goal-check { width:16px;height:16px;border-radius:50%;background:#0070f3;color:#fff;font-size:9px;font-weight:800;display:none;align-items:center;justify-content:center;align-self:flex-end;margin-top:4px }
       .ob-goal-card.selected .ob-goal-check { display:flex }
 
       /* ── Step 3: Roadmap ── */
-      .ob-roadmap-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px }
+      .ob-roadmap-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px;overflow:hidden }
       @media(max-width:620px){ .ob-roadmap-grid { grid-template-columns:1fr } }
       .ob-rm-card {
         border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:14px;
         display:flex;flex-direction:column;gap:8px;background:#fafafa;
+        min-width:0;overflow:hidden;box-sizing:border-box;
       }
       .ob-rm-head   { display:flex;align-items:center;gap:8px;flex-wrap:nowrap }
       .ob-rm-num {
@@ -525,10 +525,9 @@
     const body = currentStep === 1 ? buildStep1()
                : currentStep === 2 ? buildStep2()
                :                     buildStep3();
-    const widthCls = currentStep === 3 ? ' xwide' : currentStep === 2 ? ' wide' : ' ind-wide';
     rootEl.innerHTML = `
       <div class="ob-overlay">
-        <div class="ob-card${widthCls}">
+        <div class="ob-card">
           <div class="ob-head">
             <div class="ob-logo">🛡 BCMS Portal</div>
             <div class="ob-tagline">ISO 22301 기반 업무연속성관리 시스템</div>
