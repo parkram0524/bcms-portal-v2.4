@@ -314,7 +314,7 @@
         background:rgba(0,0,0,.52);
         backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
         display:flex;align-items:center;justify-content:center;
-        padding:20px;overflow-y:auto;
+        padding:20px;overflow-y:auto;overflow-x:hidden;
         animation:ob-fade .2s ease;
       }
       .ob-card {
@@ -323,10 +323,12 @@
         width:100%;max-width:560px;
         display:flex;flex-direction:column;
         max-height:calc(100vh - 40px);
+        overflow-x:hidden;
         animation:ob-slide .25s cubic-bezier(.4,0,.2,1);
       }
-      .ob-card.wide  { max-width:700px }
-      .ob-card.xwide { max-width:860px }
+      .ob-card.ind-wide { max-width:680px }
+      .ob-card.wide     { max-width:700px }
+      .ob-card.xwide    { max-width:860px }
       .ob-head {
         background:linear-gradient(135deg,#0070f3 0%,#0050d4 100%);
         padding:28px 32px 22px;color:#fff;flex-shrink:0;
@@ -338,7 +340,7 @@
       .ob-dot     { height:5px;width:5px;border-radius:3px;background:rgba(255,255,255,.35);transition:all .2s }
       .ob-dot.active { width:18px;background:#fff }
 
-      .ob-body    { padding:28px 32px;overflow-y:auto;border-radius:0 0 16px 16px }
+      .ob-body    { padding:28px 28px;overflow-y:auto;overflow-x:hidden;border-radius:0 0 16px 16px }
       .ob-title   { font-size:17px;font-weight:700;color:#111;letter-spacing:-.02em;margin-bottom:6px;word-break:keep-all }
       .ob-desc    { font-size:13px;color:#666;line-height:1.7;word-break:keep-all;margin-bottom:18px }
       .ob-actions { display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap }
@@ -350,18 +352,18 @@
       .ob-btn:disabled { opacity:.42;cursor:not-allowed;pointer-events:none }
 
       /* ── Step 1: Industry cards ── */
-      .ob-ind-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px }
+      .ob-ind-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;min-width:0 }
       @media(max-width:580px){ .ob-ind-grid { grid-template-columns:repeat(2,1fr) } }
       .ob-ind-card {
-        border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:14px 12px;cursor:pointer;
+        border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:12px 10px;cursor:pointer;
         display:flex;flex-direction:column;gap:5px;transition:all .14s;background:#fff;
-        text-align:left;font-family:inherit;width:100%;
+        text-align:left;font-family:inherit;width:100%;min-width:0;overflow:hidden;
       }
       .ob-ind-card:hover   { border-color:#0070f3;background:rgba(0,112,243,.04) }
       .ob-ind-card.selected{ border-color:#0070f3;background:rgba(0,112,243,.08);box-shadow:0 0 0 2px rgba(0,112,243,.22) }
       .ob-ind-icon  { font-size:22px;line-height:1 }
-      .ob-ind-name  { font-size:13px;font-weight:700;color:#111;letter-spacing:-.01em;word-break:keep-all }
-      .ob-ind-desc  { font-size:11px;color:#777;line-height:1.4;word-break:keep-all }
+      .ob-ind-name  { font-size:12.5px;font-weight:700;color:#111;letter-spacing:-.01em;word-break:keep-all }
+      .ob-ind-desc  { font-size:10.5px;color:#777;line-height:1.4;word-break:keep-all }
       .ob-ind-check { width:16px;height:16px;border-radius:50%;background:#0070f3;color:#fff;font-size:9px;font-weight:800;display:none;align-items:center;justify-content:center;align-self:flex-end;margin-top:2px }
       .ob-ind-card.selected .ob-ind-check { display:flex }
 
@@ -523,7 +525,7 @@
     const body = currentStep === 1 ? buildStep1()
                : currentStep === 2 ? buildStep2()
                :                     buildStep3();
-    const widthCls = currentStep === 3 ? ' xwide' : currentStep === 2 ? ' wide' : '';
+    const widthCls = currentStep === 3 ? ' xwide' : currentStep === 2 ? ' wide' : ' ind-wide';
     rootEl.innerHTML = `
       <div class="ob-overlay">
         <div class="ob-card${widthCls}">
