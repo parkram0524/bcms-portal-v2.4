@@ -165,11 +165,10 @@
   const H = p => BASE + p;
 
   /* ── 데이터 로드 ── */
-  const bcpRaw  = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
-  const bcpArr  = arr(Array.isArray(bcpRaw) ? bcpRaw : (bcpRaw && typeof bcpRaw === 'object' ? Object.values(bcpRaw) : []));
+  const bcpDoc  = load('bcmsBCPDoc',  null);
   const bcpMeta = load('bcmsBCPMeta', null);
 
-  const eopArr  = arr(load('bcmsActivationProc', []));
+  const eopDoc  = load('bcmsEOPDoc',  null);
   const eopMeta = load('bcmsEOPMeta', null);
 
   const sopArr  = arr(load('bcmsSOPData', []));
@@ -177,31 +176,31 @@
 
   const drpArr  = arr(load('bcmsDRPData', []));
 
-  const confirmed = arr(load('bcmsPriorityConfirmed', []));
-
   /* ── 완성도 계산 ── */
-  function bcpPct() {
-    const total = confirmed.length;
-    if (total === 0) return bcpArr.length > 0 ? 40 : 0;
-    const written = bcpArr.filter(b => b && (b.strategyText || b.strategyType || b.strategy || b.done)).length;
-    return Math.max(0, Math.min(100, Math.round(written / total * 100)));
-  }
-
-  function eopPct() {
-    if (eopArr.length === 0) return 0;
-    const done = eopArr.filter(r => r && (r.status === '완료' || r.done === true)).length;
-    return eopArr.length > 0 ? Math.min(100, Math.round(done / eopArr.length * 100 + 30)) : 0;
+  function docSectionPct(doc) {
+    if (!doc) return 0;
+    if (typeof doc !== 'object' || Array.isArray(doc)) return 30;
+    const entries = Object.entries(doc);
+    if (entries.length === 0) return 0;
+    const filled = entries.filter(([, v]) => {
+      if (typeof v === 'string') return v.trim().length > 2;
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === 'object' && v !== null) return Object.keys(v).length > 0;
+      return !!v;
+    }).length;
+    return Math.round(filled / entries.length * 100);
   }
 
   function sopPct() {
     if (sopArr.length === 0) return 0;
-    return Math.min(100, 30 + sopArr.length * 10);
+    if (sopArr.length >= 5) return 100;
+    return Math.round(sopArr.length / 5 * 100);
   }
 
   function drpPct() {
     if (drpArr.length === 0) return 0;
-    const hasRto = drpArr.filter(r => r && (r.rto || r.RTO)).length;
-    return Math.min(100, Math.round(hasRto / drpArr.length * 60 + 20));
+    if (drpArr.length >= 3) return 100;
+    return 50;
   }
 
   /* ── 진행바 색상 ── */
@@ -211,7 +210,13 @@
 
   /* ── 버전/날짜 추출 ── */
   function metaVersion(meta) { return meta?.version ?? null; }
-  function metaDate(meta)    { return meta?.updatedAt ?? meta?.savedAt ?? null; }
+  function metaDate(meta)    { return meta?.updatedAt ?? meta?.savedAt ?? meta?.date ?? null; }
+
+  /* ── doc 섹션 수 ── */
+  function sectionCount(doc) {
+    if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return 0;
+    return Object.keys(doc).length;
+  }
 
   /* ── 문서 정의 ── */
   const docs = [
@@ -220,10 +225,11 @@
       name: 'BCP 절차서',
       sub: '업무연속성계획서',
       desc: '핵심업무 중단 시 복구전략 및 대응절차',
-      pct: bcpPct(),
+      pct: docSectionPct(bcpDoc),
       version: metaVersion(bcpMeta),
       date: metaDate(bcpMeta),
-      dataCount: bcpArr.length,
+      dataCount: sectionCount(bcpDoc),
+      dataUnit: '섹션',
       href: H('/library/bcp.html'),
     },
     {
@@ -231,10 +237,11 @@
       name: 'EOP 비상대응절차서',
       sub: '',
       desc: '재난 발생 시 초기 대응 및 비상운영절차',
-      pct: eopPct(),
+      pct: docSectionPct(eopDoc),
       version: metaVersion(eopMeta),
       date: metaDate(eopMeta),
-      dataCount: eopArr.length,
+      dataCount: sectionCount(eopDoc),
+      dataUnit: '섹션',
       href: H('/library/eop.html'),
     },
     {
@@ -246,6 +253,7 @@
       version: metaVersion(sopMeta),
       date: metaDate(sopMeta),
       dataCount: sopArr.length,
+      dataUnit: '건',
       href: H('/library/sop.html'),
     },
     {
@@ -257,6 +265,7 @@
       version: null,
       date: null,
       dataCount: drpArr.length,
+      dataUnit: '건',
       href: H('/strategy-plans/drp.html'),
     },
   ];
