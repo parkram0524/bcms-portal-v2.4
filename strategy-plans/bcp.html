@@ -398,7 +398,18 @@
       function renderKpi() {
         const all = state.rows.filter((r) => r.critical || r.riskScore >= 13);
         const written = all.filter((r) => (r.strategyText || '').trim().length > 0).length;
-        const finalCount = all.filter((r) => r.status === '확정').length;
+
+        // Count confirmed from state.rows (bcmsBCP key)
+        const finalFromBCP = all.filter((r) => r.status === '확정').length;
+        // Count confirmed from bcmsBCPStrategy (strategy-plans/index.html saves here)
+        const stratData = (() => {
+          try { return JSON.parse(localStorage.getItem('bcmsBCPStrategy') || '[]'); } catch { return []; }
+        })();
+        const finalFromStrategy = Array.isArray(stratData)
+          ? stratData.filter((s) => !!s.completed || s.status === 'confirmed' || s.status === '확정').length
+          : 0;
+        const finalCount = Math.max(finalFromBCP, finalFromStrategy);
+
         const pending = Math.max(all.length - written, 0);
 
         $('kCritical').textContent = String(all.length);

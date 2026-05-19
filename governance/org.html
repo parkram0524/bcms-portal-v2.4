@@ -109,6 +109,9 @@
   .pTxt { resize: vertical; min-height: 70px; line-height: 1.5; }
   .pContactRow { display: none; }
   body.isEditMode .pContactRow { display: flex; }
+  /* ── 비상대응 모드 전용 담당부서 필드 ── */
+  .pDeptField { display: none; }
+  body.isEmergencyMode .pDeptField { display: flex; }
   .pBtns { display: flex; gap: 8px; }
   .pBtn { flex: 1; font-size: 12px; font-weight: 600; padding: 7px; border-radius: var(--r-sm); border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text); cursor: pointer; }
   .pBtn.primary { background: var(--accent); color: #fff; border-color: transparent; }
@@ -214,6 +217,12 @@
       <div class="pField">
         <label class="pLbl">노드 높이 (40~150)</label>
         <input class="pInp" id="pNodeH" type="number" min="40" max="150" value="70"/>
+      </div>
+      <div class="pField pDeptField">
+        <label class="pLbl">담당부서 매칭</label>
+        <select class="pSel" id="pDeptMapping">
+          <option value="">-- 미지정 --</option>
+        </select>
       </div>
       <div class="pBtns">
         <button class="pBtn primary" onclick="ORG.savePanel()">적용</button>
@@ -725,6 +734,19 @@ window.ORG = (() => {
     if (panelNode && ctxTarget.isNode() && panelNode.id() === ctxTarget.id()) closePanel();
   }
 
+  /* ── Org dept list (for emergency mode dropdown) ─────────────── */
+  function getOrgDepts() {
+    try {
+      const raw = loadJ(KEY_ORG, null);
+      if (!raw) return [];
+      const arr = Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])];
+      return arr
+        .filter(e => e.data && !e.data.source && e.data.label)
+        .map(e => e.data.label.split('\n')[0].trim())
+        .filter(Boolean);
+    } catch { return []; }
+  }
+
   /* ── Detail panel ─────────────────────────────────────────────── */
   function openPanel(node) {
     panelNode = node;
@@ -738,6 +760,13 @@ window.ORG = (() => {
     document.getElementById('pBannerColor').value = node.data('bannerColor') || '#0070f3';
     document.getElementById('pNodeW').value = Math.round(node.width()) || 140;
     document.getElementById('pNodeH').value = Math.round(node.height()) || 70;
+    if (mode === 'emergency') {
+      const sel     = document.getElementById('pDeptMapping');
+      const depts   = getOrgDepts();
+      const current = node.data('assignedDept') || '';
+      sel.innerHTML = '<option value="">-- 미지정 --</option>' +
+        depts.map(d => `<option value="${d}"${d === current ? ' selected' : ''}>${d}</option>`).join('');
+    }
     document.getElementById('panel').classList.add('open');
   }
   function savePanel() {
@@ -758,6 +787,15 @@ window.ORG = (() => {
     panelNode.data('nodeH', h);
     // Apply inline style immediately for live feedback
     applyNodeStyle(panelNode);
+    // Emergency mode: apply dept mapping as node subtitle
+    if (mode === 'emergency') {
+      const dept = document.getElementById('pDeptMapping').value;
+      panelNode.data('assignedDept', dept);
+      if (dept) {
+        panelNode.data('label', name + '\n' + dept);
+        panelNode.data('sub', dept);
+      }
+    }
     // Auto-save to localStorage
     const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
     saveJ(key, cy.json().elements);
@@ -840,6 +878,7 @@ window.ORG = (() => {
     mode = m;
     document.getElementById('btnNormal').classList.toggle('active',    m === 'normal');
     document.getElementById('btnEmergency').classList.toggle('active', m === 'emergency');
+    document.body.classList.toggle('isEmergencyMode', m === 'emergency');
     applyTabStyle(m);
     closePanel();
     loadMode();
@@ -970,6 +1009,7 @@ window.ORG = (() => {
       document.getElementById('btnEmergency').classList.toggle('active', mode === 'emergency');
     }
     applyTabStyle(mode);
+    document.body.classList.toggle('isEmergencyMode', mode === 'emergency');
 
     // Handle sidebar clicks when already on this page (only hash changes, no reload)
     window.addEventListener('hashchange', () => {

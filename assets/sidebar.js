@@ -9,6 +9,23 @@
   const BASE = m ? m[1] : ""; // e.g. "/BCMS-PORTAL-V2" or ""
   const H = (p) => `${BASE}${p}`;
 
+  // ── 사이드바 배지용 등록 건수 (로컬스토리지 즉시 읽기) ──
+  const _biaCount = (() => {
+    try {
+      const d = JSON.parse(localStorage.getItem('bcmsBIAData') || '[]');
+      return Array.isArray(d) ? d.flatMap(t => t.functions || []).length : 0;
+    } catch(e) { return 0; }
+  })();
+  const _riskCount = (() => {
+    try {
+      const ra = JSON.parse(localStorage.getItem('bcmsRiskAssessment') || '[]');
+      const rl = JSON.parse(localStorage.getItem('bcmsRiskList') || '[]');
+      const a  = Array.isArray(ra) ? ra.flatMap(t => t.risks || []).length : 0;
+      const b  = Array.isArray(rl) ? rl.length : 0;
+      return a || b;
+    } catch(e) { return 0; }
+  })();
+
   const sidebarHTML = `
   <div class="sidebar">
 
@@ -39,8 +56,8 @@
       <a href="${H("/risk-bia/index.html")}" class="sidebar-section-title">🧩 2. BIA & RA (업무영향분석·리스크평가)</a>
       <div class="sub-menu">
         <a href="${H("/risk-bia/index.html")}">대시보드</a>
-        <a href="${H("/risk-bia/bia.html")}">업무영향분석 (BIA)</a>
-        <a href="${H("/risk-bia/risk.html")}">리스크 평가 (RA)</a>
+        <a href="${H("/risk-bia/bia.html")}">업무영향분석 (BIA)${_biaCount > 0 ? `<span class="sbBadge">${_biaCount}</span>` : ''}</a>
+        <a href="${H("/risk-bia/risk.html")}">리스크 평가 (RA)${_riskCount > 0 ? `<span class="sbBadge">${_riskCount}</span>` : ''}</a>
         <a href="${H("/risk-bia/priority.html")}">통합 우선순위</a>
         <a href="${H("/risk-bia/core-functions.html")}">핵심업무 관리</a>
       </div>
@@ -51,7 +68,7 @@
       <div class="sub-menu">
         <a href="${H("/strategy-plans/index.html")}">전략 대시보드</a>
         <a href="${H("/strategy-plans/bcp.html")}">BCP 전략</a>
-        <a href="${H("/strategy-plans/drp.html")}">연속성 절차</a>
+        <a href="${H("/strategy-plans/drp.html")}">DRP (연속성 절차)</a>
       </div>
     </div>
 
@@ -99,6 +116,10 @@
       <button class="sidebar-guide-btn" id="bcmsGuideBtn" type="button">📋 수립 가이드</button>
     </div>
 
+    <div class="sidebar-contact">
+      문의·피드백: <a href="mailto:bcms@example.com" class="sidebar-contact-link">bcms@example.com</a>
+    </div>
+
   </div>
   `;
 
@@ -111,6 +132,60 @@
     .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; }
     .sidebar-brand-link:hover{ opacity:.95; }
     .sidebar-brand-link h1{ cursor:pointer; }
+
+    /* ── 1-2: 다크모드 버튼 오른쪽 상단 통일 ── */
+    .theme-toggle {
+      bottom: auto !important;
+      top: 16px !important;
+      right: 16px !important;
+    }
+
+    /* ── 1-3: 사이드바 긴 텍스트 줄바꿈 허용 ── */
+    .sidebar-section-title {
+      white-space: normal !important;
+      line-height: 1.4 !important;
+      align-items: flex-start !important;
+    }
+    .sub-menu a {
+      white-space: normal !important;
+      line-height: 1.4 !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    /* ── 1-4: BIA·리스크 등록 건수 배지 ── */
+    .sbBadge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 16px;
+      border-radius: 999px;
+      padding: 0 5px;
+      margin-left: 6px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    /* ── 1-5: 문의 메일 ── */
+    .sidebar-contact {
+      padding: 8px 14px 12px;
+      font-size: 11px;
+      color: var(--sb-sub);
+      text-align: center;
+      border-top: 0.5px solid var(--sb-border);
+      line-height: 1.6;
+    }
+    .sidebar-contact-link {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .sidebar-contact-link:hover { text-decoration: underline; }
+
     .sidebar-guide-wrap {
       position:sticky;
       bottom:0;
@@ -599,7 +674,20 @@
         font-weight: 700;
         color: var(--accent);
         flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        cursor: default;
       }
+      .isoTagIcon { flex-shrink: 0; }
+      .isoTagText {
+        display: inline-block;
+        max-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        transition: max-width 0.28s ease;
+        vertical-align: middle;
+      }
+      .isoTag:hover .isoTagText { max-width: 240px; }
       .bannerDivider {
         color: var(--border-strong);
         flex-shrink: 0;
@@ -622,8 +710,11 @@
 
     const banner = document.createElement("div");
     banner.className = "contextBanner";
+    const _isoParts = bannerData.iso.split(' ');
+    const _isoIcon  = _isoParts[0];
+    const _isoRest  = ' ' + _isoParts.slice(1).join(' ');
     banner.innerHTML =
-      `<span class="isoTag">${bannerData.iso}</span>` +
+      `<span class="isoTag"><span class="isoTagIcon">${_isoIcon}</span><span class="isoTagText">${_isoRest}</span></span>` +
       `<span class="bannerDivider">|</span>` +
       `<span class="bannerTask">${bannerData.task}</span>` +
       (bannerData.nextLabel

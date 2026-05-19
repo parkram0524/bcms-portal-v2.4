@@ -16,7 +16,15 @@
       gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
     }
     .dashHeaderLeft { display: flex; flex-direction: column; gap: 6px; }
-    .dashTitle { font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--text); display: flex; align-items: center; gap: 10px; }
+    .dashTitle {
+      font-size: 28px; font-weight: 800; letter-spacing: -.03em;
+      display: flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #0070f3 0%, #00bcd4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: var(--accent); /* fallback */
+    }
     .dashSubtitle { font-size: 13px; color: var(--text-2); }
     .dashHeaderRight { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .headerChip {
@@ -486,13 +494,26 @@
     cards.forEach((c, i) => {
       if (i === 4) html += `<div class="kpiDivider"></div>`;
       const valCls = c.word ? `v word ${c.cls}` : `v ${c.cls}`;
+      const isNum = !c.word && typeof c.v === 'number';
       html += `<a class="kpiCard" href="${esc(c.href)}" style="text-decoration:none">
         <div class="k">${esc(c.k)}</div>
-        <div class="${valCls}">${esc(String(c.v))}</div>
+        <div class="${valCls}"${isNum ? ` data-target="${c.v}"` : ''}>${isNum ? '0' : esc(String(c.v))}</div>
         <div class="m">${esc(c.m)}</div>
       </a>`;
     });
     grid.innerHTML = html;
+    grid.querySelectorAll('.v[data-target]').forEach(el => {
+      const target = +el.dataset.target;
+      if (!target) { el.textContent = '0'; return; }
+      const dur = 900, start = performance.now();
+      const tick = now => {
+        const p = Math.min(1, (now - start) / dur);
+        const ease = 1 - (1 - p) ** 3;
+        el.textContent = String(Math.round(ease * target));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
   };
 
   /* ── Risk TOP 5 ── */

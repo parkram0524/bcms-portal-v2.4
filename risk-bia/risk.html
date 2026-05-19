@@ -177,7 +177,27 @@
     .cell.low  { background: rgba(34,197,94,.1);  color: #16a34a; border-color: rgba(34,197,94,.25); }
     .cell.mid  { background: rgba(245,158,11,.1); color: #b45309; border-color: rgba(245,158,11,.25); }
     .cell.high { background: rgba(239,68,68,.1);  color: #dc2626; border-color: rgba(239,68,68,.25); }
-    .cell.active { box-shadow: 0 0 0 2px var(--accent) inset; }
+    /* 십자 하이라이트: 행/열 — background-image로 기존 색상 위에 투명 파란 오버레이 */
+    .cell.hl-row, .cell.hl-col {
+      background-image: linear-gradient(rgba(0,112,243,.13), rgba(0,112,243,.13));
+      border-color: rgba(0,112,243,.28) !important;
+    }
+    /* 교차점 셀 — 진한 강조 */
+    .cell.active {
+      background-color: var(--accent) !important;
+      background-image: none !important;
+      color: #fff !important;
+      border-color: transparent !important;
+      font-weight: 800;
+      box-shadow: 0 2px 10px rgba(0,112,243,.38);
+    }
+    /* 매트릭스 하단 위험도 레이블 */
+    .matrixScoreLabel {
+      margin-top: 10px; font-size: 12px; color: var(--text-2);
+      display: flex; align-items: center; justify-content: center;
+      gap: 5px; flex-wrap: wrap; text-align: center;
+    }
+    .matrixScoreLabel strong { color: var(--text); font-weight: 700; }
 
     @media (max-width: 960px) {
       .entryPanel { grid-template-columns: 1fr; }
@@ -455,6 +475,10 @@
         const band = scoreBand(s);
         newScoreBadge.textContent = band.text;
         newScoreBadge.className = `scoreBadge ${band.cls}`;
+        // matrixPos 업데이트 → refreshMatrix (선언 순서와 무관하게 호출 시점에 이미 초기화됨)
+        matrixPos.likelihood = l;
+        matrixPos.impact     = i;
+        refreshMatrix();
       };
 
       const updateResidualScore = () => {
@@ -689,11 +713,25 @@
 
       /* ── Matrix ── */
       const buildMatrixHtml = (activeLikelihood=null, activeImpact=null) => {
+        const hasActive = activeLikelihood != null && activeImpact != null;
+        const al = Number(activeLikelihood), ai = Number(activeImpact);
+
         const cell = (like, impact) => {
           const score = like * impact, band = scoreBand(score);
-          const active = Number(activeLikelihood)===like && Number(activeImpact)===impact;
-          return `<td class="cell ${band.cls} ${active?'active':''}">${score}</td>`;
+          const isActive = hasActive && al === like && ai === impact;
+          const isHlRow  = hasActive && !isActive && ai === impact;
+          const isHlCol  = hasActive && !isActive && al === like;
+          const extra = isActive ? ' active' : (isHlRow && isHlCol ? ' hl-row hl-col' : isHlRow ? ' hl-row' : isHlCol ? ' hl-col' : '');
+          return `<td class="cell ${band.cls}${extra}" data-like="${like}" data-impact="${impact}" style="cursor:pointer">${score}</td>`;
         };
+
+        let scoreLabel = '';
+        if (hasActive) {
+          const score = al * ai;
+          const band  = scoreBand(score);
+          scoreLabel = `<div class="matrixScoreLabel">발생가능성 <strong>${al}점</strong> × 영향도 <strong>${ai}점</strong> = 위험도 <strong>${score}점</strong>&nbsp;<span class="scoreBadge ${band.cls}" style="font-size:10px;padding:2px 8px;vertical-align:middle">${band.text}</span></div>`;
+        }
+
         return `
           <table class="matrix" aria-label="리스크 매트릭스">
             <thead><tr><th>영향도↑</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
@@ -701,7 +739,7 @@
               ${[5,4,3,2,1].map(impact=>`<tr><th>${impact}</th>${[1,2,3,4,5].map(like=>cell(like,impact)).join('')}</tr>`).join('')}
               <tr><th>발생가능성→</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
             </tbody>
-          </table>`;
+          </table>${scoreLabel}`;
       };
 
       /* ── Data init ── */
@@ -761,12 +799,19 @@
         avgMetric.textContent       = avg;
       };
 
+      /* 현재 활성 매트릭스 위치 — 슬라이더/셀클릭/BIA행클릭 공통 단일 소스 */
+      let matrixPos = { likelihood: 1, impact: 3 };
+
+      const refreshMatrix = () => {
+        matrixMount.innerHTML = buildMatrixHtml(matrixPos.likelihood, matrixPos.impact);
+      };
+
       const renderTable = () => {
         const team = teamSelect.value;
         if (!team) {
           tableMount.innerHTML = '<div class="empty">BIA 데이터가 없어 리스크 평가를 시작할 수 없습니다.</div>';
           renderMetrics({ team:'-', risks:[] });
-          matrixMount.innerHTML = buildMatrixHtml();
+          refreshMatrix();
           return;
         }
         const teamRow = ensureTeamRisk(team);
@@ -775,7 +820,7 @@
         renderMetrics(teamRow);
         if (!risks.length) {
           tableMount.innerHTML = '<div class="empty">선택한 팀의 핵심업무가 BIA에 없습니다.</div>';
-          matrixMount.innerHTML = buildMatrixHtml();
+          refreshMatrix();
           return;
         }
         tableMount.innerHTML = `
@@ -828,7 +873,7 @@
               }).join('')}
             </tbody>
           </table>`;
-        matrixMount.innerHTML = buildMatrixHtml(activeCell.likelihood, activeCell.impact);
+        refreshMatrix();
       };
 
       const isInteractive = (el) => !!(el && el.closest('input,select,textarea,button,option,label'));
@@ -837,10 +882,16 @@
         tableMount.querySelectorAll('tr.focusRow').forEach(r=>r.classList.remove('focusRow'));
         if (tr) tr.classList.add('focusRow');
         activeCell = risk ? { likelihood:risk.likelihood, impact:risk.impact } : { likelihood:null, impact:null };
+        if (risk) {
+          matrixPos.likelihood = risk.likelihood;
+          matrixPos.impact     = risk.impact;
+          newLikelihood.value  = risk.likelihood;
+          newImpact.value      = risk.impact;
+        }
         matrixHint.textContent = risk
           ? `선택 항목: 발생가능성 ${risk.likelihood}, 영향도 ${risk.impact}, 위험도 ${risk.riskScore}`
           : '행을 클릭하면 매트릭스에서 위치가 강조됩니다.';
-        matrixMount.innerHTML = buildMatrixHtml(activeCell.likelihood, activeCell.impact);
+        refreshMatrix();
       };
 
       const refreshRowVisual = (tr, risk) => {
@@ -1055,6 +1106,23 @@
         matrixHint.textContent = '행을 클릭하면 매트릭스에서 위치가 강조됩니다.';
         updateAffectedFunctions();
         renderTable();
+      });
+
+      /* ── 매트릭스 셀 클릭 → 슬라이더 + 매트릭스 동기화 ── */
+      matrixMount.addEventListener('click', e => {
+        const td = e.target.closest('td.cell[data-like]');
+        if (!td) return;
+        const like   = Number(td.dataset.like);
+        const impact = Number(td.dataset.impact);
+        // 슬라이더 값 업데이트
+        newLikelihood.value = like;
+        newImpact.value     = impact;
+        // BIA 행 선택 초기화
+        tableMount.querySelectorAll('tr.focusRow').forEach(r => r.classList.remove('focusRow'));
+        activeCell = { likelihood: like, impact: impact };
+        matrixHint.textContent = `위치 선택: 발생가능성 ${like}점 × 영향도 ${impact}점 = 위험도 ${like * impact}점`;
+        // score 표시 + 매트릭스 재렌더 (updateNewScore가 matrixPos도 갱신함)
+        updateNewScore();
       });
 
       quickRisk.addEventListener('keydown', e => {

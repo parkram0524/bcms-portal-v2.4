@@ -4,6 +4,7 @@
     SERVICE: 'bcms_service_registry_v1',
     BIA: 'bcmsBIAData',
     RISK: 'bcmsRiskAssessment',
+    RISKFLAT: 'bcmsRiskList',
     BCP: 'bcmsBCP',
     DRP: 'bcmsDRP'
   };

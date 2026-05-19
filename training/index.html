@@ -20,11 +20,19 @@
     .hero h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
     .hero p  { margin-top: 6px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
 
-    .metricsStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metricsStrip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
     .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
     .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
     .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
     .metric .v.word { font-size: 14px; font-family: inherit; }
+    .metric .rateBar { margin-top: 10px; height: 6px; background: var(--bg); border-radius: 999px; border: 0.5px solid var(--border); overflow: hidden; }
+    .metric .rateFill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .5s ease; }
+
+    .ddayBadge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; border: 0.5px solid; white-space: nowrap; font-family: "SF Mono","Consolas",monospace; margin-top: 3px; }
+    .ddayBadge.future { background: rgba(99,102,241,.08);  color: #4338ca; border-color: rgba(99,102,241,.25); }
+    .ddayBadge.soon   { background: rgba(239,68,68,.08);   color: #dc2626; border-color: rgba(239,68,68,.25); }
+    .ddayBadge.today  { background: rgba(245,158,11,.1);   color: #b45309; border-color: rgba(245,158,11,.3); }
+    .ddayBadge.past   { background: rgba(107,114,128,.08); color: #6b7280; border-color: rgba(107,114,128,.25); }
 
     .tabNav { display: flex; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
     .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
@@ -167,8 +175,61 @@
     .gaugeFill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .5s ease; }
     .gaugePct  { font-size: 13px; font-weight: 700; color: var(--text); min-width: 42px; text-align: right; font-family: "SF Mono","Consolas",monospace; }
 
+    /* ── Stats Charts ── */
+    .statsSection { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .chartCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+    .chartCard h3 { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 14px; }
+    .chartWrap { display: flex; align-items: center; gap: 18px; }
+    .donutLegend { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .legendItem { display: flex; align-items: center; gap: 7px; }
+    .legendDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legendLabel { font-size: 11px; color: var(--text-2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .legendCount { font-size: 11px; font-weight: 700; color: var(--text); font-family: "SF Mono","Consolas",monospace; flex-shrink: 0; }
+    .hBarList { display: flex; flex-direction: column; gap: 12px; }
+    .hBarRow { display: flex; flex-direction: column; gap: 5px; }
+    .hBarLabelRow { display: flex; justify-content: space-between; align-items: center; }
+    .hBarLabelRow .hBL { font-size: 12px; color: var(--text-2); font-weight: 500; }
+    .hBarLabelRow .hBV { font-size: 12px; font-weight: 700; color: var(--text); font-family: "SF Mono","Consolas",monospace; }
+    .hBarTrack { height: 10px; background: var(--bg); border-radius: 999px; overflow: hidden; border: 0.5px solid var(--border); }
+    .hBarFill { height: 100%; border-radius: 999px; transition: width .5s ease; }
+
+    /* ── Calendar ── */
+    .calView { display: none; margin-top: 14px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .calView.show { display: block; }
+    .calTopBar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 0.5px solid var(--border); background: var(--surface-hover); }
+    .calMonthTitle { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; text-align: center; }
+    .calNavBtn { width: 28px; height: 28px; border: 0.5px solid var(--border-strong); border-radius: 5px; background: var(--surface); color: var(--text-2); cursor: pointer; font-size: 17px; display: flex; align-items: center; justify-content: center; line-height: 1; flex-shrink: 0; }
+    .calNavBtn:hover { background: var(--bg); }
+    .calGrid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .calDow { font-size: 10px; font-weight: 700; color: var(--text-3); text-align: center; padding: 7px 0; border-bottom: 0.5px solid var(--border); border-right: 0.5px solid var(--border); background: var(--bg); }
+    .calDow:last-child { border-right: none; }
+    .calCell { min-height: 88px; padding: 5px 6px; border-bottom: 0.5px solid var(--border); border-right: 0.5px solid var(--border); overflow: hidden; }
+    .calCell:nth-child(7n) { border-right: none; }
+    .calCell:nth-last-child(-n+7) { border-bottom: none; }
+    .calCell.other-month { opacity: .4; }
+    .calCell.is-today { background: rgba(0,112,243,.04); }
+    .calNum { font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 3px; display: flex; align-items: center; }
+    .calNum .todayBubble { min-width: 20px; height: 20px; padding: 0 4px; background: var(--accent); color: #fff; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .calEvent { font-size: 10px; font-weight: 600; padding: 2px 5px; border-radius: 3px; border: 0.5px solid transparent; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; line-height: 1.5; }
+    .calEvent:hover { filter: brightness(.92); }
+    .calDetailPanel { padding: 14px 18px; background: var(--bg); border-top: 0.5px solid var(--border); display: none; }
+    .calDetailPanel.show { display: block; }
+    .calDetailHead { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .calDetailName { font-size: 13px; font-weight: 700; flex: 1; }
+    .calDetailMeta { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+    .calDetailFld { display: flex; flex-direction: column; gap: 3px; }
+    .calDetailFld .calFldKey { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; }
+    .calDetailFld .calFldVal { font-size: 12px; color: var(--text); }
+
+    @media print {
+      @page { margin: 15mm; }
+      aside, .theme-toggle, .tabNav, .demoBannerSmall { display: none !important; }
+      .main { display: none !important; }
+      #printReport { display: block !important; }
+    }
+
     @media (max-width: 960px) {
-      .metricsStrip { grid-template-columns: repeat(2, 1fr); }
+      .metricsStrip { grid-template-columns: repeat(3, 1fr); }
       .entryGrid { grid-template-columns: 1fr 1fr; }
       .entryGrid .full  { grid-column: 1 / -1; }
       .entryGrid .half2 { grid-column: 1 / -1; }
@@ -177,6 +238,7 @@
     }
     @media (max-width: 640px) {
       .metricsStrip { grid-template-columns: 1fr 1fr; }
+      .statsSection { grid-template-columns: 1fr; }
       .entryGrid { grid-template-columns: 1fr; }
       .timelineHeader, .timelineRow { grid-template-columns: 1fr; }
       .tlHead:not(:first-child) { display: none; }
@@ -210,6 +272,11 @@
         <div class="metric">
           <div class="k">최근 훈련일</div>
           <div class="v word" id="mLast">-</div>
+        </div>
+        <div class="metric">
+          <div class="k">이행률</div>
+          <div class="v" id="mRateVal" style="font-size:18px">0%</div>
+          <div class="rateBar"><div class="rateFill" id="mRateFill" style="width:0%"></div></div>
         </div>
       </div>
 
@@ -251,6 +318,7 @@
             <select id="yearFilter"><option value="">전체 연도</option></select>
           </div>
           <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn" id="btnCalToggle" type="button">캘린더 보기</button>
             <button class="btn" id="btnToggleForm" type="button">+ 훈련 등록</button>
           </div>
         </div>
@@ -310,7 +378,41 @@
           </div>
         </div>
 
-        <div class="tableSection">
+        <!-- ─── 통계 차트 ─── -->
+        <div class="statsSection">
+          <div class="chartCard">
+            <h3>유형별 훈련 수 (올해)</h3>
+            <div class="chartWrap">
+              <div style="flex-shrink:0">
+                <svg id="donutSvg" viewBox="0 0 160 160" width="130" height="130" style="display:block"></svg>
+              </div>
+              <div class="donutLegend" id="donutLegend"></div>
+            </div>
+          </div>
+          <div class="chartCard">
+            <h3>상태별 훈련 수 (올해)</h3>
+            <div class="hBarList" id="statusBarList"></div>
+          </div>
+        </div>
+
+        <!-- ─── 캘린더 뷰 ─── -->
+        <div class="calView" id="calView">
+          <div class="calTopBar">
+            <button class="calNavBtn" id="calPrev" type="button">&#8249;</button>
+            <span class="calMonthTitle" id="calMonthTitle"></span>
+            <button class="calNavBtn" id="calNext" type="button">&#8250;</button>
+            <button class="btn" id="calTodayBtn" type="button" style="font-size:11px;padding:4px 10px;margin-left:4px">오늘</button>
+          </div>
+          <div class="calGrid" id="calGrid"></div>
+          <div class="calDetailPanel" id="calDetailPanel">
+            <div class="calDetailHead">
+              <span class="calDetailName" id="calDetailName"></span>
+            </div>
+            <div class="calDetailMeta" id="calDetailMeta"></div>
+          </div>
+        </div>
+
+        <div class="tableSection" id="planTableSection">
           <div class="sectionHeader">
             <h2>훈련 계획 목록</h2>
             <span style="font-size:12px;color:var(--text-3)" id="planCount">0건</span>
@@ -406,7 +508,8 @@
       <div id="paneRecord" class="tabPane hidden">
         <div class="controlRow" style="margin-bottom:0">
           <span style="font-size:13px;color:var(--text-2)">완료 또는 예정 상태의 훈련을 선택해 결과를 기록하세요.</span>
-          <div style="margin-left:auto">
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn" id="btnPrintReport" type="button">보고서 출력</button>
             <button class="btn primary" id="recSaveAll" type="button">전체 저장</button>
           </div>
         </div>
@@ -425,6 +528,7 @@
     </div><!-- .wrap -->
   </main>
 
+  <div id="printReport" style="display:none"></div>
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
   <script src="../assets/sidebar.js"></script>
@@ -474,6 +578,31 @@
 
   const ACHIEVEMENT_OPTIONS = ['달성', '부분달성', '미달성'];
   const STATUS_OPTIONS = ['예정', '완료', '취소'];
+
+  /* ─── Type color map ─── */
+  const TYPE_COLORS = {
+    '탁상 훈련 (Tabletop Exercise)':   { bg:'rgba(99,102,241,.12)',  color:'#4338ca', stroke:'#6366f1' },
+    '기능 훈련 (Functional Exercise)':  { bg:'rgba(16,185,129,.12)',  color:'#059669', stroke:'#10b981' },
+    '전체 훈련 (Full-scale Exercise)':  { bg:'rgba(245,158,11,.12)',  color:'#b45309', stroke:'#f59e0b' },
+    'DR 테스트':                         { bg:'rgba(239,68,68,.12)',   color:'#dc2626', stroke:'#ef4444' },
+    '연락망 훈련':                       { bg:'rgba(107,114,128,.12)', color:'#4b5563', stroke:'#9ca3af' },
+  };
+  const TYPE_DEFAULT_COLOR = { bg:'rgba(99,102,241,.08)', color:'#4338ca', stroke:'#6366f1' };
+  const getTypeColor = t => TYPE_COLORS[t] || TYPE_DEFAULT_COLOR;
+  const SHORT_TYPE = {
+    '탁상 훈련 (Tabletop Exercise)':  '탁상',
+    '기능 훈련 (Functional Exercise)': '기능',
+    '전체 훈련 (Full-scale Exercise)': '전체',
+    'DR 테스트': 'DR테스트',
+    '연락망 훈련': '연락망',
+  };
+
+  /* ─── Calendar state ─── */
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+  let calVisible = false;
+  const MONTHS_KO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const DOWS_KO = ['일','월','화','수','목','금','토'];
 
   /* ─── Data ─── */
   let trainings = [];
@@ -579,6 +708,17 @@
     return `<span class="badge ${cls}">${esc(s)}</span>`;
   };
 
+  const ddayBadge = (planDate) => {
+    if (!planDate) return '';
+    const t = new Date(today() + 'T00:00:00');
+    const p = new Date(planDate + 'T00:00:00');
+    const diff = Math.round((p - t) / 86400000);
+    if (diff > 3)  return `<span class="ddayBadge future">D-${diff}</span>`;
+    if (diff > 0)  return `<span class="ddayBadge soon">D-${diff}</span>`;
+    if (diff === 0) return `<span class="ddayBadge today">D-day</span>`;
+    return `<span class="ddayBadge past">D+${Math.abs(diff)}</span>`;
+  };
+
   /* ─── Metrics ─── */
   const renderMetrics = () => {
     const yr = String(thisYear);
@@ -590,6 +730,11 @@
     document.getElementById('mDone').textContent  = done.length;
     document.getElementById('mPlan').textContent  = plan.length;
     document.getElementById('mLast').textContent  = lastDates[0] || '-';
+    const pct = yearTrainings.length ? Math.round((done.length / yearTrainings.length) * 100) : 0;
+    document.getElementById('mRateVal').textContent = pct + '%';
+    const fill = document.getElementById('mRateFill');
+    fill.style.width = pct + '%';
+    fill.style.background = pct >= 80 ? 'var(--accent)' : pct >= 50 ? '#f59e0b' : '#ef4444';
   };
 
   /* ─── Plan table ─── */
@@ -621,7 +766,10 @@
         <td><span class="typeBadge">${esc(t.type || '-')}</span></td>
         <td style="font-size:12px;color:var(--text-2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.scenario || '-')}</td>
         <td style="font-size:12px;color:var(--text-2)">${esc(depts)}</td>
-        <td style="font-family:'SF Mono','Consolas',monospace;font-size:12px">${esc(t.planDate || '-')}</td>
+        <td>
+          <div style="font-family:'SF Mono','Consolas',monospace;font-size:12px">${esc(t.planDate || '-')}</div>
+          ${t.status === '예정' ? ddayBadge(t.planDate) : ''}
+        </td>
         <td>${statusBadge(t.status || '예정')}</td>
         <td>
           <div style="display:flex;gap:5px">
@@ -699,13 +847,190 @@
     }).join('');
   };
 
+  /* ─── Donut chart ─── */
+  const renderDonutChart = () => {
+    const yr = String(thisYear);
+    const data = trainings.filter(t => (t.planDate || '').startsWith(yr));
+    const total = data.length;
+    const CIRCUM = 2 * Math.PI * 55; // r=55, cx=cy=80
+    const svgEl = document.getElementById('donutSvg');
+    const legend = document.getElementById('donutLegend');
+
+    const entries = Object.keys(TYPE_COLORS).map(type => ({
+      type, count: data.filter(t => t.type === type).length,
+    }));
+
+    if (!total) {
+      svgEl.innerHTML = `<circle cx="80" cy="80" r="55" fill="none" stroke="var(--border)" stroke-width="24"/>
+        <text x="80" y="85" text-anchor="middle" font-size="11" style="fill:var(--text-3)">데이터 없음</text>`;
+      legend.innerHTML = entries.map(e => `
+        <div class="legendItem">
+          <span class="legendDot" style="background:${TYPE_COLORS[e.type].stroke}"></span>
+          <span class="legendLabel">${esc(SHORT_TYPE[e.type] || e.type)}</span>
+          <span class="legendCount">0</span>
+        </div>`).join('');
+      return;
+    }
+
+    let offset = 0;
+    const segs = entries.filter(e => e.count > 0).map(e => {
+      const arc = (e.count / total) * CIRCUM;
+      const s = `<circle cx="80" cy="80" r="55" fill="none" stroke="${TYPE_COLORS[e.type].stroke}" stroke-width="24"
+        stroke-dasharray="${arc.toFixed(2)} ${CIRCUM.toFixed(2)}"
+        stroke-dashoffset="${(-offset).toFixed(2)}"
+        transform="rotate(-90 80 80)"/>`;
+      offset += arc;
+      return s;
+    });
+
+    svgEl.innerHTML = segs.join('') +
+      `<circle cx="80" cy="80" r="43" fill="var(--surface)"/>
+      <text x="80" y="76" text-anchor="middle" font-size="20" font-weight="700"
+        style="fill:var(--text);font-family:'SF Mono','Consolas',monospace">${total}</text>
+      <text x="80" y="92" text-anchor="middle" font-size="10" style="fill:var(--text-3)">총 훈련</text>`;
+
+    legend.innerHTML = entries.map(e => `
+      <div class="legendItem">
+        <span class="legendDot" style="background:${TYPE_COLORS[e.type].stroke}"></span>
+        <span class="legendLabel" title="${esc(e.type)}">${esc(SHORT_TYPE[e.type] || e.type)}</span>
+        <span class="legendCount">${e.count}</span>
+      </div>`).join('');
+  };
+
+  /* ─── Status bar chart ─── */
+  const renderStatusBars = () => {
+    const yr = String(thisYear);
+    const data = trainings.filter(t => (t.planDate || '').startsWith(yr));
+    const total = data.length || 1;
+    const statuses = [
+      { label: '완료', color: '#22c55e', count: data.filter(t => t.status === '완료').length },
+      { label: '예정', color: '#6366f1', count: data.filter(t => t.status === '예정').length },
+      { label: '취소', color: '#ef4444', count: data.filter(t => t.status === '취소').length },
+    ];
+    document.getElementById('statusBarList').innerHTML = statuses.map(s => `
+      <div class="hBarRow">
+        <div class="hBarLabelRow">
+          <span class="hBL">${esc(s.label)}</span>
+          <span class="hBV">${s.count}건</span>
+        </div>
+        <div class="hBarTrack">
+          <div class="hBarFill" style="width:${Math.round(s.count/total*100)}%;background:${s.color}"></div>
+        </div>
+      </div>`).join('');
+  };
+
+  /* ─── Calendar render ─── */
+  const renderCalendar = () => {
+    document.getElementById('calMonthTitle').textContent = `${calYear}년 ${MONTHS_KO[calMonth]}`;
+    const todayStr = today();
+    const firstDow = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+    const totalRows = Math.ceil((firstDow + daysInMonth) / 7);
+    const totalCells = totalRows * 7;
+
+    const byDate = {};
+    trainings.forEach(t => {
+      if (!t.planDate) return;
+      (byDate[t.planDate] = byDate[t.planDate] || []).push(t);
+    });
+
+    const dow = DOWS_KO.map(d => `<div class="calDow">${d}</div>`).join('');
+    const cells = [];
+    for (let i = 0; i < totalCells; i++) {
+      const off = i - firstDow;
+      let d, m = calMonth, y = calYear, other = false;
+      if (off < 0) {
+        d = daysInPrev + off + 1; m = calMonth - 1; other = true;
+        if (m < 0) { m = 11; y = calYear - 1; }
+      } else if (off >= daysInMonth) {
+        d = off - daysInMonth + 1; m = calMonth + 1; other = true;
+        if (m > 11) { m = 0; y = calYear + 1; }
+      } else {
+        d = off + 1;
+      }
+      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = dateStr === todayStr;
+      const events = (byDate[dateStr] || []).map(t => {
+        const c = getTypeColor(t.type);
+        return `<div class="calEvent" data-cal-id="${esc(t.id)}"
+          style="background:${c.bg};color:${c.color};border-color:${c.stroke}"
+          title="${esc(t.name)}">${esc(t.name)}</div>`;
+      }).join('');
+      const numEl = isToday
+        ? `<div class="calNum"><span class="todayBubble">${d}</span></div>`
+        : `<div class="calNum" style="color:${other?'var(--text-3)':'var(--text-2)'}">${d}</div>`;
+      cells.push(`<div class="calCell${other?' other-month':''}${isToday?' is-today':''}">${numEl}${events}</div>`);
+    }
+
+    document.getElementById('calGrid').innerHTML = dow + cells.join('');
+    document.getElementById('calDetailPanel').classList.remove('show');
+  };
+
   /* ─── Full render ─── */
   const renderAll = () => {
     loadTrainings();
     renderMetrics();
     populateYearFilter();
     renderPlanTable();
+    renderDonutChart();
+    renderStatusBars();
+    if (calVisible) renderCalendar();
   };
+
+  /* ═══════════════════════════════════════════════
+     Calendar events
+  ═══════════════════════════════════════════════ */
+  document.getElementById('calGrid').addEventListener('click', e => {
+    const evEl = e.target.closest('.calEvent');
+    if (!evEl) return;
+    const id = evEl.getAttribute('data-cal-id');
+    const t = trainings.find(x => x.id === id);
+    if (!t) return;
+    const c = getTypeColor(t.type);
+    document.getElementById('calDetailName').innerHTML =
+      `<span style="color:${c.color}">${esc(t.name)}</span>` +
+      `<span class="typeBadge" style="margin-left:8px">${esc(t.type||'-')}</span>` +
+      `${statusBadge(t.status||'예정')}`;
+    document.getElementById('calDetailMeta').innerHTML = [
+      ['훈련 ID',    t.id],
+      ['계획일',     t.planDate || '-'],
+      ['상태',       t.status || '-'],
+      ['대상 부서',  (t.departments||[]).join(', ') || '-'],
+      t.participants ? ['참여 인원', t.participants + '명'] : null,
+      t.objective ? ['훈련 목표', t.objective.slice(0,60)] : null,
+    ].filter(Boolean).map(([k, v]) =>
+      `<div class="calDetailFld">
+        <span class="calFldKey">${esc(k)}</span>
+        <span class="calFldVal">${esc(v)}</span>
+      </div>`
+    ).join('');
+    document.getElementById('calDetailPanel').classList.add('show');
+  });
+
+  document.getElementById('calPrev').addEventListener('click', () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  document.getElementById('calNext').addEventListener('click', () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+  document.getElementById('calTodayBtn').addEventListener('click', () => {
+    calYear = new Date().getFullYear();
+    calMonth = new Date().getMonth();
+    renderCalendar();
+  });
+
+  document.getElementById('btnCalToggle').addEventListener('click', () => {
+    calVisible = !calVisible;
+    document.getElementById('calView').classList.toggle('show', calVisible);
+    document.getElementById('planTableSection').style.display = calVisible ? 'none' : '';
+    document.getElementById('btnCalToggle').textContent = calVisible ? '목록 보기' : '캘린더 보기';
+    if (calVisible) { loadTrainings(); renderCalendar(); }
+  });
 
   /* ═══════════════════════════════════════════════
      Tab 2: 훈련 시나리오 — Scenario logic
@@ -1325,6 +1650,91 @@
     btn.textContent = '저장됨';
     setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
   });
+
+  /* ─── Print report ─── */
+  const printReport = () => {
+    loadTrainings();
+    const meta = loadJSON('bcmsReportMeta', {});
+    const companyName = meta.companyName || meta.company || localStorage.getItem('bcmsCompany') || '(회사명 미등록)';
+    const yr = String(thisYear);
+    const yearData = trainings.filter(t => (t.planDate || '').startsWith(yr));
+    const doneData = yearData.filter(t => t.status === '완료');
+    const capaData = loadJSON('bcmsCapaData', []);
+
+    const hasBcpTrain = doneData.some(t => ['탁상 훈련 (Tabletop Exercise)','기능 훈련 (Functional Exercise)','전체 훈련 (Full-scale Exercise)'].includes(t.type));
+    const hasDrTest   = doneData.some(t => t.type === 'DR 테스트');
+    const hasTabletop = doneData.some(t => t.type === '탁상 훈련 (Tabletop Exercise)');
+    const hasDoc      = doneData.some(t => (t.resultSummary || '').trim().length > 0);
+    const hasCapa     = capaData.length > 0 || doneData.some(t => (t.improvements || '').trim().length > 0);
+
+    const isoSummary = [
+      { title: '연 1회 이상 BCP 훈련 실시', ref: 'ISO 22301 8.5',  ok: hasBcpTrain },
+      { title: 'DR 테스트 실시',             ref: 'ISO 22301 8.5',  ok: hasDrTest   },
+      { title: '탁상훈련 실시',               ref: 'ISO 22301 8.5',  ok: hasTabletop },
+      { title: '훈련 결과 문서화',             ref: 'ISO 22301 9.1',  ok: hasDoc      },
+      { title: '결과 기반 CAPA 등록',         ref: 'ISO 22301 10.1', ok: hasCapa     },
+    ];
+    const isoOk = isoSummary.filter(i => i.ok).length;
+
+    const td = 'border:1px solid #bfdbfe;padding:7px 10px;font-size:12px;vertical-align:top';
+    const th = `${td};background:#eff6ff;font-weight:700;color:#1e3a8a;text-align:left`;
+
+    const dataRows = yearData.length ? yearData.map(t => `<tr>
+      <td style="${td}">${esc(t.name || '-')}</td>
+      <td style="${td}">${esc(t.type || '-')}</td>
+      <td style="${td};white-space:nowrap">${esc(t.actualDate || t.planDate || '-')}</td>
+      <td style="${td};text-align:center">${t.participants ? esc(String(t.participants)) + '명' : '-'}</td>
+      <td style="${td}">${esc(t.resultSummary ? t.resultSummary.slice(0, 80) + (t.resultSummary.length > 80 ? '…' : '') : '-')}</td>
+      <td style="${td};text-align:center;font-weight:700;color:${t.achievement === '달성' ? '#16a34a' : t.achievement === '미달성' ? '#dc2626' : '#b45309'}">${esc(t.achievement || (t.status === '예정' ? '미실시' : '-'))}</td>
+    </tr>`).join('') : `<tr><td colspan="6" style="${td};text-align:center;color:#9ca3af">훈련 실적 없음</td></tr>`;
+
+    const isoRows = isoSummary.map(i => `<tr>
+      <td style="${td}">${esc(i.title)}</td>
+      <td style="${td}">${esc(i.ref)}</td>
+      <td style="${td};text-align:center;font-weight:700;color:${i.ok ? '#16a34a' : '#dc2626'}">${i.ok ? '충족' : '미충족'}</td>
+    </tr>`).join('');
+
+    document.getElementById('printReport').innerHTML = `
+<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;max-width:900px;margin:0 auto;padding:40px 30px;color:#111">
+  <div style="border-bottom:2px solid #1e40af;padding-bottom:16px;margin-bottom:28px">
+    <h1 style="font-size:22px;font-weight:800;color:#1e3a8a;margin:0 0 10px">훈련 결과 보고서</h1>
+    <table style="border:none;border-collapse:collapse;width:auto">
+      <tr><td style="border:none;padding:2px 20px 2px 0;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase">회사명</td><td style="border:none;padding:2px 0;font-size:13px;font-weight:700">${esc(companyName)}</td></tr>
+      <tr><td style="border:none;padding:2px 20px 2px 0;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase">작성일</td><td style="border:none;padding:2px 0;font-size:13px">${esc(today())}</td></tr>
+      <tr><td style="border:none;padding:2px 20px 2px 0;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase">보고 기간</td><td style="border:none;padding:2px 0;font-size:13px">${yr}년도</td></tr>
+    </table>
+  </div>
+
+  <h2 style="font-size:15px;font-weight:700;color:#1e3a8a;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid #e5e7eb">1. 연간 훈련 실적 요약</h2>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:32px">
+    <thead><tr>
+      <th style="${th}">훈련명</th>
+      <th style="${th};width:130px">유형</th>
+      <th style="${th};width:90px">일자</th>
+      <th style="${th};width:65px;text-align:center">참여인원</th>
+      <th style="${th}">결과 요약</th>
+      <th style="${th};width:70px;text-align:center">목표달성</th>
+    </tr></thead>
+    <tbody>${dataRows}</tbody>
+  </table>
+
+  <h2 style="font-size:15px;font-weight:700;color:#1e3a8a;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid #e5e7eb">2. ISO 22301 충족 현황 (${isoOk}/${isoSummary.length} 충족)</h2>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:28px">
+    <thead><tr>
+      <th style="${th}">요구사항</th>
+      <th style="${th};width:140px">ISO 조항</th>
+      <th style="${th};width:80px;text-align:center">충족 여부</th>
+    </tr></thead>
+    <tbody>${isoRows}</tbody>
+  </table>
+
+  <p style="font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:12px;margin:0;text-align:right">본 보고서는 BCMS Portal에서 자동 생성되었습니다. | ${esc(today())}</p>
+</div>`;
+
+    window.print();
+  };
+
+  document.getElementById('btnPrintReport').addEventListener('click', printReport);
 
   /* ─── Demo seed ─── */
   if (window.BCMSDemoSeed) {

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>BCMS - 업무연속성계획서 (BCP)</title>
 <link rel="stylesheet" href="../assets/style.css"/>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <style>
   html, body { overflow-x: hidden; max-width: 100%; }
   .main { overflow-x: hidden; min-width: 0; }
@@ -300,6 +301,7 @@
     <h1>📋 업무연속성계획서 (BCP)</h1>
     <div class="headerBtns">
       <button class="btn primary" id="btnSave">💾 저장</button>
+      <button class="btn" id="btnWord">📥 Word 다운로드</button>
       <button class="btn" onclick="window.print()">🖨️ 인쇄</button>
       <a href="./index.html" class="btn">← 라이브러리</a>
       <button id="themeToggle" class="btn">🌙 다크모드</button>
@@ -921,6 +923,145 @@
   themeBtn.addEventListener('click', () =>
     applyTheme(htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
   );
+
+  /* ── Word 다운로드 ── */
+  $('btnWord').addEventListener('click', async () => {
+    const btn = $('btnWord');
+    const orig = btn.textContent;
+    btn.textContent = '생성 중...';
+    btn.disabled = true;
+    try { await generateDocx(); }
+    catch (e) { alert('Word 파일 생성 중 오류가 발생했습니다.\n' + (e.message || e)); }
+    finally { btn.textContent = orig; btn.disabled = false; }
+  });
+
+  async function generateDocx() {
+    const docxLib = window.docx;
+    if (!docxLib || typeof docxLib.Document !== 'function') {
+      throw new Error('docx 라이브러리가 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+    }
+    const { Document, Paragraph, TextRun, Table, TableRow, TableCell,
+            WidthType, AlignmentType, Packer } = docxLib;
+
+    collectState();
+
+    const safeStr = v => String(v ?? '').trim();
+    const docNo    = safeStr($('metaDocNo').value)    || 'BCP-2026-001';
+    const version  = safeStr($('metaVersion').value)  || 'v1.0';
+    const created  = safeStr($('metaCreated').value)  || '';
+    const author   = safeStr($('metaAuthor').value)   || '';
+    const approver = safeStr($('metaApprover').value) || '';
+
+    const h1 = txt => new Paragraph({ text: txt, heading: 'Heading1' });
+    const h2 = txt => new Paragraph({ text: txt, heading: 'Heading2' });
+    const p  = txt => new Paragraph({ children: [new TextRun({ text: safeStr(txt), size: 22 })] });
+    const blank = () => new Paragraph({ text: '' });
+    const makeCell = txt => new TableCell({
+      children: [new Paragraph({ children: [new TextRun({ text: safeStr(txt), size: 18 })] })],
+    });
+
+    const children = [
+      new Paragraph({
+        children: [new TextRun({ text: '업무연속성계획서 (BCP)', bold: true, size: 40 })],
+        alignment: AlignmentType.CENTER,
+      }),
+      blank(),
+      p(`문서번호: ${docNo}  |  버전: ${version}  |  작성일: ${created}`),
+      p(`작성자: ${author}  |  승인자: ${approver}`),
+      blank(),
+      h1('1. 목적 및 적용범위'),
+      p(state.sec1Text || '(내용 없음)'),
+      blank(),
+      h1('2. 핵심업무 복구전략'),
+    ];
+
+    const stratItems = (() => {
+      const raw = load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []);
+      return arr(Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []));
+    })();
+    if (stratItems.length > 0) {
+      const hdrRow = new TableRow({
+        children: ['팀', '핵심업무', 'RTO', '복구전략 유형', 'BCP 전략 내용', '필요자원'].map(makeCell),
+        tableHeader: true,
+      });
+      const dataRows = stratItems.map(b => new TableRow({
+        children: [
+          makeCell(b.team ?? b.dept ?? ''),
+          makeCell(b.functionName ?? b.name ?? b.title ?? ''),
+          makeCell(b.rto ?? b.RTO ?? ''),
+          makeCell(b.strategyType ?? b.strategy ?? ''),
+          makeCell(b.strategyText ?? b.description ?? b.detail ?? ''),
+          makeCell(b.resources ?? b.resource ?? ''),
+        ],
+      }));
+      children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [hdrRow, ...dataRows] }));
+    } else {
+      children.push(p('BCP 전략 데이터 없음'));
+    }
+    children.push(blank());
+
+    children.push(h1('3. 발동 조건 및 초기 행동'));
+    if (state.activationRows.length > 0) {
+      state.activationRows.forEach(r => {
+        children.push(p(`[${safeStr(r.type)}] ${safeStr(r.condition)} (발동 권한자: ${safeStr(r.authority)})`));
+      });
+    } else {
+      children.push(p('(내용 없음)'));
+    }
+    children.push(blank());
+
+    children.push(h1('4. 팀별 역할 및 책임'));
+    if (state.roleRows.length > 0) {
+      state.roleRows.forEach(r => {
+        children.push(p(`${safeStr(r.role)} — ${safeStr(r.name)} (${safeStr(r.contact)}): ${safeStr(r.duties)}`));
+      });
+    } else {
+      children.push(p('(내용 없음)'));
+    }
+    children.push(blank());
+
+    children.push(h1('5. 단계별 복구 절차'));
+    if (state.steps.length > 0) {
+      state.steps.forEach((s, i) => {
+        children.push(h2(`${i + 1}단계: ${safeStr(s.title)}`));
+        if (s.detail) children.push(p(safeStr(s.detail)));
+        if (s.owner || s.duration) children.push(p(`담당: ${safeStr(s.owner)}  소요시간: ${safeStr(s.duration)}`));
+      });
+    } else {
+      children.push(p('(내용 없음)'));
+    }
+    children.push(blank());
+
+    children.push(h1('6. 비상연락망'));
+    if (state.contactRows.length > 0) {
+      state.contactRows.forEach(r => {
+        children.push(p(`${safeStr(r.position)} ${safeStr(r.name)} — ${safeStr(r.phone)} / ${safeStr(r.email)}`));
+      });
+    } else {
+      children.push(p('(내용 없음)'));
+    }
+    children.push(blank());
+
+    children.push(h1('7. 문서 이력'));
+    if (state.histRows.length > 0) {
+      state.histRows.forEach(r => {
+        children.push(p(`${safeStr(r.version)}  ${safeStr(r.date)}  ${safeStr(r.editor)} — ${safeStr(r.summary)}`));
+      });
+    } else {
+      children.push(p('(이력 없음)'));
+    }
+
+    const doc = new Document({ sections: [{ properties: {}, children }] });
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BCP_${docNo}_${version}.docx`.replace(/[/\\:*?"<>|]/g, '_');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 
   /* ── 초기 렌더 ── */
   loadDoc();
