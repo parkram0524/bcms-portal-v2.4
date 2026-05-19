@@ -62,7 +62,7 @@
     </div>
 
     <div class="sidebar-section" data-section="risk-bia">
-      <a href="${H("/risk-bia/index.html")}" class="sidebar-section-title">🧩 2. BIA & RA (업무영향분석·리스크평가)</a>
+      <a href="${H("/risk-bia/index.html")}" class="sidebar-section-title">🧩 2. BIA & RA</a>
       <div class="sub-menu">
         <a href="${H("/risk-bia/index.html")}">대시보드</a>
         <a href="${H("/risk-bia/bia.html")}">업무영향분석 (BIA)${_biaCount > 0 ? `<span class="sbBadge">${_biaCount}</span>` : ''}</a>
@@ -126,7 +126,7 @@
     </div>
 
     <div class="sidebar-contact">
-      문의·피드백: <a href="mailto:bcms@example.com" class="sidebar-contact-link">bcms@example.com</a>
+      문의·피드백: <a href="mailto:drogdembaba@naver.com" class="sidebar-contact-link">drogdembaba@naver.com</a>
     </div>
 
   </div>
