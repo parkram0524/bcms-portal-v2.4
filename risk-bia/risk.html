@@ -37,10 +37,14 @@
     .metric .k { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
     .metric .v { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Consolas",monospace; color: var(--text); }
 
+    /* ── Collapsible card ── */
+    .collapseCard { margin-top: 24px; border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+    .collapseHead { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; transition: background .12s; gap: 12px; }
+    .collapseHead:hover { background: var(--surface-hover); }
+    .collapseTitle { font-size: 13px; font-weight: 600; color: var(--text); }
+
     /* ── Entry form ── */
-    .entryToggle { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
-    .entryToggle h2 { font-size: 13px; font-weight: 600; color: var(--text-2); }
-    .entryPanel { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .entryPanel { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; background: var(--bg); }
     .entryPanel.collapsed { display: none; }
 
     .entryCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 22px 24px; }
@@ -213,8 +217,13 @@
     <div class="wrap">
 
       <section class="hero">
-        <h1>리스크 평가</h1>
-        <p>BIA 저장값(중요업무 여부·업무등급·MTPD·RTO·영향도)을 불러와 중단 리스크를 평가합니다. ISO 22301 기준 리스크 유형과 소요자원을 선택하고 발생가능성을 입력하면 위험도가 자동 계산됩니다.</p>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div>
+            <h1>리스크 평가</h1>
+            <p>BIA 저장값(중요업무 여부·업무등급·MTPD·RTO·영향도)을 불러와 중단 리스크를 평가합니다. ISO 22301 기준 리스크 유형과 소요자원을 선택하고 발생가능성을 입력하면 위험도가 자동 계산됩니다.</p>
+          </div>
+          <button class="btn primary" id="pageAiBtn" type="button" style="flex-shrink:0;display:flex;align-items:center;gap:5px;margin-top:4px;">🤖 AI 도움받기</button>
+        </div>
       </section>
 
       <!-- 팀 선택 -->
@@ -239,11 +248,12 @@
       </div>
 
       <!-- 새 리스크 등록 -->
-      <div class="entryToggle">
-        <h2>새 리스크 등록</h2>
-        <button class="btn" id="toggleEntry" type="button">▾ 펼치기</button>
-      </div>
-      <div class="entryPanel collapsed" id="entryPanel">
+      <div class="collapseCard">
+        <div class="collapseHead" id="riskEntryHeader">
+          <span class="collapseTitle">새 리스크 등록</span>
+          <button class="btn primary" id="toggleEntry" type="button">▾ 펼치기</button>
+        </div>
+        <div class="entryPanel collapsed" id="entryPanel">
 
         <!-- 카드 1: 기본 정보 -->
         <div class="entryCard">
@@ -358,7 +368,8 @@
             <button type="button" class="btn primary" id="addEntryBtn">리스크 추가</button>
           </div>
         </div>
-      </div>
+        </div><!-- /entryPanel -->
+      </div><!-- /collapseCard (새 리스크 등록) -->
 
       <!-- 리스크 목록 탭 -->
       <div class="tabNav" id="riskTabNav">
@@ -404,6 +415,7 @@
 
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
+  <script src="../assets/ai-helper.js"></script>
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
   <script src="../assets/demo-seed.js"></script>
@@ -430,6 +442,9 @@
         panelOpen = !panelOpen;
         entryPanel.classList.toggle('collapsed', !panelOpen);
         toggleEntry.textContent = panelOpen ? '▴ 접기' : '▾ 펼치기';
+      });
+      document.getElementById('riskEntryHeader').addEventListener('click', e => {
+        if (!e.target.closest('button')) toggleEntry.click();
       });
 
       /* ── Risk ID generator ── */
@@ -1202,7 +1217,96 @@
       renderTable();
       updateNewScore();
       updateResidualScore();
+
+      window._bcmsApplyRisks = (text) => {
+        const data  = AIHelper.extractJSON(text);
+        const risks = Array.isArray(data?.risks) ? data.risks : [];
+        if (!risks.length) { alert('AI 응답에서 리스크 목록을 찾을 수 없습니다.\n응답을 직접 확인해주세요.'); return; }
+        const items = readRiskList();
+        const existNames = new Set(items.map(r => r.riskName));
+        const now  = new Date();
+        const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        let added  = 0;
+        risks.forEach(r => {
+          const name = String(r.riskName || r.name || '').trim();
+          if (!name || existNames.has(name)) return;
+          const l   = Math.min(5, Math.max(1, Number(r.likelihood) || 3));
+          const imp = Math.min(5, Math.max(1, Number(r.impact)     || 3));
+          const s   = l * imp;
+          items.push({
+            id: 'R' + Date.now() + '-' + added,
+            riskType:    r.riskType || r.type || '외부환경',
+            riskName:    name,
+            resources:   Array.isArray(r.resources) ? r.resources : [],
+            description: String(r.description || ''),
+            treatment:   r.treatment || '완화',
+            likelihood:l, impact:imp, riskScore:s,
+            riskLevel:   window.scoreBand(s).text,
+            residualLikelihood: Math.max(1, l - 1),
+            residualImpact:     Math.max(1, imp - 1),
+            residualScore:      Math.max(1, l - 1) * Math.max(1, imp - 1),
+            registeredAt: date
+          });
+          existNames.add(name);
+          added++;
+        });
+        writeRiskList(items);
+        renderRiskList();
+        document.getElementById('ai-helper-modal').classList.remove('open');
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#0070f3;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.2);';
+        toast.textContent = `✅ ${added}개 리스크 시나리오가 추가되었습니다.`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 4000);
+      };
     })();
+  </script>
+  <script>
+    document.getElementById('pageAiBtn').addEventListener('click', () => {
+      const industry = localStorage.getItem('bcmsIndustry') || '일반';
+      const biaRows  = AIHelper.loadJSON('bcmsBIAData', []);
+      const riskList = AIHelper.loadJSON('bcmsRiskList', []);
+      const coreFns  = biaRows.flatMap(r => (r.functions || []).filter(f => f.coreFinal || f.grade === 'core').map(f => f.name));
+      const existing = riskList.map(r => r.riskName || r.risk || r.name).filter(Boolean);
+      AIHelper.open({
+        title: '🤖 AI 리스크 시나리오 제안',
+        applyLabel: '✅ 리스크 목록에 추가',
+        buildPrompt: () => `당신은 ISO 22301 기반 BCMS 전문가입니다.
+아래 조직 정보를 바탕으로 중단 리스크 시나리오를 제안해주세요.
+
+[조직 정보]
+- 업종: ${industry}
+- 핵심업무: ${coreFns.join(', ') || '(미등록)'}
+- 현재 등록된 리스크: ${existing.join(', ') || '(없음)'}
+
+[요청 사항]
+1. 해당 업종에서 발생 가능한 중단 리스크 10가지를 제안해주세요.
+2. 반드시 아래 JSON 형식으로만 응답해주세요 (다른 설명 없이):
+
+\`\`\`json
+{
+  "risks": [
+    {
+      "riskName": "리스크명",
+      "riskType": "자연재해|IT장애|인적오류|공급망|시설|외부환경",
+      "likelihood": 3,
+      "impact": 4,
+      "resources": ["인력", "시스템"],
+      "treatment": "완화|회피|이전|수용",
+      "description": "리스크 설명"
+    }
+  ]
+}
+\`\`\`
+
+3. 현재 등록 리스크(${existing.join(', ') || '없음'})와 중복되지 않게 해주세요.
+4. likelihood와 impact는 1~5 사이 정수로 지정해주세요.`,
+        onApply: (text) => {
+          if (typeof window._bcmsApplyRisks === 'function') window._bcmsApplyRisks(text);
+          else alert('적용 함수를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+        }
+      });
+    });
   </script>
 </body>
 </html>

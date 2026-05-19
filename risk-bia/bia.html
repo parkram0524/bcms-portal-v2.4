@@ -37,10 +37,14 @@
     .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
     .field input, .field select { width: 100%; }
 
+    /* ── Collapsible card ── */
+    .collapseCard { margin-top: 24px; border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+    .collapseHead { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; transition: background .12s; gap: 12px; }
+    .collapseHead:hover { background: var(--surface-hover); }
+    .collapseTitle { font-size: 13px; font-weight: 600; color: var(--text); }
+
     /* ── Entry form ── */
-    .entryToggle { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
-    .entryToggle h2 { font-size: 13px; font-weight: 600; color: var(--text-2); }
-    .entryPanel { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .entryPanel { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; background: var(--bg); }
     .entryPanel.collapsed { display: none; }
     .entryCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 22px 24px; }
     .entryCard.full { grid-column: 1 / -1; }
@@ -145,6 +149,25 @@
     .empty { padding: 32px 16px; text-align: center; color: var(--text-3); font-size: 13px; }
     .actions { margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end; }
 
+    /* ── MBCO inline editor ── */
+    .mbco-cell { cursor: pointer; transition: background .1s; }
+    .mbco-cell:hover { background: var(--surface-hover) !important; }
+    .badge.mbco-set   { background: rgba(0,112,243,.1);   color: #0070f3; border-color: rgba(0,112,243,.25); }
+    .badge.mbco-unset { background: rgba(245,158,11,.1);  color: #b45309; border-color: rgba(245,158,11,.3); }
+    .mbco-detail-row td { background: var(--bg) !important; padding: 0 !important; height: auto !important; border-bottom: 0.5px solid var(--border) !important; }
+    .mbco-editor { padding: 14px 18px; }
+    .mbco-editor-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .mbco-field-label { font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .mbco-val-disp { font-family: "SF Mono","Consolas",monospace; font-weight: 700; color: var(--text); }
+    .mbco-hint { font-size: 10px; color: var(--text-3); margin-top: 4px; line-height: 1.4; }
+    .mbco-rto-hint { margin-top: 10px; padding: 8px 12px; background: var(--accent-subtle); border: 0.5px solid var(--accent-border); border-radius: var(--r-sm); font-size: 11px; color: var(--accent); line-height: 1.6; }
+    .mbco-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 10px; }
+
+    /* ── Toast ── */
+    .bcms-toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 12px 18px; font-size: 13px; color: var(--text); box-shadow: 0 4px 20px rgba(0,0,0,.12); z-index: 9999; animation: toastIn .2s ease; max-width: 380px; line-height: 1.5; }
+    .bcms-toast.toast-success { border-left: 3px solid #16a34a; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
     /* ── Tabs ── */
     .tabNav { display: flex; gap: 6px; margin-top: 24px; margin-bottom: 0; }
     .tabBtn { font-size: 13px; font-weight: 600; padding: 7px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong) !important; background: var(--surface) !important; color: var(--text-2) !important; cursor: pointer; transition: all .15s; }
@@ -162,7 +185,8 @@
 
     /* ── Team editor (collapsible) ── */
     .teamEditorSection { margin-top: 24px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
-    .teamEditorSection .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 0.5px solid var(--border); }
+    .teamEditorSection .sectionHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; transition: background .12s; gap: 12px; }
+    .teamEditorSection .sectionHeader:hover { background: var(--surface-hover); }
     .teamEditorSection .sectionHeader h2 { font-size: 13px; font-weight: 600; color: var(--text); }
     .teamEditorBody { padding: 20px 24px; }
     .teamEditorBody.collapsed { display: none; }
@@ -268,11 +292,15 @@
       </div>
 
       <!-- BIA 등록 폼 (5섹션) -->
-      <div class="entryToggle">
-        <h2>BIA 등록</h2>
-        <button class="btn" id="toggleEntry" type="button">▾ 펼치기</button>
-      </div>
-      <div class="entryPanel collapsed" id="entryPanel">
+      <div class="collapseCard">
+        <div class="collapseHead" id="biaEntryHeader">
+          <span class="collapseTitle">BIA 등록</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn primary" id="aiHelpBtn" type="button" style="display:flex;align-items:center;gap:5px;">🤖 AI 도움받기</button>
+            <button class="btn primary" id="toggleEntry" type="button">▾ 펼치기</button>
+          </div>
+        </div>
+        <div class="entryPanel collapsed" id="entryPanel">
 
         <!-- ① 기본 정보 -->
         <div class="entryCard">
@@ -420,7 +448,8 @@
           </div>
         </div>
 
-      </div><!-- /entryPanel -->
+        </div><!-- /entryPanel -->
+      </div><!-- /collapseCard (BIA 등록) -->
 
       <!-- 탭 내비게이션 -->
       <div class="tabNav" id="biaTabNav">
@@ -447,9 +476,9 @@
 
       <!-- 팀별 BIA 상세 편집 (접힘) -->
       <div class="teamEditorSection">
-        <div class="sectionHeader">
+        <div class="sectionHeader" id="teamEditorHeader">
           <h2>팀별 BIA 상세 편집 <span style="font-weight:400;color:var(--text-2);font-size:12px;margin-left:6px">· 시간경과 영향평가</span></h2>
-          <button class="btn" type="button" id="teamEditorToggle">▾ 펼치기</button>
+          <button class="btn primary" type="button" id="teamEditorToggle">▾ 펼치기</button>
         </div>
         <div class="teamEditorBody collapsed" id="teamEditorBody">
           <div class="summaryStrip">
@@ -471,6 +500,7 @@
 
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
+  <script src="../assets/ai-helper.js"></script>
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/data-store.js"></script>
   <script src="../assets/demo-seed.js"></script>
@@ -494,6 +524,9 @@
     const BIA_KEY  = (window.DataStore && DataStore.KEY_BIA_DATA)       || 'bcmsBIAData';
     const ORG_KEY  = (window.DataStore && DataStore.KEY_ORG_REGISTRY)   || 'bcms_org_registry_v1';
     const RISK_LIST_KEY = 'bcmsRiskList';
+    const MBCO_KEY = 'bcmsMBCOData';
+    const loadMbcoData = () => { try { const r = localStorage.getItem(MBCO_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; } };
+    const saveMbcoData = d => localStorage.setItem(MBCO_KEY, JSON.stringify(d));
 
     const RESOURCE_OPTIONS = ['인원','시설·작업장','기술·IT','정보·문서','공급망·외주','유틸리티','설비·장비','자금'];
     const RESOURCE_ICONS   = { '인원':'👤','시설·작업장':'🏢','기술·IT':'💻','정보·문서':'📋','공급망·외주':'🔗','유틸리티':'⚡','설비·장비':'🔧','자금':'💰' };
@@ -652,6 +685,25 @@
       return rtoMin >= fn.mtpdMinutes ? 'RTO는 MTPD보다 짧아야 합니다.' : '';
     };
 
+    /* ── Toast & MBCO helpers ── */
+    const showToast = (msg, type = 'toast-success') => {
+      const el = document.createElement('div');
+      el.className = `bcms-toast ${type}`;
+      el.innerHTML = msg;
+      document.body.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 4000);
+    };
+
+    const getMbcoRtoHint = (mbco, fn) => {
+      const rtoText = fn.rto ? `현재 RTO: <b>${escHtml(fn.rto)}</b>` : 'RTO 미설정';
+      const rpoText = fn.rpoValue ? ` · RPO: <b>${fn.rpoValue}${fn.rpoUnit || '분'}</b>` : '';
+      let advice = '';
+      if (mbco >= 80) advice = '⚡ MBCO 80% 이상 — 높은 업무 수준 유지 필요. RTO 4시간 이내를 권장합니다.';
+      else if (mbco >= 50) advice = '⏱ MBCO 50~79% — RTO 1일 이내 설정을 권장합니다.';
+      else advice = '📋 MBCO 50% 미만 — 제한적 운영 허용. RTO를 업무 특성에 맞게 설정하세요.';
+      return `<span>${rtoText}${rpoText}</span><br>${advice}`;
+    };
+
     /* ── Data load/save ── */
     const loadCoreFunctions = () => {
       if (window.DataStore && DataStore.getAllCoreFunctions) {
@@ -769,6 +821,7 @@
     const scoreGuideOpened = new Set();
     let dirtyState = false;
     let panelOpen  = false;
+    let mbcoEditOpen = null;
 
     /* ── DOM refs ── */
     const teamSelect      = document.getElementById('teamSelect');
@@ -814,6 +867,9 @@
       entryPanel.classList.toggle('collapsed', !panelOpen);
       toggleEntry.textContent = panelOpen ? '▴ 접기' : '▾ 펼치기';
     });
+    document.getElementById('biaEntryHeader').addEventListener('click', e => {
+      if (!e.target.closest('button')) toggleEntry.click();
+    });
 
     /* ── Team editor toggle ── */
     const teamEditorBody   = document.getElementById('teamEditorBody');
@@ -824,6 +880,9 @@
       teamEditorBody.classList.toggle('collapsed', !editorOpen);
       teamEditorToggle.textContent = editorOpen ? '▴ 접기' : '▾ 펼치기';
       if (editorOpen) renderTeamEditor();
+    });
+    document.getElementById('teamEditorHeader').addEventListener('click', e => {
+      if (!e.target.closest('button')) teamEditorToggle.click();
     });
 
     /* ── Demo banner ── */
@@ -1027,6 +1086,7 @@
       renderTeamSelect();
       switchTab('biaList');
       document.getElementById('clearEntryBtn').click();
+      showToast('✅ BIA 등록 완료! BIA 목록의 <b>MBCO 컬럼</b>을 클릭하여 최소운영수준을 설정하세요.');
     });
 
     /* ── BIA list rendering ── */
@@ -1038,7 +1098,13 @@
         biaListMount.innerHTML = '<div class="empty">등록된 BIA가 없습니다. 위 폼에서 등록하거나 팀 편집기를 사용하세요.</div>';
         return;
       }
-      biaListMount.innerHTML = `
+      const unsetMbcoCount = allFns.filter(fn => fn.mbco == null).length;
+      const unsetNotice = unsetMbcoCount > 0 ? `
+        <div style="padding:8px 16px;background:rgba(245,158,11,.08);border-bottom:0.5px solid rgba(245,158,11,.2);font-size:12px;color:#b45309;display:flex;align-items:center;gap:6px">
+          ⚠ MBCO 미설정 ${unsetMbcoCount}개 업무 — MBCO 컬럼을 클릭하여 최소운영수준을 설정하세요.
+        </div>` : '';
+      const mbcoData = loadMbcoData();
+      biaListMount.innerHTML = unsetNotice + `
         <table>
           <colgroup>
             <col style="width:9%"/>  <col style="width:16%"/> <col style="width:9%"/>
@@ -1048,15 +1114,23 @@
           </colgroup>
           <thead><tr>
             <th>BIA-ID</th><th>업무명</th><th>부서</th><th>중요도</th>
-            <th>MTPD</th><th>RTO</th><th>RPO</th><th>종합영향도</th><th>MBCO</th><th>수정/삭제</th>
+            <th>MTPD</th><th>RTO</th><th>RPO</th><th>종합영향도</th>
+            <th title="클릭하여 MBCO 설정">MBCO 🖊</th><th>수정/삭제</th>
           </tr></thead>
           <tbody>
             ${allFns.map(fn => {
-              const band       = scoreBand(fn.overallImpact);
-              const impCls     = fn.importance === '핵심' ? 'core' : fn.importance === '중요' ? 'important' : 'general';
-              const rpo        = fn.rpoValue   ? `${fn.rpoValue}${fn.rpoUnit || '분'}` : '-';
-              const mbcoStr    = fn.mbco != null ? `${fn.mbco}%` : '-';
-              return `
+              const band      = scoreBand(fn.overallImpact);
+              const impCls    = fn.importance === '핵심' ? 'core' : fn.importance === '중요' ? 'important' : 'general';
+              const rpo       = fn.rpoValue ? `${fn.rpoValue}${fn.rpoUnit || '분'}` : '-';
+              const mbcoNum   = fn.mbco != null ? Number(fn.mbco) : null;
+              const mbcoStr   = mbcoNum !== null ? `${mbcoNum}%` : null;
+              const mbcoKey   = `${fn._team}::${fn._fnIdx}`;
+              const mbcoOpen  = mbcoEditOpen === mbcoKey;
+              const mbcoRecord = mbcoData[fn.biaId || fn.id] || {};
+              const savedReason = mbcoRecord.mbcoReason || '';
+              const sliderInit  = mbcoNum ?? 50;
+
+              const mainRow = `
                 <tr>
                   <td style="font-family:monospace;font-size:10px">${escHtml(fn.biaId || fn.id || '-')}</td>
                   <td class="td-left">${escHtml(fn.name)}</td>
@@ -1066,7 +1140,11 @@
                   <td>${escHtml(fn.rto  || '-')}</td>
                   <td>${escHtml(rpo)}</td>
                   <td><span class="badge ${band.cls}">${fn.overallImpact} ${band.text}</span></td>
-                  <td>${escHtml(mbcoStr)}</td>
+                  <td class="mbco-cell" data-mbco-edit="${escHtml(mbcoKey)}" title="클릭하여 MBCO 설정">
+                    ${mbcoStr
+                      ? `<span class="badge mbco-set">${mbcoStr}</span>`
+                      : `<span class="badge mbco-unset">미설정 ⚠</span>`}
+                  </td>
                   <td>
                     <button class="btn" style="font-size:10px;padding:3px 7px;margin-right:3px" type="button"
                       data-edit-bia="${escHtml(fn._team)}::${fn._fnIdx}">수정</button>
@@ -1074,12 +1152,87 @@
                       data-delete-bia="${escHtml(fn._team)}::${fn._fnIdx}">삭제</button>
                   </td>
                 </tr>`;
+
+              const detailRow = mbcoOpen ? `
+                <tr class="mbco-detail-row">
+                  <td colspan="10">
+                    <div class="mbco-editor">
+                      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">
+                        📋 MBCO 설정 —
+                        <span style="color:var(--accent)">${escHtml(fn.name)}</span>
+                        <span style="font-size:11px;font-weight:400;color:var(--text-3);margin-left:6px">${escHtml(fn._team)}</span>
+                      </div>
+                      <div class="mbco-editor-inner">
+                        <div>
+                          <div class="mbco-field-label">
+                            최소운영수준
+                            <span class="mbco-val-disp" data-mbco-disp>${sliderInit}%</span>
+                          </div>
+                          <input type="range" min="0" max="100" step="5" value="${sliderInit}" data-mbco-slider style="width:100%"/>
+                          <div class="mbco-hint">중단 상황에서 최소한 유지해야 하는 업무 수행 수준 (0~100%)</div>
+                        </div>
+                        <div>
+                          <div class="mbco-field-label">설정 근거</div>
+                          <textarea data-mbco-reason placeholder="규제 요구사항, 고객 영향 범위, 대체 가능 수준 등"
+                            style="width:100%;min-height:60px;resize:vertical;border:0.5px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);padding:7px 9px;font-size:12px;box-sizing:border-box"
+                          >${escHtml(savedReason)}</textarea>
+                        </div>
+                      </div>
+                      <div class="mbco-rto-hint" data-mbco-hint>${getMbcoRtoHint(sliderInit, fn)}</div>
+                      <div class="mbco-actions">
+                        <button class="btn" type="button" data-mbco-cancel="${escHtml(mbcoKey)}">취소</button>
+                        <button class="btn primary" type="button" data-mbco-save="${escHtml(mbcoKey)}">저장</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>` : '';
+
+              return mainRow + detailRow;
             }).join('')}
           </tbody>
         </table>`;
     };
 
     biaListMount.addEventListener('click', e => {
+      /* ── MBCO cell click (toggle editor) ── */
+      const mbcoCellEl = e.target.closest('.mbco-cell');
+      if (mbcoCellEl) {
+        const key = mbcoCellEl.getAttribute('data-mbco-edit');
+        if (key) { mbcoEditOpen = mbcoEditOpen === key ? null : key; renderBiaList(); return; }
+      }
+
+      /* ── MBCO save ── */
+      const mbcoSaveKey = e.target.getAttribute('data-mbco-save');
+      if (mbcoSaveKey) {
+        const [mTeam, mIdxStr] = mbcoSaveKey.split('::');
+        const mRow = biaRows.find(r => r.team === mTeam);
+        if (!mRow) return;
+        const mFn = mRow.functions[Number(mIdxStr)];
+        if (!mFn) return;
+        const slider    = biaListMount.querySelector('[data-mbco-slider]');
+        const reasonEl  = biaListMount.querySelector('[data-mbco-reason]');
+        const newMbco   = Number(slider?.value ?? mFn.mbco ?? 50);
+        const newReason = reasonEl?.value.trim() || '';
+        mFn.mbco = newMbco;
+        const mbcoStore = loadMbcoData();
+        mbcoStore[mFn.biaId || mFn.id || `${mTeam}-${mIdxStr}`] = {
+          biaId: mFn.biaId || mFn.id || '', functionName: mFn.name, teamName: mTeam,
+          mbco: newMbco, mbcoReason: newReason,
+          linkedRto: mFn.rto || '', linkedRpo: mFn.rpoValue ? `${mFn.rpoValue}${mFn.rpoUnit || '분'}` : '',
+          updatedAt: new Date().toISOString().slice(0, 10)
+        };
+        saveMbcoData(mbcoStore);
+        saveBiaData(biaRows);
+        mbcoEditOpen = null;
+        renderBiaList(); renderMetrics();
+        showToast(`✅ MBCO 저장 완료: ${mFn.name} → ${newMbco}%`);
+        return;
+      }
+
+      /* ── MBCO cancel ── */
+      const mbcoCancelKey = e.target.getAttribute('data-mbco-cancel');
+      if (mbcoCancelKey) { mbcoEditOpen = null; renderBiaList(); return; }
+
       const editKey   = e.target.getAttribute('data-edit-bia');
       const deleteKey = e.target.getAttribute('data-delete-bia');
 
@@ -1088,6 +1241,7 @@
         const teamRow = biaRows.find(r => r.team === team);
         if (teamRow) {
           teamRow.functions.splice(Number(idxStr), 1);
+          mbcoEditOpen = null;
           saveBiaData(biaRows);
           renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect();
         }
@@ -1095,6 +1249,7 @@
       }
 
       if (editKey) {
+        mbcoEditOpen = null;
         const [team, idxStr] = editKey.split('::');
         const teamRow = biaRows.find(r => r.team === team);
         if (!teamRow) return;
@@ -1156,6 +1311,23 @@
           toggleEntry.textContent = '▴ 접기';
         }
         entryPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    /* ── MBCO slider live update ── */
+    biaListMount.addEventListener('input', e => {
+      if (!e.target.hasAttribute('data-mbco-slider')) return;
+      const val  = Number(e.target.value);
+      const disp = biaListMount.querySelector('[data-mbco-disp]');
+      if (disp) disp.textContent = val + '%';
+      if (mbcoEditOpen) {
+        const [mTeam, mIdxStr] = mbcoEditOpen.split('::');
+        const mRow = biaRows.find(r => r.team === mTeam);
+        const mFn  = mRow?.functions[Number(mIdxStr)];
+        if (mFn) {
+          const hint = biaListMount.querySelector('[data-mbco-hint]');
+          if (hint) hint.innerHTML = getMbcoRtoHint(val, mFn);
+        }
       }
     });
 
@@ -1521,6 +1693,64 @@
       });
     });
     if (normalizedChanged) saveBiaData(biaRows);
+
+    /* ── AI 도우미 ── */
+    document.getElementById('aiHelpBtn').addEventListener('click', () => {
+      const industry = localStorage.getItem('bcmsIndustry') || '일반';
+      const allFns   = biaRows.flatMap(r => (r.functions || []).map(f => `${r.team}: ${f.name}`));
+      const teams    = biaRows.map(r => r.team).filter(Boolean);
+      const curTeam  = teamSelect.value || teams[0] || '운영팀';
+      AIHelper.open({
+        title: '🤖 AI 핵심업무 목록 초안 제안 (BIA)',
+        applyLabel: '✅ BIA에 추가하기',
+        buildPrompt: () => `당신은 ISO 22301 기반 BCMS 전문가입니다.
+아래 조직 정보를 바탕으로 BIA 등록에 필요한 핵심업무 목록 초안을 제안해주세요.
+
+[조직 정보]
+- 업종: ${industry}
+- 등록된 팀/부서: ${teams.join(', ') || '(없음)'}
+- 현재 등록된 업무: ${allFns.join(', ') || '(없음)'}
+- 추가 대상 팀: ${curTeam}
+
+[요청 사항]
+1. 해당 업종에 적합한 핵심업무 8~12개를 제안해주세요.
+2. 반드시 아래 JSON 형식으로만 응답해주세요 (다른 설명 없이):
+
+\`\`\`json
+{
+  "functions": [
+    {
+      "name": "업무명",
+      "importance": "핵심업무|중요업무|일반업무",
+      "rto": "4시간",
+      "description": "업무 간단 설명"
+    }
+  ]
+}
+\`\`\`
+
+3. 현재 이미 등록된 업무(${allFns.join(', ') || '없음'})와 중복되지 않게 해주세요.`,
+        onApply: (text) => {
+          const data = AIHelper.extractJSON(text);
+          const fns  = Array.isArray(data?.functions) ? data.functions : [];
+          if (!fns.length) { alert('AI 응답에서 업무 목록을 찾을 수 없습니다.\n응답을 직접 확인해주세요.'); return; }
+          let teamRow = biaRows.find(r => r.team === curTeam);
+          if (!teamRow) { teamRow = { team: curTeam, functions: [] }; biaRows.push(teamRow); }
+          const existNames = new Set((teamRow.functions || []).map(f => f.name));
+          let added = 0;
+          fns.forEach(f => {
+            if (!f.name || existNames.has(f.name)) return;
+            teamRow.functions.push(normalizeFunction({ name: f.name, importance: f.importance || '일반업무', rto: f.rto || '', description: f.description || '' }));
+            existNames.add(f.name);
+            added++;
+          });
+          saveBiaData(biaRows);
+          renderBiaList();
+          document.getElementById('ai-helper-modal').classList.remove('open');
+          showToast(`✅ ${added}개 업무가 <b>${curTeam}</b>에 추가되었습니다.`);
+        }
+      });
+    });
 
   })();
   </script>

@@ -69,6 +69,7 @@
           <p class="desc">중점관리 리스크 기반 연속성 전략을 관리합니다. BIA/Risk 최신 데이터를 기준으로 표시되며, 전략만 저장·보정합니다.</p>
         </div>
         <div class="actions">
+          <button class="btn primary" id="pageAiBtn" type="button" style="display:flex;align-items:center;gap:5px;">🤖 AI 도움받기</button>
           <a class="btn" href="../risk-bia/bia.html">BIA</a>
           <a class="btn" href="../risk-bia/risk.html">Risk Assessment</a>
           <a class="btn primary" href="./index.html">전략·계획 홈</a>
@@ -121,6 +122,7 @@
     </div>
   </main>
 
+  <script src="../assets/ai-helper.js"></script>
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/demo-seed.js"></script>
   <script src="../assets/response-assets.js"></script>
@@ -518,5 +520,43 @@
   </script>
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
   <script>(function(){const r=document.documentElement,t=document.getElementById('themeToggle'),s=localStorage.getItem('bcmsTheme')||'light';r.setAttribute('data-theme',s);if(t){t.textContent=s==='dark'?'☀️':'🌙';t.addEventListener('click',()=>{const n=r.getAttribute('data-theme')=== 'dark'?'light':'dark';r.setAttribute('data-theme',n);t.textContent=n==='dark'?'☀️':'🌙';localStorage.setItem('bcmsTheme',n);});}})();</script>
+  <script>
+    document.getElementById('pageAiBtn').addEventListener('click', () => {
+      const industry = localStorage.getItem('bcmsIndustry') || '일반';
+      const biaRows  = AIHelper.loadJSON('bcmsBIAData', []);
+      const riskList = AIHelper.loadJSON('bcmsRiskList', []);
+      const bcpData  = AIHelper.loadJSON('bcmsBCP', []);
+      const coreFns  = biaRows.flatMap(r =>
+        (r.functions || []).filter(f => f.coreFinal || f.grade === 'core' || f.importance === '핵심업무')
+          .map(f => `${r.team}: ${f.name} (RTO ${f.rto || f.rtoValue || '-'})`)
+      );
+      const highRisks = riskList.filter(r => (r.riskScore || 0) >= 15 || r.grade === 'high' || r.level === '중점관리')
+        .map(r => r.riskName || r.risk || r.name).filter(Boolean);
+      const bcpCount = Array.isArray(bcpData) ? bcpData.flatMap(t => t.strategies || []).filter(s => s.strategy).length : 0;
+      AIHelper.open({
+        title: '🤖 AI BCP 전략 초안 생성',
+        applyLabel: '📋 클립보드 복사',
+        buildPrompt: () => `당신은 ISO 22301 기반 BCMS 전문가입니다.
+아래 BIA 및 리스크 데이터를 바탕으로 BCP(업무연속성계획) 전략 초안을 작성해주세요.
+
+[현황 데이터]
+- 업종: ${industry}
+- 핵심업무 (팀: 업무명, RTO): ${coreFns.join(' | ') || '(미등록)'}
+- 중점관리 리스크: ${highRisks.join(', ') || '(없음)'}
+- 기존 BCP 전략 작성 수: ${bcpCount}건
+
+[요청 사항]
+1. 각 핵심업무별로 실행 가능한 연속성 전략을 제안해주세요 (예방/대체운영/복구 등).
+2. 중점관리 리스크에 대한 구체적인 대응 방안을 포함해주세요.
+3. ISO 22301 요구사항(8.4.2 업무연속성계획)에 따른 필수 항목(역할·책임·연락체계·복구절차)을 안내해주세요.
+4. 전략 우선순위와 실행 로드맵(단기/중기/장기)을 제안해주세요.
+5. 한국어로 명확하게 작성해주세요.`,
+        onApply: (text) => {
+          navigator.clipboard.writeText(text).then(() => alert('✅ BCP 전략 초안이 클립보드에 복사되었습니다.\n문서 편집기에 붙여넣기 하세요.'))
+            .catch(() => alert('클립보드 복사에 실패했습니다. 텍스트를 직접 선택하여 복사해주세요.'));
+        }
+      });
+    });
+  </script>
 </body>
 </html>

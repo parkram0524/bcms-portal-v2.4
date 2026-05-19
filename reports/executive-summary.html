@@ -353,6 +353,7 @@
       <p class="sub" id="reportSub"></p>
     </div>
     <div class="headerRight">
+      <button class="btn primary" id="pageAiBtn" type="button" style="display:flex;align-items:center;gap:5px;">🤖 AI 도움받기</button>
       <button class="btn" onclick="window.print()">🖨️ 인쇄</button>
       <button id="btnWordDownload" class="btn">📥 Word 다운로드</button>
       <a href="../op-center/index.html" class="btn">운영센터 →</a>
@@ -426,6 +427,7 @@
 </div>
 </main>
 
+<script src="../assets/ai-helper.js"></script>
 <script src="../assets/demo-seed.js"></script>
 <script src="../assets/sidebar.js"></script>
 <script>
@@ -990,6 +992,59 @@
   );
 
 })();
+</script>
+<script>
+document.getElementById('pageAiBtn').addEventListener('click', () => {
+  const industry   = localStorage.getItem('bcmsIndustry') || '일반';
+  const company    = document.getElementById('companyInput')?.value?.trim() || '(미입력)';
+  const biaRows    = AIHelper.loadJSON('bcmsBIAData', []);
+  const riskList   = AIHelper.loadJSON('bcmsRiskList', []);
+  const trainData  = AIHelper.loadJSON('bcmsTrainingData', []);
+  const capaData   = AIHelper.loadJSON('bcmsCapaItems', []);
+  const gapRaw     = AIHelper.loadJSON('bcmsGapAnalysis', {});
+  const gapData    = Array.isArray(gapRaw) ? gapRaw : Object.values(gapRaw);
+  const mbcoData   = AIHelper.loadJSON('bcmsMBCOData', {});
+  const totalFns   = biaRows.flatMap(r => r.functions || []).length;
+  const coreFns    = biaRows.flatMap(r => r.functions || []).filter(f => f.coreFinal || f.grade === 'core').length;
+  const highRisks  = riskList.filter(r => (r.riskScore || 0) >= 15 || r.grade === 'high').length;
+  const trainDone  = trainData.filter(t => t.status === '완료').length;
+  const openCapas  = capaData.filter(c => c.status !== '완료').length;
+  const gapFulfill = gapData.length ? Math.round(gapData.filter(g => g.status === '충족' || g.score >= 3).length / gapData.length * 100) : 0;
+  const mbcoEntries = Object.values(mbcoData);
+  const mbcoSet     = mbcoEntries.filter(m => m.mbco != null).length;
+  const mbcoAvg     = mbcoEntries.length ? Math.round(mbcoEntries.reduce((s,m) => s + (m.mbco || 0), 0) / mbcoEntries.length) : 0;
+  AIHelper.open({
+    title: '🤖 AI 경영진 보고서 초안 생성',
+    applyLabel: '📋 클립보드 복사',
+    buildPrompt: () => `당신은 ISO 22301 기반 BCMS 전문가이자 경영 컨설턴트입니다.
+아래 BCMS 운영 현황을 바탕으로 경영진 보고용 요약 보고서 초안을 작성해주세요.
+
+[조직 정보]
+- 회사명: ${company}
+- 업종: ${industry}
+
+[BCMS 운영 현황]
+- 전체 업무 등록: ${totalFns}개 (핵심업무 ${coreFns}개)
+- 중점관리 리스크: ${highRisks}건
+- 훈련 완료: ${trainDone}건
+- 미완료 CAPA: ${openCapas}건
+- ISO 22301 충족률: ${gapFulfill}%
+- MBCO 설정 현황: ${mbcoSet}/${mbcoEntries.length}개 업무 설정 완료 (평균 ${mbcoAvg}%)
+
+[요청 사항]
+1. 경영진이 한눈에 파악할 수 있는 BCMS 운영 현황 요약(Executive Summary)을 작성해주세요.
+2. 주요 리스크 현황과 대응 수준을 평가해주세요.
+3. ISO 22301 인증 준비 수준 및 주요 과제를 제시해주세요.
+4. MBCO 설정 현황을 포함한 업무연속성 수준을 평가해주세요.
+5. 경영진 의사결정이 필요한 사항(예산, 조직, 정책)을 도출해주세요.
+6. 향후 3~6개월 우선 추진 과제를 로드맵 형식으로 제안해주세요.
+7. 한국어 보고서 형식으로 명확하게 작성해주세요.`,
+    onApply: (text) => {
+      navigator.clipboard.writeText(text).then(() => alert('✅ 경영진 보고서 초안이 클립보드에 복사되었습니다.\n문서 편집기에 붙여넣기 하세요.'))
+        .catch(() => alert('클립보드 복사에 실패했습니다. 텍스트를 직접 선택하여 복사해주세요.'));
+    }
+  });
+});
 </script>
 </body>
 </html>

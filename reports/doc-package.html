@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>BCMS - 심사용 문서 패키지</title>
+<link rel="stylesheet" href="../assets/style.css"/>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+<style>
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .main { overflow-x: hidden; min-width: 0; }
+  .wrap { max-width: 1100px; margin: 0 auto; overflow-x: hidden; padding-bottom: 40px; }
+
+  .pageHeader {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px; margin-bottom: 24px;
+  }
+  .pageHeader h1 { font-size: 22px; font-weight: 800; margin: 0 0 4px 0; }
+  .pageHeader .sub { font-size: 13px; color: var(--text-2); margin: 0; }
+  .headerRight { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .btn {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); white-space: nowrap; transition: background .15s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn:hover { background: var(--surface-hover, rgba(0,0,0,.05)); }
+  .btn.primary { background: var(--accent, #0070f3); color: #fff; border-color: var(--accent, #0070f3); }
+  .btn.primary:hover { opacity: .88; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ── 안내 배너 ── */
+  .infoBanner {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(0,112,243,.06); border: 0.5px solid rgba(0,112,243,.2);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; font-size: 13px;
+    color: var(--text-2); line-height: 1.6;
+  }
+  .infoBanner b { color: var(--text); }
+
+  /* ── 문서 카드 그리드 ── */
+  .docGrid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin-bottom: 20px;
+  }
+  @media (max-width: 720px) { .docGrid { grid-template-columns: 1fr; } }
+
+  .docCard {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 20px 20px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: box-shadow .15s;
+  }
+  .docCard:hover { box-shadow: 0 4px 18px rgba(0,0,0,.08); }
+
+  .cardTop { display: flex; align-items: flex-start; gap: 12px; }
+  .cardIco { font-size: 26px; line-height: 1; flex-shrink: 0; }
+  .cardInfo { flex: 1; min-width: 0; }
+  .cardNum { font-size: 11px; font-weight: 700; color: var(--accent, #0070f3); margin: 0 0 2px 0; }
+  .cardTitle { font-size: 15px; font-weight: 800; margin: 0 0 4px 0; }
+  .cardDesc { font-size: 12px; color: var(--text-2); margin: 0; line-height: 1.5; }
+
+  .cardSources { display: flex; flex-wrap: wrap; gap: 5px; }
+  .srcTag {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    background: rgba(0,112,243,.07); color: var(--accent, #0070f3);
+    border: 0.5px solid rgba(0,112,243,.18); font-family: monospace;
+  }
+
+  .cardStatus { display: flex; align-items: center; gap: 8px; }
+  .statusDot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: var(--border);
+  }
+  .statusDot.ready  { background: #16a34a; }
+  .statusDot.partial { background: #d97706; }
+  .statusDot.empty  { background: #94a3b8; }
+  .statusText { font-size: 11px; color: var(--text-2); }
+
+  .cardFooter { display: flex; align-items: center; justify-content: space-between; }
+  .cardNote { font-size: 11px; color: var(--text-2); }
+
+  /* ── 진행 상태 바 ── */
+  .progressRow { display: flex; align-items: center; gap: 8px; }
+  .miniBar { flex: 1; height: 4px; border-radius: 999px; background: var(--border); overflow: hidden; }
+  .miniBarFill { height: 100%; border-radius: 999px; transition: width .3s; }
+  .miniPct { font-size: 11px; font-weight: 700; color: var(--text-2); min-width: 32px; text-align: right; }
+
+  /* ── 전체 다운로드 섹션 ── */
+  .bulkSection {
+    border: 0.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 20px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px;
+  }
+  .bulkLeft h3 { font-size: 15px; font-weight: 800; margin: 0 0 4px 0; }
+  .bulkLeft p  { font-size: 12px; color: var(--text-2); margin: 0; }
+
+  /* ── 다운로드 로딩 ── */
+  .dl-spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+    border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── 토스트 ── */
+  .pkg-toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: #0f172a; color: #fff; padding: 12px 20px;
+    border-radius: 10px; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    opacity: 0; transition: opacity .25s; pointer-events: none;
+  }
+  .pkg-toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<aside id="sidebarMount"></aside>
+<main class="main">
+<div class="wrap">
+
+  <!-- 헤더 -->
+  <div class="pageHeader">
+    <div>
+      <h1>📦 심사용 문서 패키지</h1>
+      <p class="sub">포털 입력 데이터를 기반으로 ISO 22301 심사 제출용 문서 8종을 Word(.docx)로 자동 생성합니다.</p>
+    </div>
+    <div class="headerRight">
+      <button id="themeToggle" class="btn">🌙 다크모드</button>
+      <button id="btnDownloadAll" class="btn primary" type="button">⬇️ 전체 다운로드 (8종)</button>
+    </div>
+  </div>
+
+  <!-- 안내 배너 -->
+  <div class="infoBanner">
+    <span style="font-size:20px;flex-shrink:0;">💡</span>
+    <span>
+      <b>회사명·작성일자는 각 문서에 자동 삽입됩니다.</b><br>
+      데이터가 부족한 문서는 "(데이터 없음)" 표시로 생성됩니다. 해당 메뉴에서 데이터를 먼저 입력 후 다시 생성하세요.
+      다운로드에는 <b>docx@8.5.0</b> 라이브러리가 사용됩니다 (외부 서버 전송 없음).
+    </span>
+  </div>
+
+  <!-- 문서 카드 그리드 -->
+  <div class="docGrid" id="docGrid">
+    <!-- JS로 렌더링 -->
+  </div>
+
+  <!-- 전체 다운로드 -->
+  <div class="bulkSection">
+    <div class="bulkLeft">
+      <h3>📋 전체 일괄 다운로드</h3>
+      <p>8종 문서를 순서대로 생성하여 개별 파일로 다운로드합니다. 브라우저 팝업 차단 설정을 확인해 주세요.</p>
+    </div>
+    <button id="btnDownloadAll2" class="btn primary" type="button" style="font-size:14px;padding:10px 22px;">⬇️ 8종 전체 다운로드</button>
+  </div>
+
+</div>
+</main>
+
+<div class="pkg-toast" id="pkgToast"></div>
+
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/ai-helper.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* ═══════════════ 유틸 ═══════════════ */
+const load = (key, def) => {
+  try { const v = localStorage.getItem(key); if (!v) return def; return JSON.parse(v) ?? def; }
+  catch { return def; }
+};
+const arr  = v => Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v) : []);
+const s    = v => String(v ?? '').trim();
+const today = () => new Date().toISOString().split('T')[0];
+
+const company  = () => s(load('bcmsPolicyData', {}).companyName) || s(load('bcmsCompany', '')) || '(회사명 미입력)';
+const todayStr = today();
+
+function showToast(msg, dur = 3000) {
+  const el = document.getElementById('pkgToast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ═══════════════ DOCX 헬퍼 ═══════════════ */
+function getDocx() {
+  const lib = window.docx;
+  if (!lib || typeof lib.Document !== 'function') throw new Error('docx 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+  return lib;
+}
+
+function makeCoverSection(lib, title, docNo, author, approver) {
+  const { Paragraph, TextRun, AlignmentType } = lib;
+  const cn = company();
+  return [
+    new Paragraph({ children: [new TextRun({ text: title, bold: true, size: 52, color: '1E3A5F' })], alignment: AlignmentType.CENTER }),
+    new Paragraph({ text: '' }),
+    new Paragraph({ children: [new TextRun({ text: cn, size: 28, color: '374151' })], alignment: AlignmentType.CENTER }),
+    new Paragraph({ text: '' }),
+    new Paragraph({ children: [new TextRun({ text: `문서번호: ${docNo}    작성일: ${todayStr}`, size: 22, color: '6B7280' })], alignment: AlignmentType.CENTER }),
+    new Paragraph({ children: [new TextRun({ text: `작성자: ${author || '—'}    승인자: ${approver || '—'}`, size: 22, color: '6B7280' })], alignment: AlignmentType.CENTER }),
+    new Paragraph({ text: '' }),
+    new Paragraph({ children: [new TextRun({ text: '─'.repeat(60), color: 'D1D5DB' })], alignment: AlignmentType.CENTER }),
+    new Paragraph({ text: '' }),
+  ];
+}
+
+const h1 = (lib, txt) => new lib.Paragraph({ text: txt, heading: 'Heading1' });
+const h2 = (lib, txt) => new lib.Paragraph({ text: txt, heading: 'Heading2' });
+const p  = (lib, txt) => new lib.Paragraph({ children: [new lib.TextRun({ text: s(txt) || '(없음)', size: 22 })] });
+const blank = lib => new lib.Paragraph({ text: '' });
+
+function makeTable(lib, headers, rows) {
+  const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle } = lib;
+  const border = { style: BorderStyle.SINGLE, size: 4, color: 'D1D5DB' };
+  const cellBorders = { top: border, bottom: border, left: border, right: border };
+  const hdrRow = new TableRow({
+    children: headers.map(h => new TableCell({
+      children: [new Paragraph({ children: [new TextRun({ text: s(h), bold: true, size: 18, color: '1E3A5F' })] })],
+      borders: cellBorders,
+      shading: { fill: 'EFF6FF' },
+    })),
+    tableHeader: true,
+  });
+  const dataRows = rows.map(cols => new TableRow({
+    children: cols.map(c => new TableCell({
+      children: [new Paragraph({ children: [new TextRun({ text: s(c), size: 18 })] })],
+      borders: cellBorders,
+    })),
+  }));
+  return new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [hdrRow, ...dataRows] });
+}
+
+/* ═══════════════ 8종 문서 생성 함수 ═══════════════ */
+
+/* ① BCMS 정책서 */
+async function genPolicy() {
+  const lib = getDocx();
+  const d   = load('bcmsPolicyData', {});
+  const children = [
+    ...makeCoverSection(lib, 'BCMS 정책서', s(d.policyNo) || 'POL-BCMS-001', s(d.signerName), s(d.signerTitle)),
+    h1(lib, '1. 목적'),
+    p(lib, 'BCMS 정책서는 ISO 22301 기반 업무연속성관리시스템(BCMS)의 방침 및 원칙을 정의합니다.'),
+    blank(lib),
+    h1(lib, '2. 정책 방침'),
+    p(lib, s(d.body) || '(정책 내용 미입력 - governance/policy.html에서 입력하세요)'),
+    blank(lib),
+    h1(lib, '3. 정책 이력'),
+    makeTable(lib,
+      ['문서번호', '버전', '정책일자', '다음 검토일', '작성자/직위'],
+      [[s(d.policyNo)||'-', s(d.version)||'-', s(d.policyDate)||'-', s(d.nextReview)||'-', `${s(d.signerName)} / ${s(d.signerTitle)}`]]
+    ),
+    blank(lib),
+    h1(lib, '4. 승인'),
+    p(lib, `서명자: ${s(d.signerName) || '(미입력)'}  직위: ${s(d.signerTitle) || '(미입력)'}`),
+    p(lib, `정책 수립일: ${s(d.policyDate) || '-'}  다음 검토일: ${s(d.nextReview) || '-'}`),
+  ];
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ② BIA 결과보고서 */
+async function genBIA() {
+  const lib      = getDocx();
+  const biaRows  = arr(load('bcmsBIAData', []));
+  const mbcoData = load('bcmsMBCOData', {});
+  const allFns   = biaRows.flatMap(r => (r.functions || []).map(f => ({ ...f, team: r.team })));
+
+  const children = [
+    ...makeCoverSection(lib, 'BIA 결과보고서', 'BIA-2026-001', '', ''),
+    h1(lib, '1. 개요'),
+    p(lib, `본 보고서는 ISO 22301 6.2항에 따른 업무영향분석(BIA) 결과를 정리한 것입니다.`),
+    p(lib, `분석 기준일: ${todayStr}  |  분석 팀 수: ${biaRows.length}개  |  전체 업무 수: ${allFns.length}개`),
+    blank(lib),
+    h1(lib, '2. 팀별 핵심업무 목록'),
+  ];
+
+  if (biaRows.length === 0) {
+    children.push(p(lib, '(BIA 데이터 없음 - risk-bia/bia.html에서 입력하세요)'));
+  } else {
+    biaRows.forEach(row => {
+      children.push(h2(lib, `◆ ${s(row.team)}`));
+      const fns = arr(row.functions);
+      if (fns.length === 0) {
+        children.push(p(lib, '(등록된 업무 없음)'));
+      } else {
+        children.push(makeTable(lib,
+          ['업무명', '중요도', '영향도', 'MTPD', 'RTO', 'MBCO(%)', 'MBCO 근거'],
+          fns.map(f => {
+            const mbco = mbcoData[`${row.team}:${f.name}`] || mbcoData[f.id] || {};
+            return [
+              s(f.name), s(f.importance || f.grade), String(f.overallImpact || '-'),
+              s(f.mtpd), s(f.rto || (f.rtoValue ? `${f.rtoValue}${f.rtoUnit||'분'}` : '')),
+              mbco.mbco != null ? String(mbco.mbco) + '%' : '미설정',
+              s(mbco.reason),
+            ];
+          })
+        ));
+      }
+      children.push(blank(lib));
+    });
+  }
+
+  const coreFns = allFns.filter(f => f.coreFinal || f.grade === 'core');
+  children.push(h1(lib, '3. 핵심업무 요약'));
+  children.push(p(lib, `총 핵심업무: ${coreFns.length}개 / 전체 등록 업무: ${allFns.length}개`));
+  if (coreFns.length > 0) {
+    children.push(makeTable(lib,
+      ['팀', '업무명', 'RTO', '영향도'],
+      coreFns.map(f => [s(f.team), s(f.name), s(f.rto || '미설정'), String(f.overallImpact || '-')])
+    ));
+  }
+  children.push(blank(lib));
+
+  const mbcoEntries = Object.values(mbcoData).filter(m => m.mbco != null);
+  const mbcoAvg = mbcoEntries.length ? Math.round(mbcoEntries.reduce((sum, m) => sum + m.mbco, 0) / mbcoEntries.length) : 0;
+  children.push(h1(lib, '4. MBCO 현황'));
+  children.push(p(lib, `MBCO 설정 업무: ${mbcoEntries.length}개  |  평균 MBCO: ${mbcoAvg}%`));
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ③ 리스크 평가보고서 */
+async function genRisk() {
+  const lib      = getDocx();
+  const riskList = arr(load('bcmsRiskList', null) ?? load('bcmsRiskAssessment', []));
+
+  const children = [
+    ...makeCoverSection(lib, '리스크 평가보고서', 'RA-2026-001', '', ''),
+    h1(lib, '1. 개요'),
+    p(lib, 'ISO 22301 6.1항에 따른 BCMS 리스크 평가 결과입니다.'),
+    p(lib, `평가일: ${todayStr}  |  등록 리스크: ${riskList.length}건`),
+    blank(lib),
+    h1(lib, '2. 리스크 평가 결과'),
+  ];
+
+  if (riskList.length === 0) {
+    children.push(p(lib, '(리스크 데이터 없음 - risk-bia/risk.html에서 입력하세요)'));
+  } else {
+    children.push(makeTable(lib,
+      ['ID', '유형', '리스크명', '발생가능성', '영향도', '점수', '등급', '처리전략', '영향 자원'],
+      riskList.map(r => [
+        s(r.id), s(r.riskType), s(r.riskName),
+        String(r.likelihood || '-'), String(r.impact || '-'),
+        String(r.riskScore || '-'), s(r.riskLevel),
+        s(r.treatment), arr(r.resources).join(', '),
+      ])
+    ));
+    children.push(blank(lib));
+
+    const high   = riskList.filter(r => (r.riskScore || 0) >= 15 || r.riskLevel === '중점관리');
+    const medium = riskList.filter(r => { const sc = r.riskScore || 0; return sc >= 8 && sc < 15; });
+    const low    = riskList.filter(r => (r.riskScore || 0) < 8);
+    children.push(h1(lib, '3. 리스크 등급 요약'));
+    children.push(makeTable(lib,
+      ['등급', '건수', '비율'],
+      [
+        ['중점관리 (15이상)', String(high.length), `${riskList.length ? Math.round(high.length/riskList.length*100) : 0}%`],
+        ['일반관리 (8~14)',   String(medium.length), `${riskList.length ? Math.round(medium.length/riskList.length*100) : 0}%`],
+        ['수용 (7이하)',      String(low.length), `${riskList.length ? Math.round(low.length/riskList.length*100) : 0}%`],
+      ]
+    ));
+  }
+  children.push(blank(lib));
+  children.push(h1(lib, '4. 잔여 리스크'));
+  if (riskList.length > 0) {
+    children.push(makeTable(lib,
+      ['리스크명', '잔여 발생가능성', '잔여 영향도', '잔여 점수'],
+      riskList.map(r => [
+        s(r.riskName), String(r.residualLikelihood||'-'), String(r.residualImpact||'-'), String(r.residualScore||'-')
+      ])
+    ));
+  } else {
+    children.push(p(lib, '(데이터 없음)'));
+  }
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ④ BCP 절차서 */
+async function genBCP() {
+  const lib  = getDocx();
+  const meta = load('bcmsBCPMeta', {});
+  const doc  = load('bcmsBCPDoc',  {});
+  const strats = arr(load('bcmsBCPStrategy', null) ?? load('bcmsBCP', []));
+
+  const children = [
+    ...makeCoverSection(lib, '업무연속성계획서 (BCP)', s(meta.docNo)||'BCP-2026-001', s(meta.author), s(meta.approver)),
+    h1(lib, '1. 목적 및 적용범위'),
+    p(lib, s(doc.sec1Text) || '(내용 없음 - library/bcp.html에서 입력하세요)'),
+    blank(lib),
+    h1(lib, '2. 핵심업무 복구전략'),
+  ];
+  if (strats.length > 0) {
+    children.push(makeTable(lib,
+      ['팀', '핵심업무', 'RTO', '복구전략 유형', 'BCP 전략 내용', '필요자원'],
+      strats.map(b => [
+        s(b.team??b.dept), s(b.functionName??b.name??b.title),
+        s(b.rto??b.RTO), s(b.strategyType??b.strategy),
+        s(b.strategyText??b.description??b.detail), s(b.resources??b.resource),
+      ])
+    ));
+  } else {
+    children.push(p(lib, '(BCP 전략 데이터 없음 - strategy-plans/bcp.html에서 입력하세요)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '3. 발동 조건 및 초기 행동'));
+  const actRows = arr(doc.activationRows);
+  if (actRows.length > 0) {
+    actRows.forEach(r => children.push(p(lib, `[${s(r.type)}] ${s(r.condition)} (권한자: ${s(r.authority)})`)));
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '4. 팀별 역할 및 책임'));
+  const roleRows = arr(doc.roleRows);
+  if (roleRows.length > 0) {
+    children.push(makeTable(lib,
+      ['역할', '성명', '연락처', '주요 임무'],
+      roleRows.map(r => [s(r.role), s(r.name), s(r.contact), s(r.duties)])
+    ));
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '5. 단계별 복구 절차'));
+  const steps = arr(doc.steps);
+  if (steps.length > 0) {
+    steps.forEach((st, i) => {
+      children.push(h2(lib, `${i + 1}단계: ${s(st.title)}`));
+      if (st.detail) children.push(p(lib, s(st.detail)));
+      children.push(p(lib, `담당: ${s(st.owner)}  소요시간: ${s(st.duration)}`));
+    });
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '6. 비상연락망'));
+  const contacts = arr(doc.contactRows);
+  if (contacts.length > 0) {
+    children.push(makeTable(lib,
+      ['직위', '성명', '전화', '이메일'],
+      contacts.map(r => [s(r.position), s(r.name), s(r.phone), s(r.email)])
+    ));
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ⑤ EOP 절차서 */
+async function genEOP() {
+  const lib  = getDocx();
+  const meta = load('bcmsEOPMeta', {});
+  const doc  = load('bcmsEOPDoc',  {});
+
+  const children = [
+    ...makeCoverSection(lib, '비상운영절차서 (EOP)', s(meta.docNo)||'EOP-2026-001', s(meta.author), s(meta.approver)),
+    h1(lib, '1. 목적 및 적용범위'),
+    p(lib, s(doc.sec1Text) || '(내용 없음 - library/eop.html에서 입력하세요)'),
+    blank(lib),
+    h1(lib, '2. 발동 조건'),
+  ];
+  const actRows = arr(doc.activationRows);
+  if (actRows.length > 0) {
+    children.push(makeTable(lib,
+      ['재난 유형', '발동 조건', '발동 권한자'],
+      actRows.map(r => [s(r.disasterType||r.type), s(r.condition), s(r.authority)])
+    ));
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '3. 초기 대응 체크리스트'));
+  const checks = arr(doc.checkItems);
+  if (checks.length > 0) {
+    checks.forEach((c, i) => children.push(p(lib, `${i+1}. [${s(c.owner||c.role)}] ${s(c.action||c.text||c.item)}`)));
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '4. 비상 조직 체계'));
+  const orgRows = arr(doc.orgRows);
+  if (orgRows.length > 0) {
+    children.push(makeTable(lib,
+      ['역할', '성명', '연락처', '대체자'],
+      orgRows.map(r => [s(r.role), s(r.name), s(r.contact), s(r.backup)])
+    ));
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '5. 재난 유형별 시나리오 및 대응절차'));
+  const scenarios = arr(doc.scenarios);
+  if (scenarios.length > 0) {
+    scenarios.forEach((sc, i) => {
+      children.push(h2(lib, `시나리오 ${i+1}: ${s(sc.disasterType||sc.title||sc.type)}`));
+      children.push(p(lib, `상황: ${s(sc.situation||sc.condition)}`));
+      children.push(p(lib, `대응: ${s(sc.response||sc.action)}`));
+    });
+  } else {
+    children.push(p(lib, '(내용 없음)'));
+  }
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ⑥ 훈련 결과보고서 */
+async function genTraining() {
+  const lib       = getDocx();
+  const trainData = arr(load('bcmsTrainingData', []));
+  const done      = trainData.filter(t => t.status === '완료');
+  const planned   = trainData.filter(t => t.status !== '완료');
+
+  const children = [
+    ...makeCoverSection(lib, '훈련 결과보고서', 'TRN-2026-001', '', ''),
+    h1(lib, '1. 훈련 현황 요약'),
+    p(lib, `총 등록 훈련: ${trainData.length}건  |  완료: ${done.length}건  |  예정/진행: ${planned.length}건`),
+    blank(lib),
+    h1(lib, '2. 완료된 훈련 결과'),
+  ];
+
+  if (done.length === 0) {
+    children.push(p(lib, '(완료된 훈련 없음 - training/index.html에서 입력하세요)'));
+  } else {
+    done.forEach((t, i) => {
+      children.push(h2(lib, `${i+1}. ${s(t.name)} (${s(t.type)})`));
+      children.push(makeTable(lib,
+        ['항목', '내용'],
+        [
+          ['훈련 일자', s(t.actualDate || t.planDate)],
+          ['훈련 유형', s(t.type)],
+          ['참여자 수', String(t.participants || 0) + '명'],
+          ['훈련 목표', s(t.objective)],
+          ['합격 기준', s(t.criteria)],
+          ['결과 요약', s(t.resultSummary)],
+          ['달성도',    s(t.achievement)],
+          ['문제점',    s(t.issues)],
+          ['개선사항',  s(t.improvements)],
+        ]
+      ));
+      children.push(blank(lib));
+    });
+  }
+
+  if (planned.length > 0) {
+    children.push(h1(lib, '3. 예정 훈련 계획'));
+    children.push(makeTable(lib,
+      ['훈련명', '유형', '예정일', '목표'],
+      planned.map(t => [s(t.name), s(t.type), s(t.planDate), s(t.objective)])
+    ));
+  }
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ⑦ 내부심사 보고서 */
+async function genAudit() {
+  const lib       = getDocx();
+  const auditData = arr(load('bcmsAuditData', []));
+  const gapRaw    = load('bcmsGapAnalysis', {});
+  const gapItems  = Array.isArray(gapRaw) ? gapRaw : Object.values(gapRaw);
+  const gapTotal  = gapItems.length;
+  const gapDone   = gapItems.filter(g => g.status === '완료' || g.score >= 3).length;
+  const gapPct    = gapTotal ? Math.round(gapDone / gapTotal * 100) : 0;
+
+  const children = [
+    ...makeCoverSection(lib, '내부심사 보고서', 'AUD-2026-001', '', ''),
+    h1(lib, '1. 심사 개요'),
+    p(lib, `작성 기준일: ${todayStr}  |  ISO 22301 갭 충족률: ${gapPct}% (${gapDone}/${gapTotal})`),
+    blank(lib),
+    h1(lib, '2. 내부심사 이력'),
+  ];
+
+  if (auditData.length === 0) {
+    children.push(p(lib, '(심사 데이터 없음 - audit/index.html에서 입력하세요)'));
+  } else {
+    children.push(makeTable(lib,
+      ['ID', '심사명', '유형', '계획일', '실시일', '심사원', '상태'],
+      auditData.map(a => [
+        s(a.id), s(a.name), s(a.type), s(a.planDate),
+        s(a.actualDate), s(a.auditor), s(a.status),
+      ])
+    ));
+    children.push(blank(lib));
+
+    const completed = auditData.filter(a => a.status === '완료');
+    if (completed.length > 0) {
+      children.push(h1(lib, '3. 심사 상세 결과'));
+      completed.forEach((a, i) => {
+        children.push(h2(lib, `${i+1}. ${s(a.name)} (${s(a.type)}) — ${s(a.actualDate)}`));
+        children.push(makeTable(lib,
+          ['항목', '내용'],
+          [
+            ['심사 범위',   s(a.scope)],
+            ['심사원',      s(a.auditor)],
+            ['총평',        s(a.overallComment)],
+            ['적합 사항',   s(a.conformity)],
+            ['부적합 사항', s(a.nonconformity)],
+            ['관찰 사항',   s(a.observation)],
+            ['다음 심사',   s(a.nextDate)],
+          ]
+        ));
+        children.push(blank(lib));
+      });
+    }
+  }
+
+  children.push(h1(lib, '4. ISO 22301 갭분석 요약'));
+  children.push(p(lib, `전체 요구사항: ${gapTotal}개  |  충족: ${gapDone}개  |  충족률: ${gapPct}%`));
+  const nonDone = gapItems.filter(g => g.status !== '완료' && (g.score == null || g.score < 3)).slice(0, 10);
+  if (nonDone.length > 0) {
+    children.push(h2(lib, '주요 미충족 조항'));
+    children.push(makeTable(lib,
+      ['조항번호', '항목명', '현황'],
+      nonDone.map(g => [s(g.clause || g.id || g.section), s(g.title || g.name), s(g.status || '미착수')])
+    ));
+  }
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ⑧ 경영검토 보고서 */
+async function genMgmtReview() {
+  const lib       = getDocx();
+  const objectives = arr(load('bcmsObjectives', []));
+  const trainData  = arr(load('bcmsTrainingData', []));
+  const auditData  = arr(load('bcmsAuditData', []));
+  const riskList   = arr(load('bcmsRiskList', null) ?? load('bcmsRiskAssessment', []));
+  const biaRows    = arr(load('bcmsBIAData', []));
+  const capaData   = arr(load('bcmsCapaItems', []));
+  const gapRaw     = load('bcmsGapAnalysis', {});
+  const gapItems   = Array.isArray(gapRaw) ? gapRaw : Object.values(gapRaw);
+
+  const trainDone  = trainData.filter(t => t.status === '완료').length;
+  const highRisks  = riskList.filter(r => (r.riskScore || 0) >= 15).length;
+  const openCapas  = capaData.filter(c => c.status !== '완료').length;
+  const gapPct     = gapItems.length ? Math.round(gapItems.filter(g => g.status==='완료'||g.score>=3).length/gapItems.length*100) : 0;
+  const allFns     = biaRows.flatMap(r => r.functions || []);
+  const coreFns    = allFns.filter(f => f.coreFinal || f.grade === 'core');
+
+  const children = [
+    ...makeCoverSection(lib, '경영검토 보고서', 'MGR-2026-001', '', ''),
+    h1(lib, '1. BCMS 운영 현황 요약'),
+    makeTable(lib,
+      ['구분', '현황'],
+      [
+        ['등록 업무 (핵심업무)', `${allFns.length}개 (핵심 ${coreFns.length}개)`],
+        ['중점관리 리스크',      `${highRisks}건`],
+        ['훈련 완료',           `${trainDone}건 / 전체 ${trainData.length}건`],
+        ['미완료 CAPA',         `${openCapas}건`],
+        ['ISO 22301 충족률',    `${gapPct}%`],
+      ]
+    ),
+    blank(lib),
+    h1(lib, '2. BCMS 목표 및 달성 현황'),
+  ];
+
+  if (objectives.length === 0) {
+    children.push(p(lib, '(목표 데이터 없음 - governance/policy.html에서 입력하세요)'));
+  } else {
+    children.push(makeTable(lib,
+      ['목표 ID', '구분', '목표값', '현재값', '상태'],
+      objectives.map(o => [
+        s(o.id), s(o.category), s(o.target), s(o.currentValue ?? '-'), s(o.status)
+      ])
+    ));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '3. 훈련 및 점검 실적'));
+  if (trainData.length > 0) {
+    children.push(makeTable(lib,
+      ['훈련명', '유형', '계획일', '상태', '달성도'],
+      trainData.slice(0, 10).map(t => [s(t.name), s(t.type), s(t.planDate), s(t.status), s(t.achievement)])
+    ));
+  } else {
+    children.push(p(lib, '(훈련 데이터 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '4. 내부심사 결과 요약'));
+  if (auditData.length > 0) {
+    children.push(makeTable(lib,
+      ['심사명', '유형', '실시일', '적합 사항', '부적합 사항'],
+      auditData.slice(0, 5).map(a => [s(a.name), s(a.type), s(a.actualDate||a.planDate), s(a.conformity), s(a.nonconformity)])
+    ));
+  } else {
+    children.push(p(lib, '(심사 데이터 없음)'));
+  }
+  children.push(blank(lib));
+
+  children.push(h1(lib, '5. 개선 필요 사항 및 경영진 결정사항'));
+  children.push(p(lib, `미완료 CAPA: ${openCapas}건  |  ISO 22301 미충족 항목: ${gapItems.length - gapItems.filter(g=>g.status==='완료'||g.score>=3).length}개`));
+  children.push(p(lib, '이 항목들에 대한 경영진 검토 및 의사결정이 필요합니다.'));
+  return new lib.Document({ sections: [{ properties: {}, children }] });
+}
+
+/* ═══════════════ 문서 정의 목록 ═══════════════ */
+const DOCS = [
+  {
+    num: '①', ico: '📋', title: 'BCMS 정책서',
+    desc: 'BCMS 방침, 정책 본문, 승인자 정보',
+    sources: ['bcmsPolicyData'],
+    filename: () => `BCMS_정책서_${todayStr}.docx`,
+    gen: genPolicy,
+    countData: () => { const d = load('bcmsPolicyData', {}); return s(d.body) ? 100 : (s(d.companyName) ? 40 : 0); },
+  },
+  {
+    num: '②', ico: '📊', title: 'BIA 결과보고서',
+    desc: 'BIA 전체 업무목록, MBCO 현황, 핵심업무 요약',
+    sources: ['bcmsBIAData', 'bcmsMBCOData'],
+    filename: () => `BIA_결과보고서_${todayStr}.docx`,
+    gen: genBIA,
+    countData: () => { const rows = arr(load('bcmsBIAData', [])); const total = rows.reduce((s,r)=>s+(r.functions||[]).length,0); return total > 0 ? Math.min(100, total * 10) : 0; },
+  },
+  {
+    num: '③', ico: '⚠️', title: '리스크 평가보고서',
+    desc: '리스크 목록, 점수, 등급, 처리전략, 잔여리스크',
+    sources: ['bcmsRiskList', 'bcmsRiskAssessment'],
+    filename: () => `리스크평가보고서_${todayStr}.docx`,
+    gen: genRisk,
+    countData: () => { const n = arr(load('bcmsRiskList', null)??load('bcmsRiskAssessment',[])).length; return n > 0 ? Math.min(100, n * 10) : 0; },
+  },
+  {
+    num: '④', ico: '🗂', title: 'BCP 절차서',
+    desc: '복구전략, 발동조건, 역할책임, 복구절차, 비상연락망',
+    sources: ['bcmsBCPDoc', 'bcmsBCPMeta'],
+    filename: () => `BCP_절차서_${todayStr}.docx`,
+    gen: genBCP,
+    countData: () => { const d = load('bcmsBCPDoc', null); return d ? (s(d.sec1Text) ? 80 : 40) : 0; },
+  },
+  {
+    num: '⑤', ico: '🚨', title: 'EOP 절차서',
+    desc: '발동조건, 초기대응 체크리스트, 비상조직, 시나리오',
+    sources: ['bcmsEOPDoc', 'bcmsEOPMeta'],
+    filename: () => `EOP_절차서_${todayStr}.docx`,
+    gen: genEOP,
+    countData: () => { const d = load('bcmsEOPDoc', null); return d ? (arr(d.scenarios).length > 0 ? 80 : 40) : 0; },
+  },
+  {
+    num: '⑥', ico: '🎯', title: '훈련 결과보고서',
+    desc: '훈련 계획 및 완료 결과, 달성도, 개선사항',
+    sources: ['bcmsTrainingData'],
+    filename: () => `훈련결과보고서_${todayStr}.docx`,
+    gen: genTraining,
+    countData: () => { const n = arr(load('bcmsTrainingData',[])).length; return n>0?Math.min(100,n*20):0; },
+  },
+  {
+    num: '⑦', ico: '🔍', title: '내부심사 보고서',
+    desc: '심사 이력, 적합/부적합 사항, 갭분석 요약',
+    sources: ['bcmsAuditData', 'bcmsGapAnalysis'],
+    filename: () => `내부심사보고서_${todayStr}.docx`,
+    gen: genAudit,
+    countData: () => { const n = arr(load('bcmsAuditData',[])).length; return n>0?Math.min(100,n*25):0; },
+  },
+  {
+    num: '⑧', ico: '📈', title: '경영검토 보고서',
+    desc: 'BCMS 목표달성, 훈련/심사 실적, 개선사항, 경영진 결정사항',
+    sources: ['bcmsObjectives', 'bcmsTrainingData', 'bcmsAuditData'],
+    filename: () => `경영검토보고서_${todayStr}.docx`,
+    gen: genMgmtReview,
+    countData: () => { const n = arr(load('bcmsObjectives',[])).length; return n>0?Math.min(100,n*20):0; },
+  },
+];
+
+/* ═══════════════ 카드 렌더링 ═══════════════ */
+function renderCards() {
+  const grid = document.getElementById('docGrid');
+  grid.innerHTML = DOCS.map((doc, idx) => {
+    const pct = doc.countData();
+    const dotClass = pct >= 60 ? 'ready' : (pct > 0 ? 'partial' : 'empty');
+    const statusLabel = pct >= 60 ? '데이터 충분' : (pct > 0 ? '데이터 부분' : '데이터 없음');
+    const fillColor = pct >= 60 ? '#16a34a' : (pct > 0 ? '#d97706' : '#94a3b8');
+    return `
+    <div class="docCard">
+      <div class="cardTop">
+        <div class="cardIco">${doc.ico}</div>
+        <div class="cardInfo">
+          <p class="cardNum">문서 ${doc.num}</p>
+          <h3 class="cardTitle">${doc.title}</h3>
+          <p class="cardDesc">${doc.desc}</p>
+        </div>
+      </div>
+      <div class="cardSources">
+        ${doc.sources.map(k => `<span class="srcTag">${k}</span>`).join('')}
+      </div>
+      <div class="progressRow">
+        <div class="miniBar"><div class="miniBarFill" style="width:${pct}%;background:${fillColor};"></div></div>
+        <span class="miniPct">${pct}%</span>
+      </div>
+      <div class="cardFooter">
+        <div class="cardStatus">
+          <div class="statusDot ${dotClass}"></div>
+          <span class="statusText">${statusLabel}</span>
+        </div>
+        <button class="btn primary" data-doc-idx="${idx}" type="button" style="font-size:12px;padding:5px 14px;">
+          ⬇️ Word 다운로드
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════ 다운로드 실행 ═══════════════ */
+async function downloadDoc(idx) {
+  const doc    = DOCS[idx];
+  const btn    = document.querySelector(`[data-doc-idx="${idx}"]`);
+  const origTxt = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="dl-spinner"></span> 생성 중…';
+  try {
+    const docxObj = await doc.gen();
+    const blob    = await window.docx.Packer.toBlob(docxObj);
+    const url     = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href = url; a.download = doc.filename();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast(`✅ ${doc.title} 다운로드 완료`);
+  } catch (e) {
+    alert(`❌ 생성 실패: ${e.message}`);
+  } finally {
+    btn.disabled = false; btn.innerHTML = origTxt;
+  }
+}
+
+async function downloadAll(btnEl) {
+  const origTxt = btnEl.innerHTML;
+  btnEl.disabled = true;
+  btnEl.innerHTML = '<span class="dl-spinner"></span> 생성 중…';
+  let successCount = 0;
+  for (let i = 0; i < DOCS.length; i++) {
+    const doc = DOCS[i];
+    btnEl.innerHTML = `<span class="dl-spinner"></span> ${i+1}/8 생성 중…`;
+    try {
+      const docxObj = await doc.gen();
+      const blob    = await window.docx.Packer.toBlob(docxObj);
+      const url     = URL.createObjectURL(blob);
+      const a       = document.createElement('a');
+      a.href = url; a.download = doc.filename();
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 8000);
+      successCount++;
+      await new Promise(r => setTimeout(r, 400));
+    } catch (e) {
+      showToast(`⚠️ ${doc.title} 생성 실패: ${e.message}`, 5000);
+    }
+  }
+  btnEl.disabled = false; btnEl.innerHTML = origTxt;
+  showToast(`✅ ${successCount}/8종 다운로드 완료`, 4000);
+}
+
+/* ═══════════════ 이벤트 ═══════════════ */
+document.getElementById('docGrid').addEventListener('click', e => {
+  const btn = e.target.closest('[data-doc-idx]');
+  if (!btn) return;
+  downloadDoc(Number(btn.dataset.docIdx));
+});
+
+document.getElementById('btnDownloadAll').addEventListener('click', e => {
+  downloadAll(e.currentTarget);
+});
+document.getElementById('btnDownloadAll2').addEventListener('click', e => {
+  downloadAll(e.currentTarget);
+});
+
+/* ── 초기화 ── */
+renderCards();
+
+/* ── 테마 ── */
+(function() {
+  const r = document.documentElement, t = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('bcmsTheme') || 'light';
+  r.setAttribute('data-theme', saved);
+  if (t) t.textContent = saved === 'dark' ? '☀️ 라이트' : '🌙 다크모드';
+  if (t) t.addEventListener('click', () => {
+    const n = r.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    r.setAttribute('data-theme', n); t.textContent = n === 'dark' ? '☀️ 라이트' : '🌙 다크모드';
+    localStorage.setItem('bcmsTheme', n);
+  });
+})();
+
+})();
+</script>
+</body>
+</html>

@@ -44,9 +44,13 @@
     .field label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
     .field select, .field input { min-width: 140px; }
 
-    .entryToggle { margin-top: 20px; display: flex; align-items: center; justify-content: space-between; }
-    .entryToggle h2 { font-size: 13px; font-weight: 600; color: var(--text-2); }
-    .entryPanel { margin-top: 10px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 22px 24px; }
+    /* ── Collapsible card ── */
+    .collapseCard { margin-top: 14px; border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+    .collapseHead { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; cursor: pointer; user-select: none; transition: background .12s; gap: 12px; }
+    .collapseHead:hover { background: var(--surface-hover); }
+    .collapseHead.open { border-bottom: 0.5px solid var(--border); }
+    .collapseTitle { font-size: 13px; font-weight: 600; color: var(--text); }
+    .entryPanel { background: var(--surface); padding: 22px 24px; }
     .entryPanel.hidden { display: none; }
     .entryGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
     .entryGrid .full { grid-column: 1 / -1; }
@@ -251,9 +255,14 @@
     <div class="wrap">
 
       <section class="hero">
-        <h1>훈련·점검 (ISO 22301)</h1>
-        <p>BCP/DRP 훈련 계획 수립, AI 시나리오 생성, 결과 기록, ISO 22301 충족 현황을 통합 관리합니다.<br>
-          연동 데이터: <b>bcmsTrainingData</b> · <b>bcmsScenarioData</b> · <b>bcmsRiskList</b> · <b>bcmsBIAData</b></p>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div>
+            <h1>훈련·점검 (ISO 22301)</h1>
+            <p>BCP/DRP 훈련 계획 수립, AI 시나리오 생성, 결과 기록, ISO 22301 충족 현황을 통합 관리합니다.<br>
+              연동 데이터: <b>bcmsTrainingData</b> · <b>bcmsScenarioData</b> · <b>bcmsRiskList</b> · <b>bcmsBIAData</b></p>
+          </div>
+          <button class="btn primary" id="pageAiBtn" type="button" style="flex-shrink:0;display:flex;align-items:center;gap:5px;margin-top:4px;">🤖 AI 도움받기</button>
+        </div>
       </section>
 
       <div class="metricsStrip">
@@ -319,11 +328,15 @@
           </div>
           <div style="margin-left:auto;display:flex;gap:8px">
             <button class="btn" id="btnCalToggle" type="button">캘린더 보기</button>
-            <button class="btn" id="btnToggleForm" type="button">+ 훈련 등록</button>
           </div>
         </div>
 
-        <div class="entryPanel hidden" id="entryPanel">
+        <div class="collapseCard">
+          <div class="collapseHead" id="trainEntryHeader">
+            <span class="collapseTitle">훈련 등록</span>
+            <button class="btn primary" id="btnToggleForm" type="button">▾ 등록 펼치기</button>
+          </div>
+          <div class="entryPanel hidden" id="entryPanel">
           <div class="entryGrid">
             <div class="formRow">
               <label>훈련 ID <span style="font-weight:400;text-transform:none;letter-spacing:0">(자동 생성)</span></label>
@@ -376,7 +389,8 @@
             <button class="btn" type="button" id="btnCancelForm">취소</button>
             <button class="btn primary" type="button" id="btnSavePlan">훈련 등록</button>
           </div>
-        </div>
+          </div><!-- /entryPanel -->
+        </div><!-- /collapseCard (훈련 등록) -->
 
         <!-- ─── 통계 차트 ─── -->
         <div class="statsSection">
@@ -531,6 +545,7 @@
   <div id="printReport" style="display:none"></div>
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
+  <script src="../assets/ai-helper.js"></script>
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/demo-seed.js"></script>
   <script>
@@ -1532,11 +1547,17 @@
   /* ═══════════════════════════════════════════════
      Plan tab: entry form
   ═══════════════════════════════════════════════ */
+  const syncTrainHeader = () => {
+    const hidden = document.getElementById('entryPanel').classList.contains('hidden');
+    document.getElementById('btnToggleForm').textContent = hidden ? '▾ 등록 펼치기' : '▴ 닫기';
+    document.getElementById('trainEntryHeader').classList.toggle('open', !hidden);
+  };
+
   document.getElementById('btnToggleForm').addEventListener('click', () => {
     const panel = document.getElementById('entryPanel');
     const isHidden = panel.classList.contains('hidden');
     panel.classList.toggle('hidden', !isHidden);
-    if (!isHidden) return;
+    if (!isHidden) { syncTrainHeader(); return; }
     document.getElementById('fName').value = '';
     document.getElementById('fType').value = '';
     document.getElementById('fPlanDate').value = today();
@@ -1547,12 +1568,15 @@
     if (ft) ft.value = '';
     loadScenarioOptions();
     document.getElementById('newTrnId').textContent = genId();
-    document.getElementById('btnToggleForm').textContent = '× 닫기';
+    syncTrainHeader();
+  });
+  document.getElementById('trainEntryHeader').addEventListener('click', e => {
+    if (!e.target.closest('button')) document.getElementById('btnToggleForm').click();
   });
 
   document.getElementById('btnCancelForm').addEventListener('click', () => {
     document.getElementById('entryPanel').classList.add('hidden');
-    document.getElementById('btnToggleForm').textContent = '+ 훈련 등록';
+    syncTrainHeader();
   });
 
   document.getElementById('btnSavePlan').addEventListener('click', () => {
@@ -1576,7 +1600,7 @@
     saveTrainings();
     renderAll();
     document.getElementById('entryPanel').classList.add('hidden');
-    document.getElementById('btnToggleForm').textContent = '+ 훈련 등록';
+    syncTrainHeader();
   });
 
   /* ─── Plan table: status change + delete ─── */
@@ -1755,6 +1779,90 @@
   /* ─── Init ─── */
   loadDeptOptions();
   renderAll();
+
+  /* ─── AI 도우미 ─── */
+  window._bcmsApplyTraining = (text) => {
+    const data  = AIHelper.extractJSON(text);
+    const items = Array.isArray(data?.trainings) ? data.trainings : [];
+    if (!items.length) { alert('AI 응답에서 훈련 시나리오를 찾을 수 없습니다.\n응답을 직접 확인해주세요.'); return; }
+    loadTrainings();
+    let added = 0;
+    items.forEach(item => {
+      const name = String(item.name || item.trainName || '').trim();
+      if (!name) return;
+      trainings.unshift({
+        id: genId(),
+        name,
+        type:        item.type || item.trainType || '탁상훈련',
+        scenario:    item.scenario || '',
+        departments: Array.isArray(item.departments) ? item.departments : [],
+        planDate:    item.planDate || '',
+        objective:   item.objective || '',
+        criteria:    item.criteria || '',
+        status: '예정',
+        actualDate: '', participants: 0,
+        resultSummary: '', achievement: '', issues: '', improvements: '',
+      });
+      added++;
+    });
+    saveTrainings();
+    renderAll();
+    document.getElementById('ai-helper-modal').classList.remove('open');
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#0070f3;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.2);';
+    toast.textContent = `✅ ${added}개 훈련 시나리오가 추가되었습니다.`;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 4000);
+  };
+
+  document.getElementById('pageAiBtn').addEventListener('click', () => {
+    const industry   = localStorage.getItem('bcmsIndustry') || '일반';
+    const biaRows    = AIHelper.loadJSON('bcmsBIAData', []);
+    const riskList   = AIHelper.loadJSON('bcmsRiskList', []);
+    const trainData  = AIHelper.loadJSON('bcmsTrainingData', []);
+    const coreFns    = biaRows.flatMap(r => (r.functions || []).filter(f => f.coreFinal || f.grade === 'core').map(f => f.name));
+    const highRisks  = riskList.filter(r => (r.riskScore || 0) >= 15 || r.grade === 'high').map(r => r.riskName || r.risk || r.name).filter(Boolean);
+    const trainTypes = [...new Set(trainData.map(t => t.type || t.trainingType).filter(Boolean))];
+    const trainDone  = trainData.filter(t => t.status === '완료').length;
+    AIHelper.open({
+      title: '🤖 AI 훈련 시나리오 생성',
+      applyLabel: '✅ 훈련 계획에 추가',
+      buildPrompt: () => `당신은 ISO 22301 기반 BCMS 훈련 전문가입니다.
+아래 조직 정보를 바탕으로 실전적인 훈련 시나리오 5가지를 제안해주세요.
+
+[조직 정보]
+- 업종: ${industry}
+- 핵심업무: ${coreFns.join(', ') || '(미등록)'}
+- 중점관리 리스크: ${highRisks.join(', ') || '(없음)'}
+- 기존 훈련 유형: ${trainTypes.join(', ') || '(없음)'}
+- 완료된 훈련: ${trainDone}건
+
+[요청 사항]
+반드시 아래 JSON 형식으로만 응답해주세요 (다른 설명 없이):
+
+\`\`\`json
+{
+  "trainings": [
+    {
+      "name": "훈련명",
+      "type": "탁상훈련|실제훈련|전산모의|통합훈련",
+      "scenario": "훈련 시나리오 상황 설명",
+      "objective": "훈련 목표",
+      "criteria": "합격 기준",
+      "planDate": "2026-07-01",
+      "departments": ["운영팀", "IT팀"]
+    }
+  ]
+}
+\`\`\`
+
+탁상훈련(TTX)과 실제훈련을 혼합하여 제안해주세요. ISO 22301 8.5 요구사항을 반영해주세요.`,
+      onApply: (text) => {
+        if (typeof window._bcmsApplyTraining === 'function') window._bcmsApplyTraining(text);
+        else alert('적용 함수를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+      }
+    });
+  });
   </script>
 </body>
 </html>

@@ -111,6 +111,7 @@
       <a href="${H("/reports/executive-summary.html")}" class="sidebar-section-title">🗂 8. Reports (경영진/감사 요약)</a>
       <div class="sub-menu">
         <a href="${H("/reports/executive-summary.html")}">Executive Summary</a>
+        <a href="${H("/reports/doc-package.html")}">📦 심사용 문서 패키지</a>
       </div>
     </div>
 

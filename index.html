@@ -98,6 +98,24 @@
     .kpiCard .m { margin-top: 5px; font-size: 11px; color: var(--text-3); }
     .kpiDivider { grid-column: 1/-1; height: 0; border: none; border-top: 0.5px dashed var(--border); margin: 2px 0; }
 
+    /* ── MBCO Panel ── */
+    .mbcoGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    .mbcoCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 16px 18px; text-decoration: none; display: block; transition: background .12s; }
+    .mbcoCard:hover { background: var(--surface-hover); }
+    .mbcoCard.unset { border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.02); }
+    .mbcoCard .mc-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+    .mbcoCard .mc-team { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+    .mbcoCard .mc-val { font-size: 24px; font-weight: 800; font-family: "SF Mono","Consolas",monospace; line-height: 1; }
+    .mbcoCard .mc-bar { height: 4px; background: var(--bg); border-radius: 999px; overflow: hidden; margin-top: 8px; border: 0.5px solid var(--border); }
+    .mbcoCard .mc-fill { height: 100%; border-radius: 999px; transition: width .4s; }
+    .mbcoCard .mc-unset-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(245,158,11,.12); color: #b45309; border: 0.5px solid rgba(245,158,11,.3); }
+    .mbcoCard .mc-reason { font-size: 10px; color: var(--text-3); margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mbcoWarnBar { padding: 8px 14px; margin-bottom: 10px; background: rgba(245,158,11,.06); border: 0.5px solid rgba(245,158,11,.2); border-radius: var(--r); font-size: 12px; color: #b45309; }
+    .mbcoWarnBar a { color: #b45309; font-weight: 700; }
+
+    @media (max-width:1100px) { .mbcoGrid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width:700px)  { .mbcoGrid { grid-template-columns: 1fr 1fr; } }
+
     /* ── Bottom 2-col ── */
     .bottomGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .panelCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
@@ -173,6 +191,10 @@
       <div class="kpiGrid" id="kpiGrid">
         <!-- JS-generated -->
       </div>
+
+      <!-- ── MBCO 현황 ── -->
+      <div class="sectionTitle">🎯 MBCO (최소운영수준) 현황</div>
+      <div id="mbcoSection"><!-- JS-generated --></div>
 
       <!-- ── Bottom 2-col ── -->
       <div class="bottomGrid">
@@ -587,6 +609,65 @@
       </div>`).join('');
   };
 
+  /* ── MBCO Dashboard ── */
+  const getMBCOStore = () => loadJ('bcmsMBCOData', {});
+
+  const renderMbcoDashboard = () => {
+    const section = document.getElementById('mbcoSection');
+    const biaData = getBIA();
+    const mbcoStore = getMBCOStore();
+
+    const allFns = biaData.flatMap(row =>
+      (row.functions || []).map(fn => ({ ...fn, _team: row.team || row.teamName || '' }))
+    ).filter(fn => fn.name);
+
+    if (!allFns.length) {
+      section.innerHTML = `<div class="panelCard" style="margin-bottom:20px"><div class="empty">BIA 데이터가 없습니다. <a href="risk-bia/bia.html" style="color:var(--accent)">BIA 등록 →</a></div></div>`;
+      return;
+    }
+
+    const orderMap = { '핵심': 0, '중요': 1, '일반': 2 };
+    const sorted = [...allFns].sort((a, b) =>
+      (orderMap[a.importance] ?? 2) - (orderMap[b.importance] ?? 2)
+    );
+    const top = sorted.slice(0, 8);
+    const unsetCount = allFns.filter(fn => fn.mbco == null).length;
+
+    const mbcoColor = v => v >= 70 ? '#0070f3' : v >= 40 ? '#f59e0b' : '#dc2626';
+
+    let cardsHtml = top.map(fn => {
+      const rec   = mbcoStore[fn.biaId || fn.id] || {};
+      const mbco  = fn.mbco != null ? Number(fn.mbco) : (rec.mbco != null ? Number(rec.mbco) : null);
+      const reason = rec.mbcoReason || '';
+      if (mbco === null) {
+        return `<a class="mbcoCard unset" href="risk-bia/bia.html">
+          <div class="mc-name" title="${esc(fn.name)}">${esc(fn.name)}</div>
+          <div class="mc-team">${esc(fn._team)}</div>
+          <span class="mc-unset-badge">미설정</span>
+          <div class="mc-bar"><div class="mc-fill" style="width:0%;background:#d1d5db"></div></div>
+        </a>`;
+      }
+      const col = mbcoColor(mbco);
+      return `<a class="mbcoCard" href="risk-bia/bia.html">
+        <div class="mc-name" title="${esc(fn.name)}">${esc(fn.name)}</div>
+        <div class="mc-team">${esc(fn._team)}</div>
+        <div class="mc-val" style="color:${col}">${mbco}%</div>
+        <div class="mc-bar"><div class="mc-fill" style="width:${mbco}%;background:${col}"></div></div>
+        ${reason ? `<div class="mc-reason" title="${esc(reason)}">${esc(reason)}</div>` : ''}
+      </a>`;
+    }).join('');
+
+    if (allFns.length > 8) {
+      cardsHtml += `<a class="mbcoCard" href="risk-bia/bia.html" style="display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent)">+${allFns.length - 8}개 더보기 →</a>`;
+    }
+
+    const warnBar = unsetCount > 0
+      ? `<div class="mbcoWarnBar">⚠ ${unsetCount}개 업무의 MBCO가 미설정입니다. <a href="risk-bia/bia.html">BIA 페이지에서 설정 →</a></div>`
+      : '';
+
+    section.innerHTML = warnBar + `<div class="mbcoGrid">${cardsHtml}</div>`;
+  };
+
   /* ── Demo seed ── */
   const initDemoBanner = () => {
     if (!window.BCMSDemoSeed) return;
@@ -607,6 +688,7 @@
     renderActions();
     renderFlow();
     renderKPI();
+    renderMbcoDashboard();
     renderRiskTop5();
     renderActivity();
   };
