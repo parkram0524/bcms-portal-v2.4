@@ -5,7 +5,7 @@
   // - GitHub Pages repo: /BCMS-PORTAL-V2/governance/index.html
   // =========================================================
   const path = window.location.pathname || "/";
-  const m = path.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports)\/)/);
+  const m = path.match(/^(\/[^\/]+)(?=\/(governance|risk-bia|strategy-plans|op-center|library|training|audit|admin|reports|education)\/)/);
   const BASE = m ? m[1] : ""; // e.g. "/BCMS-PORTAL-V2" or ""
   const H = (p) => `${BASE}${p}`;
 
@@ -36,6 +36,15 @@
 
     <div class="sidebar-section" data-section="home">
       <a href="${H("/index.html")}" class="sidebar-section-title">🏠 BCMS Home</a>
+    </div>
+
+    <div class="sidebar-section" data-section="education">
+      <a href="${H("/education/index.html")}" class="sidebar-section-title">📚 0. Education Center (교육센터)</a>
+      <div class="sub-menu">
+        <a href="${H("/education/index.html")}">BCM 기초 · ISO 22301 해설</a>
+        <a href="${H("/education/index.html")}">실습 가이드 · 업종별 사례</a>
+        <a href="${H("/education/index.html")}">인증 준비 체크리스트</a>
+      </div>
     </div>
 
     <div class="sidebar-section" data-section="governance">
@@ -229,6 +238,7 @@
   // ✅ Active section detection (folder-based)
   // =========================================================
   const sections = [
+    { key: "education",       match: "/education/" },
     { key: "governance", match: "/governance/" },
     { key: "risk-bia", match: "/risk-bia/" },
     { key: "strategy-plans", match: "/strategy-plans/" },

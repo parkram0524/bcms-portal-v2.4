@@ -234,6 +234,7 @@
   const getPriorityConfirmed = () => loadJ('bcmsPriorityConfirmed', {});
   const bcpAllStrategies = () => getBCP().flatMap(t => Array.isArray(t.strategies) ? t.strategies : []);
   const getCapas     = () => loadJ('bcmsCapaItems', []);
+  const getEduProg   = () => loadJ('bcmsEducationProgress', { stagesPassed: [false,false,false,false,false], quizScores: [null,null,null,null,null] });
   const getGap       = () => loadJ('bcmsGapAnalysis', {});
   const getDR        = () => loadJ('bcmsDisasterReduction', {});
   const getAudits    = () => loadJ('bcmsAuditData', []);
@@ -487,12 +488,17 @@
       { k: '미완료 CAPA',     v: open,           cls: open ? 'warn' : 'ok', m: 'bcmsCapaItems 기준', href: 'audit/index.html' },
       { k: '재해경감 자가평가', v: `${dr}점`,      cls: dr >= 80 ? 'ok' : dr >= 60 ? 'accent' : 'warn', m: '/ 100점', word: true, href: 'audit/index.html' },
       { k: '다음 심사 D-day', v: nd ? `D-${nd.diff}` : '미정', cls: nd && nd.diff <= 30 ? 'warn' : 'accent', m: nd ? nd.date : '심사 예정 없음', word: !nd || nd.diff > 999, href: 'audit/index.html' },
+      /* divider2 */
+      /* Row 3 */
+      { k: '교육 완료율',   v: (() => { const ep = getEduProg(); const n = ep.stagesPassed.filter(Boolean).length; return `${Math.round(n/5*100)}%`; })(), cls: (() => { const ep = getEduProg(); const n = ep.stagesPassed.filter(Boolean).length; return n === 5 ? 'ok' : n > 0 ? 'accent' : 'warn'; })(), m: (() => { const ep = getEduProg(); const n = ep.stagesPassed.filter(Boolean).length; return `${n}/5단계 완료`; })(), word: true, href: 'education/index.html' },
+      { k: '현재 교육 단계', v: (() => { const ep = getEduProg(); const names = ['BCM 기초','ISO 22301','실습 가이드','업종별 사례','인증 준비']; const n = ep.stagesPassed.filter(Boolean).length; return n >= 5 ? '전 과정 완료' : names[n]; })(), cls: 'accent', m: (() => { const ep = getEduProg(); const n = ep.stagesPassed.filter(Boolean).length; return n >= 5 ? '🎉 수료' : `${n+1}단계 진행 중`; })(), word: true, href: 'education/index.html' },
     ];
 
     const grid = document.getElementById('kpiGrid');
     let html = '';
     cards.forEach((c, i) => {
       if (i === 4) html += `<div class="kpiDivider"></div>`;
+      if (i === 8) html += `<div class="kpiDivider"></div>`;
       const valCls = c.word ? `v word ${c.cls}` : `v ${c.cls}`;
       const isNum = !c.word && typeof c.v === 'number';
       html += `<a class="kpiCard" href="${esc(c.href)}" style="text-decoration:none">

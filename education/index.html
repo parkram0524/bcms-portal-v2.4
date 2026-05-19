@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BCMS Portal - 교육센터</title>
+  <link rel="stylesheet" href="../assets/style.css"/>
+  <style>
+    .wrap { max-width: 1280px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .eduHeader {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--r); padding: 20px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .eduTitle {
+      font-size: 26px; font-weight: 800; letter-spacing: -.03em;
+      background: linear-gradient(135deg, #0070f3 0%, #00bcd4 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .eduSubtitle { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+
+    .overallProg { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .overallProgInfo { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+    .overallProgBar { width: 160px; height: 8px; background: var(--bg); border-radius: 999px; border: 0.5px solid var(--border); overflow: hidden; }
+    .overallProgFill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .5s ease; }
+    .overallProgLabel { font-size: 22px; font-weight: 800; color: var(--accent); font-family: "SF Mono","Consolas",monospace; }
+
+    /* ── Stage Navigation ── */
+    .sectionTitle { font-size: 12px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .stageNav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stageNavItem {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--r); padding: 16px 12px; cursor: pointer;
+      transition: all .15s; position: relative;
+      display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center;
+    }
+    .stageNavItem.active { border-color: var(--accent); background: var(--accent-subtle); }
+    .stageNavItem.done { border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.04); }
+    .stageNavItem.locked { opacity: .52; cursor: not-allowed; }
+    .stageNavItem:not(.locked):hover { background: var(--surface-hover); box-shadow: var(--shadow-sm); }
+    .stageNavItem.active:hover { background: var(--accent-subtle); }
+    .stageIcon { font-size: 26px; line-height: 1; }
+    .stageNum { font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; }
+    .stageTitle { font-size: 13px; font-weight: 700; color: var(--text); word-break: keep-all; }
+    .stageSub { font-size: 11px; color: var(--text-2); word-break: keep-all; line-height: 1.4; }
+    .stageLockBadge { position: absolute; top: 8px; right: 8px; font-size: 13px; }
+    .stageDoneBadge {
+      position: absolute; top: 7px; right: 7px;
+      background: rgba(34,197,94,.1); color: #16a34a;
+      border: 0.5px solid rgba(34,197,94,.3);
+      border-radius: 999px; font-size: 10px; font-weight: 700; padding: 1px 6px;
+    }
+
+    /* ── Content Panel ── */
+    .contentPanel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
+    .contentHead {
+      display: flex; align-items: flex-start; gap: 14px; padding: 18px 24px;
+      border-bottom: 0.5px solid var(--border); background: var(--surface-hover);
+    }
+    .contentHeadIcon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+    .contentHeadText h2 { font-size: 16px; font-weight: 700; color: var(--text); }
+    .contentHeadText p { font-size: 13px; color: var(--text-2); margin-top: 3px; }
+    .contentBody { padding: 24px; }
+
+    /* ── Glossary ── */
+    .glossaryGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+    .termCard {
+      background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm);
+      padding: 16px; cursor: pointer; transition: all .15s; text-decoration: none; display: block;
+    }
+    .termCard:hover { border-color: var(--accent); background: var(--accent-subtle); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .termAbr { font-size: 19px; font-weight: 800; color: var(--accent); font-family: "SF Mono","Consolas",monospace; }
+    .termKr { font-size: 11.5px; color: var(--text-2); margin: 3px 0 8px; line-height: 1.4; }
+    .termDef { font-size: 12.5px; color: var(--text); line-height: 1.65; word-break: keep-all; }
+    .termLink { font-size: 11px; color: var(--accent); margin-top: 10px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+    /* ── ISO Clauses ── */
+    .clauseList { display: flex; flex-direction: column; gap: 8px; }
+    .clauseItem { border: 0.5px solid var(--border); border-radius: var(--r-sm); overflow: hidden; background: var(--bg); }
+    .clauseHead { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; user-select: none; transition: background .12s; }
+    .clauseHead:hover { background: var(--surface-hover); }
+    .clauseNum { font-size: 13px; font-weight: 800; color: var(--accent); font-family: "SF Mono","Consolas",monospace; min-width: 32px; flex-shrink: 0; }
+    .clauseTitleText { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+    .clauseArrow { font-size: 11px; color: var(--text-3); transition: transform .2s; flex-shrink: 0; }
+    .clauseItem.open .clauseArrow { transform: rotate(90deg); }
+    .clauseBody { display: none; padding: 0 16px 16px 60px; }
+    .clauseItem.open .clauseBody { display: block; }
+    .clauseDesc { font-size: 13px; color: var(--text-2); line-height: 1.75; word-break: keep-all; }
+    .clauseKey { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .clauseKeyItem { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--accent-subtle); color: var(--accent); border: 0.5px solid var(--accent-border); font-weight: 600; }
+    .clausePortalLink { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--accent); text-decoration: none; padding: 5px 12px; border: 0.5px solid var(--accent-border); border-radius: 6px; background: var(--accent-subtle); transition: background .12s; }
+    .clausePortalLink:hover { background: rgba(0,112,243,.14); }
+
+    /* ── Practice Guide ── */
+    .practiceSteps { display: flex; flex-direction: column; gap: 16px; }
+    .practiceStep { display: flex; gap: 18px; align-items: flex-start; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 18px; }
+    .practiceStepNum { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; flex-shrink: 0; font-family: "SF Mono","Consolas",monospace; }
+    .practiceStepContent { flex: 1; }
+    .practiceStepTitle { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .practiceStepDesc { font-size: 13px; color: var(--text-2); line-height: 1.7; word-break: keep-all; }
+    .practiceStepTips { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+    .practiceStepTip { font-size: 12px; color: var(--text-2); padding-left: 14px; position: relative; line-height: 1.6; }
+    .practiceStepTip::before { content: '•'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+    .practiceStepLink { display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; font-size: 12px; font-weight: 700; color: var(--accent); text-decoration: none; padding: 6px 14px; border: 0.5px solid var(--accent-border); border-radius: 6px; background: var(--accent-subtle); transition: background .12s; }
+    .practiceStepLink:hover { background: rgba(0,112,243,.14); }
+
+    /* ── Case Studies ── */
+    .caseGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+    .caseCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 20px; }
+    .caseIndustry { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+    .caseTitle { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+    .caseSituation { font-size: 13px; color: var(--text-2); line-height: 1.65; margin-bottom: 12px; word-break: keep-all; }
+    .caseLessons { display: flex; flex-direction: column; gap: 5px; }
+    .caseLesson { font-size: 12px; color: var(--text); padding: 6px 10px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 5px; line-height: 1.5; word-break: keep-all; }
+
+    /* ── Certification ── */
+    .certSection { margin-bottom: 28px; }
+    .certSectionTitle { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 0.5px solid var(--border); }
+    .processFlow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-bottom: 8px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); overflow: hidden; }
+    .processStep { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 18px 12px; position: relative; }
+    .processStep:not(:last-child)::after { content: '→'; position: absolute; right: -8px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text-3); pointer-events: none; }
+    .processStepNum { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; margin-bottom: 8px; }
+    .processStepTitle { font-size: 13px; font-weight: 700; color: var(--text); word-break: keep-all; }
+    .processStepDesc { font-size: 11px; color: var(--text-2); margin-top: 4px; word-break: keep-all; line-height: 1.5; }
+    .certChecklist { display: flex; flex-direction: column; gap: 7px; }
+    .certCheckItem { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); }
+    .certCheckIcon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .certCheckText { flex: 1; }
+    .certCheckTitle { font-size: 13px; font-weight: 600; color: var(--text); }
+    .certCheckDesc { font-size: 12px; color: var(--text-2); margin-top: 2px; line-height: 1.5; word-break: keep-all; }
+    .certCheckLink { font-size: 11px; color: var(--accent); font-weight: 700; white-space: nowrap; text-decoration: none; flex-shrink: 0; padding: 4px 10px; border: 0.5px solid var(--accent-border); border-radius: 5px; background: var(--accent-subtle); }
+    .certCheckLink:hover { background: rgba(0,112,243,.14); }
+
+    /* ── Lock Overlay ── */
+    .lockOverlay { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 24px; gap: 12px; }
+    .lockIcon { font-size: 52px; }
+    .lockTitle { font-size: 17px; font-weight: 700; color: var(--text); }
+    .lockDesc { font-size: 13px; color: var(--text-2); text-align: center; line-height: 1.6; }
+
+    /* ── Quiz ── */
+    .quizPanel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .quizHead { padding: 16px 24px; border-bottom: 0.5px solid var(--border); background: var(--surface-hover); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .quizHead h3 { font-size: 15px; font-weight: 700; color: var(--text); }
+    .quizPassBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .quizPassBadge.pass    { background: rgba(34,197,94,.1);  color: #16a34a; border: 0.5px solid rgba(34,197,94,.3); }
+    .quizPassBadge.fail    { background: rgba(239,68,68,.1);  color: #dc2626; border: 0.5px solid rgba(239,68,68,.3); }
+    .quizPassBadge.pending { background: rgba(99,102,241,.1); color: #4338ca; border: 0.5px solid rgba(99,102,241,.3); }
+    .quizBody { padding: 24px; }
+    .quizQ { margin-bottom: 22px; }
+    .quizQNum { font-size: 11px; font-weight: 700; color: var(--text-3); margin-bottom: 5px; }
+    .quizQText { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 10px; line-height: 1.55; word-break: keep-all; }
+    .quizOptions { display: flex; flex-direction: column; gap: 6px; }
+    .quizOption { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 0.5px solid var(--border); border-radius: var(--r-sm); cursor: pointer; transition: all .12s; background: var(--bg); }
+    .quizOption:hover:not(.no-hover) { border-color: var(--accent); background: var(--accent-subtle); }
+    .quizOption.selected { border-color: var(--accent); background: var(--accent-subtle); }
+    .quizOption.correct  { border-color: rgba(34,197,94,.5);  background: rgba(34,197,94,.08); cursor: default; }
+    .quizOption.wrong    { border-color: rgba(239,68,68,.5);   background: rgba(239,68,68,.08);  cursor: default; }
+    .quizOptLetter {
+      width: 24px; height: 24px; border-radius: 50%; border: 0.5px solid var(--border-strong);
+      background: var(--surface); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--text-2); flex-shrink: 0;
+      transition: all .12s; font-family: "SF Mono","Consolas",monospace;
+    }
+    .quizOption.selected .quizOptLetter { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .quizOption.correct  .quizOptLetter { background: #16a34a; color: #fff; border-color: #16a34a; }
+    .quizOption.wrong    .quizOptLetter { background: #dc2626; color: #fff; border-color: #dc2626; }
+    .quizOptText { font-size: 13px; color: var(--text); line-height: 1.45; word-break: keep-all; flex: 1; }
+    .quizFooter { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 0.5px solid var(--border); flex-wrap: wrap; gap: 10px; }
+    .quizResult { font-size: 14px; font-weight: 700; }
+    .quizResult.pass { color: #16a34a; }
+    .quizResult.fail { color: #dc2626; }
+    .quizLockedMsg { padding: 20px 24px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+    /* ── Buttons ── */
+    .btn { font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 8px; border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text); cursor: pointer; transition: all .12s; font-family: inherit; }
+    .btn:hover { background: var(--surface-hover); }
+    .btn-primary { background: var(--accent); color: #fff !important; border-color: transparent; }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    @media (max-width: 1000px) {
+      .stageNav { grid-template-columns: repeat(3, 1fr); }
+      .processFlow { grid-template-columns: repeat(2, 1fr); }
+      .processStep:nth-child(2n)::after { display: none; }
+    }
+    @media (max-width: 640px) {
+      .stageNav { grid-template-columns: repeat(2, 1fr); }
+      .glossaryGrid { grid-template-columns: 1fr; }
+      .caseGrid { grid-template-columns: 1fr; }
+      .processFlow { grid-template-columns: 1fr; }
+      .processStep::after { display: none !important; }
+      .practiceStep { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+  <main class="main">
+    <div class="wrap">
+
+      <!-- ── Header ── -->
+      <div class="eduHeader">
+        <div>
+          <div class="eduTitle">📚 교육센터</div>
+          <div class="eduSubtitle">BCM 기초부터 ISO 22301 인증 준비까지 — 5단계 학습 프로그램</div>
+        </div>
+        <div class="overallProg">
+          <div>
+            <div class="overallProgInfo">전체 완료율</div>
+            <div class="overallProgBar">
+              <div class="overallProgFill" id="overallFill" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="overallProgLabel" id="overallLabel">0%</div>
+        </div>
+      </div>
+
+      <!-- ── Stage Nav ── -->
+      <div class="sectionTitle">📍 학습 단계 선택</div>
+      <div class="stageNav" id="stageNav"></div>
+
+      <!-- ── Content ── -->
+      <div class="contentPanel" id="contentPanel"></div>
+
+      <!-- ── Quiz ── -->
+      <div class="sectionTitle" style="margin-top:4px;">📝 단계 퀴즈</div>
+      <div class="quizPanel" id="quizPanel"></div>
+
+    </div>
+  </main>
+
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+
+  <script src="../assets/sidebar.js"></script>
+  <script>
+  'use strict';
+
+  /* ── Theme ── */
+  {
+    const root = document.documentElement;
+    const tog  = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('bcmsTheme') || 'light';
+    root.setAttribute('data-theme', saved);
+    if (tog) tog.textContent = saved === 'dark' ? '☀️' : '🌙';
+    if (tog) tog.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      tog.textContent = next === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('bcmsTheme', next);
+    });
+  }
+
+  /* ── BASE prefix ── */
+  const _p = window.location.pathname || '/';
+  const _bm = _p.match(/^(\/[^\/]+)(?=\/education\/)/);
+  const BASE = _bm ? _bm[1] : '';
+  const H = p => `${BASE}${p}`;
+
+  /* ── Progress ── */
+  const STORAGE_KEY = 'bcmsEducationProgress';
+
+  function loadProg() {
+    try {
+      const d = localStorage.getItem(STORAGE_KEY);
+      if (d) {
+        const p = JSON.parse(d);
+        if (Array.isArray(p.stagesPassed) && p.stagesPassed.length === 5) return p;
+      }
+    } catch (e) {}
+    return { stagesPassed: [false, false, false, false, false], quizScores: [null, null, null, null, null] };
+  }
+
+  function saveProg(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+
+  /* ── Data ── */
+  const STAGES = [
+    { id: 0, icon: '📖', title: 'BCM 기초',      sub: '용어사전 & 핵심 개념' },
+    { id: 1, icon: '📋', title: 'ISO 22301',      sub: '조항별 쉬운 해설' },
+    { id: 2, icon: '✏️', title: '실습 가이드',    sub: 'BIA → RTO/RPO 작성법' },
+    { id: 3, icon: '🏢', title: '업종별 사례',    sub: '5개 업종 BCM 케이스' },
+    { id: 4, icon: '🏆', title: '인증 준비',      sub: '심사 프로세스 & 체크리스트' },
+  ];
+
+  const GLOSSARY = [
+    { abr:'BCMS', kr:'업무연속성 관리 시스템 (Business Continuity Management System)', def:'조직이 업무 중단에 대비해 연속성을 유지·관리하기 위한 전체 관리 체계. ISO 22301이 국제 표준입니다.', href:H('/index.html') },
+    { abr:'BIA',  kr:'업무영향분석 (Business Impact Analysis)', def:'업무 중단 시 조직에 미치는 영향을 분석하여 핵심업무를 식별하고 복구 우선순위를 결정하는 분석 활동. BCMS의 출발점입니다.', href:H('/risk-bia/bia.html') },
+    { abr:'MBCO', kr:'최소 업무연속성 목표 (Minimum Business Continuity Objective)', def:'위기 상황에서 조직이 수용 가능한 최소한의 업무 서비스 수준. 예: "콜센터 처리량의 30% 이상 유지". BIA에서 팀별로 정의합니다.', href:H('/risk-bia/bia.html') },
+    { abr:'RTO',  kr:'복구 목표 시간 (Recovery Time Objective)', def:'업무 중단 후 정상 운영으로 복구되어야 하는 최대 허용 시간. 반드시 MTPD보다 짧게 설정해야 하며, BCP의 핵심 목표값입니다.', href:H('/risk-bia/bia.html') },
+    { abr:'RPO',  kr:'복구 목표 시점 (Recovery Point Objective)', def:'데이터 복구 시 허용 가능한 데이터 손실의 최대 시점(기준 시간). 주로 IT·데이터 복구에 사용되며, DRP에서 달성 방안을 정의합니다.', href:H('/risk-bia/bia.html') },
+    { abr:'MTPD', kr:'최대 허용 중단 기간 (Maximum Tolerable Period of Disruption)', def:'업무 중단 시 조직이 버틸 수 있는 절대 최대 시간. RTO의 상한선이 됩니다. 반드시 MTPD > RTO 조건을 만족해야 합니다.', href:H('/risk-bia/bia.html') },
+    { abr:'BCP',  kr:'업무연속성 계획 (Business Continuity Plan)', def:'업무 중단 시 신속하게 핵심업무를 복구·유지하기 위한 사전 계획서. BIA 결과 기반으로 수립하며 발동 조건과 대체 절차를 포함합니다.', href:H('/strategy-plans/bcp.html') },
+    { abr:'EOP',  kr:'비상대응절차 (Emergency Operating Procedure)', def:'재난·비상상황 발생 직후 초동 대응을 위한 단계별 행동 지침서. BCP보다 먼저 실행되는 즉각 대응 절차입니다.', href:H('/library/eop.html') },
+    { abr:'DRP',  kr:'재해복구 계획 (Disaster Recovery Plan)', def:'IT 시스템·데이터 중단 시 복구 절차를 담은 계획서. RPO/RTO 목표를 달성하기 위한 기술적 복구 방안과 절차를 정의합니다.', href:H('/library/drp.html') },
+    { abr:'SOP',  kr:'표준운영절차 (Standard Operating Procedure)', def:'평상시 반복 업무를 일관되게 수행하기 위한 단계별 표준 절차서. BCMS 운영 기반이 되며 교육·훈련 자료로도 활용됩니다.', href:H('/library/sop.html') },
+    { abr:'CAPA', kr:'시정 및 예방조치 (Corrective and Preventive Action)', def:'발견된 부적합 사항과 잠재 위험에 대해 근본 원인을 제거하는 개선 활동. 내부심사 후 반드시 등록·처리해야 합니다.', href:H('/audit/capa.html') },
+    { abr:'RA',   kr:'리스크 평가 (Risk Assessment)', def:'업무 중단을 유발할 수 있는 위협을 식별하고 발생가능성 × 영향도로 위험도를 산출하는 프로세스. BIA 이후 수행합니다.', href:H('/risk-bia/risk.html') },
+  ];
+
+  const ISO_CLAUSES = [
+    { num:'4', title:'조직 상황 이해', desc:'BCMS를 도입하기 전, 조직의 내·외부 상황과 이해관계자 요구사항, 그리고 BCMS 적용 범위를 먼저 파악해야 합니다. "우리 조직이 왜 BCM이 필요한가?"를 정의하는 단계입니다.', key:['내·외부 이슈', '이해관계자', 'BCMS 적용 범위'], portal:H('/governance/policy.html'), portalLabel:'정책·범위 관리' },
+    { num:'5', title:'리더십', desc:'최고경영자가 BCMS에 직접 참여하고 지원해야 합니다. BCMS 정책을 수립하고, 역할과 책임을 명확히 배분해야 하며, 경영진의 실질적 의지가 없으면 BCMS는 형식적 문서에 그칩니다.', key:['경영진 의지', 'BCMS 정책 수립', '역할과 책임'], portal:H('/governance/org.html'), portalLabel:'조직 관리' },
+    { num:'6', title:'기획', desc:'리스크와 기회를 파악하고, 업무연속성 목표를 수립하며, 목표 달성을 위한 실행 계획을 만드는 단계입니다. ISO 22301에서 요구하는 BIA와 리스크 평가의 기반이 됩니다.', key:['리스크·기회 파악', 'BC 목표', '실행 계획'], portal:H('/risk-bia/bia.html'), portalLabel:'BIA & 리스크 평가' },
+    { num:'7', title:'지원', desc:'사람·자원·역량·인식·의사소통·문서화된 정보(문서) 등 BCMS 운영에 필요한 지원 체계를 갖춰야 합니다. 훈련 기록, 의사소통 계획, 문서 목록이 여기에 해당합니다.', key:['자원·역량', '인식·의사소통', '문서화된 정보'], portal:H('/governance/docs.html'), portalLabel:'문서 관리' },
+    { num:'8', title:'운용 (핵심 조항)', desc:'실제 BCMS를 구축하고 운영하는 핵심 단계입니다. BIA(8.2), 업무연속성 전략(8.3), 업무연속성 계획(8.4), 훈련·테스팅(8.5)이 포함됩니다. ISO 심사 집중도의 60% 이상이 여기에 집중됩니다.', key:['BIA 8.2', 'BC 전략 8.3', 'BC 계획 8.4', '훈련·테스팅 8.5'], portal:H('/risk-bia/bia.html'), portalLabel:'BIA 시작하기' },
+    { num:'9', title:'성과 평가', desc:'모니터링, 측정, 분석, 내부심사, 경영검토를 통해 BCMS가 효과적으로 운영되는지 지속적으로 점검하는 단계입니다. 연 1회 이상 수행이 요구됩니다.', key:['모니터링·측정', '내부심사', '경영검토'], portal:H('/audit/index.html'), portalLabel:'갭분석 & 심사' },
+    { num:'10', title:'개선', desc:'부적합 사항을 시정하고, 잠재적 리스크에 대한 예방조치를 취하며, BCMS를 지속적으로 개선하는 단계입니다. CAPA 등록과 후속 조치가 핵심입니다.', key:['부적합 조치', 'CAPA 등록', '지속적 개선'], portal:H('/audit/capa.html'), portalLabel:'CAPA 관리' },
+  ];
+
+  const PRACTICE_STEPS = [
+    { num:1, title:'핵심업무 식별', desc:'조직의 핵심업무를 팀(부서)별로 목록화합니다. "이 업무가 중단되면 조직에 얼마나 큰 타격인가?"를 기준으로 선별합니다.', tips:['팀별 인터뷰 또는 워크숍 방식 활용','고객에게 직접 영향을 주는 업무를 우선 포함','법적 의무가 있는 업무(규제 보고 등)는 반드시 포함'], href:H('/risk-bia/bia.html'), hrefLabel:'→ BIA 작성하기' },
+    { num:2, title:'업무 영향도 평가 (BIA)', desc:'중단 시간대별(1시간/4시간/1일/1주)로 재무적·운영적·법적·평판 영향을 1~5점으로 평가합니다. 영향도가 높을수록 복구 우선순위 업무입니다.', tips:['재무 영향: 매출 손실, 위약금, 지연 비용','운영 영향: 대체 수단 없을 시 마비 여부','평판 영향: 고객 이탈, 언론 노출 가능성'], href:H('/risk-bia/bia.html'), hrefLabel:'→ 영향도 입력하기' },
+    { num:3, title:'MTPD 설정', desc:'각 핵심업무에 대해 "조직이 버틸 수 있는 최대 중단 시간"인 MTPD를 설정합니다. 영향도 평가 결과와 현실적인 복구 역량을 함께 고려합니다.', tips:['재무 영향이 임계치를 넘는 시점이 MTPD 기준','법적 의무 업무는 규제 요건이 MTPD 기준','팀장 및 경영진 합의로 최종 확정'], href:H('/risk-bia/bia.html'), hrefLabel:'→ MTPD 설정하기' },
+    { num:4, title:'MBCO 정의', desc:'"업무가 중단된 상황에서 최소한 이 정도는 유지해야 한다"는 수준을 설정합니다. 예: "콜센터 업무 MBCO = 정상 처리량의 30%"', tips:['MBCO는 숫자(%) 또는 절대값으로 표현','핵심 고객 및 핵심 기능에 집중해서 설정','현실적으로 달성 가능한 수준으로 보수적 설정'], href:H('/risk-bia/bia.html'), hrefLabel:'→ MBCO 설정하기' },
+    { num:5, title:'RTO / RPO 결정', desc:'MTPD를 기준으로 RTO(복구 목표 시간)와 RPO(데이터 복구 목표 시점)를 결정합니다. RTO는 반드시 MTPD보다 짧아야 합니다.', tips:['필수 조건: RTO < MTPD','RPO는 IT팀과 협의해 기술적으로 달성 가능한 수준으로','RTO 달성 불가 시 DR 인프라 투자 검토 필요'], href:H('/risk-bia/bia.html'), hrefLabel:'→ RTO/RPO 확인하기' },
+    { num:6, title:'BCP 전략 수립', desc:'RTO/MTPD 목표를 달성하기 위한 연속성 전략을 선택합니다: 이중화, 대체 사무소, 수작업 전환, 외부 위탁, 공급망 대체, 협력사 협약 등 6가지 유형.', tips:['비용·효과 균형 고려 — 모든 업무를 이중화할 필요 없음','한 업무에 여러 전략 조합 가능','핵심업무일수록 더 강한 전략 채택'], href:H('/strategy-plans/bcp.html'), hrefLabel:'→ BCP 전략 수립하기' },
+  ];
+
+  const CASE_STUDIES = [
+    { industry:'금융', title:'인터넷뱅킹 서비스 중단 대응', situation:'국내 A은행은 핵심 서버 장애로 인터넷뱅킹 3시간 중단을 경험했습니다. BCP에 따라 DR센터로 20분 내 전환, 고객 공지 및 콜센터 증원을 즉각 실행하여 피해를 최소화했습니다.', lessons:['이중화 DR센터 사전 구축이 핵심','RTO 20분 달성을 위한 정기 DR훈련 필수','규제기관 보고 프로세스를 BCP에 사전 포함','고객 커뮤니케이션 메시지 사전 템플릿 준비'] },
+    { industry:'IT / 데이터센터', title:'데이터센터 화재 대응 사례', situation:'B 클라우드 업체는 전력실 화재 직후 BCP를 발동, 4시간 내 90%의 서비스를 백업 센터에서 복구했습니다. EOP 기반 초동 대응으로 인명 피해 없이 상황을 통제했습니다.', lessons:['EOP 구체성이 초동 대응의 질을 결정','오프사이트 백업으로 RPO 4시간 이내 유지','단일 장애점 제거를 위한 서버 부하 분산','협력사(ISP, 장비업체) 비상 연락망 필수'] },
+    { industry:'제조', title:'부품 공급망 중단 위기 극복', situation:'C 자동차 부품업체는 주요 공급사 공장 화재로 핵심 소재 공급이 2주간 중단됐습니다. 사전 수립한 대체 공급사 목록과 안전 재고 전략으로 생산 중단을 최소화했습니다.', lessons:['공급망 리스크는 BIA 필수 항목','핵심 소재 안전 재고 최소 2주치 확보','대체 공급사 사전 승인 및 계약 유지','공급망 중단 조기 경보 시스템 구축'] },
+    { industry:'의료', title:'병원 랜섬웨어 대응 성공 사례', situation:'D 병원은 랜섬웨어 공격으로 전 전산 시스템이 암호화됐습니다. EOP에 따라 수기 처방 전환, 핵심 환자 데이터 복구를 즉각 실행하여 72시간 내 EMR 시스템을 재가동했습니다.', lessons:['수기 대체 절차 사전 교육·훈련 필수','오프라인 환자 데이터 백업 별도 유지','IT 보안과 BCM의 통합 접근 필요','규제기관·환자 공지 계획 BCP에 포함'] },
+    { industry:'공공 / 정부', title:'태풍 청사 침수 기능 이전', situation:'E 지방자치단체는 태풍으로 청사가 침수되어 행정 기능이 마비됐습니다. BCP에 따라 48시간 내 인근 대체 청사로 이전, 복지·민원 등 핵심 서비스를 우선 복구했습니다.', lessons:['대체 업무 공간 사전 MOU 체결','원격 근무 및 클라우드 기반 행정 시스템 도입','주민 공지 채널(SNS, 방송) 사전 운영 계획','위기 단계별 의사결정 권한 위임 체계'] },
+  ];
+
+  const CERT_DATA = {
+    processSteps: [
+      { num:1, title:'인증기관 선택', desc:'KSSN, KFQ, BSI 등 인정된 인증기관 선정' },
+      { num:2, title:'Stage 1 심사', desc:'문서 검토 및 현장 준비도 확인 (2~4시간)' },
+      { num:3, title:'Stage 2 심사', desc:'현장 운영 검증 및 인터뷰 (1~2일)' },
+      { num:4, title:'인증서 발급', desc:'유효기간 3년, 연 1회 사후심사' },
+    ],
+    requiredDocs: [
+      { icon:'📄', title:'BCMS 정책서',        desc:'최고경영자 서명 필수. 범위·목표·원칙 포함',           portal:H('/governance/policy.html') },
+      { icon:'📊', title:'BIA 보고서',          desc:'핵심업무 목록, MTPD/RTO/RPO, 영향도 평가 결과',     portal:H('/risk-bia/bia.html') },
+      { icon:'⚠️', title:'리스크 평가 보고서',  desc:'위협 목록, 위험도 매트릭스, 처리 방안',             portal:H('/risk-bia/risk.html') },
+      { icon:'🛡️', title:'BCP (업무연속성 계획)', desc:'발동 조건, 대체 운영 절차, 비상 연락처 포함',     portal:H('/strategy-plans/bcp.html') },
+      { icon:'🚨', title:'EOP (비상대응절차)',  desc:'비상 단계별 행동 지침, 역할 배분',                  portal:H('/library/eop.html') },
+      { icon:'💻', title:'DRP (재해복구 계획)', desc:'IT 복구 절차, RPO/RTO 달성 방법',                   portal:H('/library/drp.html') },
+      { icon:'🎯', title:'훈련 기록',           desc:'연간 훈련 계획 및 실시 결과 보고서 (연 1회 이상)',  portal:H('/training/index.html') },
+      { icon:'🔍', title:'내부심사 보고서',     desc:'심사 계획, 심사 결과, 부적합 목록',                 portal:H('/audit/index.html') },
+      { icon:'📋', title:'경영검토 기록',       desc:'경영진 검토 결과, 개선 방향 결정 사항',             portal:H('/reports/executive-summary.html') },
+      { icon:'🛠️', title:'CAPA 기록',          desc:'부적합 사항 시정 조치 내역 및 완료 확인',            portal:H('/audit/capa.html') },
+    ],
+    commonFindings: [
+      { icon:'⚠️', title:'훈련 기록 미흡',           desc:'훈련 실시만으로 부족 — 결과 분석 및 개선 조치까지 기록해야 합니다' },
+      { icon:'⚠️', title:'MTPD/RTO 설정 근거 부재',  desc:'"1시간"만 기재하면 지적 대상 — 왜 1시간인지 영향도 평가 근거 필요' },
+      { icon:'⚠️', title:'경영진 의지 증거 없음',     desc:'정책서에 서명이 없거나 경영검토 회의록이 없으면 5조 지적 대상' },
+      { icon:'⚠️', title:'CAPA 미연결',              desc:'내부심사에서 발견된 부적합이 CAPA로 등록·처리되지 않은 경우' },
+      { icon:'⚠️', title:'문서 버전 관리 미흡',      desc:'과거 버전이 현장에 유통되거나 최신본과 내용이 불일치한 경우' },
+    ]
+  };
+
+  const QUIZZES = [
+    // 0: BCM 기초
+    [
+      { q:'RTO(복구 목표 시간)를 올바르게 설명한 것은?', opts:['업무 중단 후 정상 운영으로 복구해야 하는 최대 허용 시간','데이터 손실을 허용하는 최대 시점','업무 중단 시 조직이 버틸 수 있는 최대 기간','최소 유지해야 할 업무 서비스 수준'], ans:0 },
+      { q:'MTPD와 RTO의 올바른 관계는?', opts:['MTPD > RTO (MTPD가 더 길다)','MTPD < RTO (RTO가 더 길다)','MTPD = RTO (같아야 한다)','두 지표는 서로 독립적으로 설정한다'], ans:0 },
+      { q:'BCP(업무연속성 계획)의 주요 목적은?', opts:['업무 중단 시 핵심업무의 연속성을 확보하기 위한 사전 계획','IT 시스템 보안을 강화하는 계획','원가 절감을 위한 업무 효율화 계획','신제품 출시를 위한 사업 계획'], ans:0 },
+      { q:'EOP(비상대응절차)는 주로 언제 사용하나?', opts:['재난·비상상황 발생 직후 초동 대응 시','연간 감사 실시 시','IT 시스템 정기 백업 수행 시','신규 직원 입사 교육 시'], ans:0 },
+      { q:'ISO 22301은 어떤 국제 표준인가?', opts:['업무연속성 관리(BCMS) 국제 표준','정보보안 관리(ISMS) 국제 표준','품질 경영(QMS) 국제 표준','환경 경영(EMS) 국제 표준'], ans:0 },
+    ],
+    // 1: ISO 22301
+    [
+      { q:'ISO 22301의 4조에서 요구하는 핵심 사항은?', opts:['조직 상황 이해 (내·외부 이슈, 이해관계자, 적용 범위)','리더십과 경영진 의지','BCMS 기획 및 목표 설정','성과 모니터링 및 측정'], ans:0 },
+      { q:'ISO 22301에서 BIA(업무영향분석)는 어느 조항에 해당하나?', opts:['8.2조 (사업영향분석)','5.2조 (정책)','6.1조 (리스크와 기회)','9.1조 (모니터링과 측정)'], ans:0 },
+      { q:'BCMS 정책 수립은 ISO 22301 어느 조항의 요구사항인가?', opts:['5.2조 (정책)','4.3조 (범위)','6.2조 (BC 목표)','8.1조 (운용 기획)'], ans:0 },
+      { q:'ISO 22301에서 내부심사(Internal Audit)는 어느 조항인가?', opts:['9.2조 (내부심사)','8.3조 (BC 전략)','7.4조 (의사소통)','10.1조 (부적합 및 시정조치)'], ans:0 },
+      { q:'ISO 22301의 10조에서 다루는 주제는?', opts:['개선 (부적합 조치, CAPA, 지속적 개선)','훈련 및 테스팅','문서화된 정보 관리','경영검토'], ans:0 },
+    ],
+    // 2: 실습 가이드
+    [
+      { q:'BIA 작성의 올바른 순서는?', opts:['핵심업무 식별 → 영향도 평가 → MTPD 설정 → MBCO 정의 → RTO/RPO 결정','MTPD 설정 → 핵심업무 식별 → 영향도 평가','RTO 결정 → BIA 작성 → MTPD 설정','리스크 평가 → BIA → MTPD 설정'], ans:0 },
+      { q:'MBCO(최소 업무연속성 목표)를 올바르게 설명한 것은?', opts:['위기 상황에서 최소한 유지해야 할 업무 서비스 수준','업무 복구 완료 기준 시간','최대 업무 처리 가능 용량','정상 운영 대비 100% 목표 수준'], ans:0 },
+      { q:'RTO 설정 시 반드시 만족해야 하는 조건은?', opts:['RTO는 반드시 MTPD보다 짧아야 한다','RTO는 RPO보다 길어야 한다','RTO는 MBCO와 동일해야 한다','RTO는 BCP 전략 수립 이후 결정한다'], ans:0 },
+      { q:'RPO(복구 목표 시점)는 주로 어떤 영역에서 중요하나?', opts:['IT·데이터 복구 (허용 가능한 데이터 손실 시점 결정)','HR·인사 관리 복구','마케팅 캠페인 복구','재무 결산 프로세스'], ans:0 },
+      { q:'BIA 완료 후 바로 다음에 수행해야 할 것은?', opts:['리스크 평가 (RA)','BCP 전략 수립','훈련 실시','ISO 갭분석'], ans:0 },
+    ],
+    // 3: 업종별 사례
+    [
+      { q:'금융권 BCM에서 가장 중요하게 고려해야 할 사항은?', opts:['결제·핵심 시스템 연속성 및 금융 규제 요구사항 충족','생산라인 연속성 확보','물류 네트워크 유지','고객 서비스 센터 단독 운영'], ans:0 },
+      { q:'IT/데이터센터 BCM의 핵심 전략은?', opts:['이중화 시스템 구축과 재해복구센터(DR센터) 운영','대체 사무실 확보','수작업 전환 절차 마련','직원 대피 훈련'], ans:0 },
+      { q:'제조업에서 공급망 관리가 BCM 핵심 항목인 이유는?', opts:['핵심 부품·소재 공급 중단이 전체 생산을 마비시킬 수 있기 때문','IT 시스템 복구가 어렵기 때문','인력 부족 문제가 빈번하기 때문','고객 응대 서비스 품질 유지 때문'], ans:0 },
+      { q:'의료기관 BCM에서 랜섬웨어 대응 시 최우선 사항은?', opts:['수기 대체 절차 즉각 발동 및 핵심 환자 데이터 복구','소셜미디어 공지','영업 중단 공표','보험 청구 접수'], ans:0 },
+      { q:'업종별 BCM 수립 시 가장 먼저 고려해야 할 것은?', opts:['해당 업종의 규제 및 법적 의무 요구사항','경쟁사 BCM 수준 분석','글로벌 벤치마킹 결과','예산 규모'], ans:0 },
+    ],
+    // 4: 인증 준비
+    [
+      { q:'ISO 22301 인증 심사는 몇 단계로 구성되나?', opts:['2단계 (Stage 1: 문서심사, Stage 2: 현장심사)','1단계','3단계','4단계'], ans:0 },
+      { q:'Stage 1 심사의 주요 목적은?', opts:['문서 검토 및 조직의 현장 준비도 확인','훈련 참관 및 실시간 평가','경영진 단독 인터뷰','재무 현황 점검'], ans:0 },
+      { q:'ISO 22301 인증서의 유효기간은?', opts:['3년 (연 1회 사후심사)','1년','5년','2년'], ans:0 },
+      { q:'ISO 22301 심사에서 가장 많이 지적받는 사항은?', opts:['훈련 기록 미흡 및 MTPD/RTO 설정 근거 부재','사무실 환경 불량','직원 수 부족','웹사이트 미비'], ans:0 },
+      { q:'인증 심사 전 반드시 완료해야 할 내부 활동은?', opts:['내부심사 및 경영검토 완료','외부 컨설팅 의무 수행','전사 대피 훈련 1회 완료','글로벌 벤치마킹 수행'], ans:0 },
+    ],
+  ];
+
+  /* ── State ── */
+  let currentStage = 0;
+  let prog = loadProg();
+  let quizState = { answers: {}, submitted: false };
+
+  /* ── Utils ── */
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function isUnlocked(id) {
+    return id === 0 || prog.stagesPassed[id - 1] === true;
+  }
+  function getPct() {
+    return Math.round(prog.stagesPassed.filter(Boolean).length / STAGES.length * 100);
+  }
+
+  /* ── Render Overall ── */
+  function renderOverall() {
+    const pct = getPct();
+    document.getElementById('overallFill').style.width = pct + '%';
+    document.getElementById('overallLabel').textContent = pct + '%';
+  }
+
+  /* ── Render Stage Nav ── */
+  function renderStageNav() {
+    document.getElementById('stageNav').innerHTML = STAGES.map(s => {
+      const unlocked = isUnlocked(s.id);
+      const done     = prog.stagesPassed[s.id];
+      const active   = s.id === currentStage;
+      let cls = 'stageNavItem';
+      if (active) cls += ' active';
+      else if (done) cls += ' done';
+      if (!unlocked) cls += ' locked';
+      const badge = !unlocked
+        ? '<span class="stageLockBadge">🔒</span>'
+        : done ? '<span class="stageDoneBadge">✓ 완료</span>' : '';
+      return `<div class="${cls}" onclick="selectStage(${s.id})">
+        ${badge}
+        <div class="stageIcon">${s.icon}</div>
+        <div class="stageNum">${s.id + 1}단계</div>
+        <div class="stageTitle">${esc(s.title)}</div>
+        <div class="stageSub">${esc(s.sub)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ── Render Content ── */
+  function renderContent() {
+    const panel = document.getElementById('contentPanel');
+    const s = STAGES[currentStage];
+
+    if (!isUnlocked(currentStage)) {
+      panel.innerHTML = `<div class="lockOverlay">
+        <div class="lockIcon">🔒</div>
+        <div class="lockTitle">잠긴 단계입니다</div>
+        <div class="lockDesc">${currentStage}단계 퀴즈를 70점 이상으로 통과하면<br>이 단계가 열립니다.</div>
+      </div>`;
+      return;
+    }
+
+    let body = '';
+
+    if (currentStage === 0) {
+      body = `<div class="glossaryGrid">${GLOSSARY.map(g =>
+        `<a class="termCard" href="${g.href}">
+          <div class="termAbr">${esc(g.abr)}</div>
+          <div class="termKr">${esc(g.kr)}</div>
+          <div class="termDef">${esc(g.def)}</div>
+          <div class="termLink">→ 포털에서 직접 사용해보기</div>
+        </a>`).join('')}</div>`;
+
+    } else if (currentStage === 1) {
+      body = `<div class="clauseList">${ISO_CLAUSES.map(c =>
+        `<div class="clauseItem">
+          <div class="clauseHead" onclick="this.parentElement.classList.toggle('open')">
+            <div class="clauseNum">${esc(c.num)}조</div>
+            <div class="clauseTitleText">${esc(c.title)}</div>
+            <div class="clauseArrow">▶</div>
+          </div>
+          <div class="clauseBody">
+            <div class="clauseDesc">${esc(c.desc)}</div>
+            <div class="clauseKey">${c.key.map(k => `<span class="clauseKeyItem">${esc(k)}</span>`).join('')}</div>
+            <a class="clausePortalLink" href="${c.portal}">→ ${esc(c.portalLabel)} 바로가기</a>
+          </div>
+        </div>`).join('')}</div>`;
+
+    } else if (currentStage === 2) {
+      body = `<div class="practiceSteps">${PRACTICE_STEPS.map(ps =>
+        `<div class="practiceStep">
+          <div class="practiceStepNum">${ps.num}</div>
+          <div class="practiceStepContent">
+            <div class="practiceStepTitle">${esc(ps.title)}</div>
+            <div class="practiceStepDesc">${esc(ps.desc)}</div>
+            <div class="practiceStepTips">${ps.tips.map(t => `<div class="practiceStepTip">${esc(t)}</div>`).join('')}</div>
+            <a class="practiceStepLink" href="${ps.href}">${esc(ps.hrefLabel)}</a>
+          </div>
+        </div>`).join('')}</div>`;
+
+    } else if (currentStage === 3) {
+      body = `<div class="caseGrid">${CASE_STUDIES.map(cs =>
+        `<div class="caseCard">
+          <div class="caseIndustry">${esc(cs.industry)}</div>
+          <div class="caseTitle">${esc(cs.title)}</div>
+          <div class="caseSituation">${esc(cs.situation)}</div>
+          <div class="caseLessons">${cs.lessons.map(l => `<div class="caseLesson">💡 ${esc(l)}</div>`).join('')}</div>
+        </div>`).join('')}</div>`;
+
+    } else if (currentStage === 4) {
+      body = `
+        <div class="certSection">
+          <div class="certSectionTitle">📋 인증 심사 프로세스</div>
+          <div class="processFlow">
+            ${CERT_DATA.processSteps.map(ps =>
+              `<div class="processStep">
+                <div class="processStepNum">${ps.num}</div>
+                <div class="processStepTitle">${esc(ps.title)}</div>
+                <div class="processStepDesc">${esc(ps.desc)}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="certSection">
+          <div class="certSectionTitle">📄 필수 준비 서류 체크리스트</div>
+          <div class="certChecklist">
+            ${CERT_DATA.requiredDocs.map(d =>
+              `<div class="certCheckItem">
+                <div class="certCheckIcon">${d.icon}</div>
+                <div class="certCheckText">
+                  <div class="certCheckTitle">${esc(d.title)}</div>
+                  <div class="certCheckDesc">${esc(d.desc)}</div>
+                </div>
+                <a class="certCheckLink" href="${d.portal}">→ 작성하기</a>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="certSection">
+          <div class="certSectionTitle">⚠️ 심사 단골 지적 사항 TOP 5</div>
+          <div class="certChecklist">
+            ${CERT_DATA.commonFindings.map(f =>
+              `<div class="certCheckItem">
+                <div class="certCheckIcon">${f.icon}</div>
+                <div class="certCheckText">
+                  <div class="certCheckTitle">${esc(f.title)}</div>
+                  <div class="certCheckDesc">${esc(f.desc)}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+
+    panel.innerHTML = `
+      <div class="contentHead">
+        <div class="contentHeadIcon">${s.icon}</div>
+        <div class="contentHeadText">
+          <h2>${esc(s.title)}</h2>
+          <p>${esc(s.sub)}</p>
+        </div>
+      </div>
+      <div class="contentBody">${body}</div>`;
+  }
+
+  /* ── Render Quiz ── */
+  function renderQuiz() {
+    const el = document.getElementById('quizPanel');
+
+    if (!isUnlocked(currentStage)) {
+      el.innerHTML = `<div class="quizLockedMsg">이전 단계를 완료하면 퀴즈를 풀 수 있습니다.</div>`;
+      return;
+    }
+
+    const qs       = QUIZZES[currentStage];
+    const passed   = prog.stagesPassed[currentStage];
+    const score    = prog.quizScores[currentStage];
+    const isLast   = currentStage === STAGES.length - 1;
+
+    const badge = passed
+      ? `<span class="quizPassBadge pass">✓ 통과 (${score}점)</span>`
+      : score !== null
+        ? `<span class="quizPassBadge fail">미통과 (${score}점)</span>`
+        : `<span class="quizPassBadge pending">미응시</span>`;
+
+    const qHTML = qs.map((q, qi) => {
+      const ua   = quizState.answers[qi];
+      const done = quizState.submitted;
+      return `<div class="quizQ">
+        <div class="quizQNum">문제 ${qi + 1} / ${qs.length}</div>
+        <div class="quizQText">${esc(q.q)}</div>
+        <div class="quizOptions">
+          ${q.opts.map((opt, oi) => {
+            let cls = 'quizOption';
+            if (done) {
+              if (oi === q.ans) cls += ' correct no-hover';
+              else if (oi === ua && oi !== q.ans) cls += ' wrong no-hover';
+              else cls += ' no-hover';
+            } else if (oi === ua) cls += ' selected';
+            const letter = String.fromCharCode(65 + oi);
+            const click  = done ? '' : `onclick="selectAnswer(${qi},${oi})"`;
+            return `<div class="${cls}" ${click}>
+              <div class="quizOptLetter">${letter}</div>
+              <div class="quizOptText">${esc(opt)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+
+    let footer = '';
+    if (!quizState.submitted) {
+      footer = `<div></div><button class="btn btn-primary" onclick="submitQuiz()">제출하기</button>`;
+    } else {
+      const correct  = qs.filter((q, i) => quizState.answers[i] === q.ans).length;
+      const scoreVal = Math.round(correct / qs.length * 100);
+      const ok       = scoreVal >= 70;
+      footer = `
+        <div class="quizResult ${ok ? 'pass' : 'fail'}">
+          ${ok ? '✓ 통과!' : '✗ 미통과'} — ${correct}/${qs.length} 정답 (${scoreVal}점)${ok ? '' : ' · 70점 이상 필요'}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" onclick="retryQuiz()">다시 풀기</button>
+          ${ok && !isLast ? `<button class="btn btn-primary" onclick="goNextStage()">다음 단계로 →</button>` : ''}
+          ${ok && isLast  ? `<button class="btn btn-primary" onclick="alert('🎉 전 과정 완료! 수고하셨습니다.')">완료 축하 🎉</button>` : ''}
+        </div>`;
+    }
+
+    el.innerHTML = `
+      <div class="quizHead">
+        <h3>📝 ${esc(STAGES[currentStage].title)} 퀴즈 — ${qs.length}문항 · 70점 이상 통과</h3>
+        ${badge}
+      </div>
+      <div class="quizBody">${qHTML}<div class="quizFooter">${footer}</div></div>`;
+  }
+
+  /* ── Actions ── */
+  window.selectStage = function(id) {
+    if (!isUnlocked(id)) return;
+    currentStage = id;
+    quizState = { answers: {}, submitted: false };
+    renderAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  window.selectAnswer = function(qi, oi) {
+    if (quizState.submitted) return;
+    quizState.answers[qi] = oi;
+    renderQuiz();
+  };
+
+  window.submitQuiz = function() {
+    const qs      = QUIZZES[currentStage];
+    const correct = qs.filter((q, i) => quizState.answers[i] === q.ans).length;
+    const score   = Math.round(correct / qs.length * 100);
+    quizState.submitted = true;
+    prog.quizScores[currentStage] = score;
+    if (score >= 70) prog.stagesPassed[currentStage] = true;
+    saveProg(prog);
+    renderAll();
+  };
+
+  window.retryQuiz = function() {
+    quizState = { answers: {}, submitted: false };
+    renderQuiz();
+  };
+
+  window.goNextStage = function() {
+    if (currentStage < STAGES.length - 1) selectStage(currentStage + 1);
+  };
+
+  function renderAll() {
+    renderOverall();
+    renderStageNav();
+    renderContent();
+    renderQuiz();
+  }
+
+  renderAll();
+  </script>
+</body>
+</html>
