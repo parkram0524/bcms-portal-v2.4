@@ -199,12 +199,12 @@
           <div class="kpiHead">
             <div>
               <p class="kpiTitle">훈련·점검</p>
-              <p class="kpiCaption">모듈 연계 예정</p>
+              <p class="kpiCaption" id="trainingCaption">올해 훈련 현황</p>
             </div>
-            <span class="pill warn">미구현</span>
+            <span class="pill" id="trainingPill">로딩…</span>
           </div>
-          <div class="kpiNum">—</div>
-          <p class="kpiCaption">훈련 모듈에서 기록을 관리합니다.</p>
+          <div class="kpiNum" id="trainingNum">—</div>
+          <p class="kpiCaption" id="trainingSub">-</p>
           <div class="kpiActions">
             <a class="chipBtn" href="../training/index.html" style="padding:9px 12px; font-size:13px;">훈련으로 이동</a>
           </div>
@@ -217,7 +217,7 @@
               <p class="kpiTitle">ISO 22301 충족률</p>
               <p class="kpiCaption">조항 4~10 기준</p>
             </div>
-            <span class="pill" id="isoPill">Clause 4~10</span>
+            <span style="font-size:11px;color:rgba(15,23,42,.42);font-weight:600;letter-spacing:.02em;">Clause 4~10</span>
           </div>
 
           <div class="gaugeWrap">
@@ -286,7 +286,6 @@
           <a href="./system-registry.html">
             <p class="qlTitle">🧩 시스템 목록</p>
             <p class="qlDesc">시스템/설비 표준 자산 관리</p>
-            <div class="mono">localStorage: "bcms_system_registry_v1"</div>
           </a>
         </article>
       </section>
@@ -372,6 +371,28 @@
       $("#isoPct").textContent = `${agg.pct}%`;
       $("#isoSub").textContent = `충족 ${agg.ok} · 부분 ${agg.partial} · 갭 ${agg.gap}`;
       setGaugePct(agg.pct);
+
+      // 훈련·점검 (bcmsTrainingData 연동)
+      const training = safeParse(localStorage.getItem('bcmsTrainingData'), []);
+      const thisYear = new Date().getFullYear();
+      const yearTr   = training.filter(x => {
+        const d = new Date(x.date || x.plannedDate || 0);
+        return d.getFullYear() === thisYear;
+      });
+      const doneTr  = yearTr.filter(x => x.status === '완료').length;
+      const totalTr = yearTr.length;
+      const pillTr  = $("#trainingPill");
+      if (totalTr === 0) {
+        pillTr.className = "pill warn";
+        pillTr.textContent = "계획 없음";
+        $("#trainingNum").textContent = "—";
+        $("#trainingSub").textContent = `${thisYear}년 훈련 계획을 등록하세요`;
+      } else {
+        pillTr.className = "pill " + (doneTr === totalTr ? "ok" : "warn");
+        pillTr.textContent = `${doneTr}/${totalTr} 완료`;
+        $("#trainingNum").textContent = String(doneTr);
+        $("#trainingSub").textContent = `${thisYear}년 계획 ${totalTr}건 · 완료 ${doneTr}건`;
+      }
     }
 
     function seedDemo(){
@@ -411,9 +432,12 @@
       localStorage.removeItem(LS.iso);
     }
 
-    document.getElementById("btnSeed").addEventListener("click", () => { seedDemo(); render(); });
+    document.getElementById("btnSeed").addEventListener("click", () => {
+      if (!confirm('⚠️ 주의: 모든 데이터가 삭제됩니다.\n데모 데이터로 교체하시겠습니까?')) return;
+      seedDemo(); render();
+    });
     document.getElementById("btnClear").addEventListener("click", () => {
-      if (!confirm('모든 BCMS 데이터를 초기화합니다. 계속하시겠습니까?')) return;
+      if (!confirm('⚠️ 주의: 모든 데이터가 삭제됩니다.\n거버넌스 데이터를 모두 초기화합니다. 계속하시겠습니까?')) return;
       Object.keys(localStorage)
         .filter(k => k.startsWith('bcms'))
         .forEach(k => localStorage.removeItem(k));
