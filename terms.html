@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BCMS Portal - 이용약관</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    .wrap { max-width: 860px; margin: 0 auto; }
+
+    .legalHeader {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--r); padding: 28px 32px;
+      margin-bottom: 20px;
+    }
+    .legalTitle {
+      font-size: 26px; font-weight: 800; letter-spacing: -.03em;
+      background: linear-gradient(135deg, #0070f3 0%, #00bcd4 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 8px;
+    }
+    .legalMeta { font-size: 13px; color: var(--text-2); display: flex; gap: 16px; flex-wrap: wrap; }
+    .legalMetaItem { display: flex; align-items: center; gap: 5px; }
+    .legalMetaDot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-strong); }
+
+    .legalSection {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--r); padding: 28px 32px; margin-bottom: 12px;
+    }
+    .legalSectionNum {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+    .legalSectionTitle {
+      font-size: 17px; font-weight: 700; color: var(--text);
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .legalBody { font-size: 14px; color: var(--text-2); line-height: 1.85; word-break: keep-all; }
+    .legalBody p { margin-bottom: 10px; }
+    .legalBody p:last-child { margin-bottom: 0; }
+
+    .infoTable {
+      width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px;
+    }
+    .infoTable th {
+      background: var(--accent-subtle); color: var(--accent);
+      font-weight: 700; font-size: 12px; text-align: left;
+      padding: 10px 14px; border: 0.5px solid var(--border);
+      letter-spacing: .02em;
+    }
+    .infoTable td {
+      padding: 10px 14px; border: 0.5px solid var(--border);
+      color: var(--text-2); vertical-align: top; line-height: 1.6;
+    }
+    .infoTable tr:hover td { background: var(--surface-hover); }
+
+    .highlightBox {
+      background: var(--accent-subtle); border: 0.5px solid var(--accent-border);
+      border-radius: var(--r-sm); padding: 14px 18px;
+      font-size: 13.5px; color: var(--text-2); line-height: 1.7;
+      margin: 14px 0; word-break: keep-all;
+    }
+    .highlightBox strong { color: var(--accent); font-weight: 700; }
+
+    .warnBox {
+      background: rgba(245,158,11,.06); border: 0.5px solid rgba(245,158,11,.25);
+      border-radius: var(--r-sm); padding: 14px 18px;
+      font-size: 13.5px; color: var(--text-2); line-height: 1.7;
+      margin: 14px 0; word-break: keep-all;
+    }
+    .warnBox strong { color: #b45309; font-weight: 700; }
+
+    .scopeBadge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-subtle); color: var(--accent);
+      border: 0.5px solid var(--accent-border);
+      border-radius: 999px; font-size: 12px; font-weight: 700;
+      padding: 4px 12px; margin-bottom: 14px;
+    }
+
+    .contactCard {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--r-sm); padding: 16px 20px; margin-top: 14px;
+    }
+    .contactIcon { font-size: 28px; flex-shrink: 0; }
+    .contactInfo { flex: 1; }
+    .contactLabel { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .contactEmail { font-size: 14px; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .contactEmail:hover { text-decoration: underline; }
+
+    .legalFooterNote {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--r); padding: 16px 24px;
+      font-size: 12.5px; color: var(--text-3); line-height: 1.7;
+      margin-top: 20px; display: flex; align-items: flex-start; gap: 10px;
+    }
+    .legalFooterNote strong { color: var(--text-2); }
+  </style>
+</head>
+<body>
+  <aside id="sidebarMount"></aside>
+  <main class="main">
+    <div class="wrap">
+
+      <!-- ── Header ── -->
+      <div class="legalHeader">
+        <div class="legalTitle">이용약관</div>
+        <div class="legalMeta">
+          <span class="legalMetaItem">📅 시행일: 2026년 1월 1일</span>
+          <span class="legalMetaDot"></span>
+          <span class="legalMetaItem">📄 버전: v1.0</span>
+          <span class="legalMetaDot"></span>
+          <span class="legalMetaItem">🌐 BCMS Portal v2</span>
+        </div>
+      </div>
+
+      <!-- ── 제1조: 목적 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 1 조</div>
+        <div class="legalSectionTitle">목적</div>
+        <div class="legalBody">
+          <p>본 약관은 BCMS Portal(이하 "서비스")의 이용 조건 및 절차, 이용자와 서비스 운영자 간의 권리·의무 및 책임 사항을 규정함을 목적으로 합니다.</p>
+          <p>서비스를 이용함으로써 이용자는 본 약관에 동의한 것으로 간주됩니다.</p>
+        </div>
+      </div>
+
+      <!-- ── 제2조: 서비스 범위 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 2 조</div>
+        <div class="legalSectionTitle">서비스 범위</div>
+        <div class="legalBody">
+          <div class="scopeBadge">🌐 BCMS 수립 지원 웹 포털</div>
+          <p>서비스는 ISO 22301 기반 업무연속성관리시스템(BCMS) 수립을 지원하는 웹 포털입니다. 제공 기능은 아래와 같습니다.</p>
+          <table class="infoTable">
+            <thead>
+              <tr>
+                <th>기능 영역</th>
+                <th>제공 내용</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Education Center</td>
+                <td>BCM 기초 교육, ISO 22301 해설, 실습 가이드, 업종별 사례, 인증 준비 체크리스트</td>
+              </tr>
+              <tr>
+                <td>거버넌스</td>
+                <td>BCMS 정책·목표·범위 관리, 조직도, 문서체계, 법규·요구사항 등록</td>
+              </tr>
+              <tr>
+                <td>BIA & RA</td>
+                <td>업무영향분석(BIA), 리스크 평가(RA), 핵심업무 우선순위 산정</td>
+              </tr>
+              <tr>
+                <td>전략·계획</td>
+                <td>BCP 전략 수립, 연속성 절차(DRP) 등록</td>
+              </tr>
+              <tr>
+                <td>절차·문서 라이브러리</td>
+                <td>SOP, EOP, BCP, DRP 문서 작성 지원</td>
+              </tr>
+              <tr>
+                <td>훈련·점검</td>
+                <td>연간 훈련 계획 수립, 결과 기록</td>
+              </tr>
+              <tr>
+                <td>성과·감사</td>
+                <td>ISO 22301 갭분석, 내부심사, CAPA 관리</td>
+              </tr>
+              <tr>
+                <td>보고서</td>
+                <td>경영진 요약 보고서, 심사용 문서 패키지 출력</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── 제3조: 데이터 소유권 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 3 조</div>
+        <div class="legalSectionTitle">데이터 소유권</div>
+        <div class="legalBody">
+          <div class="highlightBox">
+            <strong>📌 원칙:</strong> 이용자가 서비스에 입력한 모든 데이터의 소유권은 입력한 이용자 본인에게 있습니다.
+          </div>
+          <p>서비스는 이용자가 입력한 데이터를 이용자의 동의 없이 열람·수집·활용·판매하지 않습니다.</p>
+          <p>모든 데이터는 이용자 본인 기기의 브라우저 localStorage에만 저장되며, 운영자는 해당 데이터에 접근할 수 없습니다.</p>
+          <p>이용자는 브라우저 데이터 삭제를 통해 언제든지 자신의 데이터를 완전히 삭제할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <!-- ── 제4조: 책임 한계 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 4 조</div>
+        <div class="legalSectionTitle">책임 한계</div>
+        <div class="legalBody">
+          <div class="warnBox">
+            <strong>⚠️ 중요:</strong> 본 서비스는 ISO 22301 인증 취득 또는 심사 합격을 보장하지 않습니다.
+          </div>
+          <p>서비스 운영자의 책임 범위는 아래와 같이 제한됩니다.</p>
+          <table class="infoTable">
+            <thead>
+              <tr>
+                <th>항목</th>
+                <th>내용</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>인증 결과 보장</td>
+                <td>ISO 22301 인증 취득, 심사 합격, 인증 유지를 보장하지 않습니다. 실제 인증은 공인 인증기관의 심사에 따릅니다.</td>
+              </tr>
+              <tr>
+                <td>데이터 손실</td>
+                <td>localStorage 초기화, 브라우저 업데이트, 기기 교체 등으로 인한 데이터 손실에 대해 책임지지 않습니다.</td>
+              </tr>
+              <tr>
+                <td>법적 효력</td>
+                <td>서비스 내에서 작성된 문서·보고서의 법적 효력을 보장하지 않습니다.</td>
+              </tr>
+              <tr>
+                <td>컨설팅 대체</td>
+                <td>본 서비스는 전문 컨설팅·법무·회계 서비스를 대체하지 않습니다.</td>
+              </tr>
+              <tr>
+                <td>서비스 정확성</td>
+                <td>서비스 내 콘텐츠(ISO 해설, 가이드 등)는 참고용이며 법적·공식 해석과 다를 수 있습니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── 제5조: 서비스 변경·중단 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 5 조</div>
+        <div class="legalSectionTitle">서비스 변경 및 중단</div>
+        <div class="legalBody">
+          <p>운영자는 서비스 운영 개선, 법령 변경, 기술적 사유 등으로 서비스의 전부 또는 일부를 변경하거나 중단할 수 있습니다.</p>
+          <table class="infoTable">
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>안내 방법</th>
+                <th>사전 공지 기간</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>기능 변경·추가</td>
+                <td>서비스 내 공지</td>
+                <td>원칙적으로 7일 전</td>
+              </tr>
+              <tr>
+                <td>서비스 일시 중단</td>
+                <td>서비스 내 공지 또는 이메일</td>
+                <td>원칙적으로 7일 전</td>
+              </tr>
+              <tr>
+                <td>서비스 영구 종료</td>
+                <td>서비스 내 공지 및 이메일</td>
+                <td>원칙적으로 30일 전</td>
+              </tr>
+              <tr>
+                <td>긴급 점검·장애</td>
+                <td>서비스 내 공지</td>
+                <td>사전 공지 불가 시 사후 안내</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>서비스 중단 시 이용자가 입력한 데이터는 이용자 본인 기기에 남아 있으며, 운영자는 해당 데이터를 보유하지 않으므로 별도 복구를 제공할 수 없습니다.</p>
+          <p>중요한 데이터는 정기적으로 PDF 출력 또는 별도 매체에 백업하시기 바랍니다.</p>
+        </div>
+      </div>
+
+      <!-- ── 제6조: 이용자 의무 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 6 조</div>
+        <div class="legalSectionTitle">이용자 의무</div>
+        <div class="legalBody">
+          <p>이용자는 서비스 이용 시 아래 사항을 준수하여야 합니다.</p>
+          <ul style="padding-left: 18px; margin: 10px 0; display: flex; flex-direction: column; gap: 7px;">
+            <li>타인의 정보를 도용하거나 허위 정보를 입력하는 행위 금지</li>
+            <li>서비스의 정상적인 운영을 방해하는 행위 금지</li>
+            <li>관련 법령 및 본 약관을 준수</li>
+            <li>서비스 내 콘텐츠의 무단 복제·배포 금지</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ── 제7조: 약관 개정 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 7 조</div>
+        <div class="legalSectionTitle">약관 개정</div>
+        <div class="legalBody">
+          <p>운영자는 관련 법령의 변경 또는 서비스 정책 변경 시 약관을 개정할 수 있습니다.</p>
+          <p>약관 개정 시 시행일 7일 전(이용자에게 불리한 변경의 경우 30일 전)에 서비스 내 공지 또는 이메일을 통해 안내합니다.</p>
+          <p>개정 약관 시행일 이후 서비스를 계속 이용하는 경우 개정 약관에 동의한 것으로 간주됩니다.</p>
+        </div>
+      </div>
+
+      <!-- ── 제8조: 문의처 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 8 조</div>
+        <div class="legalSectionTitle">문의처</div>
+        <div class="legalBody">
+          <p>약관 관련 문의 및 서비스 이용 문의는 아래 연락처로 접수하실 수 있습니다.</p>
+          <div class="contactCard">
+            <div class="contactIcon">📬</div>
+            <div class="contactInfo">
+              <div class="contactLabel">서비스 운영 이메일</div>
+              <a href="mailto:drogdembaba@naver.com" class="contactEmail">drogdembaba@naver.com</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 시행일 안내 ── -->
+      <div class="legalFooterNote">
+        <span style="font-size:18px; flex-shrink:0;">📋</span>
+        <span>
+          <strong>시행일:</strong> 2026년 1월 1일 &nbsp;|&nbsp;
+          <strong>최종 개정일:</strong> 2026년 1월 1일 &nbsp;|&nbsp;
+          본 약관은 관련 법령 개정 또는 서비스 정책 변경 시 사전 공지 후 개정될 수 있습니다.
+        </span>
+      </div>
+
+    </div>
+  </main>
+
+  <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+
+  <script src="assets/sidebar.js"></script>
+  <script>
+  'use strict';
+  {
+    const root = document.documentElement;
+    const tog = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('bcmsTheme') || 'light';
+    root.setAttribute('data-theme', saved);
+    if (tog) { tog.textContent = saved === 'dark' ? '☀️' : '🌙'; }
+    if (tog) tog.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      tog.textContent = next === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('bcmsTheme', next);
+    });
+  }
+  </script>
+</body>
+</html>

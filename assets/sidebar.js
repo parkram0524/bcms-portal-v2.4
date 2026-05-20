@@ -130,6 +130,12 @@
       문의·피드백: <a href="mailto:drogdembaba@naver.com" class="sidebar-contact-link">drogdembaba@naver.com</a>
     </div>
 
+    <div class="sidebar-legal">
+      <a href="${H("/privacy.html")}" class="sidebar-legal-link">개인정보처리방침</a>
+      <span class="sidebar-legal-sep">|</span>
+      <a href="${H("/terms.html")}" class="sidebar-legal-link">이용약관</a>
+    </div>
+
   </div>
   `;
 
@@ -196,6 +202,30 @@
     }
     .sidebar-contact-link:hover { text-decoration: underline; }
 
+    .sidebar-legal {
+      padding: 7px 14px 10px;
+      font-size: 11px;
+      color: var(--sb-sub);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .sidebar-legal-sep {
+      color: var(--sb-border);
+      font-size: 10px;
+    }
+    .sidebar-legal-link {
+      color: var(--sb-sub);
+      text-decoration: none;
+      transition: color .12s;
+    }
+    .sidebar-legal-link:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
     .sidebar-guide-wrap {
       position:sticky;
       bottom:0;
@@ -234,6 +264,62 @@
       }
     });
   }
+
+  // =========================================================
+  // ✅ 페이지 하단 법적 푸터 주입
+  // =========================================================
+  (function injectPageFooter() {
+    const footerSt = document.createElement("style");
+    footerSt.textContent = `
+      .pageFooter {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 0.5px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--text-3);
+      }
+      .pageFooterLeft { display: flex; align-items: center; gap: 6px; }
+      .pageFooterLinks { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+      .pageFooterLink {
+        color: var(--text-3);
+        text-decoration: none;
+        transition: color .12s;
+        font-size: 12px;
+      }
+      .pageFooterLink:hover { color: var(--accent); text-decoration: underline; }
+      .pageFooterSep { color: var(--border-strong); }
+      @media print { .pageFooter { display: none !important; } }
+    `;
+    document.head.appendChild(footerSt);
+
+    function tryInjectFooter() {
+      const wrap = document.querySelector(".main .wrap") || document.querySelector(".wrap");
+      if (!wrap) return false;
+      if (wrap.querySelector(".pageFooter")) return true;
+      const footer = document.createElement("footer");
+      footer.className = "pageFooter";
+      footer.innerHTML =
+        `<span class="pageFooterLeft">© 2026 BCMS Portal v2. All rights reserved.</span>` +
+        `<span class="pageFooterLinks">` +
+          `<a href="${H("/privacy.html")}" class="pageFooterLink">개인정보처리방침</a>` +
+          `<span class="pageFooterSep">|</span>` +
+          `<a href="${H("/terms.html")}" class="pageFooterLink">이용약관</a>` +
+          `<span class="pageFooterSep">|</span>` +
+          `<a href="mailto:drogdembaba@naver.com" class="pageFooterLink">문의</a>` +
+        `</span>`;
+      wrap.appendChild(footer);
+      return true;
+    }
+
+    if (!tryInjectFooter()) {
+      document.addEventListener("DOMContentLoaded", tryInjectFooter);
+    }
+  })();
 
   // =========================================================
   // ✅ Active section detection (folder-based)
