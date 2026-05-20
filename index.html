@@ -405,17 +405,29 @@
       actions.push({ urg: 1, icon: '🛡️', title: `BCP 전략 미수립`, desc: `BIA 데이터는 있으나 BCP 전략이 없습니다. 전략·계획 메뉴에서 수립하세요.`, href: 'strategy-plans/index.html', urgLabel: '중요' });
     }
 
-    /* 4. 훈련 계획 없음 */
+    /* 4. BCP 문서 검토일 */
+    const bcpMeta   = loadJ('bcmsBCPMeta', {});
+    const bcpReview = bcpMeta.review;
+    if (bcpReview) {
+      const diffDays = Math.ceil((new Date(bcpReview) - new Date()) / 86400000);
+      if (diffDays < 0) {
+        actions.push({ urg: 0, icon: '📋', title: `BCP 검토 필요`, desc: `BCP 문서 검토일(${bcpReview})이 ${Math.abs(diffDays)}일 경과했습니다. 문서를 즉시 검토·갱신하세요.`, href: 'library/bcp.html', urgLabel: '긴급' });
+      } else if (diffDays <= 30) {
+        actions.push({ urg: 1, icon: '📋', title: `BCP 검토 예정 (${diffDays}일 후)`, desc: `BCP 문서 다음 검토일은 ${bcpReview}입니다. 검토를 미리 준비하세요.`, href: 'library/bcp.html', urgLabel: '중요' });
+      }
+    }
+
+    /* 5. 훈련 계획 없음 */
     if (tr.total === 0) {
       actions.push({ urg: 1, icon: '🎯', title: `올해 훈련 계획 미수립`, desc: `${thisYear}년 훈련 계획이 없습니다. ISO 22301은 연 1회 이상 훈련을 요구합니다.`, href: 'training/index.html', urgLabel: '중요' });
     }
 
-    /* 5. CAPA 지연 */
+    /* 6. CAPA 지연 */
     if (late > 0) {
       actions.push({ urg: 0, icon: '🚨', title: `지연된 CAPA: ${late}개`, desc: `목표 완료일이 지난 CAPA가 ${late}개 있습니다. 즉시 조치 또는 일정을 재조정하세요.`, href: 'audit/index.html', urgLabel: '긴급' });
     }
 
-    /* 6. ISO 갭분석 미착수 */
+    /* 7. ISO 갭분석 미착수 */
     const gapEntries = Object.values(gap);
     const notStarted = gapEntries.filter(e => e.status === '미착수').length;
     const totalReqs  = 37;
@@ -425,7 +437,7 @@
       actions.push({ urg: 2, icon: '📋', title: `갭분석 미착수: ${remaining}개 요구사항`, desc: `ISO 22301 ${remaining}개 요구사항이 미확인 상태입니다. 갭분석을 완성하세요.`, href: 'audit/index.html', urgLabel: '권고' });
     }
 
-    /* 7. 리스크 없음 */
+    /* 8. 리스크 없음 */
     if (risks.length === 0) {
       actions.push({ urg: 1, icon: '⚠️', title: `리스크 평가 미등록`, desc: `등록된 리스크가 없습니다. 리스크 식별 및 평가를 먼저 수행하세요.`, href: 'risk-bia/risk.html', urgLabel: '중요' });
     }

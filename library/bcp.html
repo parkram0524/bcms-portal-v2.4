@@ -181,7 +181,8 @@
     #themeToggle, .theme-toggle,
     .helpBtn, .addRowBtn, .addStepBtn,
     .stepDel, .autoLabel,
-    .tabNav, nav { display: none !important; }
+    .tabNav, nav,
+    .histCard, .reviewAlert { display: none !important; }
 
     /* ── 기본 레이아웃 ── */
     html, body {
@@ -289,6 +290,25 @@
     .pageHeader { flex-direction: column; }
     .headerBtns { width: 100%; }
   }
+
+  /* ── 버전 이력 카드 ── */
+  .histCard { border: 0.5px solid var(--border); border-radius: 12px; background: var(--surface); margin-bottom: 16px; overflow: hidden; }
+  .histCardHead { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; }
+  .histCardHead:hover { background:var(--surface-hover); }
+  .histCardTitle { font-size:13px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px; }
+  .histPill { font-size:11px; padding:2px 8px; border-radius:999px; background:rgba(0,112,243,.1); color:var(--accent,#0070f3); font-weight:700; }
+  .histBody { padding:14px 16px; border-top:0.5px solid var(--border); }
+  .saveNoteWrap { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .saveNoteLabel { font-size:11px; font-weight:700; color:var(--text-2); white-space:nowrap; }
+  .saveNoteInput { flex:1; min-width:160px; padding:5px 9px; border-radius:7px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; outline:none; font-family:inherit; }
+  .saveNoteInput:focus { border-color:var(--accent,#0070f3); }
+
+  /* ── 검토일 알림 ── */
+  .reviewAlert { padding:10px 16px; border-radius:10px; margin-bottom:12px; font-size:13px; font-weight:600; display:none; }
+  .reviewAlert.warn { background:rgba(251,191,36,.12); border:0.5px solid rgba(251,191,36,.4); color:#92400e; }
+  .reviewAlert.danger { background:rgba(220,38,38,.08); border:0.5px solid rgba(220,38,38,.3); color:#dc2626; }
+  [data-theme="dark"] .reviewAlert.warn { color:#fbbf24; }
+  [data-theme="dark"] .reviewAlert.danger { color:#f87171; }
 </style>
 </head>
 <body>
@@ -325,7 +345,7 @@
         <input type="date" id="metaCreated"/>
       </div>
       <div class="metaField">
-        <label>검토일</label>
+        <label>다음 검토일</label>
         <input type="date" id="metaReview"/>
       </div>
       <div class="metaField">
@@ -335,6 +355,37 @@
       <div class="metaField">
         <label>승인자</label>
         <input type="text" id="metaApprover" placeholder="승인자명"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- 검토일 알림 -->
+  <div class="reviewAlert" id="reviewAlert"></div>
+
+  <!-- 버전 이력 카드 -->
+  <div class="histCard">
+    <div class="histCardHead" onclick="toggleHistCard()">
+      <div class="histCardTitle">📋 버전 이력 <span class="histPill" id="histCount">0건</span></div>
+      <span class="chevron" id="histChev">▼</span>
+    </div>
+    <div class="histBody" id="histBody" style="display:none">
+      <div class="saveNoteWrap" style="margin-bottom:12px">
+        <span class="saveNoteLabel">💬 저장 시 메모</span>
+        <input class="saveNoteInput" id="saveNote" type="text" placeholder="변경 사항 간략 입력 (비워두면 자동 감지)"/>
+      </div>
+      <div class="tableWrap">
+        <table class="doc">
+          <thead><tr>
+            <th style="width:70px">버전</th><th style="width:105px">변경일</th>
+            <th style="width:90px">변경자</th><th>변경 내용</th><th style="width:42px"></th>
+          </tr></thead>
+          <tbody id="histTabBody"></tbody>
+        </table>
+      </div>
+      <div class="saveNoteWrap" style="margin-top:12px;border-top:0.5px solid var(--border);padding-top:12px">
+        <span class="saveNoteLabel">🖊️ 직접 추가</span>
+        <input class="saveNoteInput" id="manualChanges" type="text" placeholder="변경 내용 직접 입력 후 추가 클릭"/>
+        <button class="btn sm" onclick="addManualHistEntry()">추가</button>
       </div>
     </div>
   </div>
@@ -478,6 +529,8 @@
 
   const KEY_DOC  = 'bcmsBCPDoc';
   const KEY_META = 'bcmsBCPMeta';
+  const KEY_HIST = 'bcmsBCPHistory';
+  let histData = [];
 
   /* ── 유틸 ── */
   const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -555,11 +608,56 @@
     }
 
     $('sec1Text').value = state.sec1Text;
+    loadHistory();
+    checkReviewDate($('metaReview').value);
   }
 
   /* ── 저장 ── */
   function saveAll() {
+    const prevDoc  = load(KEY_DOC,  null);
+    const prevMeta = load(KEY_META, {});
+
     collectState();
+
+    // 변경 감지
+    const note = ($('saveNote')?.value ?? '').trim();
+    let changeStr;
+    if (note) {
+      changeStr = note;
+    } else {
+      const parts = [];
+      if (!prevDoc) {
+        parts.push('최초 저장');
+      } else {
+        if ((prevDoc.sec1Text ?? '') !== state.sec1Text)
+          parts.push('목적·범위 수정됨');
+        if (JSON.stringify(prevDoc.activationRows ?? []) !== JSON.stringify(state.activationRows))
+          parts.push('발동 조건 수정됨');
+        if (JSON.stringify(prevDoc.roleRows ?? []) !== JSON.stringify(state.roleRows))
+          parts.push('역할·책임 수정됨');
+        if (JSON.stringify(prevDoc.steps ?? []) !== JSON.stringify(state.steps))
+          parts.push('복구 절차 수정됨');
+        if (JSON.stringify(prevDoc.contactRows ?? []) !== JSON.stringify(state.contactRows))
+          parts.push('비상연락망 수정됨');
+        const newVer = $('metaVersion').value.trim();
+        if (newVer && newVer !== (prevMeta.version ?? ''))
+          parts.push(`버전 변경 → ${newVer}`);
+        if ($('metaReview').value !== (prevMeta.review ?? ''))
+          parts.push('다음 검토일 변경됨');
+      }
+      changeStr = parts.join(' · ') || '내용 저장됨';
+    }
+
+    // 버전 이력 자동 추가
+    histData.push({
+      version: $('metaVersion').value.trim() || '—',
+      date:    todayStr(),
+      editor:  $('metaAuthor').value.trim()  || '—',
+      changes: changeStr,
+    });
+    save(KEY_HIST, histData);
+    if ($('saveNote')) $('saveNote').value = '';
+
     const meta = {
       docNo:    $('metaDocNo').value.trim(),
       version:  $('metaVersion').value.trim(),
@@ -572,6 +670,8 @@
     };
     save(KEY_META, meta);
     save(KEY_DOC,  { ...state });
+    renderHistTab();
+    checkReviewDate(meta.review);
     showToast('✓ 저장되었습니다');
   }
 
@@ -615,6 +715,81 @@
       });
     });
     return items;
+  }
+
+  /* ── 버전 이력 (bcmsBCPHistory) ── */
+  function loadHistory() {
+    const raw = load(KEY_HIST, []);
+    histData = Array.isArray(raw) ? raw : [];
+    renderHistTab();
+  }
+
+  function renderHistTab() {
+    const countEl = $('histCount');
+    const tbody   = $('histTabBody');
+    if (countEl) countEl.textContent = `${histData.length}건`;
+    if (!tbody) return;
+    if (histData.length === 0) {
+      tbody.innerHTML = `<tr class="emptyRow"><td colspan="5">저장 시 자동으로 이력이 기록됩니다</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = histData.slice().reverse().map((r, revIdx) => {
+      const realI = histData.length - 1 - revIdx;
+      return `<tr>
+        <td style="white-space:nowrap">${esc(r.version ?? '—')}</td>
+        <td style="white-space:nowrap">${esc(r.date ?? '')}</td>
+        <td>${esc(r.editor ?? '—')}</td>
+        <td>${esc(r.changes ?? '')}</td>
+        <td><button class="btn sm danger" onclick="delHistEntry(${realI})">✕</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.toggleHistCard = function() {
+    const body = $('histBody');
+    const chev = $('histChev');
+    if (!body) return;
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? 'block' : 'none';
+    if (chev) chev.classList.toggle('open', isHidden);
+  };
+
+  window.addManualHistEntry = function() {
+    const changes = ($('manualChanges')?.value ?? '').trim();
+    if (!changes) { $('manualChanges')?.focus(); return; }
+    histData.push({
+      version: $('metaVersion').value.trim() || '—',
+      date:    todayStr(),
+      editor:  $('metaAuthor').value.trim()  || '—',
+      changes,
+    });
+    save(KEY_HIST, histData);
+    if ($('manualChanges')) $('manualChanges').value = '';
+    renderHistTab();
+  };
+
+  window.delHistEntry = function(i) {
+    histData.splice(i, 1);
+    save(KEY_HIST, histData);
+    renderHistTab();
+  };
+
+  function checkReviewDate(reviewStr) {
+    const el = $('reviewAlert');
+    if (!el) return;
+    if (!reviewStr) { el.style.display = 'none'; return; }
+    const diffDays = Math.ceil((new Date(reviewStr) - new Date()) / 86400000);
+    if (diffDays < 0) {
+      el.className = 'reviewAlert danger';
+      el.style.display = 'block';
+      el.textContent = `🚨 BCP 검토 필요: 다음 검토일(${reviewStr})이 ${Math.abs(diffDays)}일 경과했습니다. 즉시 검토를 진행하세요.`;
+    } else if (diffDays <= 30) {
+      el.className = 'reviewAlert warn';
+      el.style.display = 'block';
+      el.textContent = `⚠️ BCP 검토 예정: ${reviewStr}까지 ${diffDays}일 남았습니다. 검토를 준비하세요.`;
+    } else {
+      el.style.display = 'none';
+    }
   }
 
   /* ── 섹션2: BCP 전략 ── */
