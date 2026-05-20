@@ -40,11 +40,6 @@
 
     <div class="sidebar-section" data-section="education">
       <a href="${H("/education/index.html")}" class="sidebar-section-title">📚 0. Education Center (교육센터)</a>
-      <div class="sub-menu">
-        <a href="${H("/education/index.html")}">BCM 기초 · ISO 22301 해설</a>
-        <a href="${H("/education/index.html")}">실습 가이드 · 업종별 사례</a>
-        <a href="${H("/education/index.html")}">인증 준비 체크리스트</a>
-      </div>
     </div>
 
     <div class="sidebar-section" data-section="governance">
