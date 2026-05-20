@@ -162,12 +162,12 @@
   // ✅ 링크가 h1 스타일을 망치지 않게 보정 (style.css 수정 없이)
   const st = document.createElement("style");
   st.textContent = `
-    .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; padding-bottom:12px; border-bottom:0.5px solid rgba(100,116,139,.18); margin-bottom:2px; }
-    .sidebar-brand{ display:flex; align-items:center; gap:9px; }
-    .sidebar-brand-icon{ font-size:22px; line-height:1; flex-shrink:0; }
-    .sidebar-brand-text{ display:flex; align-items:baseline; line-height:1; }
-    .sidebar-brand-bcms{ font-size:19px; font-weight:800; letter-spacing:-.025em; background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .sidebar-brand-portal{ font-size:19px; font-weight:300; color:#64748b; letter-spacing:.01em; }
+    .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; padding:4px 0 16px; border-bottom:0.5px solid rgba(100,116,139,.18); margin-bottom:2px; }
+    .sidebar-brand{ display:flex; align-items:center; gap:11px; }
+    .sidebar-brand-icon{ font-size:28px; line-height:1; flex-shrink:0; }
+    .sidebar-brand-text{ display:flex; align-items:baseline; gap:5px; line-height:1; }
+    .sidebar-brand-bcms{ font-size:24px; font-weight:800; letter-spacing:-.03em; background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .sidebar-brand-portal{ font-size:16px; font-weight:300; color:#64748b; letter-spacing:.01em; }
 
     /* ── 1-2: 다크모드 버튼 오른쪽 상단 통일 ── */
     .theme-toggle {
