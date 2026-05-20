@@ -434,7 +434,11 @@ const PHASES = [
 /* ─── Render PDCA ───────────────────────────────────────────── */
 function renderPDCA() {
   const phaseVals = PHASES.map(p => p.avgFn());
-  const overall   = avg(...phaseVals);
+  // PLAN/DO/CHECK/ACT 4단계 전체 합산 ÷ 4 (데이터 없는 단계는 0으로 처리)
+  const allNull = phaseVals.every(v => v === null);
+  const overall = allNull
+    ? null
+    : clamp(Math.round(phaseVals.reduce((a, v) => a + (v ?? 0), 0) / PHASES.length));
   const gc = overall === null ? '#6b7280' : overall >= 80 ? '#16a34a' : overall >= 50 ? '#d97706' : '#dc2626';
 
   setGauge('gaugePDCA', 'pdcaPct', overall, gc);
