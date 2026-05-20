@@ -355,44 +355,44 @@
   };
 
   const QUIZZES = [
-    // 0: BCM 기초
+    // 0: BCM 기초 — 정답 순서: A, A, B, C, A (인덱스: 0, 0, 1, 2, 0)
     [
       { q:'RTO(복구 목표 시간)를 올바르게 설명한 것은?', opts:['업무 중단 후 정상 운영으로 복구해야 하는 최대 허용 시간','데이터 손실을 허용하는 최대 시점','업무 중단 시 조직이 버틸 수 있는 최대 기간','최소 유지해야 할 업무 서비스 수준'], ans:0 },
       { q:'MTPD와 RTO의 올바른 관계는?', opts:['MTPD > RTO (MTPD가 더 길다)','MTPD < RTO (RTO가 더 길다)','MTPD = RTO (같아야 한다)','두 지표는 서로 독립적으로 설정한다'], ans:0 },
-      { q:'BCP(업무연속성 계획)의 주요 목적은?', opts:['업무 중단 시 핵심업무의 연속성을 확보하기 위한 사전 계획','IT 시스템 보안을 강화하는 계획','원가 절감을 위한 업무 효율화 계획','신제품 출시를 위한 사업 계획'], ans:0 },
-      { q:'EOP(비상대응절차)는 주로 언제 사용하나?', opts:['재난·비상상황 발생 직후 초동 대응 시','연간 감사 실시 시','IT 시스템 정기 백업 수행 시','신규 직원 입사 교육 시'], ans:0 },
+      { q:'BCP(업무연속성 계획)의 주요 목적은?', opts:['IT 시스템 보안을 강화하는 계획','업무 중단 시 핵심업무의 연속성을 확보하기 위한 사전 계획','원가 절감을 위한 업무 효율화 계획','신제품 출시를 위한 사업 계획'], ans:1 },
+      { q:'EOP(비상대응절차)는 주로 언제 사용하나?', opts:['연간 감사 실시 시','IT 시스템 정기 백업 수행 시','재난·비상상황 발생 직후 초동 대응 시','신규 직원 입사 교육 시'], ans:2 },
       { q:'ISO 22301은 어떤 국제 표준인가?', opts:['업무연속성 관리(BCMS) 국제 표준','정보보안 관리(ISMS) 국제 표준','품질 경영(QMS) 국제 표준','환경 경영(EMS) 국제 표준'], ans:0 },
     ],
-    // 1: ISO 22301
+    // 1: ISO 22301 — 정답 순서: B, A, C, B, A (인덱스: 1, 0, 2, 1, 0)
     [
-      { q:'ISO 22301의 4조에서 요구하는 핵심 사항은?', opts:['조직 상황 이해 (내·외부 이슈, 이해관계자, 적용 범위)','리더십과 경영진 의지','BCMS 기획 및 목표 설정','성과 모니터링 및 측정'], ans:0 },
+      { q:'ISO 22301의 4조에서 요구하는 핵심 사항은?', opts:['리더십과 경영진 의지','조직 상황 이해 (내·외부 이슈, 이해관계자, 적용 범위)','BCMS 기획 및 목표 설정','성과 모니터링 및 측정'], ans:1 },
       { q:'ISO 22301에서 BIA(업무영향분석)는 어느 조항에 해당하나?', opts:['8.2조 (사업영향분석)','5.2조 (정책)','6.1조 (리스크와 기회)','9.1조 (모니터링과 측정)'], ans:0 },
-      { q:'BCMS 정책 수립은 ISO 22301 어느 조항의 요구사항인가?', opts:['5.2조 (정책)','4.3조 (범위)','6.2조 (BC 목표)','8.1조 (운용 기획)'], ans:0 },
-      { q:'ISO 22301에서 내부심사(Internal Audit)는 어느 조항인가?', opts:['9.2조 (내부심사)','8.3조 (BC 전략)','7.4조 (의사소통)','10.1조 (부적합 및 시정조치)'], ans:0 },
+      { q:'BCMS 정책 수립은 ISO 22301 어느 조항의 요구사항인가?', opts:['4.3조 (범위)','6.2조 (BC 목표)','5.2조 (정책)','8.1조 (운용 기획)'], ans:2 },
+      { q:'ISO 22301에서 내부심사(Internal Audit)는 어느 조항인가?', opts:['8.3조 (BC 전략)','9.2조 (내부심사)','7.4조 (의사소통)','10.1조 (부적합 및 시정조치)'], ans:1 },
       { q:'ISO 22301의 10조에서 다루는 주제는?', opts:['개선 (부적합 조치, CAPA, 지속적 개선)','훈련 및 테스팅','문서화된 정보 관리','경영검토'], ans:0 },
     ],
-    // 2: 실습 가이드
+    // 2: 실습 가이드 — 정답 순서: A, C, B, A, B (인덱스: 0, 2, 1, 0, 1)
     [
       { q:'BIA 작성의 올바른 순서는?', opts:['핵심업무 식별 → 영향도 평가 → MTPD 설정 → MBCO 정의 → RTO/RPO 결정','MTPD 설정 → 핵심업무 식별 → 영향도 평가','RTO 결정 → BIA 작성 → MTPD 설정','리스크 평가 → BIA → MTPD 설정'], ans:0 },
-      { q:'MBCO(최소 업무연속성 목표)를 올바르게 설명한 것은?', opts:['위기 상황에서 최소한 유지해야 할 업무 서비스 수준','업무 복구 완료 기준 시간','최대 업무 처리 가능 용량','정상 운영 대비 100% 목표 수준'], ans:0 },
-      { q:'RTO 설정 시 반드시 만족해야 하는 조건은?', opts:['RTO는 반드시 MTPD보다 짧아야 한다','RTO는 RPO보다 길어야 한다','RTO는 MBCO와 동일해야 한다','RTO는 BCP 전략 수립 이후 결정한다'], ans:0 },
+      { q:'MBCO(최소 업무연속성 목표)를 올바르게 설명한 것은?', opts:['업무 복구 완료 기준 시간','최대 업무 처리 가능 용량','위기 상황에서 최소한 유지해야 할 업무 서비스 수준','정상 운영 대비 100% 목표 수준'], ans:2 },
+      { q:'RTO 설정 시 반드시 만족해야 하는 조건은?', opts:['RTO는 RPO보다 길어야 한다','RTO는 반드시 MTPD보다 짧아야 한다','RTO는 MBCO와 동일해야 한다','RTO는 BCP 전략 수립 이후 결정한다'], ans:1 },
       { q:'RPO(복구 목표 시점)는 주로 어떤 영역에서 중요하나?', opts:['IT·데이터 복구 (허용 가능한 데이터 손실 시점 결정)','HR·인사 관리 복구','마케팅 캠페인 복구','재무 결산 프로세스'], ans:0 },
-      { q:'BIA 완료 후 바로 다음에 수행해야 할 것은?', opts:['리스크 평가 (RA)','BCP 전략 수립','훈련 실시','ISO 갭분석'], ans:0 },
+      { q:'BIA 완료 후 바로 다음에 수행해야 할 것은?', opts:['BCP 전략 수립','리스크 평가 (RA)','훈련 실시','ISO 갭분석'], ans:1 },
     ],
-    // 3: 업종별 사례
+    // 3: 업종별 사례 — 정답 순서: C, A, B, A, C (인덱스: 2, 0, 1, 0, 2)
     [
-      { q:'금융권 BCM에서 가장 중요하게 고려해야 할 사항은?', opts:['결제·핵심 시스템 연속성 및 금융 규제 요구사항 충족','생산라인 연속성 확보','물류 네트워크 유지','고객 서비스 센터 단독 운영'], ans:0 },
+      { q:'금융권 BCM에서 가장 중요하게 고려해야 할 사항은?', opts:['생산라인 연속성 확보','물류 네트워크 유지','결제·핵심 시스템 연속성 및 금융 규제 요구사항 충족','고객 서비스 센터 단독 운영'], ans:2 },
       { q:'IT/데이터센터 BCM의 핵심 전략은?', opts:['이중화 시스템 구축과 재해복구센터(DR센터) 운영','대체 사무실 확보','수작업 전환 절차 마련','직원 대피 훈련'], ans:0 },
-      { q:'제조업에서 공급망 관리가 BCM 핵심 항목인 이유는?', opts:['핵심 부품·소재 공급 중단이 전체 생산을 마비시킬 수 있기 때문','IT 시스템 복구가 어렵기 때문','인력 부족 문제가 빈번하기 때문','고객 응대 서비스 품질 유지 때문'], ans:0 },
+      { q:'제조업에서 공급망 관리가 BCM 핵심 항목인 이유는?', opts:['IT 시스템 복구가 어렵기 때문','핵심 부품·소재 공급 중단이 전체 생산을 마비시킬 수 있기 때문','인력 부족 문제가 빈번하기 때문','고객 응대 서비스 품질 유지 때문'], ans:1 },
       { q:'의료기관 BCM에서 랜섬웨어 대응 시 최우선 사항은?', opts:['수기 대체 절차 즉각 발동 및 핵심 환자 데이터 복구','소셜미디어 공지','영업 중단 공표','보험 청구 접수'], ans:0 },
-      { q:'업종별 BCM 수립 시 가장 먼저 고려해야 할 것은?', opts:['해당 업종의 규제 및 법적 의무 요구사항','경쟁사 BCM 수준 분석','글로벌 벤치마킹 결과','예산 규모'], ans:0 },
+      { q:'업종별 BCM 수립 시 가장 먼저 고려해야 할 것은?', opts:['경쟁사 BCM 수준 분석','글로벌 벤치마킹 결과','해당 업종의 규제 및 법적 의무 요구사항','예산 규모'], ans:2 },
     ],
-    // 4: 인증 준비
+    // 4: 인증 준비 — 정답 순서: B, C, A, B, A (인덱스: 1, 2, 0, 1, 0)
     [
-      { q:'ISO 22301 인증 심사는 몇 단계로 구성되나?', opts:['2단계 (Stage 1: 문서심사, Stage 2: 현장심사)','1단계','3단계','4단계'], ans:0 },
-      { q:'Stage 1 심사의 주요 목적은?', opts:['문서 검토 및 조직의 현장 준비도 확인','훈련 참관 및 실시간 평가','경영진 단독 인터뷰','재무 현황 점검'], ans:0 },
+      { q:'ISO 22301 인증 심사는 몇 단계로 구성되나?', opts:['1단계','2단계 (Stage 1: 문서심사, Stage 2: 현장심사)','3단계','4단계'], ans:1 },
+      { q:'Stage 1 심사의 주요 목적은?', opts:['훈련 참관 및 실시간 평가','경영진 단독 인터뷰','문서 검토 및 조직의 현장 준비도 확인','재무 현황 점검'], ans:2 },
       { q:'ISO 22301 인증서의 유효기간은?', opts:['3년 (연 1회 사후심사)','1년','5년','2년'], ans:0 },
-      { q:'ISO 22301 심사에서 가장 많이 지적받는 사항은?', opts:['훈련 기록 미흡 및 MTPD/RTO 설정 근거 부재','사무실 환경 불량','직원 수 부족','웹사이트 미비'], ans:0 },
+      { q:'ISO 22301 심사에서 가장 많이 지적받는 사항은?', opts:['사무실 환경 불량','훈련 기록 미흡 및 MTPD/RTO 설정 근거 부재','직원 수 부족','웹사이트 미비'], ans:1 },
       { q:'인증 심사 전 반드시 완료해야 할 내부 활동은?', opts:['내부심사 및 경영검토 완료','외부 컨설팅 의무 수행','전사 대피 훈련 1회 완료','글로벌 벤치마킹 수행'], ans:0 },
     ],
   ];
@@ -400,7 +400,7 @@
   /* ── State ── */
   let currentStage = 0;
   let prog = loadProg();
-  let quizState = { answers: {}, submitted: false };
+  let quizState = { answers: {}, submitted: false, started: false, currentQ: 0 };
 
   /* ── Utils ── */
   const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -565,10 +565,10 @@
       return;
     }
 
-    const qs       = QUIZZES[currentStage];
-    const passed   = prog.stagesPassed[currentStage];
-    const score    = prog.quizScores[currentStage];
-    const isLast   = currentStage === STAGES.length - 1;
+    const qs     = QUIZZES[currentStage];
+    const passed = prog.stagesPassed[currentStage];
+    const score  = prog.quizScores[currentStage];
+    const isLast = currentStage === STAGES.length - 1;
 
     const badge = passed
       ? `<span class="quizPassBadge pass">✓ 통과 (${score}점)</span>`
@@ -576,62 +576,125 @@
         ? `<span class="quizPassBadge fail">미통과 (${score}점)</span>`
         : `<span class="quizPassBadge pending">미응시</span>`;
 
-    const qHTML = qs.map((q, qi) => {
-      const ua   = quizState.answers[qi];
-      const done = quizState.submitted;
-      return `<div class="quizQ">
-        <div class="quizQNum">문제 ${qi + 1} / ${qs.length}</div>
-        <div class="quizQText">${esc(q.q)}</div>
-        <div class="quizOptions">
-          ${q.opts.map((opt, oi) => {
-            let cls = 'quizOption';
-            if (done) {
-              if (oi === q.ans) cls += ' correct no-hover';
-              else if (oi === ua && oi !== q.ans) cls += ' wrong no-hover';
-              else cls += ' no-hover';
-            } else if (oi === ua) cls += ' selected';
-            const letter = String.fromCharCode(65 + oi);
-            const click  = done ? '' : `onclick="selectAnswer(${qi},${oi})"`;
-            return `<div class="${cls}" ${click}>
-              <div class="quizOptLetter">${letter}</div>
-              <div class="quizOptText">${esc(opt)}</div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`;
-    }).join('');
-
-    let footer = '';
-    if (!quizState.submitted) {
-      footer = `<div></div><button class="btn btn-primary" onclick="submitQuiz()">제출하기</button>`;
-    } else {
-      const correct  = qs.filter((q, i) => quizState.answers[i] === q.ans).length;
-      const scoreVal = Math.round(correct / qs.length * 100);
-      const ok       = scoreVal >= 70;
-      footer = `
-        <div class="quizResult ${ok ? 'pass' : 'fail'}">
-          ${ok ? '✓ 통과!' : '✗ 미통과'} — ${correct}/${qs.length} 정답 (${scoreVal}점)${ok ? '' : ' · 70점 이상 필요'}
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn" onclick="retryQuiz()">다시 풀기</button>
-          ${ok && !isLast ? `<button class="btn btn-primary" onclick="goNextStage()">다음 단계로 →</button>` : ''}
-          ${ok && isLast  ? `<button class="btn btn-primary" onclick="alert('🎉 전 과정 완료! 수고하셨습니다.')">완료 축하 🎉</button>` : ''}
-        </div>`;
-    }
-
-    el.innerHTML = `
+    const head = `
       <div class="quizHead">
         <h3>📝 ${esc(STAGES[currentStage].title)} 퀴즈 — ${qs.length}문항 · 70점 이상 통과</h3>
         ${badge}
-      </div>
-      <div class="quizBody">${qHTML}<div class="quizFooter">${footer}</div></div>`;
+      </div>`;
+
+    /* ── 응시 시작 전 ── */
+    if (!quizState.started && !quizState.submitted) {
+      const prevNote = score !== null
+        ? `<div style="margin-top:6px;font-size:13px;color:var(--text-2);">이전 점수: <strong style="color:${score>=70?'#16a34a':'#dc2626'}">${score}점</strong></div>` : '';
+      el.innerHTML = head + `
+        <div class="quizBody" style="text-align:center;padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <div style="font-size:46px;line-height:1;">📝</div>
+          <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(STAGES[currentStage].title)} 단계 확인 퀴즈</div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;max-width:360px;">
+            ${qs.length}문항 · 문항당 ${Math.round(100/qs.length)}점<br>
+            각 문항을 선택한 뒤 다음 문제로 이동하세요.<br>
+            <strong style="color:var(--accent);">70점 이상</strong>이면 다음 단계가 잠금 해제됩니다.
+          </div>
+          ${prevNote}
+          <button class="btn btn-primary" style="margin-top:10px;padding:10px 36px;font-size:14px;" onclick="startQuiz()">퀴즈 응시 시작</button>
+        </div>`;
+      return;
+    }
+
+    /* ── 제출 후 결과 화면 ── */
+    if (quizState.submitted) {
+      const correct  = qs.filter((q, i) => quizState.answers[i] === q.ans).length;
+      const scoreVal = Math.round(correct / qs.length * 100);
+      const ok       = scoreVal >= 70;
+
+      const reviewHTML = qs.map((q, qi) => {
+        const ua = quizState.answers[qi];
+        return `<div class="quizQ">
+          <div class="quizQNum">문제 ${qi + 1} / ${qs.length}</div>
+          <div class="quizQText">${esc(q.q)}</div>
+          <div class="quizOptions">
+            ${q.opts.map((opt, oi) => {
+              let cls = 'quizOption no-hover';
+              if (oi === q.ans) cls += ' correct';
+              else if (oi === ua && oi !== q.ans) cls += ' wrong';
+              const letter = String.fromCharCode(65 + oi);
+              return `<div class="${cls}">
+                <div class="quizOptLetter">${letter}</div>
+                <div class="quizOptText">${esc(opt)}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('');
+
+      el.innerHTML = head + `
+        <div class="quizBody">
+          <div style="text-align:center;padding:24px 0 22px;border-bottom:0.5px solid var(--border);margin-bottom:24px;">
+            <div style="font-size:44px;line-height:1;margin-bottom:12px;">${ok ? '🎉' : '😓'}</div>
+            <div class="quizResult ${ok ? 'pass' : 'fail'}" style="font-size:20px;margin-bottom:8px;">
+              ${ok ? '✓ 통과! 다음 단계 잠금 해제' : '✗ 미통과'} — ${correct}/${qs.length} 정답 (${scoreVal}점)
+            </div>
+            <div style="font-size:13px;color:var(--text-2);">${ok ? '다음 단계로 이동하거나 내용을 다시 복습해보세요.' : '70점 이상이 필요합니다. 내용을 복습 후 재도전해보세요.'}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px;">
+              <button class="btn" onclick="retryQuiz()">재응시하기</button>
+              ${ok && !isLast ? `<button class="btn btn-primary" onclick="goNextStage()">다음 단계로 →</button>` : ''}
+              ${ok && isLast  ? `<button class="btn btn-primary" onclick="alert('🎉 전 과정 완료! 수고하셨습니다.')">완료 축하 🎉</button>` : ''}
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;">📋 정답 해설</div>
+          ${reviewHTML}
+        </div>`;
+      return;
+    }
+
+    /* ── 응시 중: 한 문제씩 ── */
+    const qi      = quizState.currentQ;
+    const q       = qs[qi];
+    const ua      = quizState.answers[qi];
+    const isLastQ = qi === qs.length - 1;
+
+    const dotsHTML = qs.map((_, i) => {
+      let s = 'width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .15s;';
+      s += i < qi ? 'background:#16a34a;' : i === qi ? 'background:var(--accent);' : 'background:var(--border-strong);';
+      return `<div style="${s}"></div>`;
+    }).join('');
+
+    const canProceed = ua !== undefined;
+    const actionBtn  = isLastQ
+      ? `<button class="btn btn-primary" ${canProceed ? `onclick="submitQuiz()"` : `disabled style="opacity:.45;cursor:not-allowed;"`}>제출하기</button>`
+      : `<button class="btn btn-primary" ${canProceed ? `onclick="nextQuestion()"` : `disabled style="opacity:.45;cursor:not-allowed;"`}>다음 문제 →</button>`;
+
+    el.innerHTML = head + `
+      <div class="quizBody">
+        <div class="quizQ">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="display:flex;gap:6px;align-items:center;">${dotsHTML}</div>
+            <div class="quizQNum" style="margin-bottom:0;">문제 ${qi + 1} / ${qs.length}</div>
+          </div>
+          <div class="quizQText">${esc(q.q)}</div>
+          <div class="quizOptions">
+            ${q.opts.map((opt, oi) => {
+              const cls = oi === ua ? 'quizOption selected' : 'quizOption';
+              const letter = String.fromCharCode(65 + oi);
+              return `<div class="${cls}" onclick="selectAnswer(${qi},${oi})">
+                <div class="quizOptLetter">${letter}</div>
+                <div class="quizOptText">${esc(opt)}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="quizFooter">
+          <div style="font-size:12px;color:var(--text-3);">${canProceed ? '' : '선택지를 골라주세요'}</div>
+          ${actionBtn}
+        </div>
+      </div>`;
   }
 
   /* ── Actions ── */
   window.selectStage = function(id) {
     if (!isUnlocked(id)) return;
     currentStage = id;
-    quizState = { answers: {}, submitted: false };
+    quizState = { answers: {}, submitted: false, started: false, currentQ: 0 };
     renderAll();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -640,6 +703,21 @@
     if (quizState.submitted) return;
     quizState.answers[qi] = oi;
     renderQuiz();
+  };
+
+  window.startQuiz = function() {
+    quizState.started  = true;
+    quizState.currentQ = 0;
+    renderQuiz();
+    document.getElementById('quizPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.nextQuestion = function() {
+    const qs = QUIZZES[currentStage];
+    if (quizState.currentQ < qs.length - 1) {
+      quizState.currentQ++;
+      renderQuiz();
+    }
   };
 
   window.submitQuiz = function() {
@@ -654,7 +732,7 @@
   };
 
   window.retryQuiz = function() {
-    quizState = { answers: {}, submitted: false };
+    quizState = { answers: {}, submitted: false, started: false, currentQ: 0 };
     renderQuiz();
   };
 
