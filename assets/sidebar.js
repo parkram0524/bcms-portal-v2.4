@@ -31,7 +31,12 @@
 
     <!-- ✅ 상단 타이틀 클릭 → BCMS 대시보드로 이동 -->
     <a href="${H("/index.html")}" class="sidebar-brand-link" aria-label="BCMS Dashboard로 이동">
-      <h1>BCMS Portal v2</h1>
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-icon">🛡️</span>
+        <span class="sidebar-brand-text">
+          <span class="sidebar-brand-bcms">BCMS</span><span class="sidebar-brand-portal"> Portal</span>
+        </span>
+      </div>
     </a>
 
     <div class="sidebar-section" data-section="home">
@@ -157,9 +162,12 @@
   // ✅ 링크가 h1 스타일을 망치지 않게 보정 (style.css 수정 없이)
   const st = document.createElement("style");
   st.textContent = `
-    .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; }
-    .sidebar-brand-link:hover{ opacity:.95; }
-    .sidebar-brand-link h1{ cursor:pointer; }
+    .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; padding-bottom:12px; border-bottom:0.5px solid rgba(100,116,139,.18); margin-bottom:2px; }
+    .sidebar-brand{ display:flex; align-items:center; gap:9px; }
+    .sidebar-brand-icon{ font-size:22px; line-height:1; flex-shrink:0; }
+    .sidebar-brand-text{ display:flex; align-items:baseline; line-height:1; }
+    .sidebar-brand-bcms{ font-size:19px; font-weight:800; letter-spacing:-.025em; background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .sidebar-brand-portal{ font-size:19px; font-weight:300; color:#64748b; letter-spacing:.01em; }
 
     /* ── 1-2: 다크모드 버튼 오른쪽 상단 통일 ── */
     .theme-toggle {
