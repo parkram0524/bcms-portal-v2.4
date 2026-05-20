@@ -121,6 +121,23 @@
       <button class="sidebar-guide-btn" id="bcmsGuideBtn" type="button">📋 수립 가이드</button>
     </div>
 
+    <div class="sidebar-security">
+      <div class="sidebar-security-badge">
+        <span class="sidebar-security-icon">🔒</span>
+        <span class="sidebar-security-text">로컬 저장 · 외부 전송 없음</span>
+      </div>
+      <div class="sidebar-security-desc">
+        입력하신 모든 데이터는 귀사의 브라우저에만 저장되며, 외부 서버로 전송되지 않습니다.
+      </div>
+      <!--
+        [Supabase 전환 시 아래 문구로 교체]
+        "모든 데이터는 AES-256 암호화하여 저장됩니다."
+        "데이터 전송은 TLS 암호화 프로토콜로 보호됩니다."
+        "인프라는 SOC 2 Type 2 인증 AWS 서버를 사용합니다."
+        "귀사의 데이터는 타 기업과 완전히 격리되어 저장됩니다."
+      -->
+    </div>
+
     <div class="sidebar-contact">
       문의·피드백: <a href="mailto:drogdembaba@naver.com" class="sidebar-contact-link">drogdembaba@naver.com</a>
     </div>
@@ -196,6 +213,34 @@
       text-decoration: none;
     }
     .sidebar-contact-link:hover { text-decoration: underline; }
+
+    /* ── 보안 배지 ── */
+    .sidebar-security {
+      margin: 0 10px 2px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 0.5px solid rgba(34,197,94,.22);
+      background: rgba(34,197,94,.05);
+    }
+    .sidebar-security-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+    .sidebar-security-icon { font-size: 11px; line-height: 1; flex-shrink: 0; }
+    .sidebar-security-text {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #16a34a;
+      letter-spacing: .01em;
+    }
+    .sidebar-security-desc {
+      font-size: 10px;
+      color: var(--sb-sub);
+      line-height: 1.55;
+      word-break: keep-all;
+    }
 
     .sidebar-legal {
       padding: 7px 14px 10px;
