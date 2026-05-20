@@ -142,7 +142,8 @@
     .lockDesc { font-size: 13px; color: var(--text-2); text-align: center; line-height: 1.6; }
 
     /* ── Quiz ── */
-    .quizPanel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .quizPanel { background: #ffffff; border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    [data-theme="dark"] .quizPanel { background: #111111; }
     .quizHead { padding: 16px 24px; border-bottom: 0.5px solid var(--border); background: var(--surface-hover); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
     .quizHead h3 { font-size: 15px; font-weight: 700; color: var(--text); }
     .quizPassBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
@@ -154,26 +155,57 @@
     .quizQNum { font-size: 11px; font-weight: 700; color: var(--text-3); margin-bottom: 5px; }
     .quizQText { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 10px; line-height: 1.55; word-break: keep-all; }
     .quizOptions { display: flex; flex-direction: column; gap: 6px; }
-    .quizOption { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 0.5px solid var(--border); border-radius: var(--r-sm); cursor: pointer; transition: all .12s; background: var(--bg); }
-    .quizOption:hover:not(.no-hover) { border-color: var(--accent); background: var(--accent-subtle); }
-    .quizOption.selected { border-color: var(--accent); background: var(--accent-subtle); }
-    .quizOption.correct  { border-color: rgba(34,197,94,.5);  background: rgba(34,197,94,.08); cursor: default; }
-    .quizOption.wrong    { border-color: rgba(239,68,68,.5);   background: rgba(239,68,68,.08);  cursor: default; }
+    .quizOption {
+      display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
+      border: 1.5px solid #d1d5db; border-radius: var(--r-sm);
+      cursor: pointer; transition: all .12s; background: #f8fafc;
+    }
+    [data-theme="dark"] .quizOption { border-color: rgba(255,255,255,.13); background: #1a1a2e; }
+    .quizOption:hover:not(.no-hover) { border-color: #2563eb; background: rgba(37,99,235,.05); }
+    .quizOption.selected { border-color: #2563eb; background: rgba(37,99,235,.07); }
+    .quizOption.correct  { border-color: rgba(34,197,94,.6);  background: rgba(34,197,94,.08); cursor: default; }
+    .quizOption.wrong    { border-color: rgba(239,68,68,.6);   background: rgba(239,68,68,.08);  cursor: default; }
     .quizOptLetter {
-      width: 24px; height: 24px; border-radius: 50%; border: 0.5px solid var(--border-strong);
-      background: var(--surface); display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; color: var(--text-2); flex-shrink: 0;
+      width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #9ca3af;
+      background: #ffffff; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #374151; flex-shrink: 0;
       transition: all .12s; font-family: "SF Mono","Consolas",monospace;
     }
-    .quizOption.selected .quizOptLetter { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .quizOption.correct  .quizOptLetter { background: #16a34a; color: #fff; border-color: #16a34a; }
-    .quizOption.wrong    .quizOptLetter { background: #dc2626; color: #fff; border-color: #dc2626; }
-    .quizOptText { font-size: 13px; color: var(--text); line-height: 1.45; word-break: keep-all; flex: 1; }
+    [data-theme="dark"] .quizOptLetter { border-color: rgba(255,255,255,.3); background: #222; color: #ccc; }
+    .quizOption.selected .quizOptLetter { background: #2563eb; color: #fff !important; border-color: #2563eb; }
+    .quizOption.correct  .quizOptLetter { background: #16a34a; color: #fff !important; border-color: #16a34a; }
+    .quizOption.wrong    .quizOptLetter { background: #dc2626; color: #fff !important; border-color: #dc2626; }
+    .quizOptText { font-size: 13px; color: #111111 !important; line-height: 1.45; word-break: keep-all; flex: 1; }
+    [data-theme="dark"] .quizOptText { color: #ededed !important; }
+    .quizOption.selected .quizOptText { color: #1d4ed8 !important; font-weight: 600; }
+    [data-theme="dark"] .quizOption.selected .quizOptText { color: #93c5fd !important; }
     .quizFooter { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 0.5px solid var(--border); flex-wrap: wrap; gap: 10px; }
     .quizResult { font-size: 14px; font-weight: 700; }
     .quizResult.pass { color: #16a34a; }
     .quizResult.fail { color: #dc2626; }
     .quizLockedMsg { padding: 20px 24px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+    /* ── Quiz 전용 버튼 (전역 style.css !important 우선순위 회피) ── */
+    .quizBtnPrimary {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #2563eb !important; color: #ffffff !important;
+      border: none !important; border-radius: 8px;
+      font-size: 13px; font-weight: 700; padding: 9px 20px;
+      cursor: pointer; transition: background .12s, transform .08s; font-family: inherit;
+    }
+    .quizBtnPrimary:hover:not([disabled]) { background: #1d4ed8 !important; }
+    .quizBtnPrimary:active:not([disabled]) { transform: scale(.98); }
+    .quizBtnPrimary[disabled] { opacity: .42; cursor: not-allowed; }
+    .quizBtnPrimary.lg { font-size: 14px; padding: 11px 36px; }
+    .quizBtnSecondary {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #64748b !important; color: #ffffff !important;
+      border: none !important; border-radius: 8px;
+      font-size: 13px; font-weight: 600; padding: 9px 20px;
+      cursor: pointer; transition: background .12s, transform .08s; font-family: inherit;
+    }
+    .quizBtnSecondary:hover { background: #475569 !important; }
+    .quizBtnSecondary:active { transform: scale(.98); }
 
     /* ── Buttons ── */
     .btn { font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 8px; border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text); cursor: pointer; transition: all .12s; font-family: inherit; }
@@ -596,7 +628,7 @@
             <strong style="color:var(--accent);">70점 이상</strong>이면 다음 단계가 잠금 해제됩니다.
           </div>
           ${prevNote}
-          <button class="btn btn-primary" style="margin-top:10px;padding:10px 36px;font-size:14px;" onclick="startQuiz()">퀴즈 응시 시작</button>
+          <button class="quizBtnPrimary lg" style="margin-top:10px;" onclick="startQuiz()">퀴즈 응시 시작</button>
         </div>`;
       return;
     }
@@ -636,9 +668,9 @@
             </div>
             <div style="font-size:13px;color:var(--text-2);">${ok ? '다음 단계로 이동하거나 내용을 다시 복습해보세요.' : '70점 이상이 필요합니다. 내용을 복습 후 재도전해보세요.'}</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px;">
-              <button class="btn" onclick="retryQuiz()">재응시하기</button>
-              ${ok && !isLast ? `<button class="btn btn-primary" onclick="goNextStage()">다음 단계로 →</button>` : ''}
-              ${ok && isLast  ? `<button class="btn btn-primary" onclick="alert('🎉 전 과정 완료! 수고하셨습니다.')">완료 축하 🎉</button>` : ''}
+              <button class="quizBtnSecondary" onclick="retryQuiz()">재응시하기</button>
+              ${ok && !isLast ? `<button class="quizBtnPrimary" onclick="goNextStage()">다음 단계로 →</button>` : ''}
+              ${ok && isLast  ? `<button class="quizBtnPrimary" onclick="alert('🎉 전 과정 완료! 수고하셨습니다.')">완료 축하 🎉</button>` : ''}
             </div>
           </div>
           <div style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;">📋 정답 해설</div>
@@ -661,8 +693,8 @@
 
     const canProceed = ua !== undefined;
     const actionBtn  = isLastQ
-      ? `<button class="btn btn-primary" ${canProceed ? `onclick="submitQuiz()"` : `disabled style="opacity:.45;cursor:not-allowed;"`}>제출하기</button>`
-      : `<button class="btn btn-primary" ${canProceed ? `onclick="nextQuestion()"` : `disabled style="opacity:.45;cursor:not-allowed;"`}>다음 문제 →</button>`;
+      ? `<button class="quizBtnPrimary" ${canProceed ? `onclick="submitQuiz()"` : `disabled`}>제출하기</button>`
+      : `<button class="quizBtnPrimary" ${canProceed ? `onclick="nextQuestion()"` : `disabled`}>다음 문제 →</button>`;
 
     el.innerHTML = head + `
       <div class="quizBody">
