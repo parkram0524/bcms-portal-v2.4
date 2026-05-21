@@ -1,5 +1,45 @@
 (function () {
   // =========================================================
+  // ✅ Supabase 인증 게이트 (빠른 경로 – SDK 없이 localStorage 확인)
+  // =========================================================
+  (function authGate() {
+    const PUBLIC_PAGES = ['auth.html', 'privacy.html', 'terms.html'];
+    const isPublic = PUBLIC_PAGES.some(p => window.location.pathname.includes(p));
+    if (isPublic) return;
+    try {
+      const session = localStorage.getItem('bcms_supabase_session');
+      if (!session) {
+        const depth = (window.location.pathname.match(/\//g) || []).length - 1;
+        const prefix = '../'.repeat(Math.max(0, depth - 1));
+        window.location.replace(prefix + 'auth.html');
+      }
+    } catch (e) { /* localStorage 사용 불가 환경에서는 통과 */ }
+  })();
+
+  // =========================================================
+  // ✅ Supabase SDK + supabase.js 동적 주입
+  // =========================================================
+  (function injectSupabase() {
+    const PUBLIC_PAGES = ['auth.html', 'privacy.html', 'terms.html'];
+    if (PUBLIC_PAGES.some(p => window.location.pathname.includes(p))) return;
+    if (document.querySelector('script[data-bcms-supabase]')) return; // 이미 주입됨
+
+    const depth = (window.location.pathname.match(/\//g) || []).length - 1;
+    const prefix = depth > 1 ? '../' : '';
+
+    const cdn = document.createElement('script');
+    cdn.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    cdn.setAttribute('data-bcms-supabase', 'cdn');
+    cdn.onload = function () {
+      const s = document.createElement('script');
+      s.src = prefix + 'assets/supabase.js';
+      s.setAttribute('data-bcms-supabase', 'init');
+      document.head.appendChild(s);
+    };
+    document.head.appendChild(cdn);
+  })();
+
+  // =========================================================
   // ✅ Deploy-safe base prefix
   // - Netlify root:      /governance/index.html
   // - GitHub Pages repo: /BCMS-PORTAL-V2/governance/index.html
@@ -129,18 +169,11 @@
     <div class="sidebar-security">
       <div class="sidebar-security-badge">
         <span class="sidebar-security-icon">🔒</span>
-        <span class="sidebar-security-text">로컬 저장 · 외부 전송 없음</span>
+        <span class="sidebar-security-text">클라우드 암호화 저장 · TLS 전송</span>
       </div>
       <div class="sidebar-security-desc">
-        입력하신 모든 데이터는 귀사의 브라우저에만 저장되며, 외부 서버로 전송되지 않습니다.
+        데이터는 AES-256 암호화로 저장되며 TLS로 전송됩니다. 귀사 데이터는 타 기업과 완전히 격리됩니다.
       </div>
-      <!--
-        [Supabase 전환 시 아래 문구로 교체]
-        "모든 데이터는 AES-256 암호화하여 저장됩니다."
-        "데이터 전송은 TLS 암호화 프로토콜로 보호됩니다."
-        "인프라는 SOC 2 Type 2 인증 AWS 서버를 사용합니다."
-        "귀사의 데이터는 타 기업과 완전히 격리되어 저장됩니다."
-      -->
     </div>
 
     <div class="sidebar-contact">

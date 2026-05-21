@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BCMS Portal - 로그인</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f8fafc;
+      --surface:  #ffffff;
+      --border:   rgba(100,116,139,.15);
+      --text:     #0f172a;
+      --text-2:   #475569;
+      --text-3:   #94a3b8;
+      --accent:   #0070f3;
+      --accent-subtle: rgba(0,112,243,.08);
+      --r:        12px;
+      --error:    #dc2626;
+      --success:  #16a34a;
+    }
+    [data-theme="dark"] {
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --border:   rgba(100,116,139,.25);
+      --text:     #f1f5f9;
+      --text-2:   #94a3b8;
+      --text-3:   #475569;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .auth-wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .auth-brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-brand-icon { font-size: 40px; line-height: 1; }
+    .auth-brand-title {
+      margin-top: 10px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .auth-brand-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+
+    .auth-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    }
+
+    .auth-tabs {
+      display: flex;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-2);
+      background: none;
+      border: none;
+      font-family: inherit;
+      transition: color .12s, background .12s;
+    }
+    .auth-tab.active {
+      color: var(--accent);
+      background: var(--accent-subtle);
+      border-bottom: 2px solid var(--accent);
+    }
+    .auth-tab:hover:not(.active) { background: rgba(0,0,0,.02); }
+
+    .auth-panel { padding: 28px; display: none; }
+    .auth-panel.active { display: block; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .12s, box-shadow .12s;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,112,243,.12);
+    }
+    .form-input::placeholder { color: var(--text-3); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 4px;
+      transition: opacity .12s, transform .08s;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: .9; }
+    .btn-primary:active:not(:disabled) { transform: scale(.99); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    .alert {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+    .alert.error   { background: rgba(220,38,38,.08);  color: var(--error);   border: 0.5px solid rgba(220,38,38,.2);  }
+    .alert.success { background: rgba(22,163,74,.08);  color: var(--success); border: 0.5px solid rgba(22,163,74,.2);  }
+    .alert.show    { display: block; }
+
+    .divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 18px 0; font-size: 12px; color: var(--text-3);
+    }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+
+    .form-hint { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+    .auth-footer a { color: var(--text-2); text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+    .auth-footer-sep { margin: 0 6px; }
+
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 이메일 인증 안내 */
+    .verify-box {
+      text-align: center; padding: 24px 0 8px;
+      display: none;
+    }
+    .verify-box .verify-icon { font-size: 40px; }
+    .verify-box .verify-title { font-size: 17px; font-weight: 700; margin-top: 10px; }
+    .verify-box .verify-desc  { font-size: 13px; color: var(--text-2); margin-top: 6px; line-height: 1.6; }
+    .verify-box.show { display: block; }
+
+    /* 테마 토글 */
+    .theme-toggle-auth {
+      position: fixed; top: 16px; right: 16px;
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 50%; width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px; box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    }
+
+    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle-auth" id="themeToggle" title="다크모드">🌙</button>
+
+  <div class="auth-wrap">
+    <!-- 브랜드 -->
+    <div class="auth-brand">
+      <div class="auth-brand-icon">🛡️</div>
+      <div class="auth-brand-title">BCMS Portal</div>
+      <div class="auth-brand-sub">ISO 22301 업무연속성경영 포털</div>
+    </div>
+
+    <!-- 카드 -->
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">로그인</button>
+        <button class="auth-tab"        id="tabSignup" onclick="switchTab('signup')">회원가입</button>
+      </div>
+
+      <!-- 로그인 패널 -->
+      <div class="auth-panel active" id="panelLogin">
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label" for="loginEmail">이메일</label>
+            <input class="form-input" id="loginEmail" type="email" placeholder="company@example.com" required autocomplete="email"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="loginPw">비밀번호</label>
+            <input class="form-input" id="loginPw" type="password" placeholder="비밀번호 입력" required autocomplete="current-password"/>
+          </div>
+          <button class="btn-primary" id="loginBtn" type="submit">로그인</button>
+          <div class="alert error" id="loginError"></div>
+        </form>
+      </div>
+
+      <!-- 회원가입 패널 -->
+      <div class="auth-panel" id="panelSignup">
+        <div id="signupForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="signupCompany">회사명 *</label>
+              <input class="form-input" id="signupCompany" type="text" placeholder="㈜ 예시 회사" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signupIndustry">업종 *</label>
+              <input class="form-input" id="signupIndustry" type="text" placeholder="제조/금융/IT…" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signupGoal">인증 목표</label>
+            <input class="form-input" id="signupGoal" type="text" placeholder="ISO 22301 인증 취득 (선택 사항)"/>
+          </div>
+
+          <div class="divider">계정 정보</div>
+
+          <div class="form-group">
+            <label class="form-label" for="signupEmail">이메일 *</label>
+            <input class="form-input" id="signupEmail" type="email" placeholder="company@example.com" required autocomplete="email"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signupPw">비밀번호 *</label>
+            <input class="form-input" id="signupPw" type="password" placeholder="8자 이상" required autocomplete="new-password" minlength="8"/>
+            <div class="form-hint">영문, 숫자 조합 8자 이상</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signupPw2">비밀번호 확인 *</label>
+            <input class="form-input" id="signupPw2" type="password" placeholder="비밀번호 재입력" required autocomplete="new-password"/>
+          </div>
+
+          <button class="btn-primary" id="signupBtn" type="button" onclick="handleSignup()">회원가입</button>
+          <div class="alert error"   id="signupError"></div>
+          <div class="alert success" id="signupSuccess"></div>
+        </div>
+
+        <!-- 이메일 인증 안내 -->
+        <div class="verify-box" id="verifyBox">
+          <div class="verify-icon">📧</div>
+          <div class="verify-title">이메일을 확인해 주세요</div>
+          <div class="verify-desc">
+            가입하신 이메일로 인증 링크를 보냈습니다.<br>
+            이메일의 링크를 클릭하면 로그인됩니다.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="auth-footer">
+      <a href="privacy.html">개인정보처리방침</a>
+      <span class="auth-footer-sep">|</span>
+      <a href="terms.html">이용약관</a>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+
+  // ── 설정 ──────────────────────────────────────────────────────
+  const SUPABASE_URL      = 'https://otgqizneyzpwqsgdtwzv.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_owe_kg_7eEE16I51QHOFxA_vo4acx4d';
+  const LS_SESSION_KEY    = 'bcms_supabase_session';
+  const LS_USER_KEY       = 'bcms_supabase_user';
+  const LS_PROFILE_KEY    = 'bcms_user_profile';
+
+  let sb = null;
+
+  // ── 클라이언트 초기화 ─────────────────────────────────────────
+  function initClient() {
+    if (sb) return sb;
+    if (!window.supabase) { alert('Supabase SDK 로드 실패. 네트워크를 확인하세요.'); return null; }
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    return sb;
+  }
+
+  // ── 이미 로그인 중이면 대시보드로 이동 ────────────────────────
+  async function checkExistingSession() {
+    const client = initClient(); if (!client) return;
+    const { data } = await client.auth.getSession();
+    if (data?.session) {
+      localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
+      localStorage.setItem(LS_USER_KEY, JSON.stringify(data.session.user));
+      window.location.href = 'index.html';
+    }
+  }
+
+  // ── 탭 전환 ──────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.getElementById('tabLogin').classList.toggle('active',  tab === 'login');
+    document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+    document.getElementById('panelLogin').classList.toggle('active',  tab === 'login');
+    document.getElementById('panelSignup').classList.toggle('active', tab === 'signup');
+    clearAlerts();
+  }
+
+  function clearAlerts() {
+    ['loginError','signupError','signupSuccess'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('show'); el.textContent = '';
+    });
+  }
+
+  function showAlert(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.classList.add('show');
+  }
+
+  function setLoading(btnId, loading, text) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading ? `<span class="spinner"></span>${text}` : text;
+  }
+
+  // ── 로그인 ────────────────────────────────────────────────────
+  async function handleLogin(e) {
+    e.preventDefault();
+    clearAlerts();
+    const client = initClient(); if (!client) return;
+
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPw').value;
+    setLoading('loginBtn', true, '로그인 중...');
+
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    setLoading('loginBtn', false, '로그인');
+
+    if (error) {
+      const msg = error.message.includes('Invalid login credentials')
+        ? '이메일 또는 비밀번호가 올바르지 않습니다.'
+        : error.message.includes('Email not confirmed')
+        ? '이메일 인증이 필요합니다. 메일함을 확인해 주세요.'
+        : error.message;
+      showAlert('loginError', msg);
+      return;
+    }
+
+    if (data?.session) {
+      localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
+      localStorage.setItem(LS_USER_KEY, JSON.stringify(data.user));
+
+      // 프로필 로드 & localStorage 동기화
+      await loadProfileAndSync(data.user.id);
+      window.location.href = 'index.html';
+    }
+  }
+
+  // ── 회원가입 ──────────────────────────────────────────────────
+  async function handleSignup() {
+    clearAlerts();
+    const client = initClient(); if (!client) return;
+
+    const company  = document.getElementById('signupCompany').value.trim();
+    const industry = document.getElementById('signupIndustry').value.trim();
+    const goal     = document.getElementById('signupGoal').value.trim();
+    const email    = document.getElementById('signupEmail').value.trim();
+    const pw       = document.getElementById('signupPw').value;
+    const pw2      = document.getElementById('signupPw2').value;
+
+    if (!company || !industry || !email || !pw) { showAlert('signupError', '필수 항목을 모두 입력해 주세요.'); return; }
+    if (pw !== pw2) { showAlert('signupError', '비밀번호가 일치하지 않습니다.'); return; }
+    if (pw.length < 8) { showAlert('signupError', '비밀번호는 8자 이상이어야 합니다.'); return; }
+
+    setLoading('signupBtn', true, '가입 처리 중...');
+
+    const { data, error } = await client.auth.signUp({
+      email, password: pw,
+      options: {
+        data: { company_name: company, industry, certification_goal: goal }
+      }
+    });
+
+    setLoading('signupBtn', false, '회원가입');
+
+    if (error) {
+      const msg = error.message.includes('already registered')
+        ? '이미 가입된 이메일입니다. 로그인해 주세요.'
+        : error.message;
+      showAlert('signupError', msg);
+      return;
+    }
+
+    // 이메일 확인 필요 여부에 따라 처리
+    if (data?.user && !data?.session) {
+      // 이메일 인증 필요
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('verifyBox').classList.add('show');
+    } else if (data?.session) {
+      // 이메일 확인 없이 즉시 로그인 (Supabase 설정에 따라)
+      localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
+      localStorage.setItem(LS_USER_KEY, JSON.stringify(data.user));
+      // 프로필 저장
+      await saveProfile(data.user.id, { company_name: company, industry, certification_goal: goal });
+      localStorage.setItem('bcmsCompanyName', company);
+      localStorage.setItem('bcmsIndustry', industry);
+      window.location.href = 'index.html';
+    }
+  }
+
+  // ── 프로필 저장 ───────────────────────────────────────────────
+  async function saveProfile(userId, profile) {
+    if (!sb) return;
+    try {
+      const { data } = await sb.from('bcms_users')
+        .upsert({ id: userId, ...profile, updated_at: new Date().toISOString() })
+        .select().single();
+      if (data) localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(data));
+    } catch (e) { console.warn('[auth] 프로필 저장 실패:', e); }
+  }
+
+  // ── 로그인 후 데이터 동기화 ───────────────────────────────────
+  async function loadProfileAndSync(userId) {
+    if (!sb) return;
+    try {
+      // 프로필
+      const { data: profile } = await sb.from('bcms_users').select('*').eq('id', userId).single();
+      if (profile) {
+        localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(profile));
+        if (profile.company_name) localStorage.setItem('bcmsCompanyName', profile.company_name);
+        if (profile.industry)     localStorage.setItem('bcmsIndustry',    profile.industry);
+      }
+      // BIA 등 핵심 데이터만 로드 (나머지는 supabase.js가 처리)
+      const hasBia = !!localStorage.getItem('bcmsBIAData');
+      if (!hasBia) {
+        const tables = ['bcms_bia','bcms_risk','bcms_bcp','bcms_training','bcms_audit'];
+        for (const t of tables) {
+          const { data } = await sb.from(t).select('*').eq('id', userId).single();
+          if (data) {
+            if (data.data != null) {
+              const key = { bcms_bia:'bcmsBIAData', bcms_risk:'bcmsRiskAssessment', bcms_bcp:'bcmsBCP', bcms_training:'bcmsTrainingData', bcms_audit:'bcmsAuditData' }[t];
+              if (key) localStorage.setItem(key, JSON.stringify(data.data));
+            }
+            if (data.meta != null && t === 'bcms_bcp') localStorage.setItem('bcmsBCPMeta', JSON.stringify(data.meta));
+          }
+        }
+      }
+    } catch (e) { console.warn('[auth] 데이터 동기화 실패:', e); }
+  }
+
+  // ── 테마 ──────────────────────────────────────────────────────
+  const root = document.documentElement;
+  const tog  = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('bcmsTheme') || 'light';
+  root.setAttribute('data-theme', saved);
+  tog.textContent = saved === 'dark' ? '☀️' : '🌙';
+  tog.addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    tog.textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('bcmsTheme', next);
+  });
+
+  // ── 초기화 ───────────────────────────────────────────────────
+  checkExistingSession();
+  </script>
+</body>
+</html>
