@@ -745,42 +745,81 @@
   }
 
   async function saveInfoSection() {
+    const btn = document.getElementById('btnSaveInfo');
+    const msg = document.getElementById('infoSaveMsg');
+
     const companyName = document.getElementById('infoCompanyName').value.trim();
     const industryRaw = document.getElementById('infoIndustry').value;
     const industry    = industryRaw === '__custom__'
       ? document.getElementById('infoIndustryCustom').value.trim()
       : industryRaw;
     const certGoal = document.getElementById('infoCertGoal').value;
+
+    // 로컬 스토리지 즉시 반영
     if (companyName) localStorage.setItem(COMPANY_KEY,  companyName);
     if (industry)    localStorage.setItem(INDUSTRY_KEY, industry);
     if (certGoal)    localStorage.setItem(GOAL_KEY,     certGoal);
     let profile = {};
     try { profile = JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch {}
-    if (companyName) profile.company_name        = companyName;
-    if (industry)    profile.industry            = industry;
-    if (certGoal)    profile.certification_goal  = certGoal;
+    if (companyName) profile.company_name       = companyName;
+    if (industry)    profile.industry           = industry;
+    if (certGoal)    profile.certification_goal = certGoal;
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+
+    btn.disabled = true; btn.textContent = '저장 중…';
+    msg.style.display = 'none';
+
+    const errors = [];
+
+    // ── 1. bcms_users 저장 ──────────────────────────────────────
     if (window.BCMSProfile) {
-      try { await window.BCMSProfile.save(profile); } catch {}
-    }
-    // organizations 테이블도 동기화 (같은 조직 멤버 로그인 시 업종 자동 상속)
-    if (window.BCMSOrg) {
-      const { org: cachedOrg } = window.BCMSOrg.getCached();
-      if (cachedOrg?.id) {
-        const orgUpdates = {};
-        if (companyName) orgUpdates.name      = companyName;
-        if (industry)    orgUpdates.industry  = industry;
-        if (certGoal)    orgUpdates.cert_goal = certGoal;
-        if (Object.keys(orgUpdates).length > 0) {
-          try { await window.BCMSOrg.update(cachedOrg.id, orgUpdates); } catch {}
-        }
+      try {
+        await window.BCMSProfile.save(profile);
+      } catch (e) {
+        errors.push('프로필 저장 실패: ' + (e.message || e));
       }
     }
-    const chip = document.getElementById('sidebarCompanyChip');
-    if (chip && companyName) chip.textContent = '🏢 ' + companyName;
-    const msg = document.getElementById('infoSaveMsg');
+
+    // ── 2. organizations 저장 ───────────────────────────────────
+    if (window.BCMSOrg) {
+      try {
+        // 캐시 우선, 없으면 직접 조회
+        let { org } = window.BCMSOrg.getCached();
+        if (!org?.id && window.BCMSAuth) {
+          const user = window.BCMSAuth.getCurrentUser();
+          if (user) {
+            const ctx = await window.BCMSOrg.loadMyOrg(user.id);
+            org = ctx?.org || null;
+          }
+        }
+        if (org?.id) {
+          const orgUpdates = {};
+          if (companyName) orgUpdates.name      = companyName;
+          if (industry)    orgUpdates.industry  = industry;
+          if (certGoal)    orgUpdates.cert_goal = certGoal;
+          if (Object.keys(orgUpdates).length > 0) {
+            const { error } = await window.BCMSOrg.update(org.id, orgUpdates);
+            if (error) errors.push('조직 정보 저장 실패: ' + (error.message || error));
+          }
+        }
+      } catch (e) {
+        errors.push('조직 정보 저장 실패: ' + (e.message || e));
+      }
+    }
+
+    btn.disabled = false; btn.textContent = '저장';
+
+    if (errors.length) {
+      msg.textContent = errors[0];
+      msg.style.color = '#dc2626';
+    } else {
+      const chip = document.getElementById('sidebarCompanyChip');
+      if (chip && companyName) chip.textContent = '🏢 ' + companyName;
+      msg.textContent = '✓ 저장되었습니다';
+      msg.style.color = '';
+    }
     msg.style.display = 'inline';
-    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    setTimeout(() => { msg.style.display = 'none'; }, errors.length ? 4000 : 2500);
   }
 
   document.getElementById('infoIndustry').addEventListener('change', function () {
