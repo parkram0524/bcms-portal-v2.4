@@ -419,163 +419,197 @@
 /* ── 조직 관리 섹션 ── */
 (function () {
   const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const roleLabel  = { admin:'관리자', editor:'편집자', viewer:'조회자' };
-  const roleCls    = { admin:'admin', editor:'editor', viewer:'viewer' };
+  const ROLE_LABEL = { admin:'관리자', editor:'편집자', viewer:'조회자' };
+  const ROLE_CLS   = { admin:'admin',  editor:'editor',  viewer:'viewer'  };
 
-  let _orgId   = null;
-  let _myRole  = null;
+  let _orgId    = null;
+  let _myRole   = null;
   let _myUserId = null;
   let _members  = [];
-  let _invitations = [];
+  let _invs     = [];
+  let _el       = null; // orgContent 요소 참조 (sendInvite에서 재사용)
 
-  async function loadOrgSection() {
-    const el = document.getElementById('orgContent'); if (!el) return;
-
-    // BCMSOrg가 아직 로드 안 됐으면 잠시 대기
-    let retries = 0;
-    while (!window.BCMSOrg && retries++ < 20) await new Promise(r => setTimeout(r, 200));
-    if (!window.BCMSOrg) { el.innerHTML = '<p style="color:var(--text-2);font-size:13px;">Supabase 연결 중…</p>'; return; }
-
-    const user = window.BCMSAuth?.getCurrentUser();
-    if (!user) return;
-    _myUserId = user.id;
-
-    const { org, member } = window.BCMSOrg.getCached();
-    _orgId  = org?.id  || null;
-    _myRole = member?.role || null;
-
-    if (!_orgId) {
-      renderNoOrg(el); return;
+  // SDK + BCMSOrg 로드 대기 (최대 12초, 150ms 폴링)
+  async function waitForSDK() {
+    const deadline = Date.now() + 12000;
+    while (Date.now() < deadline) {
+      if (window.BCMSOrg && window.BCMSAuth) return true;
+      await new Promise(r => setTimeout(r, 150));
     }
-
-    _members     = await window.BCMSOrg.getMembers(_orgId);
-    _invitations = _myRole === 'admin' ? await window.BCMSOrg.getInvitations(_orgId) : [];
-
-    renderOrg(el, org, member);
+    return false;
   }
 
-  function renderNoOrg(el) {
-    el.innerHTML = `
+  async function loadOrgSection() {
+    _el = document.getElementById('orgContent');
+    if (!_el) return;
+    _el.innerHTML = '<p style="color:var(--text-2);font-size:13px;padding:8px 0;">⏳ 조직 정보를 불러오는 중…</p>';
+
+    // 1. SDK 대기 (CDN→supabase.js 동적 주입 완료까지)
+    if (!await waitForSDK()) {
+      _el.innerHTML = '<p style="color:#dc2626;font-size:13px;">⚠️ Supabase 연결 실패. 페이지를 새로고침해 주세요.</p>';
+      return;
+    }
+
+    // 2. 현재 사용자
+    const user = window.BCMSAuth.getCurrentUser();
+    if (!user) {
+      _el.innerHTML = '<p style="color:#dc2626;font-size:13px;">⚠️ 로그인 정보가 없습니다. 다시 로그인해 주세요.</p>';
+      return;
+    }
+    _myUserId = user.id;
+
+    // 3. 캐시 우선 → 없으면 직접 조회 (supabase.js init() 완료 여부 무관)
+    let { org, member } = window.BCMSOrg.getCached();
+    if (!org || !member) {
+      try {
+        const ctx = await window.BCMSOrg.loadMyOrg(user.id);
+        org    = ctx?.org    || null;
+        member = ctx?.member || null;
+      } catch (e) {
+        _el.innerHTML = `<p style="color:#dc2626;font-size:13px;">⚠️ 조직 정보 로드 실패: ${esc(e.message || String(e))}</p>`;
+        return;
+      }
+    }
+
+    _orgId  = org?.id     || null;
+    _myRole = member?.role || null;
+
+    if (!_orgId) { renderNoOrg(); return; }
+
+    // 4. 멤버 + 초대 로드
+    try {
+      _members = await window.BCMSOrg.getMembers(_orgId);
+      _invs    = _myRole === 'admin' ? await window.BCMSOrg.getInvitations(_orgId) : [];
+    } catch (e) {
+      _el.innerHTML = `<p style="color:#dc2626;font-size:13px;">⚠️ 멤버 목록 로드 실패: ${esc(e.message || String(e))}</p>`;
+      return;
+    }
+
+    renderOrg(org);
+  }
+
+  // ── 조직 없음 ────────────────────────────────────────────────
+  function renderNoOrg() {
+    _el.innerHTML = `
       <div class="noOrgBox">
-        <p>소속된 조직이 없습니다.<br>새 조직을 만들거나 초대 링크를 통해 가입하세요.</p>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn primary" id="btnCreateOrg">+ 새 조직 만들기</button>
-        </div>
-        <div style="margin-top:14px;" id="createOrgForm" style="display:none">
+        <p>소속된 조직이 없습니다.<br>새 조직을 만들거나 관리자에게 초대 링크를 요청하세요.</p>
+        <button class="btn primary" id="btnCreateOrg">+ 새 조직 만들기</button>
+        <div id="createOrgForm" style="display:none;margin-top:14px;">
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;justify-content:center;">
             <div>
               <label style="font-size:11px;font-weight:700;color:var(--text-2);display:block;margin-bottom:4px;">조직(회사)명 *</label>
-              <input type="text" id="newOrgName" placeholder="예) 삼성전자 BCMS팀" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;outline:none;font-family:inherit;min-width:200px;"/>
+              <input type="text" id="newOrgName" placeholder="예) 삼성전자 BCMS팀"
+                style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;outline:none;font-family:inherit;min-width:220px;"/>
             </div>
             <button class="btn primary" id="btnConfirmCreateOrg">생성</button>
-            <span id="createOrgMsg" style="font-size:12px;font-weight:600;color:#dc2626;display:none;"></span>
           </div>
+          <div id="createOrgMsg" style="font-size:12px;font-weight:600;margin-top:8px;display:none;"></div>
         </div>
       </div>`;
+
     document.getElementById('btnCreateOrg').addEventListener('click', () => {
       const f = document.getElementById('createOrgForm');
-      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+      const open = f.style.display === 'block';
+      f.style.display = open ? 'none' : 'block';
+      if (!open) document.getElementById('newOrgName').focus();
     });
+
     document.getElementById('btnConfirmCreateOrg').addEventListener('click', async () => {
       const name = document.getElementById('newOrgName').value.trim();
-      const msg  = document.getElementById('createOrgMsg');
-      if (!name) { msg.textContent = '조직명을 입력하세요.'; msg.style.display = 'inline'; return; }
-      msg.style.display = 'none';
-      const btn = document.getElementById('btnConfirmCreateOrg');
+      const msgEl = document.getElementById('createOrgMsg');
+      const btn   = document.getElementById('btnConfirmCreateOrg');
+      if (!name) { showMsg(msgEl, '조직명을 입력하세요.', '#dc2626'); return; }
       btn.disabled = true; btn.textContent = '생성 중…';
-      const { org, error } = await window.BCMSOrg.create(_myUserId, { name });
-      if (error) {
-        msg.textContent = '생성 실패: ' + (error.message || error);
-        msg.style.display = 'inline';
+      try {
+        const { org, error } = await window.BCMSOrg.create(_myUserId, { name });
+        if (error) {
+          showMsg(msgEl, '생성 실패: ' + (error.message || error), '#dc2626');
+          btn.disabled = false; btn.textContent = '생성';
+          return;
+        }
+        const profile = window.BCMSProfile?.getCached() || {};
+        if (!profile.company_name) profile.company_name = name;
+        profile.org_id = org.id;
+        localStorage.setItem('bcms_user_profile', JSON.stringify(profile));
+        try { await window.BCMSProfile?.save(profile); } catch {}
+        location.reload();
+      } catch (e) {
+        showMsg(msgEl, '오류: ' + (e.message || e), '#dc2626');
         btn.disabled = false; btn.textContent = '생성';
-        return;
       }
-      // 회사 정보도 동기화
-      const profile = window.BCMSProfile?.getCached() || {};
-      profile.company_name = name;
-      profile.org_id = org.id;
-      localStorage.setItem('bcms_user_profile', JSON.stringify(profile));
-      await window.BCMSProfile?.save(profile);
-      location.reload();
     });
   }
 
-  function renderOrg(el, org, member) {
+  // ── 조직 있음 ────────────────────────────────────────────────
+  function renderOrg(org) {
     const isAdmin = _myRole === 'admin';
 
-    // 멤버 행 렌더
-    const memberRows = _members.map(m => {
-      const isMe = m.user_id === _myUserId;
-      const email = m.bcms_users?.company_name || m.user_id.slice(0, 8) + '…';
-      const roleOpts = ['admin','editor','viewer'].map(r =>
-        `<option value="${r}"${m.role===r?' selected':''}>${roleLabel[r]}</option>`
-      ).join('');
-      return `<tr>
-        <td>${esc(email)}${isMe ? ' <span style="font-size:10px;color:#0070f3;font-weight:700;">(나)</span>' : ''}</td>
-        <td>
-          ${isAdmin && !isMe
-            ? `<select class="statusSel" data-uid="${esc(m.user_id)}" onchange="changeMemberRole(this)">${roleOpts}</select>`
-            : `<span class="roleBadge ${roleCls[m.role]}">${roleLabel[m.role]}</span>`}
-        </td>
-        <td style="color:var(--text-2);font-size:12px;">${esc(m.department || '—')}</td>
-        <td style="font-size:11px;color:var(--text-2);">${m.joined_at ? m.joined_at.split('T')[0] : '—'}</td>
-        <td>
-          ${isAdmin && !isMe
-            ? `<button class="iconBtn del" onclick="removeMember('${esc(m.user_id)}')">제거</button>`
-            : ''}
-        </td>
-      </tr>`;
-    }).join('');
+    const memberRows = _members.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:20px;font-size:13px;">멤버가 없습니다.</td></tr>`
+      : _members.map(m => {
+          const isMe     = m.user_id === _myUserId;
+          const display  = m.bcms_users?.company_name || (m.user_id.slice(0, 8) + '…');
+          const roleOpts = ['admin','editor','viewer'].map(r =>
+            `<option value="${r}"${m.role===r?' selected':''}>${ROLE_LABEL[r]}</option>`).join('');
+          return `<tr>
+            <td>${esc(display)}${isMe ? ' <span style="font-size:10px;color:#0070f3;font-weight:700;">(나)</span>' : ''}</td>
+            <td>${isAdmin && !isMe
+              ? `<select class="statusSel" data-uid="${esc(m.user_id)}" onchange="changeMemberRole(this)">${roleOpts}</select>`
+              : `<span class="roleBadge ${ROLE_CLS[m.role]||'gray'}">${ROLE_LABEL[m.role]||m.role}</span>`}</td>
+            <td style="color:var(--text-2);font-size:12px;">${esc(m.department||'—')}</td>
+            <td style="font-size:11px;color:var(--text-2);">${m.joined_at ? m.joined_at.split('T')[0] : '—'}</td>
+            <td>${isAdmin && !isMe ? `<button class="iconBtn del" onclick="removeMember('${esc(m.user_id)}')">제거</button>` : ''}</td>
+          </tr>`;
+        }).join('');
 
-    // 초대 대기 목록
-    const invRows = _invitations.map(inv => `
+    const invRows = _invs.map(inv => `
       <div class="inviteItem">
         <span class="inviteItemEmail">${esc(inv.email)}</span>
-        <span class="roleBadge ${roleCls[inv.role]}">${roleLabel[inv.role]}</span>
-        <span class="inviteItemMeta">만료: ${inv.expires_at?.split('T')[0] || '—'}</span>
+        <span class="roleBadge ${ROLE_CLS[inv.role]}">${ROLE_LABEL[inv.role]}</span>
+        <span class="inviteItemMeta">만료: ${inv.expires_at?.split('T')[0]||'—'}</span>
         <button class="iconBtn del" onclick="cancelInvite('${esc(inv.id)}')">취소</button>
       </div>`).join('');
 
-    el.innerHTML = `
+    _el.innerHTML = `
       <div class="orgMeta">
-        <span class="orgMetaName">🏢 ${esc(org?.name || '—')}</span>
-        <span class="roleBadge ${roleCls[_myRole]}">${roleLabel[_myRole]}</span>
+        <span class="orgMetaName">🏢 ${esc(org?.name||'—')}</span>
+        <span class="roleBadge ${ROLE_CLS[_myRole]||'gray'}">${ROLE_LABEL[_myRole]||_myRole}</span>
+        <span style="font-size:12px;color:var(--text-2);">멤버 ${_members.length}명</span>
       </div>
 
       <div class="tableWrap" style="margin-bottom:14px;">
         <table class="memberTable">
           <thead><tr>
-            <th>이름/이메일</th><th>역할</th><th>부서</th><th>가입일</th><th style="width:60px"></th>
+            <th>이름/식별자</th><th>역할</th><th>부서</th><th>가입일</th><th style="width:52px;"></th>
           </tr></thead>
           <tbody>${memberRows}</tbody>
         </table>
       </div>
 
       ${isAdmin ? `
-      <div class="inviteRow">
-        <div class="inviteField">
-          <label>초대할 이메일 *</label>
-          <input type="email" id="inviteEmail" placeholder="member@company.com"/>
+        <div class="inviteRow">
+          <div class="inviteField">
+            <label>초대할 이메일 *</label>
+            <input type="email" id="inviteEmail" placeholder="member@company.com"/>
+          </div>
+          <div class="inviteField">
+            <label>역할</label>
+            <select id="inviteRole">
+              <option value="editor">편집자</option>
+              <option value="viewer">조회자</option>
+            </select>
+          </div>
+          <div class="inviteField">
+            <label>부서 (선택)</label>
+            <input type="text" id="inviteDept" placeholder="예) IT팀"/>
+          </div>
+          <button class="btn primary" id="btnInvite">초대 링크 생성</button>
+          <span class="orgSaveMsg" id="inviteMsg"></span>
         </div>
-        <div class="inviteField">
-          <label>역할</label>
-          <select id="inviteRole">
-            <option value="editor">편집자</option>
-            <option value="viewer">조회자</option>
-          </select>
-        </div>
-        <div class="inviteField">
-          <label>부서 (선택)</label>
-          <input type="text" id="inviteDept" placeholder="예) IT팀"/>
-        </div>
-        <button class="btn primary" id="btnInvite">초대장 발송</button>
-        <span class="orgSaveMsg" id="inviteMsg"></span>
-      </div>
-      ${_invitations.length > 0 ? `
-      <div class="inviteListWrap">
-        <h4>대기 중인 초대 (${_invitations.length})</h4>
-        ${invRows}
-      </div>` : ''}
+        <div id="inviteLinkArea"></div>
+        ${_invs.length > 0 ? `<div class="inviteListWrap" id="inviteListWrap">
+          <h4>대기 중인 초대 (${_invs.length})</h4>${invRows}
+        </div>` : '<div id="inviteListWrap"></div>'}
       ` : ''}`;
 
     if (isAdmin) {
@@ -583,70 +617,82 @@
     }
   }
 
+  // ── 초대 링크 생성 ────────────────────────────────────────────
   async function sendInvite() {
-    const email = document.getElementById('inviteEmail').value.trim();
+    const email = (document.getElementById('inviteEmail').value||'').trim();
     const role  = document.getElementById('inviteRole').value;
-    const dept  = document.getElementById('inviteDept').value.trim();
-    const msg   = document.getElementById('inviteMsg');
-    msg.style.display = 'none';
-    if (!email) { showOrgMsg(msg, '이메일을 입력하세요.', '#dc2626'); return; }
+    const dept  = (document.getElementById('inviteDept').value||'').trim();
+    const msgEl = document.getElementById('inviteMsg');
+    if (!email) { showMsg(msgEl, '이메일을 입력하세요.', '#dc2626'); return; }
 
     const btn = document.getElementById('btnInvite');
     btn.disabled = true; btn.textContent = '처리 중…';
     const { data, error } = await window.BCMSOrg.inviteMember(_orgId, email, role, dept);
-    btn.disabled = false; btn.textContent = '초대장 발송';
+    btn.disabled = false; btn.textContent = '초대 링크 생성';
+    if (error) { showMsg(msgEl, '실패: ' + (error.message||error), '#dc2626'); return; }
+    showMsg(msgEl, '✓ 링크 생성됨', '#16a34a');
 
-    if (error) {
-      showOrgMsg(msg, '초대 실패: ' + (error.message || error), '#dc2626');
-      return;
+    // 초대 링크 표시
+    const authPath = location.origin + location.pathname.replace(/\/admin\/[^/]*$/, '/auth.html');
+    const link = `${authPath}?invite=${data.token}`;
+    const linkArea = document.getElementById('inviteLinkArea');
+    if (linkArea) {
+      linkArea.innerHTML = `
+        <div style="margin-top:8px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:8px;font-size:12px;word-break:break-all;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+          <span style="flex:1;min-width:0;">🔗 초대 링크 (7일 유효):<br><strong>${esc(link)}</strong></span>
+          <button class="btn" id="btnCopyLink" style="white-space:nowrap;flex-shrink:0;">복사</button>
+        </div>`;
+      document.getElementById('btnCopyLink').addEventListener('click', () => {
+        navigator.clipboard.writeText(link)
+          .then(() => { const b = document.getElementById('btnCopyLink'); if(b){b.textContent='✓ 복사됨'; setTimeout(()=>{if(b)b.textContent='복사';},2000);} })
+          .catch(() => prompt('아래 링크를 복사하세요:', link));
+      });
     }
 
-    // 초대 링크 표시 (이메일 발송이 없으므로 링크를 직접 복사)
-    const origin = window.location.origin;
-    const link   = `${origin}/auth.html?invite=${data.token}`;
-    showOrgMsg(msg, '✓ 초대 완료', '#16a34a');
-
-    const linkBox = document.createElement('div');
-    linkBox.style.cssText = 'margin-top:8px;padding:8px 10px;background:var(--bg);border:0.5px solid var(--border);border-radius:7px;font-size:11px;word-break:break-all;';
-    linkBox.innerHTML = `초대 링크 (7일 유효): <strong id="inviteLinkText">${esc(link)}</strong>
-      <button class="btn" style="font-size:11px;padding:3px 8px;margin-left:8px;" onclick="navigator.clipboard.writeText('${link.replace(/'/g,"\\'")}')" >복사</button>`;
-    document.getElementById('btnInvite').parentElement.appendChild(linkBox);
-
     document.getElementById('inviteEmail').value = '';
-    _invitations = await window.BCMSOrg.getInvitations(_orgId);
-    await loadOrgSection(); // 목록 갱신
+    // 초대 대기 목록 갱신
+    _invs = await window.BCMSOrg.getInvitations(_orgId);
+    const listWrap = document.getElementById('inviteListWrap');
+    if (listWrap) {
+      if (_invs.length === 0) { listWrap.innerHTML = ''; return; }
+      const rows = _invs.map(inv => `
+        <div class="inviteItem">
+          <span class="inviteItemEmail">${esc(inv.email)}</span>
+          <span class="roleBadge ${ROLE_CLS[inv.role]}">${ROLE_LABEL[inv.role]}</span>
+          <span class="inviteItemMeta">만료: ${inv.expires_at?.split('T')[0]||'—'}</span>
+          <button class="iconBtn del" onclick="cancelInvite('${esc(inv.id)}')">취소</button>
+        </div>`).join('');
+      listWrap.innerHTML = `<h4>대기 중인 초대 (${_invs.length})</h4>${rows}`;
+    }
   }
 
-  window.changeMemberRole = async function (sel) {
-    const uid     = sel.dataset.uid;
-    const newRole = sel.value;
-    const { error } = await window.BCMSOrg.changeRole(_orgId, uid, newRole);
-    if (error) { alert('역할 변경 실패: ' + (error.message || error)); await loadOrgSection(); }
+  // ── 전역 핸들러 ──────────────────────────────────────────────
+  window.changeMemberRole = async function(sel) {
+    const { error } = await window.BCMSOrg.changeRole(_orgId, sel.dataset.uid, sel.value);
+    if (error) { alert('역할 변경 실패: ' + (error.message||error)); await loadOrgSection(); }
   };
-
-  window.removeMember = async function (uid) {
-    if (!confirm('멤버를 제거하시겠습니까?')) return;
+  window.removeMember = async function(uid) {
+    if (!confirm('이 멤버를 조직에서 제거하시겠습니까?')) return;
     const { error } = await window.BCMSOrg.removeMember(_orgId, uid);
-    if (error) { alert('제거 실패: ' + (error.message || error)); return; }
+    if (error) { alert('제거 실패: ' + (error.message||error)); return; }
     await loadOrgSection();
   };
-
-  window.cancelInvite = async function (invId) {
-    if (!confirm('초대를 취소하시겠습니까?')) return;
+  window.cancelInvite = async function(invId) {
+    if (!confirm('이 초대를 취소하시겠습니까?')) return;
     await window.BCMSOrg.cancelInvitation(invId);
     await loadOrgSection();
   };
 
-  function showOrgMsg(el, text, color) {
+  function showMsg(el, text, color) {
     el.textContent = text; el.style.color = color; el.style.display = 'inline';
-    setTimeout(() => { el.style.display = 'none'; }, 3000);
+    setTimeout(() => { if (el) el.style.display = 'none'; }, 3500);
   }
 
-  // DOMContentLoaded 이후 supabase.js 초기화 완료까지 대기 후 실행
+  // DOMContentLoaded 보장 후 즉시 시작 (waitForSDK가 내부 폴링)
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(loadOrgSection, 600));
+    document.addEventListener('DOMContentLoaded', loadOrgSection);
   } else {
-    setTimeout(loadOrgSection, 600);
+    loadOrgSection();
   }
 })();
 </script>
