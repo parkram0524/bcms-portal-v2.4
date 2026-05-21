@@ -672,6 +672,20 @@
   function init() {
     const force = window.BCMS_FORCE_ONBOARDING === true;
     if (!force && localStorage.getItem(DONE_KEY) !== null) return;
+
+    // 초대 가입 사용자: 본인이 만든 조직이 아니면(= 이미 소속된 조직) 온보딩 스킵
+    if (!force) {
+      try {
+        const org    = JSON.parse(localStorage.getItem('bcms_org')           || 'null');
+        const member = JSON.parse(localStorage.getItem('bcms_org_member')    || 'null');
+        const user   = JSON.parse(localStorage.getItem('bcms_supabase_user') || 'null');
+        if (member?.org_id && org?.id && user?.id && org.created_by !== user.id) {
+          localStorage.setItem(DONE_KEY, 'true');
+          return;
+        }
+      } catch {}
+    }
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', show);
     } else {

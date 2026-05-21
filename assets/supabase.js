@@ -133,7 +133,7 @@
       const c = getClient(); if (!c) return null;
       const { data, error } = await c
         .from('org_members')
-        .select('org_id, role, department, organizations(id, name, industry, cert_goal)')
+        .select('org_id, role, department, organizations(id, name, industry, cert_goal, created_by)')
         .eq('user_id', userId)
         .single();
       if (error && error.code !== 'PGRST116') console.error('[BCMSOrg] loadMyOrg:', error);

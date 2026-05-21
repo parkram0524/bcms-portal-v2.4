@@ -634,7 +634,7 @@
       // 조직 멤버십 로드
       const { data: memberRow } = await sb
         .from('org_members')
-        .select('org_id, role, department, organizations(id,name,industry,cert_goal)')
+        .select('org_id, role, department, organizations(id,name,industry,cert_goal,created_by)')
         .eq('user_id', userId)
         .single();
       if (memberRow) {
