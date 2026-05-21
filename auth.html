@@ -205,6 +205,16 @@
     }
 
     @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+    /* 조직 가입 방식 버튼 */
+    .org-mode-btn {
+      padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      text-align: center; cursor: pointer; border: 1.5px solid var(--border);
+      background: var(--bg); color: var(--text-2); font-family: inherit;
+      transition: all .12s; line-height: 1.4;
+    }
+    .org-mode-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .org-mode-btn.active { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
   </style>
 </head>
 <body>
@@ -245,19 +255,45 @@
       <!-- 회원가입 패널 -->
       <div class="auth-panel" id="panelSignup">
         <div id="signupForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="signupCompany">회사명 *</label>
-              <input class="form-input" id="signupCompany" type="text" placeholder="㈜ 예시 회사" required/>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="signupIndustry">업종 *</label>
-              <input class="form-input" id="signupIndustry" type="text" placeholder="제조/금융/IT…" required/>
+
+          <!-- 조직 가입 방식 선택 -->
+          <div class="form-group" id="orgModeGroup">
+            <label class="form-label">가입 방식 *</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <button type="button" class="org-mode-btn active" id="modeBtnNew" onclick="setOrgMode('new')">
+                🏢 새 조직 만들기<br><span style="font-size:10px;font-weight:400;opacity:.7;">관리자(admin)로 시작</span>
+              </button>
+              <button type="button" class="org-mode-btn" id="modeBtnInvite" onclick="setOrgMode('invite')">
+                🔗 초대 링크로 가입<br><span style="font-size:10px;font-weight:400;opacity:.7;">초대받은 경우 선택</span>
+              </button>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="signupGoal">인증 목표</label>
-            <input class="form-input" id="signupGoal" type="text" placeholder="ISO 22301 인증 취득 (선택 사항)"/>
+
+          <!-- 새 조직 필드 (기본 표시) -->
+          <div id="newOrgFields">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="signupCompany">회사명 *</label>
+                <input class="form-input" id="signupCompany" type="text" placeholder="㈜ 예시 회사"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="signupIndustry">업종 *</label>
+                <input class="form-input" id="signupIndustry" type="text" placeholder="제조/금융/IT…"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signupGoal">인증 목표</label>
+              <input class="form-input" id="signupGoal" type="text" placeholder="ISO 22301 인증 취득 (선택 사항)"/>
+            </div>
+          </div>
+
+          <!-- 초대 토큰 필드 (기본 숨김) -->
+          <div id="inviteFields" style="display:none;">
+            <div class="form-group">
+              <label class="form-label" for="inviteToken">초대 토큰 *</label>
+              <input class="form-input" id="inviteToken" type="text" placeholder="초대 링크의 토큰을 붙여넣으세요"/>
+              <div class="form-hint">초대 링크: auth.html?invite=토큰</div>
+            </div>
           </div>
 
           <div class="divider">계정 정보</div>
@@ -304,14 +340,17 @@
   <script>
   'use strict';
 
-  // ── 설정 ──────────────────────────────────────────────────────
   const SUPABASE_URL      = 'https://otgqizneyzpwqsgdtwzv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_owe_kg_7eEE16I51QHOFxA_vo4acx4d';
   const LS_SESSION_KEY    = 'bcms_supabase_session';
   const LS_USER_KEY       = 'bcms_supabase_user';
   const LS_PROFILE_KEY    = 'bcms_user_profile';
+  const LS_ORG_KEY        = 'bcms_org';
+  const LS_MEMBER_KEY     = 'bcms_org_member';
 
-  let sb = null;
+  let sb          = null;
+  let _orgMode    = 'new'; // 'new' | 'invite'
+  let _inviteToken = null; // URL ?invite= 파라미터
 
   // ── 클라이언트 초기화 ─────────────────────────────────────────
   function initClient() {
@@ -323,6 +362,12 @@
     return sb;
   }
 
+  // ── URL 파라미터에서 초대 토큰 추출 ──────────────────────────
+  function parseInviteToken() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('invite') || null;
+  }
+
   // ── 이미 로그인 중이면 대시보드로 이동 ────────────────────────
   async function checkExistingSession() {
     const client = initClient(); if (!client) return;
@@ -330,8 +375,21 @@
     if (data?.session) {
       localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
       localStorage.setItem(LS_USER_KEY, JSON.stringify(data.session.user));
+      // 초대 토큰이 있으면 로그인 상태에서도 처리
+      if (_inviteToken) {
+        await handleInviteAccept(data.session.user.id, _inviteToken);
+      }
       window.location.href = 'index.html';
     }
+  }
+
+  // ── 조직 가입 방식 전환 ───────────────────────────────────────
+  function setOrgMode(mode) {
+    _orgMode = mode;
+    document.getElementById('modeBtnNew').classList.toggle('active',    mode === 'new');
+    document.getElementById('modeBtnInvite').classList.toggle('active', mode === 'invite');
+    document.getElementById('newOrgFields').style.display    = mode === 'new'    ? '' : 'none';
+    document.getElementById('inviteFields').style.display    = mode === 'invite' ? '' : 'none';
   }
 
   // ── 탭 전환 ──────────────────────────────────────────────────
@@ -375,20 +433,17 @@
     setLoading('loginBtn', false, '로그인');
 
     if (error) {
-      const msg = error.message.includes('Invalid login credentials')
-        ? '이메일 또는 비밀번호가 올바르지 않습니다.'
-        : error.message.includes('Email not confirmed')
-        ? '이메일 인증이 필요합니다. 메일함을 확인해 주세요.'
-        : error.message;
-      showAlert('loginError', msg);
+      showAlert('loginError',
+        error.message.includes('Invalid login credentials') ? '이메일 또는 비밀번호가 올바르지 않습니다.' :
+        error.message.includes('Email not confirmed')       ? '이메일 인증이 필요합니다. 메일함을 확인해 주세요.' :
+        error.message);
       return;
     }
 
     if (data?.session) {
       localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
-      localStorage.setItem(LS_USER_KEY, JSON.stringify(data.user));
-
-      // 프로필 로드 & localStorage 동기화
+      localStorage.setItem(LS_USER_KEY,    JSON.stringify(data.user));
+      if (_inviteToken) await handleInviteAccept(data.user.id, _inviteToken);
       await loadProfileAndSync(data.user.id);
       window.location.href = 'index.html';
     }
@@ -399,51 +454,117 @@
     clearAlerts();
     const client = initClient(); if (!client) return;
 
-    const company  = document.getElementById('signupCompany').value.trim();
-    const industry = document.getElementById('signupIndustry').value.trim();
-    const goal     = document.getElementById('signupGoal').value.trim();
-    const email    = document.getElementById('signupEmail').value.trim();
-    const pw       = document.getElementById('signupPw').value;
-    const pw2      = document.getElementById('signupPw2').value;
+    const email = document.getElementById('signupEmail').value.trim();
+    const pw    = document.getElementById('signupPw').value;
+    const pw2   = document.getElementById('signupPw2').value;
 
-    if (!company || !industry || !email || !pw) { showAlert('signupError', '필수 항목을 모두 입력해 주세요.'); return; }
-    if (pw !== pw2) { showAlert('signupError', '비밀번호가 일치하지 않습니다.'); return; }
+    if (!email || !pw) { showAlert('signupError', '이메일과 비밀번호를 입력해 주세요.'); return; }
+    if (pw !== pw2)    { showAlert('signupError', '비밀번호가 일치하지 않습니다.'); return; }
     if (pw.length < 8) { showAlert('signupError', '비밀번호는 8자 이상이어야 합니다.'); return; }
+
+    let company = '', industry = '', goal = '', inviteToken = '';
+
+    if (_orgMode === 'new') {
+      company  = document.getElementById('signupCompany').value.trim();
+      industry = document.getElementById('signupIndustry').value.trim();
+      goal     = document.getElementById('signupGoal').value.trim();
+      if (!company || !industry) { showAlert('signupError', '회사명과 업종을 입력해 주세요.'); return; }
+    } else {
+      inviteToken = (document.getElementById('inviteToken').value.trim()) || _inviteToken || '';
+      if (!inviteToken) { showAlert('signupError', '초대 토큰을 입력해 주세요.'); return; }
+    }
 
     setLoading('signupBtn', true, '가입 처리 중...');
 
     const { data, error } = await client.auth.signUp({
       email, password: pw,
-      options: {
-        data: { company_name: company, industry, certification_goal: goal }
-      }
+      options: { data: { company_name: company, industry, certification_goal: goal } }
     });
 
     setLoading('signupBtn', false, '회원가입');
 
     if (error) {
-      const msg = error.message.includes('already registered')
-        ? '이미 가입된 이메일입니다. 로그인해 주세요.'
-        : error.message;
-      showAlert('signupError', msg);
+      showAlert('signupError',
+        error.message.includes('already registered') ? '이미 가입된 이메일입니다. 로그인해 주세요.' : error.message);
       return;
     }
 
-    // 이메일 확인 필요 여부에 따라 처리
     if (data?.user && !data?.session) {
-      // 이메일 인증 필요
+      // 이메일 인증 필요 → 인증 후 로그인 시 조직 처리됨
+      if (_orgMode === 'new' && company) {
+        sessionStorage.setItem('bcms_pending_org', JSON.stringify({ company, industry, goal }));
+      } else if (inviteToken) {
+        sessionStorage.setItem('bcms_pending_invite', inviteToken);
+      }
       document.getElementById('signupForm').style.display = 'none';
       document.getElementById('verifyBox').classList.add('show');
     } else if (data?.session) {
-      // 이메일 확인 없이 즉시 로그인 (Supabase 설정에 따라)
       localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
-      localStorage.setItem(LS_USER_KEY, JSON.stringify(data.user));
-      // 프로필 저장
+      localStorage.setItem(LS_USER_KEY,    JSON.stringify(data.user));
+
       await saveProfile(data.user.id, { company_name: company, industry, certification_goal: goal });
-      localStorage.setItem('bcmsCompanyName', company);
-      localStorage.setItem('bcmsIndustry', industry);
+
+      if (_orgMode === 'new' && company) {
+        await createOrgForUser(data.user.id, company, industry, goal);
+      } else if (inviteToken) {
+        await handleInviteAccept(data.user.id, inviteToken);
+      }
+
+      if (company) localStorage.setItem('bcmsCompanyName', company);
+      if (industry) localStorage.setItem('bcmsIndustry', industry);
       window.location.href = 'index.html';
     }
+  }
+
+  // ── 조직 생성 (신규 가입 admin) ──────────────────────────────
+  async function createOrgForUser(userId, name, industry, certGoal) {
+    if (!sb) return;
+    try {
+      const { data: org, error: orgErr } = await sb
+        .from('organizations')
+        .insert({ name, industry, cert_goal: certGoal, created_by: userId })
+        .select().single();
+      if (orgErr) { console.error('[auth] 조직 생성 실패:', orgErr); return; }
+
+      await sb.from('org_members')
+        .insert({ org_id: org.id, user_id: userId, role: 'admin' });
+
+      await sb.from('bcms_users')
+        .upsert({ id: userId, org_id: org.id, updated_at: new Date().toISOString() });
+
+      localStorage.setItem(LS_ORG_KEY,    JSON.stringify(org));
+      localStorage.setItem(LS_MEMBER_KEY, JSON.stringify({ org_id: org.id, role: 'admin', department: '' }));
+    } catch (e) { console.warn('[auth] 조직 생성 오류:', e); }
+  }
+
+  // ── 초대 토큰 수락 ────────────────────────────────────────────
+  async function handleInviteAccept(userId, token) {
+    if (!sb || !token) return;
+    try {
+      const { data: inv } = await sb
+        .from('org_invitations')
+        .select('*')
+        .eq('token', token)
+        .is('accepted_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+      if (!inv) { console.warn('[auth] 초대 토큰 유효하지 않음'); return; }
+
+      await sb.from('org_members')
+        .upsert({ org_id: inv.org_id, user_id: userId, role: inv.role, department: inv.department, invited_by: inv.invited_by });
+      await sb.from('org_invitations')
+        .update({ accepted_at: new Date().toISOString() }).eq('id', inv.id);
+      await sb.from('bcms_users')
+        .upsert({ id: userId, org_id: inv.org_id, updated_at: new Date().toISOString() });
+
+      const { data: org } = await sb.from('organizations').select('*').eq('id', inv.org_id).single();
+      if (org) {
+        localStorage.setItem(LS_ORG_KEY,    JSON.stringify(org));
+        localStorage.setItem(LS_MEMBER_KEY, JSON.stringify({ org_id: inv.org_id, role: inv.role, department: inv.department }));
+        if (org.name) localStorage.setItem('bcmsCompanyName', org.name);
+      }
+      sessionStorage.removeItem('bcms_pending_invite');
+    } catch (e) { console.warn('[auth] 초대 수락 오류:', e); }
   }
 
   // ── 프로필 저장 ───────────────────────────────────────────────
@@ -461,34 +582,56 @@
   async function loadProfileAndSync(userId) {
     if (!sb) return;
     try {
-      // 프로필
       const { data: profile } = await sb.from('bcms_users').select('*').eq('id', userId).single();
       if (profile) {
         localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(profile));
         if (profile.company_name) localStorage.setItem('bcmsCompanyName', profile.company_name);
         if (profile.industry)     localStorage.setItem('bcmsIndustry',    profile.industry);
       }
-      // BIA 등 핵심 데이터만 로드 (나머지는 supabase.js가 처리)
-      const hasBia = !!localStorage.getItem('bcmsBIAData');
-      if (!hasBia) {
-        const tables = ['bcms_bia','bcms_risk','bcms_bcp','bcms_training','bcms_audit'];
-        for (const t of tables) {
-          const { data } = await sb.from(t).select('*').eq('id', userId).single();
-          if (data) {
-            if (data.data != null) {
-              const key = { bcms_bia:'bcmsBIAData', bcms_risk:'bcmsRiskAssessment', bcms_bcp:'bcmsBCP', bcms_training:'bcmsTrainingData', bcms_audit:'bcmsAuditData' }[t];
-              if (key) localStorage.setItem(key, JSON.stringify(data.data));
-            }
-            if (data.meta != null && t === 'bcms_bcp') localStorage.setItem('bcmsBCPMeta', JSON.stringify(data.meta));
-          }
+
+      // 조직 멤버십 로드
+      const { data: memberRow } = await sb
+        .from('org_members')
+        .select('org_id, role, department, organizations(id,name,industry,cert_goal)')
+        .eq('user_id', userId)
+        .single();
+      if (memberRow) {
+        localStorage.setItem(LS_ORG_KEY,    JSON.stringify(memberRow.organizations));
+        localStorage.setItem(LS_MEMBER_KEY, JSON.stringify({
+          org_id: memberRow.org_id, role: memberRow.role, department: memberRow.department
+        }));
+        if (memberRow.organizations?.name) localStorage.setItem('bcmsCompanyName', memberRow.organizations.name);
+        // pending org from email-verify flow
+        const pendingOrg    = sessionStorage.getItem('bcms_pending_org');
+        const pendingInvite = sessionStorage.getItem('bcms_pending_invite');
+        if (!memberRow.org_id && pendingOrg) {
+          const { company, industry: ind, goal } = JSON.parse(pendingOrg);
+          await createOrgForUser(userId, company, ind, goal);
+          sessionStorage.removeItem('bcms_pending_org');
+        } else if (!memberRow.org_id && pendingInvite) {
+          await handleInviteAccept(userId, pendingInvite);
+        }
+      }
+
+      // BIA 등 핵심 데이터 로드
+      if (!localStorage.getItem('bcmsBIAData')) {
+        const orgId = memberRow?.org_id || null;
+        for (const t of ['bcms_bia','bcms_risk','bcms_bcp','bcms_training','bcms_audit']) {
+          let q = sb.from(t).select('*');
+          q = orgId ? q.eq('org_id', orgId) : q.eq('id', userId);
+          const { data } = await q.maybeSingle();
+          if (!data) continue;
+          const keyMap = { bcms_bia:'bcmsBIAData', bcms_risk:'bcmsRiskAssessment', bcms_bcp:'bcmsBCP', bcms_training:'bcmsTrainingData', bcms_audit:'bcmsAuditData' };
+          if (data.data != null) localStorage.setItem(keyMap[t], JSON.stringify(data.data));
+          if (data.meta != null && t === 'bcms_bcp') localStorage.setItem('bcmsBCPMeta', JSON.stringify(data.meta));
         }
       }
     } catch (e) { console.warn('[auth] 데이터 동기화 실패:', e); }
   }
 
   // ── 테마 ──────────────────────────────────────────────────────
-  const root = document.documentElement;
-  const tog  = document.getElementById('themeToggle');
+  const root  = document.documentElement;
+  const tog   = document.getElementById('themeToggle');
   const saved = localStorage.getItem('bcmsTheme') || 'light';
   root.setAttribute('data-theme', saved);
   tog.textContent = saved === 'dark' ? '☀️' : '🌙';
@@ -500,6 +643,13 @@
   });
 
   // ── 초기화 ───────────────────────────────────────────────────
+  _inviteToken = parseInviteToken();
+  if (_inviteToken) {
+    // 초대 링크로 접속 → 회원가입 탭 + 초대 모드 자동 선택
+    switchTab('signup');
+    setOrgMode('invite');
+    document.getElementById('inviteToken').value = _inviteToken;
+  }
   checkExistingSession();
   </script>
 </body>
