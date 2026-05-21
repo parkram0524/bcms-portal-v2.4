@@ -563,7 +563,7 @@
         }).join('');
 
     const invRows = _invs.map(inv => `
-      <div class="inviteItem">
+      <div class="inviteItem" data-inv-id="${esc(inv.id)}">
         <span class="inviteItemEmail">${esc(inv.email)}</span>
         <span class="roleBadge ${ROLE_CLS[inv.role]}">${ROLE_LABEL[inv.role]}</span>
         <span class="inviteItemMeta">만료: ${inv.expires_at?.split('T')[0]||'—'}</span>
@@ -652,18 +652,21 @@
     document.getElementById('inviteEmail').value = '';
     // 초대 대기 목록 갱신
     _invs = await window.BCMSOrg.getInvitations(_orgId);
+    renderInviteList();
+  }
+
+  function renderInviteList() {
     const listWrap = document.getElementById('inviteListWrap');
-    if (listWrap) {
-      if (_invs.length === 0) { listWrap.innerHTML = ''; return; }
-      const rows = _invs.map(inv => `
-        <div class="inviteItem">
-          <span class="inviteItemEmail">${esc(inv.email)}</span>
-          <span class="roleBadge ${ROLE_CLS[inv.role]}">${ROLE_LABEL[inv.role]}</span>
-          <span class="inviteItemMeta">만료: ${inv.expires_at?.split('T')[0]||'—'}</span>
-          <button class="iconBtn del" onclick="cancelInvite('${esc(inv.id)}')">취소</button>
-        </div>`).join('');
-      listWrap.innerHTML = `<h4>대기 중인 초대 (${_invs.length})</h4>${rows}`;
-    }
+    if (!listWrap) return;
+    if (_invs.length === 0) { listWrap.innerHTML = ''; return; }
+    const rows = _invs.map(inv => `
+      <div class="inviteItem" data-inv-id="${esc(inv.id)}">
+        <span class="inviteItemEmail">${esc(inv.email)}</span>
+        <span class="roleBadge ${ROLE_CLS[inv.role]}">${ROLE_LABEL[inv.role]}</span>
+        <span class="inviteItemMeta">만료: ${inv.expires_at?.split('T')[0]||'—'}</span>
+        <button class="iconBtn del" onclick="cancelInvite('${esc(inv.id)}')">취소</button>
+      </div>`).join('');
+    listWrap.innerHTML = `<h4>대기 중인 초대 (${_invs.length})</h4>${rows}`;
   }
 
   // ── 전역 핸들러 ──────────────────────────────────────────────
@@ -679,8 +682,20 @@
   };
   window.cancelInvite = async function(invId) {
     if (!confirm('이 초대를 취소하시겠습니까?')) return;
-    await window.BCMSOrg.cancelInvitation(invId);
-    await loadOrgSection();
+    // 버튼 즉시 비활성화
+    const itemEl = document.querySelector(`.inviteItem[data-inv-id="${invId}"]`);
+    const btn = itemEl?.querySelector('button.del');
+    if (btn) { btn.disabled = true; btn.textContent = '처리 중…'; }
+
+    const { error } = await window.BCMSOrg.cancelInvitation(invId);
+    if (error) {
+      if (btn) { btn.disabled = false; btn.textContent = '취소'; }
+      alert('초대 취소 실패: ' + (error.message || error));
+      return;
+    }
+    // 성공: _invs 배열에서 즉시 제거 후 목록 재렌더
+    _invs = _invs.filter(inv => inv.id !== invId);
+    renderInviteList();
   };
 
   function showMsg(el, text, color) {

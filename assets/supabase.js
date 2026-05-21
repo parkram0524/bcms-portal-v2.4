@@ -274,8 +274,10 @@
 
     /** 초대 취소 */
     async cancelInvitation(invId) {
-      const c = getClient(); if (!c) return;
-      return c.from('org_invitations').delete().eq('id', invId);
+      const c = getClient();
+      if (!c) return { error: new Error('Supabase 클라이언트 없음') };
+      const { error } = await c.from('org_invitations').delete().eq('id', invId);
+      return { error: error || null };
     }
   };
 
