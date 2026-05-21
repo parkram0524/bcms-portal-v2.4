@@ -373,12 +373,28 @@
     const client = initClient(); if (!client) return;
     const { data } = await client.auth.getSession();
     if (data?.session) {
+      const userId = data.session.user.id;
       localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
-      localStorage.setItem(LS_USER_KEY, JSON.stringify(data.session.user));
-      // 초대 토큰이 있으면 로그인 상태에서도 처리
-      if (_inviteToken) {
-        await handleInviteAccept(data.session.user.id, _inviteToken);
+      localStorage.setItem(LS_USER_KEY,    JSON.stringify(data.session.user));
+
+      // 초대 토큰: URL 파라미터 우선, 없으면 이메일 인증 후 sessionStorage 확인
+      // (Supabase 이메일 인증 리디렉트 URL에는 ?invite= 파라미터가 없으므로
+      //  sessionStorage를 통해 토큰을 전달받아야 함)
+      const pendingInvite = _inviteToken || sessionStorage.getItem('bcms_pending_invite');
+      if (pendingInvite) {
+        await handleInviteAccept(userId, pendingInvite);
+      } else {
+        // 새 조직 생성 (이메일 인증 완료 후 bcms_pending_org 처리)
+        const pendingOrgStr = sessionStorage.getItem('bcms_pending_org');
+        if (pendingOrgStr) {
+          try {
+            const { company, industry, goal } = JSON.parse(pendingOrgStr);
+            if (company) await createOrgForUser(userId, company, industry, goal);
+            sessionStorage.removeItem('bcms_pending_org');
+          } catch (e) { console.warn('[auth] 조직 생성 오류:', e); }
+        }
       }
+
       window.location.href = 'index.html';
     }
   }
@@ -605,6 +621,8 @@
         localStorage.setItem(LS_MEMBER_KEY, JSON.stringify({ org_id: inv.org_id, role: inv.role, department: inv.department }));
         if (org.name) localStorage.setItem('bcmsCompanyName', org.name);
       }
+      // 초대 가입 사용자는 온보딩 스킵
+      localStorage.setItem('bcmsOnboardingDone', 'true');
       sessionStorage.removeItem('bcms_pending_invite');
     } catch (e) { console.warn('[auth] 초대 수락 오류:', e); }
   }
