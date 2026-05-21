@@ -449,6 +449,26 @@
     }
   }
 
+  // ── 회원가입 에러 메시지 번역 ────────────────────────────────
+  function translateSignupError(msg) {
+    if (!msg) return '알 수 없는 오류가 발생했습니다.';
+    if (msg.includes('already registered') || msg.includes('User already registered'))
+      return '이미 가입된 이메일입니다. 로그인해 주세요.';
+    if (msg.includes('Password should be at least') || msg.includes('password'))
+      return '비밀번호는 8자 이상 영문·숫자 조합이어야 합니다.';
+    if (msg.includes('Unable to validate email') || msg.includes('invalid format'))
+      return '유효하지 않은 이메일 형식입니다.';
+    if (msg.includes('For security purposes') || msg.includes('rate limit') || msg.includes('after 60'))
+      return '잠시 후 다시 시도해 주세요. (요청 제한)';
+    if (msg.includes('Signup is disabled'))
+      return '현재 회원가입이 비활성화되어 있습니다.';
+    if (msg.includes('Email address') && msg.includes('not authorized'))
+      return '허용되지 않은 이메일 주소입니다.';
+    if (msg.includes('Network') || msg.includes('fetch'))
+      return '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.';
+    return msg;
+  }
+
   // ── 회원가입 ──────────────────────────────────────────────────
   async function handleSignup() {
     clearAlerts();
@@ -476,43 +496,65 @@
 
     setLoading('signupBtn', true, '가입 처리 중...');
 
-    const { data, error } = await client.auth.signUp({
-      email, password: pw,
-      options: { data: { company_name: company, industry, certification_goal: goal } }
-    });
+    try {
+      const { data, error } = await client.auth.signUp({
+        email, password: pw,
+        options: { data: { company_name: company, industry, certification_goal: goal } }
+      });
 
-    setLoading('signupBtn', false, '회원가입');
-
-    if (error) {
-      showAlert('signupError',
-        error.message.includes('already registered') ? '이미 가입된 이메일입니다. 로그인해 주세요.' : error.message);
-      return;
-    }
-
-    if (data?.user && !data?.session) {
-      // 이메일 인증 필요 → 인증 후 로그인 시 조직 처리됨
-      if (_orgMode === 'new' && company) {
-        sessionStorage.setItem('bcms_pending_org', JSON.stringify({ company, industry, goal }));
-      } else if (inviteToken) {
-        sessionStorage.setItem('bcms_pending_invite', inviteToken);
-      }
-      document.getElementById('signupForm').style.display = 'none';
-      document.getElementById('verifyBox').classList.add('show');
-    } else if (data?.session) {
-      localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
-      localStorage.setItem(LS_USER_KEY,    JSON.stringify(data.user));
-
-      await saveProfile(data.user.id, { company_name: company, industry, certification_goal: goal });
-
-      if (_orgMode === 'new' && company) {
-        await createOrgForUser(data.user.id, company, industry, goal);
-      } else if (inviteToken) {
-        await handleInviteAccept(data.user.id, inviteToken);
+      if (error) {
+        showAlert('signupError', translateSignupError(error.message));
+        return;
       }
 
-      if (company) localStorage.setItem('bcmsCompanyName', company);
-      if (industry) localStorage.setItem('bcmsIndustry', industry);
-      window.location.href = 'index.html';
+      if (!data?.user) {
+        showAlert('signupError', '회원가입 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
+        return;
+      }
+
+      // Supabase 이메일 열거 방지: 이미 가입된 이메일은 error 없이 identities:[] 반환
+      if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        showAlert('signupError', '이미 가입된 이메일입니다. 로그인해 주세요.');
+        return;
+      }
+
+      if (!data.session) {
+        // 이메일 인증 필요 → 인증 후 로그인 시 조직 처리됨
+        if (_orgMode === 'new' && company) {
+          sessionStorage.setItem('bcms_pending_org', JSON.stringify({ company, industry, goal }));
+        } else if (inviteToken) {
+          sessionStorage.setItem('bcms_pending_invite', inviteToken);
+        }
+        // verifyBox에 실제 이메일 주소 표시
+        const vDesc = document.querySelector('#verifyBox .verify-desc');
+        if (vDesc) vDesc.innerHTML =
+          `<strong>${email}</strong>으로 인증 링크를 보냈습니다.<br>` +
+          `메일함을 확인하고 링크를 클릭하면 로그인됩니다.<br>` +
+          `<span style="font-size:12px;opacity:.7;margin-top:6px;display:block;">스팸·프로모션 폴더도 확인해 주세요.</span>`;
+        document.getElementById('signupForm').style.display = 'none';
+        document.getElementById('verifyBox').classList.add('show');
+      } else {
+        // 즉시 로그인됨 (이메일 인증 비활성화 시)
+        localStorage.setItem(LS_SESSION_KEY, JSON.stringify(data.session));
+        localStorage.setItem(LS_USER_KEY,    JSON.stringify(data.user));
+
+        await saveProfile(data.user.id, { company_name: company, industry, certification_goal: goal });
+
+        if (_orgMode === 'new' && company) {
+          await createOrgForUser(data.user.id, company, industry, goal);
+        } else if (inviteToken) {
+          await handleInviteAccept(data.user.id, inviteToken);
+        }
+
+        if (company)  localStorage.setItem('bcmsCompanyName', company);
+        if (industry) localStorage.setItem('bcmsIndustry', industry);
+        window.location.href = 'index.html';
+      }
+    } catch (e) {
+      console.error('[auth] 회원가입 오류:', e);
+      showAlert('signupError', '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.');
+    } finally {
+      setLoading('signupBtn', false, '회원가입');
     }
   }
 
