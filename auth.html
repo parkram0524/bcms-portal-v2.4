@@ -612,14 +612,24 @@
         .upsert({ org_id: inv.org_id, user_id: userId, role: inv.role, department: inv.department, invited_by: inv.invited_by });
       await sb.from('org_invitations')
         .update({ accepted_at: new Date().toISOString() }).eq('id', inv.id);
-      await sb.from('bcms_users')
-        .upsert({ id: userId, org_id: inv.org_id, updated_at: new Date().toISOString() });
 
+      // 조직 정보 조회 (업종/회사명 상속에 필요)
       const { data: org } = await sb.from('organizations').select('*').eq('id', inv.org_id).single();
+
+      // bcms_users: org_id + 조직 업종·회사명 상속
+      await sb.from('bcms_users').upsert({
+        id:           userId,
+        org_id:       inv.org_id,
+        company_name: org?.name     || null,
+        industry:     org?.industry || null,
+        updated_at:   new Date().toISOString()
+      });
+
       if (org) {
         localStorage.setItem(LS_ORG_KEY,    JSON.stringify(org));
         localStorage.setItem(LS_MEMBER_KEY, JSON.stringify({ org_id: inv.org_id, role: inv.role, department: inv.department }));
-        if (org.name) localStorage.setItem('bcmsCompanyName', org.name);
+        if (org.name)     localStorage.setItem('bcmsCompanyName', org.name);
+        if (org.industry) localStorage.setItem('bcmsIndustry',    org.industry);
       }
       // 초대 가입 사용자는 온보딩 스킵
       localStorage.setItem('bcmsOnboardingDone', 'true');

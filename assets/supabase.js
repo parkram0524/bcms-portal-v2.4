@@ -522,6 +522,13 @@
 
     const orgId = orgCtx?.member?.org_id || null;
 
+    // 조직 업종 상속: 개인 업종 미설정 시 조직 업종 자동 적용 (초대 가입 등)
+    if (orgCtx?.org?.industry && !profile?.industry) {
+      const updated = { ...(profile || {}), industry: orgCtx.org.industry };
+      localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(updated));
+      localStorage.setItem('bcmsIndustry', orgCtx.org.industry);
+    }
+
     // 데이터 없으면 Supabase에서 pull
     if (!localStorage.getItem('bcmsBIAData')) {
       await BCMSSync.pull(userId, orgId);

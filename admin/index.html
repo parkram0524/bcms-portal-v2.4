@@ -458,14 +458,18 @@
     }
     _myUserId = user.id;
 
-    // 3. 캐시 우선 → 없으면 직접 조회 (supabase.js init() 완료 여부 무관)
-    let { org, member } = window.BCMSOrg.getCached();
-    if (!org || !member) {
-      try {
-        const ctx = await window.BCMSOrg.loadMyOrg(user.id);
-        org    = ctx?.org    || null;
-        member = ctx?.member || null;
-      } catch (e) {
+    // 3. 항상 최신 데이터 로드 (멤버 가입/변경 즉시 반영, 캐시 무시)
+    let org = null, member = null;
+    try {
+      const ctx = await window.BCMSOrg.loadMyOrg(user.id);
+      org    = ctx?.org    || null;
+      member = ctx?.member || null;
+    } catch (e) {
+      // 네트워크 오류 시 캐시로 fallback
+      const cached = window.BCMSOrg.getCached();
+      org    = cached.org    || null;
+      member = cached.member || null;
+      if (!org) {
         _el.innerHTML = `<p style="color:#dc2626;font-size:13px;">⚠️ 조직 정보 로드 실패: ${esc(e.message || String(e))}</p>`;
         return;
       }
@@ -575,6 +579,7 @@
         <span class="orgMetaName">🏢 ${esc(org?.name||'—')}</span>
         <span class="roleBadge ${ROLE_CLS[_myRole]||'gray'}">${ROLE_LABEL[_myRole]||_myRole}</span>
         <span style="font-size:12px;color:var(--text-2);">멤버 ${_members.length}명</span>
+        <button class="btn" id="btnRefreshMembers" style="margin-left:auto;padding:4px 10px;font-size:12px;">↻ 새로고침</button>
       </div>
 
       <div class="tableWrap" style="margin-bottom:14px;">
@@ -615,6 +620,7 @@
     if (isAdmin) {
       document.getElementById('btnInvite')?.addEventListener('click', sendInvite);
     }
+    document.getElementById('btnRefreshMembers')?.addEventListener('click', loadOrgSection);
   }
 
   // ── 초대 링크 생성 ────────────────────────────────────────────
@@ -756,6 +762,19 @@
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
     if (window.BCMSProfile) {
       try { await window.BCMSProfile.save(profile); } catch {}
+    }
+    // organizations 테이블도 동기화 (같은 조직 멤버 로그인 시 업종 자동 상속)
+    if (window.BCMSOrg) {
+      const { org: cachedOrg } = window.BCMSOrg.getCached();
+      if (cachedOrg?.id) {
+        const orgUpdates = {};
+        if (companyName) orgUpdates.name      = companyName;
+        if (industry)    orgUpdates.industry  = industry;
+        if (certGoal)    orgUpdates.cert_goal = certGoal;
+        if (Object.keys(orgUpdates).length > 0) {
+          try { await window.BCMSOrg.update(cachedOrg.id, orgUpdates); } catch {}
+        }
+      }
     }
     const chip = document.getElementById('sidebarCompanyChip');
     if (chip && companyName) chip.textContent = '🏢 ' + companyName;
