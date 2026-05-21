@@ -262,10 +262,11 @@
   );
 
   /* ── Modal state ── */
-  let selectedIndustry = null;
-  let selectedGoal     = null;
-  let currentStep      = 1;
-  let rootEl           = null;
+  let selectedIndustry    = null;
+  let selectedGoal        = null;
+  let currentStep         = 1;
+  let rootEl              = null;
+  let customIndustryValue = '';
 
   /* ── Portal base URL (for roadmap links) ── */
   function portalBase() {
@@ -463,12 +464,26 @@
         <span class="ob-ind-desc">${ind.desc}</span>
         <span class="ob-ind-check">✓</span>
       </button>`).join('');
+    const customSelected = selectedIndustry === '__custom__';
+    const nextDisabled = !selectedIndustry || (customSelected && !customIndustryValue);
     return `
       <div class="ob-title">귀사의 업종을 선택해주세요</div>
       <div class="ob-desc">업종에 맞는 샘플 데이터와 용어로 빠르게 시작할 수 있습니다.</div>
-      <div class="ob-ind-grid">${cards}</div>
+      <div class="ob-ind-grid">
+        ${cards}
+        <button class="ob-ind-card${customSelected ? ' selected' : ''}" type="button" data-ind="__custom__">
+          <span class="ob-ind-icon">✏️</span>
+          <span class="ob-ind-name">직접 입력</span>
+          <span class="ob-ind-desc">목록에 없는 업종을 직접 입력합니다</span>
+          <span class="ob-ind-check">✓</span>
+        </button>
+      </div>
+      <div id="obCustomIndWrap" style="margin-top:10px;display:${customSelected ? 'block' : 'none'}">
+        <input type="text" id="obCustomIndInput" placeholder="업종을 입력하세요" value="${customIndustryValue.replace(/"/g,'&quot;')}"
+          style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #0070f3;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;background:#fff;color:#111;"/>
+      </div>
       <div class="ob-actions">
-        <button class="ob-btn primary" type="button" id="obNext"${!selectedIndustry ? ' disabled' : ''}>다음 →</button>
+        <button class="ob-btn primary" type="button" id="obNext"${nextDisabled ? ' disabled' : ''}>다음 →</button>
       </div>`;
   }
 
@@ -553,10 +568,28 @@
         selectedIndustry = card.getAttribute('data-ind');
         rootEl.querySelectorAll('.ob-ind-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
-        const n = document.getElementById('obNext');
-        if (n) n.disabled = false;
+        const n    = document.getElementById('obNext');
+        const wrap = document.getElementById('obCustomIndWrap');
+        if (selectedIndustry === '__custom__') {
+          if (wrap) wrap.style.display = 'block';
+          const inp = document.getElementById('obCustomIndInput');
+          if (inp) { inp.focus(); customIndustryValue = inp.value.trim(); }
+          if (n) n.disabled = !customIndustryValue;
+        } else {
+          if (wrap) wrap.style.display = 'none';
+          if (n) n.disabled = false;
+        }
       });
     });
+
+    const customInput = document.getElementById('obCustomIndInput');
+    if (customInput) {
+      customInput.addEventListener('input', () => {
+        customIndustryValue = customInput.value.trim();
+        const n = document.getElementById('obNext');
+        if (n) n.disabled = !customIndustryValue;
+      });
+    }
 
     rootEl.querySelectorAll('.ob-goal-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -585,22 +618,34 @@
   }
 
   function finish() {
+    const industryToSave = selectedIndustry === '__custom__' ? customIndustryValue : selectedIndustry;
     localStorage.setItem(DONE_KEY, 'true');
-    if (selectedIndustry) localStorage.setItem(INDUSTRY_KEY, selectedIndustry);
-    if (selectedGoal)     localStorage.setItem(GOAL_KEY, selectedGoal);
+    if (industryToSave) localStorage.setItem(INDUSTRY_KEY, industryToSave);
+    if (selectedGoal)   localStorage.setItem(GOAL_KEY, selectedGoal);
+
+    // Sync industry to Supabase profile cache
+    if (window.BCMSProfile && industryToSave) {
+      let profile = {};
+      try { profile = JSON.parse(localStorage.getItem('bcms_user_profile')) || {}; } catch {}
+      profile.industry = industryToSave;
+      localStorage.setItem('bcms_user_profile', JSON.stringify(profile));
+      window.BCMSProfile.save(profile).catch(() => {});
+    }
 
     // 기존 BIA/리스크/BCP 데이터 초기화 (업종 변경 시 구 데이터 잔존 방지)
     ['bcmsBIAData', 'bcmsRiskAssessment', 'bcmsRiskList',
      'bcmsBCPStrategy', 'bcmsBCP', 'bcmsPriorityConfirmed'].forEach(k => localStorage.removeItem(k));
 
-    // 새 업종 샘플 강제 로드
-    const loaded = window.BCMSDemoSeed?.loadDemo({ force: true });
+    // 새 업종 샘플 강제 로드 (직접 입력 업종은 샘플 없음)
+    const loaded = selectedIndustry !== '__custom__'
+      ? window.BCMSDemoSeed?.loadDemo({ force: true })
+      : false;
 
     if (rootEl) { rootEl.remove(); rootEl = null; }
 
     const redirect = window.BCMS_ONBOARDING_REDIRECT;
-    if (loaded && selectedIndustry) {
-      showToast(`✓ ${selectedIndustry} 샘플 데이터 로드 완료`);
+    if (loaded && industryToSave) {
+      showToast(`✓ ${industryToSave} 샘플 데이터 로드 완료`);
       setTimeout(() => {
         if (redirect) window.location.href = redirect;
         else          window.location.reload();

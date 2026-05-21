@@ -180,12 +180,81 @@
     .pageHeader { flex-direction: column; }
     .headerBtns { width: 100%; }
   }
+
+  /* ── 회사 정보 섹션 ── */
+  .infoSection {
+    margin-bottom: 20px; padding: 20px 24px;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface);
+  }
+  .infoSection h2 { font-size: 15px; font-weight: 700; margin: 0 0 4px 0; }
+  .infoSection p  { font-size: 12px; color: var(--text-2); margin: 0 0 16px 0; }
+  .infoRow {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px; margin-bottom: 14px;
+  }
+  @media (max-width: 720px) { .infoRow { grid-template-columns: 1fr; } }
+  .infoField label {
+    display: block; font-size: 11px; font-weight: 700;
+    color: var(--text-2); margin-bottom: 5px;
+  }
+  .infoInput {
+    width: 100%; padding: 8px 10px; border-radius: 8px; box-sizing: border-box;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px; outline: none; font-family: inherit;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .infoInput:focus { border-color: var(--accent, #0070f3); box-shadow: 0 0 0 2px rgba(0,112,243,.1); }
+  .infoCustomWrap { margin-top: 6px; display: none; }
+  .infoSaveRow { display: flex; align-items: center; gap: 10px; }
+  .infoSaveMsg { font-size: 12px; font-weight: 600; color: #16a34a; display: none; }
 </style>
 </head>
 <body>
 <aside id="sidebarMount"></aside>
 <main class="main">
 <div class="wrap">
+
+  <!-- ── 회사 정보 설정 ── -->
+  <div class="infoSection">
+    <h2>🏢 회사 정보 설정</h2>
+    <p>저장 즉시 사이드바와 대시보드에 반영됩니다.</p>
+    <div class="infoRow">
+      <div class="infoField">
+        <label>회사명</label>
+        <input type="text" class="infoInput" id="infoCompanyName" placeholder="예) 삼성전자 주식회사"/>
+      </div>
+      <div class="infoField">
+        <label>업종</label>
+        <select class="infoInput" id="infoIndustry">
+          <option value="">선택하세요</option>
+          <option value="제조업">제조업</option>
+          <option value="금융">금융</option>
+          <option value="공공기관">공공기관</option>
+          <option value="고속도로">고속도로</option>
+          <option value="통신">통신</option>
+          <option value="IDC">IDC</option>
+          <option value="__custom__">직접 입력</option>
+        </select>
+        <div class="infoCustomWrap" id="infoIndustryCustomWrap">
+          <input type="text" class="infoInput" id="infoIndustryCustom" placeholder="업종을 직접 입력하세요"/>
+        </div>
+      </div>
+      <div class="infoField">
+        <label>인증 목표</label>
+        <select class="infoInput" id="infoCertGoal">
+          <option value="">선택하세요</option>
+          <option value="iso22301">ISO 22301 단독 취득</option>
+          <option value="drrb">재해경감우수기업 단독 인증</option>
+          <option value="both">ISO 22301 + 재해경감우수기업 동시</option>
+        </select>
+      </div>
+    </div>
+    <div class="infoSaveRow">
+      <button type="button" class="btn primary" id="btnSaveInfo">저장</button>
+      <span class="infoSaveMsg" id="infoSaveMsg">✓ 저장되었습니다</span>
+    </div>
+  </div>
 
   <!-- ── 데이터 관리 섹션 ── -->
   <div style="margin-bottom:24px;padding:18px 20px;border:1px solid var(--border);border-radius:12px;background:var(--surface);">
@@ -300,6 +369,67 @@
 
 <script src="../assets/demo-seed.js"></script>
 <script src="../assets/sidebar.js"></script>
+<script>
+/* ── 회사 정보 섹션 ── */
+(function () {
+  const PROFILE_KEY  = 'bcms_user_profile';
+  const COMPANY_KEY  = 'bcmsCompanyName';
+  const INDUSTRY_KEY = 'bcmsIndustry';
+  const GOAL_KEY     = 'bcmsGoal';
+  const KNOWN_INDUSTRIES = ['제조업','금융','공공기관','고속도로','통신','IDC'];
+
+  function loadInfoSection() {
+    let profile = {};
+    try { profile = JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch {}
+    const companyName = profile.company_name || localStorage.getItem(COMPANY_KEY) || '';
+    const industry    = profile.industry     || localStorage.getItem(INDUSTRY_KEY) || '';
+    const certGoal    = profile.certification_goal || localStorage.getItem(GOAL_KEY) || '';
+    document.getElementById('infoCompanyName').value = companyName;
+    const sel = document.getElementById('infoIndustry');
+    if (industry && !KNOWN_INDUSTRIES.includes(industry)) {
+      sel.value = '__custom__';
+      document.getElementById('infoIndustryCustomWrap').style.display = 'block';
+      document.getElementById('infoIndustryCustom').value = industry;
+    } else {
+      sel.value = industry;
+    }
+    document.getElementById('infoCertGoal').value = certGoal;
+  }
+
+  async function saveInfoSection() {
+    const companyName = document.getElementById('infoCompanyName').value.trim();
+    const industryRaw = document.getElementById('infoIndustry').value;
+    const industry    = industryRaw === '__custom__'
+      ? document.getElementById('infoIndustryCustom').value.trim()
+      : industryRaw;
+    const certGoal = document.getElementById('infoCertGoal').value;
+    if (companyName) localStorage.setItem(COMPANY_KEY,  companyName);
+    if (industry)    localStorage.setItem(INDUSTRY_KEY, industry);
+    if (certGoal)    localStorage.setItem(GOAL_KEY,     certGoal);
+    let profile = {};
+    try { profile = JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch {}
+    if (companyName) profile.company_name        = companyName;
+    if (industry)    profile.industry            = industry;
+    if (certGoal)    profile.certification_goal  = certGoal;
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    if (window.BCMSProfile) {
+      try { await window.BCMSProfile.save(profile); } catch {}
+    }
+    const chip = document.getElementById('sidebarCompanyChip');
+    if (chip && companyName) chip.textContent = '🏢 ' + companyName;
+    const msg = document.getElementById('infoSaveMsg');
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  }
+
+  document.getElementById('infoIndustry').addEventListener('change', function () {
+    document.getElementById('infoIndustryCustomWrap').style.display =
+      this.value === '__custom__' ? 'block' : 'none';
+  });
+  document.getElementById('btnSaveInfo').addEventListener('click', saveInfoSection);
+  loadInfoSection();
+})();
+</script>
 <script>
 (function () {
   'use strict';
