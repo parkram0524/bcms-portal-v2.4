@@ -365,7 +365,25 @@
   };
 
   const renderHeader = () => {
-    const industry = localStorage.getItem('bcmsIndustry') || '';
+    // 업종 우선순위: 여러 소스를 합산, 편집자·조회자는 조직 업종 우선
+    let industry = '';
+    try {
+      const member  = JSON.parse(localStorage.getItem('bcms_org_member')   || 'null');
+      const org     = JSON.parse(localStorage.getItem('bcms_org')          || 'null');
+      const profile = JSON.parse(localStorage.getItem('bcms_user_profile') || 'null');
+      const lsInd   = localStorage.getItem('bcmsIndustry') || '';
+      const orgInd  = org?.industry      || '';
+      const profInd = profile?.industry  || '';
+      if (member?.role && member.role !== 'admin') {
+        // 편집자·조회자: 조직 업종 우선 → 개인 설정 → localStorage
+        industry = orgInd || profInd || lsInd;
+      } else {
+        // 관리자·개인: localStorage → 프로필 → 조직 업종 순
+        industry = lsInd || profInd || orgInd;
+      }
+    } catch {
+      industry = localStorage.getItem('bcmsIndustry') || '';
+    }
     const companyName = getCompanyName();
     const now = new Date();
     const dateStr = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
@@ -760,6 +778,8 @@
   render();
   window.addEventListener('focus',   render);
   window.addEventListener('storage', render);
+  // supabase.js init() 완료 후 재렌더 (비동기 로드로 bcmsIndustry 등 세팅 이후)
+  window.addEventListener('bcms:ready', render, { once: true });
   </script>
 </body>
 </html>

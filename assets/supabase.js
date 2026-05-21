@@ -539,6 +539,8 @@
       injectUserBar();
       updateSecurityBadge();
       BCMSPerm.applyViewerLock();
+      // 프로필·조직 로드 완료 → 같은 탭의 대시보드 재렌더 트리거
+      window.dispatchEvent(new CustomEvent('bcms:ready'));
     };
 
     if (document.readyState === 'loading') {
