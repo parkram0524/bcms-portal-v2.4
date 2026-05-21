@@ -111,7 +111,7 @@
         <div class="legalMeta">
           <span class="legalMetaItem">📅 시행일: 2026년 1월 1일</span>
           <span class="legalMetaDot"></span>
-          <span class="legalMetaItem">📄 버전: v1.0</span>
+          <span class="legalMetaItem">📄 버전: v2.0</span>
           <span class="legalMetaDot"></span>
           <span class="legalMetaItem">🌐 BCMS Portal v2</span>
         </div>
@@ -132,7 +132,7 @@
         <div class="legalSectionNum">제 2 조</div>
         <div class="legalSectionTitle">서비스 범위</div>
         <div class="legalBody">
-          <div class="scopeBadge">🌐 BCMS 수립 지원 웹 포털</div>
+          <div class="scopeBadge">🌐 BCMS 수립 지원 클라우드 포털</div>
           <p>서비스는 ISO 22301 기반 업무연속성관리시스템(BCMS) 수립을 지원하는 웹 포털입니다. 제공 기능은 아래와 같습니다.</p>
           <table class="infoTable">
             <thead>
@@ -143,6 +143,10 @@
             </thead>
             <tbody>
               <tr>
+                <td>회원 및 조직 관리</td>
+                <td>이메일 기반 회원가입·로그인, 멀티유저 조직 생성, 초대 링크 발송, 역할 관리(admin/editor/viewer)</td>
+              </tr>
+              <tr>
                 <td>Education Center</td>
                 <td>BCM 기초 교육, ISO 22301 해설, 실습 가이드, 업종별 사례, 인증 준비 체크리스트</td>
               </tr>
@@ -152,7 +156,7 @@
               </tr>
               <tr>
                 <td>BIA & RA</td>
-                <td>업무영향분석(BIA), 리스크 평가(RA), 핵심업무 우선순위 산정</td>
+                <td>업무영향분석(BIA), 리스크 평가(RA), MBCO 설정, 핵심업무 우선순위 산정</td>
               </tr>
               <tr>
                 <td>전략·계획</td>
@@ -174,6 +178,10 @@
                 <td>보고서</td>
                 <td>경영진 요약 보고서, 심사용 문서 패키지 출력</td>
               </tr>
+              <tr>
+                <td>AI 도우미</td>
+                <td>사용자 본인 API 키 기반 초안 생성 (분석 후 즉시 삭제, 학습 미사용)</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -188,14 +196,52 @@
             <strong>📌 원칙:</strong> 이용자가 서비스에 입력한 모든 데이터의 소유권은 입력한 이용자 본인에게 있습니다.
           </div>
           <p>서비스는 이용자가 입력한 데이터를 이용자의 동의 없이 열람·수집·활용·판매하지 않습니다.</p>
-          <p>모든 데이터는 이용자 본인 기기의 브라우저 localStorage에만 저장되며, 운영자는 해당 데이터에 접근할 수 없습니다.</p>
-          <p>이용자는 브라우저 데이터 삭제를 통해 언제든지 자신의 데이터를 완전히 삭제할 수 있습니다.</p>
+          <p>데이터는 Supabase 클라우드 서버에 암호화되어 저장되며, Row Level Security(RLS)를 통해 본인 및 소속 조직 데이터에만 접근할 수 있습니다.</p>
+          <p>이용자는 계정 삭제 요청을 통해 언제든지 자신의 데이터를 완전히 삭제할 수 있습니다.</p>
+          <div class="highlightBox">
+            <strong>📌 조직 데이터 주의:</strong> 조직(Organization) 내에서 입력한 데이터는 조직의 admin 권한자도 접근 가능합니다. 조직 탈퇴 시 해당 조직의 데이터는 조직에 귀속됩니다.
+          </div>
         </div>
       </div>
 
-      <!-- ── 제4조: 책임 한계 ── -->
+      <!-- ── 제4조: 회원 가입 및 계정 관리 ── -->
       <div class="legalSection">
         <div class="legalSectionNum">제 4 조</div>
+        <div class="legalSectionTitle">회원 가입 및 계정 관리</div>
+        <div class="legalBody">
+          <table class="infoTable">
+            <thead>
+              <tr>
+                <th>항목</th>
+                <th>내용</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>가입 방식</td>
+                <td>이메일·비밀번호 직접 가입 또는 조직 초대 링크를 통한 가입</td>
+              </tr>
+              <tr>
+                <td>1인 1계정 원칙</td>
+                <td>이용자는 복수의 계정을 생성하거나 타인의 계정을 공유할 수 없습니다</td>
+              </tr>
+              <tr>
+                <td>계정 보안 책임</td>
+                <td>비밀번호 관리 및 계정 보안은 이용자 본인에게 있습니다</td>
+              </tr>
+              <tr>
+                <td>계정 탈퇴</td>
+                <td>운영 이메일로 탈퇴 요청 가능 — 요청 접수 후 7영업일 이내 처리</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>타인의 명의나 허위 정보로 가입한 경우 서비스 이용이 제한될 수 있습니다.</p>
+        </div>
+      </div>
+
+      <!-- ── 제5조: 책임 한계 ── -->
+      <div class="legalSection">
+        <div class="legalSectionNum">제 5 조</div>
         <div class="legalSectionTitle">책임 한계</div>
         <div class="legalBody">
           <div class="warnBox">
@@ -216,7 +262,7 @@
               </tr>
               <tr>
                 <td>데이터 손실</td>
-                <td>localStorage 초기화, 브라우저 업데이트, 기기 교체 등으로 인한 데이터 손실에 대해 책임지지 않습니다.</td>
+                <td>천재지변, Supabase 장애 등 불가항력으로 인한 데이터 손실에 대해 운영자는 책임지지 않습니다. 중요한 데이터는 PDF 출력 등으로 별도 백업을 권장합니다.</td>
               </tr>
               <tr>
                 <td>법적 효력</td>
@@ -230,14 +276,18 @@
                 <td>서비스 정확성</td>
                 <td>서비스 내 콘텐츠(ISO 해설, 가이드 등)는 참고용이며 법적·공식 해석과 다를 수 있습니다.</td>
               </tr>
+              <tr>
+                <td>AI 도우미 결과물</td>
+                <td>AI가 생성한 초안은 참고용이며, 내용의 정확성·완전성을 보장하지 않습니다. 반드시 이용자가 검토·수정 후 사용하시기 바랍니다.</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- ── 제5조: 서비스 변경·중단 ── -->
+      <!-- ── 제6조: 서비스 변경·중단 ── -->
       <div class="legalSection">
-        <div class="legalSectionNum">제 5 조</div>
+        <div class="legalSectionNum">제 6 조</div>
         <div class="legalSectionTitle">서비스 변경 및 중단</div>
         <div class="legalBody">
           <p>운영자는 서비스 운영 개선, 법령 변경, 기술적 사유 등으로 서비스의 전부 또는 일부를 변경하거나 중단할 수 있습니다.</p>
@@ -272,40 +322,41 @@
               </tr>
             </tbody>
           </table>
-          <p>서비스 중단 시 이용자가 입력한 데이터는 이용자 본인 기기에 남아 있으며, 운영자는 해당 데이터를 보유하지 않으므로 별도 복구를 제공할 수 없습니다.</p>
-          <p>중요한 데이터는 정기적으로 PDF 출력 또는 별도 매체에 백업하시기 바랍니다.</p>
+          <p>서비스 영구 종료 시, 이용자가 가입 시 등록한 이메일로 데이터 내보내기 방법을 사전 안내합니다.</p>
         </div>
       </div>
 
-      <!-- ── 제6조: 이용자 의무 ── -->
+      <!-- ── 제7조: 이용자 의무 ── -->
       <div class="legalSection">
-        <div class="legalSectionNum">제 6 조</div>
+        <div class="legalSectionNum">제 7 조</div>
         <div class="legalSectionTitle">이용자 의무</div>
         <div class="legalBody">
           <p>이용자는 서비스 이용 시 아래 사항을 준수하여야 합니다.</p>
           <ul style="padding-left: 18px; margin: 10px 0; display: flex; flex-direction: column; gap: 7px;">
             <li>타인의 정보를 도용하거나 허위 정보를 입력하는 행위 금지</li>
-            <li>서비스의 정상적인 운영을 방해하는 행위 금지</li>
+            <li>타인의 계정을 무단으로 사용하는 행위 금지</li>
+            <li>조직 내 다른 구성원의 데이터를 권한 범위를 초과하여 열람·수정·삭제하는 행위 금지</li>
+            <li>서비스의 정상적인 운영을 방해하는 행위 금지(크롤링, 자동화 공격 등)</li>
             <li>관련 법령 및 본 약관을 준수</li>
             <li>서비스 내 콘텐츠의 무단 복제·배포 금지</li>
           </ul>
         </div>
       </div>
 
-      <!-- ── 제7조: 약관 개정 ── -->
+      <!-- ── 제8조: 약관 개정 ── -->
       <div class="legalSection">
-        <div class="legalSectionNum">제 7 조</div>
+        <div class="legalSectionNum">제 8 조</div>
         <div class="legalSectionTitle">약관 개정</div>
         <div class="legalBody">
           <p>운영자는 관련 법령의 변경 또는 서비스 정책 변경 시 약관을 개정할 수 있습니다.</p>
-          <p>약관 개정 시 시행일 7일 전(이용자에게 불리한 변경의 경우 30일 전)에 서비스 내 공지 또는 이메일을 통해 안내합니다.</p>
+          <p>약관 개정 시 시행일 7일 전(이용자에게 불리한 변경의 경우 30일 전)에 서비스 내 공지 또는 가입 이메일을 통해 안내합니다.</p>
           <p>개정 약관 시행일 이후 서비스를 계속 이용하는 경우 개정 약관에 동의한 것으로 간주됩니다.</p>
         </div>
       </div>
 
-      <!-- ── 제8조: 문의처 ── -->
+      <!-- ── 제9조: 문의처 ── -->
       <div class="legalSection">
-        <div class="legalSectionNum">제 8 조</div>
+        <div class="legalSectionNum">제 9 조</div>
         <div class="legalSectionTitle">문의처</div>
         <div class="legalBody">
           <p>약관 관련 문의 및 서비스 이용 문의는 아래 연락처로 접수하실 수 있습니다.</p>
@@ -324,7 +375,7 @@
         <span style="font-size:18px; flex-shrink:0;">📋</span>
         <span>
           <strong>시행일:</strong> 2026년 1월 1일 &nbsp;|&nbsp;
-          <strong>최종 개정일:</strong> 2026년 1월 1일 &nbsp;|&nbsp;
+          <strong>최종 개정일:</strong> 2026년 5월 21일 (v2.0 — Supabase 전환, 멀티유저 조직 기능 반영) &nbsp;|&nbsp;
           본 약관은 관련 법령 개정 또는 서비스 정책 변경 시 사전 공지 후 개정될 수 있습니다.
         </span>
       </div>
