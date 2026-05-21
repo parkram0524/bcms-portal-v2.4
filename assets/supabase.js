@@ -11,9 +11,11 @@
   const PUBLIC_PAGES  = ['auth.html', 'privacy.html', 'terms.html'];
   const isPublicPage  = () => PUBLIC_PAGES.some(p => window.location.pathname.includes(p));
 
+  const _SUBDIRS = ['admin','governance','risk-bia','strategy-plans','op-center',
+                    'library','training','audit','reports','education'];
   const getAuthPath = () => {
-    const depth = (window.location.pathname.match(/\//g) || []).length - 1;
-    return '../'.repeat(Math.max(0, depth - 1)) + 'auth.html';
+    const inSub = _SUBDIRS.some(d => window.location.pathname.includes('/' + d + '/'));
+    return (inSub ? '../' : '') + 'auth.html';
   };
 
   // ── 캐시 키 ──────────────────────────────────────────────────

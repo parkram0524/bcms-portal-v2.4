@@ -1,5 +1,17 @@
 (function () {
   // =========================================================
+  // 프로젝트 서브디렉토리 감지 (Live Server / file:// / 일반 서버 모두 동작)
+  // 슬래시 개수 대신 알려진 서브디렉토리명으로 판별:
+  //   /index.html          → inSubDir=false → prefix=''
+  //   /admin/index.html    → inSubDir=true  → prefix='../'
+  //   file:///...../admin/index.html → inSubDir=true → prefix='../'
+  // =========================================================
+  const _SUBDIRS = ['admin','governance','risk-bia','strategy-plans','op-center',
+                    'library','training','audit','reports','education'];
+  const _inSubDir = _SUBDIRS.some(d => window.location.pathname.includes('/' + d + '/'));
+  const _relPrefix = _inSubDir ? '../' : '';
+
+  // =========================================================
   // ✅ Supabase 인증 게이트 (빠른 경로 – SDK 없이 localStorage 확인)
   // =========================================================
   (function authGate() {
@@ -9,9 +21,7 @@
     try {
       const session = localStorage.getItem('bcms_supabase_session');
       if (!session) {
-        const depth = (window.location.pathname.match(/\//g) || []).length - 1;
-        const prefix = '../'.repeat(Math.max(0, depth - 1));
-        window.location.replace(prefix + 'auth.html');
+        window.location.replace(_relPrefix + 'auth.html');
       }
     } catch (e) { /* localStorage 사용 불가 환경에서는 통과 */ }
   })();
@@ -24,17 +34,17 @@
     if (PUBLIC_PAGES.some(p => window.location.pathname.includes(p))) return;
     if (document.querySelector('script[data-bcms-supabase]')) return; // 이미 주입됨
 
-    const depth = (window.location.pathname.match(/\//g) || []).length - 1;
-    const prefix = depth > 1 ? '../' : '';
-
     const cdn = document.createElement('script');
     cdn.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
     cdn.setAttribute('data-bcms-supabase', 'cdn');
     cdn.onload = function () {
       const s = document.createElement('script');
-      s.src = prefix + 'assets/supabase.js';
+      s.src = _relPrefix + 'assets/supabase.js';
       s.setAttribute('data-bcms-supabase', 'init');
       document.head.appendChild(s);
+    };
+    cdn.onerror = function () {
+      console.error('[BCMS] Supabase CDN 로드 실패. 네트워크를 확인하세요.');
     };
     document.head.appendChild(cdn);
   })();
