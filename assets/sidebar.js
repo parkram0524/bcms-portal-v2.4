@@ -79,6 +79,9 @@
       </div>
     </a>
 
+    <!-- 회사명 칩 -->
+    <div class="sidebar-company" id="sidebarCompanyChip"></div>
+
     <div class="sidebar-section" data-section="home">
       <a href="${H("/index.html")}" class="sidebar-section-title">🏠 BCMS Home</a>
     </div>
@@ -192,10 +195,69 @@
   const mount = document.getElementById("sidebarMount");
   if (mount) mount.innerHTML = sidebarHTML;
 
+  // ── 회사명 칩 채우기 ─────────────────────────────────────────
+  (function renderCompanyChip() {
+    const chip = document.getElementById('sidebarCompanyChip');
+    if (!chip) return;
+
+    function getCompanyName() {
+      // 1순위: Supabase 프로필 캐시
+      try {
+        const p = JSON.parse(localStorage.getItem('bcms_user_profile'));
+        if (p?.company_name) return p.company_name;
+      } catch {}
+      // 2순위: 단독 키
+      const c = localStorage.getItem('bcmsCompanyName');
+      if (c) return c;
+      // 3순위: 조직 레지스트리
+      try {
+        const org = JSON.parse(localStorage.getItem('bcms_org_registry_v1'));
+        if (org?.companyName) return org.companyName;
+      } catch {}
+      // 4순위: 이메일 앞부분
+      try {
+        const u = JSON.parse(localStorage.getItem('bcms_supabase_user'));
+        if (u?.email) return u.email.split('@')[0];
+      } catch {}
+      return null;
+    }
+
+    const name = getCompanyName();
+    if (name) {
+      chip.textContent = '🏢 ' + name;
+    } else {
+      const depth = (window.location.pathname.match(/\//g) || []).length - 1;
+      const prefix = depth > 1 ? '../' : '';
+      chip.innerHTML = `<span class="sidebar-company-setup">회사명 미설정 · <a href="${prefix}admin/index.html">설정하기 →</a></span>`;
+    }
+  })();
+
   // ✅ 링크가 h1 스타일을 망치지 않게 보정 (style.css 수정 없이)
   const st = document.createElement("style");
   st.textContent = `
-    .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; padding:4px 0 16px; border-bottom:0.5px solid rgba(100,116,139,.18); margin-bottom:2px; }
+    .sidebar-brand-link{ display:block; text-decoration:none; color:inherit; padding:4px 0 12px; border-bottom:0.5px solid rgba(100,116,139,.18); margin-bottom:2px; }
+    .sidebar-company {
+      padding: 5px 14px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-bottom: 0.5px solid rgba(100,116,139,.1);
+      margin-bottom: 4px;
+      min-height: 28px;
+    }
+    .sidebar-company-setup {
+      font-size: 11px;
+      font-weight: 400;
+      color: #94a3b8;
+    }
+    .sidebar-company-setup a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .sidebar-company-setup a:hover { text-decoration: underline; }
     .sidebar-brand{ display:flex; align-items:center; gap:11px; }
     .sidebar-brand-icon{ font-size:28px; line-height:1; flex-shrink:0; }
     .sidebar-brand-text{ display:flex; align-items:baseline; gap:5px; line-height:1; }

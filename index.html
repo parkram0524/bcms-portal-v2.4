@@ -355,13 +355,32 @@
   };
 
   /* ── Header ── */
+  const getCompanyName = () => {
+    try { const p = JSON.parse(localStorage.getItem('bcms_user_profile')); if (p?.company_name) return p.company_name; } catch {}
+    const c = localStorage.getItem('bcmsCompanyName');
+    if (c) return c;
+    try { const org = JSON.parse(localStorage.getItem('bcms_org_registry_v1')); if (org?.companyName) return org.companyName; } catch {}
+    try { const u = JSON.parse(localStorage.getItem('bcms_supabase_user')); if (u?.email) return u.email.split('@')[0]; } catch {}
+    return null;
+  };
+
   const renderHeader = () => {
     const industry = localStorage.getItem('bcmsIndustry') || '';
+    const companyName = getCompanyName();
     const now = new Date();
     const dateStr = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
 
     document.getElementById('industryChip').textContent = industry ? `🏭 ${industry}` : '업종 미설정';
     document.getElementById('dateChip').textContent = dateStr;
+
+    const subtitleEl = document.getElementById('dashSubtitle');
+    if (subtitleEl) {
+      if (companyName) {
+        subtitleEl.innerHTML = `<strong style="color:var(--text)">${esc(companyName)}</strong>의 BCMS 현황 · 지금 무엇을 먼저 할지 한눈에 확인하세요.`;
+      } else {
+        subtitleEl.innerHTML = `지금 무엇을 먼저 할지 한눈에 확인하세요. <a href="admin/index.html" style="color:var(--accent);font-size:12px">회사명 설정 →</a>`;
+      }
+    }
 
     const pct = isoPct();
     const certEl = document.getElementById('certBadge');
