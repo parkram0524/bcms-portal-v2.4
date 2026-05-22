@@ -130,6 +130,29 @@
     border: 1px solid rgba(124,58,237,.25); white-space: nowrap; margin-top: 4px;
   }
   [data-theme="dark"] .bdg-pkg { background: rgba(167,139,250,.1); color: #a78bfa; border-color: rgba(167,139,250,.3); }
+  .iso-check {
+    width: 16px; height: 16px; flex-shrink: 0; margin: 0;
+    accent-color: var(--accent); cursor: pointer;
+  }
+  .iso-check:disabled { cursor: default; opacity: .65; }
+  .iso-action {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 5px; flex-shrink: 0; padding-left: 10px; min-width: 140px; text-align: right;
+  }
+  .iso-write-btn {
+    font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;
+    border: 1px solid rgba(0,112,243,.3); background: rgba(0,112,243,.06);
+    color: var(--accent); text-decoration: none; white-space: nowrap;
+    transition: background .12s; display: inline-block;
+  }
+  .iso-write-btn:hover { background: rgba(0,112,243,.14); }
+  .bdg-portal {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 5px;
+    background: rgba(22,163,74,.08); color: #16a34a;
+    border: 1px solid rgba(22,163,74,.25); white-space: nowrap;
+  }
+  [data-theme="dark"] .bdg-portal { background: rgba(74,222,128,.1); color: #4ade80; border-color: rgba(74,222,128,.3); }
 
   /* ── Pyramid tab ── */
   .pyr-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
@@ -710,43 +733,99 @@ const PKG_FLAG_MAP = {
   managementReviewGenerated:'9.3',
 };
 
-function renderIso() {
-  const docs    = loadDocs();
-  const clauses = new Set(docs.flatMap(d => d.isoArticles || []));
+const ISO_EXTRA = {
+  '4.3':  { link: 'policy.html',                      check: () => { try { return !!String(JSON.parse(localStorage.getItem('bcmsPolicyData')||'{}').scope||'').trim(); } catch { return false; } } },
+  '5.2':  { link: 'policy.html',                      check: () => { try { return !!String(JSON.parse(localStorage.getItem('bcmsPolicyData')||'{}').body||'').trim(); } catch { return false; } } },
+  '6.2':  { link: 'policy.html',                      check: () => { try { const d = JSON.parse(localStorage.getItem('bcmsObjectives')||'[]'); return Array.isArray(d) && d.length > 0; } catch { return false; } } },
+  '7.2':  { link: 'org.html',                          check: () => false },
+  '8.2':  { link: '../risk-bia/bia.html',              check: () => { try { const d = JSON.parse(localStorage.getItem('bcmsBIAData')||'[]'); return Array.isArray(d) && d.length > 0; } catch { return false; } } },
+  '8.3':  { link: '../risk-bia/risk.html',             check: () => { try { const d = JSON.parse(localStorage.getItem('bcmsRiskList')||'[]'); return Array.isArray(d) && d.length > 0; } catch { return false; } } },
+  '8.4':  { link: '../strategy-plans/bcp.html',        check: () => { try { return !!JSON.parse(localStorage.getItem('bcmsBCPDoc')||'null'); } catch { return false; } } },
+  '8.5':  { link: '../training/index.html',            check: () => { try { const d = JSON.parse(localStorage.getItem('bcmsTrainingData')||'[]'); return Array.isArray(d) && d.length > 0; } catch { return false; } } },
+  '9.1':  { link: '../audit/index.html',               check: () => { try { const d = JSON.parse(localStorage.getItem('bcmsAuditData')||'[]'); return Array.isArray(d) && d.length > 0; } catch { return false; } } },
+  '9.2':  { link: '../audit/index.html',               check: () => { try { const d = JSON.parse(localStorage.getItem('bcmsAuditData')||'[]'); return Array.isArray(d) && d.length > 0; } catch { return false; } } },
+  '9.3':  { link: '../reports/executive-summary.html', check: () => { try { return !!JSON.parse(localStorage.getItem('bcmsReportMeta')||'null'); } catch { return false; } } },
+  '10.1': { link: '../audit/index.html',               check: () => { try { const d = JSON.parse(localStorage.getItem('bcmsAuditData')||'[]'); return Array.isArray(d) && d.length > 0; } catch { return false; } } },
+};
 
-  // 문서 패키지 생성 플래그 병합
+const MANUAL_KEY = 'bcmsIsoManual';
+const loadManual = () => { try { const v = JSON.parse(localStorage.getItem(MANUAL_KEY)||'[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
+const saveManual = (arr) => localStorage.setItem(MANUAL_KEY, JSON.stringify(arr));
+
+function renderIso() {
+  const docs = loadDocs();
+
+  // 1) 문서 목록 기반 조항
+  const docClauses = new Set(docs.flatMap(d => d.isoArticles || []));
+
+  // 2) 문서 패키지 생성 플래그
   let pkgFlags = {};
   try { pkgFlags = JSON.parse(localStorage.getItem('bcmsDocPackageFlags') || '{}'); } catch {}
   const pkgClauses = new Set();
   Object.entries(PKG_FLAG_MAP).forEach(([flag, clause]) => {
-    if (pkgFlags[flag]) { clauses.add(clause); pkgClauses.add(clause); }
+    if (pkgFlags[flag]) pkgClauses.add(clause);
   });
 
-  const regCount = ISO_REQ.filter(r => clauses.has(r.clause)).length;
+  // 3) 포털 데이터 자동 체크
+  const portalClauses = new Set();
+  Object.entries(ISO_EXTRA).forEach(([clause, meta]) => {
+    if (meta.check && meta.check()) portalClauses.add(clause);
+  });
+
+  // 4) 수동 체크
+  const manualClauses = new Set(loadManual());
+
+  const isAuto = c => docClauses.has(c) || pkgClauses.has(c) || portalClauses.has(c);
+  const isReg  = c => isAuto(c) || manualClauses.has(c);
+
+  const regCount = ISO_REQ.filter(r => isReg(r.clause)).length;
   const pct      = Math.round(regCount / ISO_REQ.length * 100);
 
   document.getElementById('gaugeText').textContent = `${regCount} / ${ISO_REQ.length}`;
   document.getElementById('gaugeFill').style.width = pct + '%';
 
   document.getElementById('isoListEl').innerHTML = ISO_REQ.map((req, i) => {
-    const registered = clauses.has(req.clause);
+    const auto = isAuto(req.clause);
+    const reg  = isReg(req.clause);
+
     const linked = docs.filter(d => (d.isoArticles || []).includes(req.clause));
     const linkedHtml = linked.length
       ? `<div class="iso-linked">연계: ${linked.map(d => esc(d.name)).join(', ')}</div>`
       : '';
-    const pkgBadge = pkgClauses.has(req.clause)
-      ? `<div><span class="bdg-pkg">📦 문서 패키지에서 생성됨</span></div>`
-      : '';
-    return `<div class="iso-item${registered ? ' registered' : ''}">
-      <div class="iso-icon">${registered ? '✅' : '⬜'}</div>
+
+    const badges = [];
+    if (pkgClauses.has(req.clause))    badges.push(`<span class="bdg-pkg">📦 문서 패키지에서 생성됨</span>`);
+    if (portalClauses.has(req.clause)) badges.push(`<span class="bdg-portal">✅ 포털에서 작성됨</span>`);
+    const extra = ISO_EXTRA[req.clause];
+    const actionHtml = badges.length
+      ? badges.join('')
+      : (!reg && extra ? `<a class="iso-write-btn" href="${extra.link}">작성하기 →</a>` : '');
+
+    return `<div class="iso-item${reg ? ' registered' : ''}">
+      <input type="checkbox" class="iso-check" data-clause="${esc(req.clause)}"${reg ? ' checked' : ''}${auto ? ' disabled title="데이터 기반 자동 체크됨"' : ''}/>
       <div class="iso-meta">
         <div class="iso-name">${i+1}. ${esc(req.name)}</div>
         <div class="iso-clause">ISO 22301 조항 ${esc(req.clause)}</div>
         ${linkedHtml}
-        ${pkgBadge}
       </div>
+      <div class="iso-action">${actionHtml}</div>
     </div>`;
   }).join('');
+
+  // 수동 체크 이벤트 (자동 체크 항목은 disabled이므로 change 미발생)
+  document.querySelectorAll('#isoListEl .iso-check:not([disabled])').forEach(cb => {
+    cb.addEventListener('change', function () {
+      const clause = this.dataset.clause;
+      let manual = loadManual();
+      if (this.checked) {
+        if (!manual.includes(clause)) manual.push(clause);
+      } else {
+        manual = manual.filter(c => c !== clause);
+      }
+      saveManual(manual);
+      renderIso();
+    });
+  });
 }
 
 /* ── Render: Pyramid ── */
