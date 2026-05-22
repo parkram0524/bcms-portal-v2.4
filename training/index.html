@@ -1367,7 +1367,7 @@
       {
         status: hasBcpTrain ? 'ok' : '미충족',
         icon: hasBcpTrain ? '✅' : '❌',
-        title: '연 1회 이상 BCP 훈련 실시',
+        title: '계획된 주기로 BCP 훈련 실시 (연 1회 이상 권장)',
         ref: 'ISO 22301 8.5 — 훈련 및 연습',
         basis: hasBcpTrain
           ? `근거: ${doneData.filter(t => ['탁상 훈련 (Tabletop Exercise)','기능 훈련 (Functional Exercise)','전체 훈련 (Full-scale Exercise)'].includes(t.type)).map(t => t.name).join(', ')}`
@@ -1692,7 +1692,7 @@
     const hasCapa     = capaData.length > 0 || doneData.some(t => (t.improvements || '').trim().length > 0);
 
     const isoSummary = [
-      { title: '연 1회 이상 BCP 훈련 실시', ref: 'ISO 22301 8.5',  ok: hasBcpTrain },
+      { title: '계획된 주기로 BCP 훈련 실시 (연 1회 이상 권장)', ref: 'ISO 22301 8.5',  ok: hasBcpTrain },
       { title: 'DR 테스트 실시',             ref: 'ISO 22301 8.5',  ok: hasDrTest   },
       { title: '탁상훈련 실시',               ref: 'ISO 22301 8.5',  ok: hasTabletop },
       { title: '훈련 결과 문서화',             ref: 'ISO 22301 9.1',  ok: hasDoc      },
