@@ -1054,4 +1054,57 @@
     }
   })();
 
+  // =========================================================
+  // ✅ 모바일 고정 헤더바 (햄버거 + 타이틀 + 다크모드)
+  // =========================================================
+  (function initMobileHeader() {
+    const header = document.createElement('div');
+    header.className = 'mobile-header';
+    header.innerHTML =
+      '<button class="mobile-header-hamburger" aria-label="메뉴 열기" aria-expanded="false">☰</button>' +
+      '<span class="mobile-header-title">' +
+        '<span class="mobile-header-bcms">BCMS</span>' +
+        '<span class="mobile-header-portal"> Portal</span>' +
+      '</span>' +
+      '<button class="mobile-header-theme" aria-label="다크모드 전환">🌙</button>';
+    document.body.appendChild(header);
+
+    const hambBtn      = header.querySelector('.mobile-header-hamburger');
+    const themeBtn     = header.querySelector('.mobile-header-theme');
+    const floatingHamb = document.querySelector('.sidebar-hamburger');
+    const sidebar      = document.querySelector('.sidebar');
+
+    // 현재 테마에 맞게 아이콘 초기화
+    const initTheme = document.documentElement.getAttribute('data-theme') ||
+                      localStorage.getItem('bcmsTheme') || 'light';
+    themeBtn.textContent = initTheme === 'dark' ? '☀️' : '🌙';
+
+    // 햄버거: 기존 floating 버튼을 프록시(DOM에 존재, CSS로 숨김)
+    hambBtn.addEventListener('click', function () {
+      if (floatingHamb) floatingHamb.click();
+    });
+
+    // sidebar classList 변화를 감시해 헤더 아이콘 동기화
+    if (sidebar) {
+      new MutationObserver(function () {
+        const isOpen = sidebar.classList.contains('sidebar-open');
+        hambBtn.textContent = isOpen ? '✕' : '☰';
+        hambBtn.setAttribute('aria-expanded', String(isOpen));
+        hambBtn.setAttribute('aria-label', isOpen ? '메뉴 닫기' : '메뉴 열기');
+      }).observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // 다크모드 토글
+    themeBtn.addEventListener('click', function () {
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem('bcmsTheme', next);
+      themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+      // 페이지 고유 토글 버튼과 동기화
+      const pageTog = document.getElementById('themeToggle');
+      if (pageTog) pageTog.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+  })();
+
 })();
