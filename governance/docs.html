@@ -828,28 +828,66 @@ function renderIso() {
   });
 }
 
-/* ── Render: Pyramid ── */
-function renderPyramid() {
-  const docs = loadDocs();
-  [1,2,3,4,5].forEach(lv => {
-    const cnt = docs.filter(d => String(d.level) === String(lv)).length;
-    document.getElementById('pc' + lv).textContent = cnt;
+/* ── 포털 작성 항목 → 피라미드 레벨 매핑 ── */
+const PORTAL_DOC_MAP = [
+  { key: 'bcmsPolicyData',   level: 1, name: '업무연속성 방침',  link: 'policy.html',
+    check: d => !!String(d && (d.body || d.policyText) || '').trim() },
+  { key: 'bcmsObjectives',   level: 1, name: '업무연속성 목표',  link: 'policy.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key: 'bcmsBCPDoc',       level: 2, name: 'BCP 절차서',       link: '../strategy-plans/bcp.html',
+    check: d => !!d && typeof d === 'object' },
+  { key: 'bcmsEOPDoc',       level: 2, name: 'EOP 절차서',       link: '../strategy-plans/eop.html',
+    check: d => !!d && typeof d === 'object' },
+  { key: 'bcmsSOPData',      level: 2, name: 'SOP',              link: '../strategy-plans/sop.html',
+    check: d => !!d },
+  { key: 'bcmsBIAData',      level: 5, name: 'BIA 결과보고서',   link: '../risk-bia/bia.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key: 'bcmsRiskList',     level: 5, name: '리스크 평가보고서', link: '../risk-bia/risk.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key: 'bcmsTrainingData', level: 5, name: '훈련 결과보고서',   link: '../training/index.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key: 'bcmsAuditData',    level: 5, name: '내부심사 보고서',   link: '../audit/index.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+];
+
+function getPortalDocs() {
+  return PORTAL_DOC_MAP.filter(entry => {
+    try {
+      const raw = localStorage.getItem(entry.key);
+      if (!raw) return false;
+      return entry.check(JSON.parse(raw));
+    } catch { return false; }
   });
-  if (selectedLevel) showPyrLevel(selectedLevel, docs);
 }
 
-function showPyrLevel(lv, docs) {
+/* ── Render: Pyramid ── */
+function renderPyramid() {
+  const docs       = loadDocs();
+  const portalDocs = getPortalDocs();
+  [1,2,3,4,5].forEach(lv => {
+    const regCnt    = docs.filter(d => String(d.level) === String(lv)).length;
+    const portalCnt = portalDocs.filter(p => p.level === lv).length;
+    document.getElementById('pc' + lv).textContent = regCnt + portalCnt;
+  });
+  if (selectedLevel) showPyrLevel(selectedLevel, docs, portalDocs);
+}
+
+function showPyrLevel(lv, docs, portalDocs) {
   selectedLevel = lv;
   document.querySelectorAll('.pyr-lv').forEach(el => el.classList.toggle('selected', el.dataset.level === String(lv)));
-  const filtered = (docs || loadDocs()).filter(d => String(d.level) === String(lv));
-  const result   = document.getElementById('pyrResult');
-  const title    = document.getElementById('pyrRTitle');
-  const list     = document.getElementById('pyrRList');
-  title.textContent = `${PYR_LBL[lv]} 문서 목록 (${filtered.length}건)`;
-  if (!filtered.length) {
+  const filtered    = (docs       || loadDocs()).filter(d => String(d.level) === String(lv));
+  const filteredPor = (portalDocs || getPortalDocs()).filter(p => p.level === Number(lv));
+  const total = filtered.length + filteredPor.length;
+
+  const result = document.getElementById('pyrResult');
+  const title  = document.getElementById('pyrRTitle');
+  const list   = document.getElementById('pyrRList');
+  title.textContent = `${PYR_LBL[lv]} 문서 목록 (${total}건)`;
+
+  if (!total) {
     list.innerHTML = '<div class="pyr-empty">등록된 문서가 없습니다.</div>';
   } else {
-    list.innerHTML = filtered.map(d => {
+    const regHtml = filtered.map(d => {
       const link = d.link ? `<a class="pyr-doc-link" href="${esc(d.link)}" target="_blank" rel="noopener">열기 ↗</a>` : '';
       return `<div class="pyr-doc-item">
         <span class="bdg ${({ draft:'bdg-draft', review:'bdg-review', approved:'bdg-approved', obsolete:'bdg-obsolete' }[d.status] || 'bdg-draft')}">${esc(STATUS_LBL[d.status] || d.status)}</span>
@@ -858,6 +896,16 @@ function showPyrLevel(lv, docs) {
         ${link}
       </div>`;
     }).join('');
+
+    const portalHtml = filteredPor.map(p =>
+      `<div class="pyr-doc-item">
+        <span class="bdg-portal">📋 포털 작성</span>
+        <span class="pyr-doc-name">${esc(p.name)}</span>
+        <a class="pyr-doc-link" href="${p.link}">작성 페이지 ↗</a>
+      </div>`
+    ).join('');
+
+    list.innerHTML = regHtml + portalHtml;
   }
   result.style.display = '';
 }
