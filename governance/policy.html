@@ -216,13 +216,29 @@
       <div style="margin-top:18px;padding-top:16px;border-top:0.5px solid var(--border);">
         <span class="sectionLabel">경영진 서명</span>
         <div class="signerGrid">
-          <div class="formRow">
-            <label>서명자 이름</label>
-            <input type="text" id="p_signerName" placeholder="예: 홍길동"/>
+          <!-- 작성자 -->
+          <div style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-sm);">
+            <span style="font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;">작성자 (담당자)</span>
+            <div class="formRow">
+              <label>이름</label>
+              <input type="text" id="p_authorName" placeholder="예: 김담당"/>
+            </div>
+            <div class="formRow">
+              <label>직책</label>
+              <input type="text" id="p_authorTitle" placeholder="예: BCMS 담당자 / 팀장"/>
+            </div>
           </div>
-          <div class="formRow">
-            <label>직책</label>
-            <input type="text" id="p_signerTitle" placeholder="예: 대표이사 / CISO"/>
+          <!-- 승인자 -->
+          <div style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-sm);">
+            <span style="font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;">승인자</span>
+            <div class="formRow">
+              <label>이름</label>
+              <input type="text" id="p_signerName" placeholder="예: 홍길동"/>
+            </div>
+            <div class="formRow">
+              <label>직책</label>
+              <input type="text" id="p_signerTitle" placeholder="예: 대표이사 / CISO"/>
+            </div>
           </div>
         </div>
       </div>
@@ -608,8 +624,10 @@ function loadPolicy() {
   $('p_nextReview').value  = d.nextReview    || '';
   $('p_policyNo').value    = d.policyNo      || '';
   $('p_body').value        = d.body          || '';
-  $('p_signerName').value  = d.signerName    || '';
-  $('p_signerTitle').value = d.signerTitle   || '';
+  $('p_authorName').value  = d.authorName   || '';
+  $('p_authorTitle').value = d.authorTitle  || '';
+  $('p_signerName').value  = d.signerName   || '';
+  $('p_signerTitle').value = d.signerTitle  || '';
 
   const checks = d.checks || {};
   document.querySelectorAll('.checkItem').forEach(item => {
@@ -629,6 +647,8 @@ $('btnPolicySave').addEventListener('click', () => {
     nextReview:   $('p_nextReview').value,
     policyNo:     $('p_policyNo').value.trim(),
     body:         $('p_body').value,
+    authorName:   $('p_authorName').value.trim(),
+    authorTitle:  $('p_authorTitle').value.trim(),
     signerName:   $('p_signerName').value.trim(),
     signerTitle:  $('p_signerTitle').value.trim(),
     checks:       loadJ(POLICY_KEY, {}).checks || {},
@@ -654,8 +674,10 @@ $('btnPrintDoc').addEventListener('click', () => {
     nextReview:   $('p_nextReview').value        || '-',
     policyNo:     $('p_policyNo').value.trim()   || '-',
     body:         $('p_body').value              || '',
-    signerName:   $('p_signerName').value.trim() || '',
-    signerTitle:  $('p_signerTitle').value.trim()|| '',
+    authorName:   $('p_authorName').value.trim()  || '',
+    authorTitle:  $('p_authorTitle').value.trim() || '',
+    signerName:   $('p_signerName').value.trim()  || '',
+    signerTitle:  $('p_signerTitle').value.trim() || '',
   };
 
   const h = s => String(s).replace(/[&<>"']/g,
@@ -803,8 +825,8 @@ $('btnPrintDoc').addEventListener('click', () => {
   <div class="sign-section">
     <div class="sign-box">
       <div class="sign-box-label">작성자 (담당자)</div>
-      <div class="sign-box-name">&nbsp;</div>
-      <div class="sign-box-role">&nbsp;</div>
+      <div class="sign-box-name">${h(d.authorName)}</div>
+      <div class="sign-box-role">${h(d.authorTitle)}</div>
       <div class="sign-line"></div>
     </div>
     <div class="sign-box">
