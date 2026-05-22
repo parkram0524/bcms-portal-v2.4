@@ -123,6 +123,13 @@
   .iso-clause { font-size: 12px; color: var(--text-2); margin-top: 2px; }
   .iso-linked { font-size: 12px; color: #2563eb; margin-top: 4px; }
   [data-theme="dark"] .iso-linked { color: #93c5fd; }
+  .bdg-pkg {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 5px;
+    background: rgba(124,58,237,.08); color: #7c3aed;
+    border: 1px solid rgba(124,58,237,.25); white-space: nowrap; margin-top: 4px;
+  }
+  [data-theme="dark"] .bdg-pkg { background: rgba(167,139,250,.1); color: #a78bfa; border-color: rgba(167,139,250,.3); }
 
   /* ── Pyramid tab ── */
   .pyr-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
@@ -693,9 +700,28 @@ function renderTable() {
 }
 
 /* ── Render: ISO checklist ── */
+const PKG_FLAG_MAP = {
+  policyGenerated:          '5.2',
+  biaGenerated:             '8.2',
+  riskGenerated:            '8.3',
+  bcpGenerated:             '8.4',
+  trainingGenerated:        '8.5',
+  auditGenerated:           '9.2',
+  managementReviewGenerated:'9.3',
+};
+
 function renderIso() {
   const docs    = loadDocs();
   const clauses = new Set(docs.flatMap(d => d.isoArticles || []));
+
+  // 문서 패키지 생성 플래그 병합
+  let pkgFlags = {};
+  try { pkgFlags = JSON.parse(localStorage.getItem('bcmsDocPackageFlags') || '{}'); } catch {}
+  const pkgClauses = new Set();
+  Object.entries(PKG_FLAG_MAP).forEach(([flag, clause]) => {
+    if (pkgFlags[flag]) { clauses.add(clause); pkgClauses.add(clause); }
+  });
+
   const regCount = ISO_REQ.filter(r => clauses.has(r.clause)).length;
   const pct      = Math.round(regCount / ISO_REQ.length * 100);
 
@@ -708,12 +734,16 @@ function renderIso() {
     const linkedHtml = linked.length
       ? `<div class="iso-linked">연계: ${linked.map(d => esc(d.name)).join(', ')}</div>`
       : '';
+    const pkgBadge = pkgClauses.has(req.clause)
+      ? `<div><span class="bdg-pkg">📦 문서 패키지에서 생성됨</span></div>`
+      : '';
     return `<div class="iso-item${registered ? ' registered' : ''}">
       <div class="iso-icon">${registered ? '✅' : '⬜'}</div>
       <div class="iso-meta">
         <div class="iso-name">${i+1}. ${esc(req.name)}</div>
         <div class="iso-clause">ISO 22301 조항 ${esc(req.clause)}</div>
         ${linkedHtml}
+        ${pkgBadge}
       </div>
     </div>`;
   }).join('');

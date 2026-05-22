@@ -701,6 +701,20 @@ async function genMgmtReview() {
   return new lib.Document({ sections: [{ properties: {}, children }] });
 }
 
+/* ═══════════════ 생성 플래그 ═══════════════ */
+const DOC_FLAGS = ['policyGenerated','biaGenerated','riskGenerated','bcpGenerated',null,'trainingGenerated','auditGenerated','managementReviewGenerated'];
+const FLAGS_KEY = 'bcmsDocPackageFlags';
+
+function saveDocFlag(idx) {
+  const flagKey = DOC_FLAGS[idx];
+  if (!flagKey) return;
+  try {
+    const flags = JSON.parse(localStorage.getItem(FLAGS_KEY) || '{}');
+    flags[flagKey] = true;
+    localStorage.setItem(FLAGS_KEY, JSON.stringify(flags));
+  } catch {}
+}
+
 /* ═══════════════ 문서 정의 목록 ═══════════════ */
 const DOCS = [
   {
@@ -823,6 +837,7 @@ async function downloadDoc(idx) {
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     showToast(`✅ ${doc.title} 다운로드 완료`);
+    saveDocFlag(idx);
   } catch (e) {
     alert(`❌ 생성 실패: ${e.message}`);
   } finally {
@@ -847,6 +862,7 @@ async function downloadAll(btnEl) {
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 8000);
       successCount++;
+      saveDocFlag(i);
       await new Promise(r => setTimeout(r, 400));
     } catch (e) {
       showToast(`⚠️ ${doc.title} 생성 실패: ${e.message}`, 5000);
