@@ -10,6 +10,7 @@
   };
 
   const DEMO_TAG = { isDemo: true, demoLabel: '예시' };
+  const DEMO_REMOVED_KEY = 'bcmsDemoRemoved';
 
   const DEMO = {
     [KEYS.CORE]: [
@@ -405,6 +406,10 @@
 
   function loadDemo(options){
     const force = !!(options && options.force);
+    // 강제 재로드 시 제거 플래그 초기화
+    if (force) localStorage.removeItem(DEMO_REMOVED_KEY);
+    // 사용자가 명시적으로 제거한 이력이 있으면 자동 주입 건너뜀
+    if (!force && localStorage.getItem(DEMO_REMOVED_KEY) === '1') return false;
     const apply = force || allMainEmpty();
     if(!apply) return false;
 
@@ -433,6 +438,8 @@
 
   function removeDemo(){
     Object.values(KEYS).forEach((key)=> setArr(key, removeDemoFromList(key, getArr(key))));
+    // 재로드 후 자동 재주입 방지 플래그
+    localStorage.setItem(DEMO_REMOVED_KEY, '1');
   }
 
   function hasDemo(){
@@ -440,6 +447,7 @@
   }
 
   function mountBanner(targetSelector){
+    if (!hasDemo()) return;
     const root = document.querySelector(targetSelector || '.wrap');
     if(!root) return;
     const box = document.createElement('div');
