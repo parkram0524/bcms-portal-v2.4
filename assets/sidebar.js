@@ -992,4 +992,66 @@
     }
   })();
 
+  // =========================================================
+  // ✅ 모바일 햄버거 메뉴
+  // =========================================================
+  (function initHamburger() {
+    const hamburgerBtn = document.createElement('button');
+    hamburgerBtn.className = 'sidebar-hamburger';
+    hamburgerBtn.setAttribute('aria-label', '메뉴 열기');
+    hamburgerBtn.setAttribute('aria-expanded', 'false');
+    hamburgerBtn.textContent = '☰';
+    document.body.appendChild(hamburgerBtn);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    document.body.appendChild(overlay);
+
+    const sidebar = document.querySelector('.sidebar');
+
+    function openSidebar() {
+      if (!sidebar) return;
+      sidebar.classList.add('sidebar-open');
+      overlay.classList.add('sidebar-overlay-visible');
+      hamburgerBtn.textContent = '✕';
+      hamburgerBtn.setAttribute('aria-expanded', 'true');
+      hamburgerBtn.setAttribute('aria-label', '메뉴 닫기');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      if (!sidebar) return;
+      sidebar.classList.remove('sidebar-open');
+      overlay.classList.remove('sidebar-overlay-visible');
+      hamburgerBtn.textContent = '☰';
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      hamburgerBtn.setAttribute('aria-label', '메뉴 열기');
+      document.body.style.overflow = '';
+    }
+
+    hamburgerBtn.addEventListener('click', function () {
+      if (sidebar && sidebar.classList.contains('sidebar-open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sidebar && sidebar.classList.contains('sidebar-open')) {
+        closeSidebar();
+      }
+    });
+
+    if (sidebar) {
+      sidebar.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+          if (window.innerWidth <= 960) closeSidebar();
+        });
+      });
+    }
+  })();
+
 })();
