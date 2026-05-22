@@ -646,7 +646,7 @@ function getFilters() {
 
 /* ── Render: KPI ── */
 function renderKpi(docs) {
-  document.getElementById('kTotal').textContent = docs.length;
+  document.getElementById('kTotal').textContent = docs.length + getPortalDocs().length;
 
   // ISO rate (포털 데이터·문서 패키지·수동 체크 통합)
   document.getElementById('kIso').textContent = calcIsoStats().pct + '%';
