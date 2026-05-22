@@ -202,6 +202,16 @@
           <input type="text" id="p_policyNo" placeholder="예: BCMS-POL-001"/>
         </div>
         <div class="formRow full">
+          <label>회사 로고 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--text-3)">(선택)</span></label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <input type="file" id="p_logo" accept="image/*" style="flex:1;min-width:180px;"/>
+            <img id="logoPreviewImg" alt="로고 미리보기"
+              style="height:40px;max-width:140px;object-fit:contain;border:0.5px solid var(--border);border-radius:6px;padding:4px;background:#fff;display:none;"/>
+            <button type="button" id="btnLogoRemove" title="로고 제거"
+              style="display:none;width:26px;height:26px;padding:0 !important;border-radius:5px;border:0.5px solid rgba(239,68,68,.3) !important;background:rgba(239,68,68,.05) !important;color:#dc2626 !important;font-size:13px;flex-shrink:0;cursor:pointer;">✕</button>
+          </div>
+        </div>
+        <div class="formRow full">
           <label>정책 본문</label>
           <textarea id="p_body" style="min-height:200px;" placeholder="[회사명]은 핵심 업무의 연속성을 확보하고 이해관계자의 신뢰를 유지하기 위해 ISO 22301 기반 업무연속성관리시스템(BCMS)을 수립·운영·유지·개선할 것을 선언합니다.
 
@@ -629,6 +639,13 @@ function loadPolicy() {
   $('p_signerName').value  = d.signerName   || '';
   $('p_signerTitle').value = d.signerTitle  || '';
 
+  // 로고 복원
+  const _logo = localStorage.getItem('bcmsPolicyLogo') || '';
+  const _prevImg = $('logoPreviewImg');
+  const _prevBtn = $('btnLogoRemove');
+  if (_logo && _prevImg) { _prevImg.src = _logo; _prevImg.style.display = ''; _prevBtn.style.display = ''; }
+  else if (_prevImg)     { _prevImg.style.display = 'none'; _prevBtn.style.display = 'none'; }
+
   const checks = d.checks || {};
   document.querySelectorAll('.checkItem').forEach(item => {
     const key = item.dataset.key;
@@ -661,8 +678,33 @@ $('btnPolicySave').addEventListener('click', () => {
 $('btnPolicyClear').addEventListener('click', () => {
   if (!confirm('정책 문서 입력 내용을 초기화할까요?')) return;
   saveJ(POLICY_KEY, {});
+  localStorage.removeItem('bcmsPolicyLogo');
+  $('p_logo').value = '';
   loadPolicy();
   showToast('초기화되었습니다.');
+});
+
+/* ── 로고 업로드 / 제거 ── */
+$('p_logo').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const base64 = e.target.result;
+    localStorage.setItem('bcmsPolicyLogo', base64);
+    $('logoPreviewImg').src = base64;
+    $('logoPreviewImg').style.display = '';
+    $('btnLogoRemove').style.display = '';
+  };
+  reader.readAsDataURL(file);
+});
+
+$('btnLogoRemove').addEventListener('click', function () {
+  localStorage.removeItem('bcmsPolicyLogo');
+  $('p_logo').value = '';
+  $('logoPreviewImg').src = '';
+  $('logoPreviewImg').style.display = 'none';
+  $('btnLogoRemove').style.display = 'none';
 });
 
 $('btnPrintDoc').addEventListener('click', () => {
@@ -678,10 +720,16 @@ $('btnPrintDoc').addEventListener('click', () => {
     authorTitle:  $('p_authorTitle').value.trim() || '',
     signerName:   $('p_signerName').value.trim()  || '',
     signerTitle:  $('p_signerTitle').value.trim() || '',
+    logoData:     localStorage.getItem('bcmsPolicyLogo') || '',
   };
 
   const h = s => String(s).replace(/[&<>"']/g,
     m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  // 로고: 이미지 or 회사명 텍스트 fallback
+  const logoHtml = d.logoData
+    ? `<img src="${d.logoData}" alt="로고" style="max-height:40px;max-width:150px;object-fit:contain;"/>`
+    : `<span class="doc-logo-text">${h(d.companyName)}</span>`;
 
   const html = `<!DOCTYPE html>
 <html lang="ko">
@@ -707,10 +755,14 @@ $('btnPrintDoc').addEventListener('click', () => {
     display: flex;
     flex-direction: column;
   }
-  .watermark {
+  .doc-logo {
     position: absolute;
     top: 5mm;
     right: 7mm;
+    text-align: right;
+    line-height: 1;
+  }
+  .doc-logo-text {
     font-size: 7.5pt;
     color: #ccc;
     letter-spacing: .12em;
@@ -799,7 +851,7 @@ $('btnPrintDoc').addEventListener('click', () => {
 </head>
 <body>
 <div class="doc-outer">
-  <div class="watermark">BCMS Portal</div>
+  <div class="doc-logo">${logoHtml}</div>
 
   <div class="doc-title">업무연속성관리체계(BCMS) 운영 방침</div>
 
