@@ -136,6 +136,12 @@
   }
   #toast.show { opacity: 1; transform: none; }
 
+  /* ── 목표 목록 테이블 정렬 ── */
+  #tab-objectives table th,
+  #tab-objectives table td { text-align: center; }
+  #tab-objectives table td:nth-child(3) { text-align: left; }
+  #tab-objectives .progressWrap { justify-content: center; }
+
   @media (max-width: 900px) {
     .formGrid { grid-template-columns: 1fr 1fr; }
     .formGrid .full { grid-column: 1 / -1; }
