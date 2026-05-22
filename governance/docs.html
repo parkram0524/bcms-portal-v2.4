@@ -648,10 +648,8 @@ function getFilters() {
 function renderKpi(docs) {
   document.getElementById('kTotal').textContent = docs.length;
 
-  // ISO rate
-  const clauses = new Set(docs.flatMap(d => d.isoArticles || []));
-  const isoRate = ISO_REQ.filter(r => clauses.has(r.clause)).length;
-  document.getElementById('kIso').textContent = Math.round(isoRate / ISO_REQ.length * 100) + '%';
+  // ISO rate (포털 데이터·문서 패키지·수동 체크 통합)
+  document.getElementById('kIso').textContent = calcIsoStats().pct + '%';
 
   // Recent revision (last 30 days)
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
@@ -752,13 +750,10 @@ const MANUAL_KEY = 'bcmsIsoManual';
 const loadManual = () => { try { const v = JSON.parse(localStorage.getItem(MANUAL_KEY)||'[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
 const saveManual = (arr) => localStorage.setItem(MANUAL_KEY, JSON.stringify(arr));
 
-function renderIso() {
+function calcIsoStats() {
   const docs = loadDocs();
-
-  // 1) 문서 목록 기반 조항
   const docClauses = new Set(docs.flatMap(d => d.isoArticles || []));
 
-  // 2) 문서 패키지 생성 플래그
   let pkgFlags = {};
   try { pkgFlags = JSON.parse(localStorage.getItem('bcmsDocPackageFlags') || '{}'); } catch {}
   const pkgClauses = new Set();
@@ -766,22 +761,27 @@ function renderIso() {
     if (pkgFlags[flag]) pkgClauses.add(clause);
   });
 
-  // 3) 포털 데이터 자동 체크
   const portalClauses = new Set();
   Object.entries(ISO_EXTRA).forEach(([clause, meta]) => {
     if (meta.check && meta.check()) portalClauses.add(clause);
   });
 
-  // 4) 수동 체크
   const manualClauses = new Set(loadManual());
-
   const isAuto = c => docClauses.has(c) || pkgClauses.has(c) || portalClauses.has(c);
   const isReg  = c => isAuto(c) || manualClauses.has(c);
+  const count  = ISO_REQ.filter(r => isReg(r.clause)).length;
+  const pct    = Math.round(count / ISO_REQ.length * 100);
+  return { docs, pkgClauses, portalClauses, isAuto, isReg, count, pct };
+}
 
-  const regCount = ISO_REQ.filter(r => isReg(r.clause)).length;
-  const pct      = Math.round(regCount / ISO_REQ.length * 100);
+function renderIso() {
+  const { docs, pkgClauses, portalClauses, isAuto, isReg, count, pct } = calcIsoStats();
 
-  document.getElementById('gaugeText').textContent = `${regCount} / ${ISO_REQ.length}`;
+  // 상단 KPI 카드 동기화
+  document.getElementById('kIso').textContent = pct + '%';
+
+  // ISO 탭 게이지
+  document.getElementById('gaugeText').textContent = `${count} / ${ISO_REQ.length}`;
   document.getElementById('gaugeFill').style.width = pct + '%';
 
   document.getElementById('isoListEl').innerHTML = ISO_REQ.map((req, i) => {
