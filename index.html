@@ -753,6 +753,12 @@
   const initDemoBanner = () => {
     if (!window.BCMSDemoSeed) return;
     BCMSDemoSeed.ensureDemoIfEmpty();
+
+    // 업종 또는 회사명이 설정되어 있으면 데모 배너 숨김
+    const hasIndustry = !!(localStorage.getItem('bcmsIndustry') || '').trim();
+    const hasCompany  = !!getCompanyName();
+    if (hasIndustry || hasCompany) return;
+
     BCMSDemoSeed.mountBanner('.wrap');
     const banner = document.querySelector('.wrap > div:first-child');
     if (banner && banner.style.background) {
