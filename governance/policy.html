@@ -747,7 +747,7 @@ $('btnPrintDoc').addEventListener('click', () => {
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>${h(d.companyName)} BCMS 운영 방침</title>
+<title>${h(d.companyName)} BCMS 운영 방침<\/title>
 <style>
   @page { size: A4 portrait; margin: 18mm 16mm; }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -859,8 +859,8 @@ $('btnPrintDoc').addEventListener('click', () => {
   @media print {
     body { background: #fff !important; }
   }
-</style>
-</head>
+<\/style>
+<\/head>
 <body>
 <div class="doc-outer">
   <div class="doc-logo">${logoHtml}</div>
@@ -908,8 +908,8 @@ $('btnPrintDoc').addEventListener('click', () => {
   </div>
 </div>
 <script>window.onload = function(){ window.print(); };<\/script>
-</body>
-</html>`;
+<\/body>
+<\/html>`;
 
   const win = window.open('', '_blank');
   if (!win) {
