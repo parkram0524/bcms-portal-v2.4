@@ -632,6 +632,20 @@
       window.BCMSProfile.save(profile).catch(() => {});
     }
 
+    // Sync industry to Supabase organizations table + local cache
+    // (없으면 supabase.js 상속 로직이 이전 org.industry로 bcmsIndustry를 덮어씀)
+    if (window.BCMSOrg && industryToSave) {
+      try {
+        const { org } = window.BCMSOrg.getCached();
+        if (org) {
+          // 로컬 캐시 즉시 반영 (bcms:ready 이전에 renderHeader가 올바른 값을 읽도록)
+          localStorage.setItem('bcms_org', JSON.stringify({ ...org, industry: industryToSave }));
+          // Supabase 비동기 저장
+          if (org.id) window.BCMSOrg.update(org.id, { industry: industryToSave }).catch(() => {});
+        }
+      } catch {}
+    }
+
     // 기존 BIA/리스크/BCP 데이터 초기화 (업종 변경 시 구 데이터 잔존 방지)
     ['bcmsBIAData', 'bcmsRiskAssessment', 'bcmsRiskList',
      'bcmsBCPStrategy', 'bcmsBCP', 'bcmsPriorityConfirmed'].forEach(k => localStorage.removeItem(k));

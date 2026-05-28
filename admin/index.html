@@ -1125,12 +1125,27 @@
 
   /* ── 데이터 관리 버튼 ── */
   document.getElementById('btnReOnboard').addEventListener('click', () => {
-    // 업종 관련 localStorage 전체 초기화
+    // 업종 관련 localStorage 키 초기화
     localStorage.removeItem('bcmsOnboardingDone');
     localStorage.removeItem('bcmsIndustry');
     localStorage.removeItem('bcmsIndustryCustom');
+    localStorage.removeItem('bcmsCompany');
 
-    // admin 폼 UI 리셋 (리다이렉트 전 정합성 유지)
+    // bcms_user_profile 캐시에서 industry 필드 삭제 (폼 재진입 시 이전값 잔류 방지)
+    try {
+      const prof = JSON.parse(localStorage.getItem('bcms_user_profile') || '{}');
+      delete prof.industry;
+      localStorage.setItem('bcms_user_profile', JSON.stringify(prof));
+    } catch {}
+
+    // bcms_org 캐시에서 industry 필드 삭제 (supabase 자동 상속 로직이 이전값으로 덮어쓰는 것 방지)
+    try {
+      const org = JSON.parse(localStorage.getItem('bcms_org') || '{}');
+      delete org.industry;
+      localStorage.setItem('bcms_org', JSON.stringify(org));
+    } catch {}
+
+    // admin 폼 UI 리셋
     const selInd = document.getElementById('infoIndustry');
     if (selInd) selInd.value = '';
     const customWrap = document.getElementById('infoIndustryCustomWrap');
