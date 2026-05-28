@@ -1125,7 +1125,19 @@
 
   /* ── 데이터 관리 버튼 ── */
   document.getElementById('btnReOnboard').addEventListener('click', () => {
+    // 업종 관련 localStorage 전체 초기화
     localStorage.removeItem('bcmsOnboardingDone');
+    localStorage.removeItem('bcmsIndustry');
+    localStorage.removeItem('bcmsIndustryCustom');
+
+    // admin 폼 UI 리셋 (리다이렉트 전 정합성 유지)
+    const selInd = document.getElementById('infoIndustry');
+    if (selInd) selInd.value = '';
+    const customWrap = document.getElementById('infoIndustryCustomWrap');
+    if (customWrap) customWrap.style.display = 'none';
+    const customInput = document.getElementById('infoIndustryCustom');
+    if (customInput) customInput.value = '';
+
     location.href = '../index.html';
   });
   document.getElementById('btnReloadSample').addEventListener('click', () => {
