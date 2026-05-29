@@ -109,8 +109,7 @@
         <a href="${H("/governance/docs.html")}">문서체계</a>
         <a href="${H("/governance/requirements.html")}">법규·요구사항</a>
         <a href="${H("/governance/bcms-map.html")}">BCMS 체계 맵</a>
-        <a href="${H("/governance/system-registry.html")}">업무 시스템 목록</a>
-        <a href="${H("/governance/service-registry.html")}">서비스 레지스트리(서비스 목록)</a>
+        <a href="${H("/governance/system-registry.html")}">시스템·서비스 목록</a>
       </div>
     </div>
 

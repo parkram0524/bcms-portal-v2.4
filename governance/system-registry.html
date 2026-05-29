@@ -135,6 +135,23 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
 .cat-app  {background:#dcfce7;color:#166534}
 .cat-data {background:#ccfbf1;color:#134e4a}
 .cat-other{background:#f3f4f6;color:#374151}
+.cat-ext  {background:#fef3c7;color:#92400e}
+.cat-cloud{background:#dbeafe;color:#1e40af}
+.cat-out  {background:#ccfbf1;color:#065f46}
+[data-theme=dark] .cat-ext  {background:#78350f;color:#fde68a}
+[data-theme=dark] .cat-cloud{background:#1e3a5f;color:#93c5fd}
+[data-theme=dark] .cat-out  {background:#064e3b;color:#6ee7b7}
+
+/* Service extra fields */
+.service-extra-fields {
+  display:none;margin-top:.75rem;border:1px dashed var(--border);
+  border-radius:8px;padding:1rem;background:var(--bg)
+}
+.service-extra-fields.show { display:block }
+.service-extra-label {
+  font-size:.8rem;font-weight:700;color:var(--accent);
+  margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);display:block
+}
 [data-theme=dark] .cat-it   {background:#1e3a5f;color:#93c5fd}
 [data-theme=dark] .cat-power{background:#422006;color:#fde68a}
 [data-theme=dark] .cat-net  {background:#2e1065;color:#c4b5fd}
@@ -238,7 +255,7 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
       <div class="field-row">
         <div class="field-group">
           <label class="field-label">카테고리 <span>*</span></label>
-          <select class="field-select" id="f_category">
+          <select class="field-select" id="f_category" onchange="onCategoryChange()">
             <option value="IT 서비스">IT 서비스 (IT Service)</option>
             <option value="전력·유틸리티">전력·유틸리티 (Power/Utility)</option>
             <option value="통신·네트워크">통신·네트워크 (Network)</option>
@@ -246,6 +263,9 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
             <option value="생산·설비">생산·설비 (Facility)</option>
             <option value="업무 애플리케이션">업무 애플리케이션 (Business App)</option>
             <option value="데이터·백업">데이터·백업 (Data/Backup)</option>
+            <option value="외부 서비스">외부 서비스 (External Service)</option>
+            <option value="클라우드 서비스">클라우드 서비스 (Cloud Service)</option>
+            <option value="아웃소싱 서비스">아웃소싱 서비스 (Outsourcing)</option>
             <option value="기타">기타</option>
           </select>
         </div>
@@ -268,6 +288,31 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
           </select>
           <input class="field-input" id="f_ownerDept" placeholder="예: 시설팀 / IT팀"
             style="display:none;margin-top:4px;"/>
+        </div>
+      </div>
+
+      <!-- 서비스 전용 추가 필드 (외부 서비스 / 클라우드 / 아웃소싱 선택 시 노출) -->
+      <div class="service-extra-fields" id="serviceExtraFields">
+        <span class="service-extra-label">🌐 외부 서비스 상세 정보</span>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">제공업체명</label>
+            <input class="field-input" id="f_provider" placeholder="예: AWS, Microsoft 365, LG CNS"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">계약/SLA 목표</label>
+            <input class="field-input" id="f_slaTarget" placeholder="예: 99.9% 가용성, RTO 4시간"/>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">비상 연락처</label>
+            <input class="field-input" id="f_emergencyContact" placeholder="예: 1588-1234 / support@aws.com"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">대체 서비스/수단</label>
+            <input class="field-input" id="f_alternativeService" placeholder="예: 자체 서버, 타 클라우드 전환"/>
+          </div>
         </div>
       </div>
 
@@ -357,6 +402,9 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
       <button class="filter-chip" data-filter="생산·설비">생산·설비</button>
       <button class="filter-chip" data-filter="업무 애플리케이션">업무 앱</button>
       <button class="filter-chip" data-filter="데이터·백업">데이터·백업</button>
+      <button class="filter-chip" data-filter="외부 서비스">외부 서비스</button>
+      <button class="filter-chip" data-filter="클라우드 서비스">클라우드</button>
+      <button class="filter-chip" data-filter="아웃소싱 서비스">아웃소싱</button>
       <button class="filter-chip" data-filter="기타">기타</button>
     </div>
 
@@ -464,6 +512,12 @@ function refreshOwnerDeptDropdown() {
   input.style.display = sel.value === '__direct__' ? '' : 'none';
 }
 
+function onCategoryChange() {
+  const cat = $('#f_category').value;
+  const extra = $('#serviceExtraFields');
+  if (extra) extra.classList.toggle('show', isServiceCat(cat));
+}
+
 function onOwnerDeptChange() {
   const isDirect = $('#f_ownerDept_sel').value === '__direct__';
   $('#f_ownerDept').style.display = isDirect ? '' : 'none';
@@ -488,8 +542,14 @@ const CAT_MAP = {
   '생산·설비':       'cat-fac',
   '업무 애플리케이션':'cat-app',
   '데이터·백업':     'cat-data',
+  '외부 서비스':     'cat-ext',
+  '클라우드 서비스': 'cat-cloud',
+  '아웃소싱 서비스': 'cat-out',
   '기타':            'cat-other',
 };
+
+const SERVICE_CATS = new Set(['외부 서비스', '클라우드 서비스', '아웃소싱 서비스']);
+const isServiceCat = cat => SERVICE_CATS.has(normCat(cat));
 
 function normCat(raw){
   if (!raw) return '기타';
@@ -505,6 +565,9 @@ function normCat(raw){
   if (c.includes('facility') || c.includes('시설') || c.includes('생산') || c.includes('설비')) return '생산·설비';
   if (c.includes('business') || c.includes('app') || c.includes('애플리케이션') || c.includes('업무')) return '업무 애플리케이션';
   if (c.includes('data') || c.includes('backup') || c.includes('백업') || c.includes('데이터')) return '데이터·백업';
+  if (c.includes('cloud') || c.includes('클라우드')) return '클라우드 서비스';
+  if (c.includes('outsourc') || c.includes('아웃소싱')) return '아웃소싱 서비스';
+  if (c.includes('external') || c.includes('외부 서비스')) return '외부 서비스';
   return '기타';
 }
 
@@ -593,6 +656,9 @@ function resetForm(){
   $('#f_criticality').value = 'Critical';
   $('#f_tags').value       = '';
   $('#f_definition').value  = '';
+  ['f_provider','f_slaTarget','f_emergencyContact','f_alternativeService'].forEach(id => { const el = $('#'+id); if (el) el.value = ''; });
+  const extra = $('#serviceExtraFields');
+  if (extra) extra.classList.remove('show');
   setBIALinks([]);
   $('#btnSave').textContent = '💾 저장';
   $('#editBanner').classList.remove('show');
@@ -612,6 +678,10 @@ function saveItem(){
   const tags        = ($('#f_tags').value||'').split(',').map(x=>x.trim()).filter(Boolean);
   const definition  = ($('#f_definition').value  || '').trim();
   const biaLinks    = getBIALinks();
+  const provider          = ($('#f_provider').value         || '').trim();
+  const slaTarget         = ($('#f_slaTarget').value         || '').trim();
+  const emergencyContact  = ($('#f_emergencyContact').value  || '').trim();
+  const alternativeService = ($('#f_alternativeService').value || '').trim();
 
   if (!systemId || !displayName){
     toast('⚠ 시스템ID와 표시명은 필수입니다.');
@@ -625,9 +695,9 @@ function saveItem(){
   const now = new Date().toISOString();
   if (editingId){
     const idx = all.findIndex(x => x.id === editingId);
-    if (idx >= 0) all[idx] = { ...all[idx], category, systemId, displayName, ownerDept, type, location, criticality, tags, definition, biaLinks, updatedAt: now };
+    if (idx >= 0) all[idx] = { ...all[idx], category, systemId, displayName, ownerDept, type, location, criticality, tags, definition, biaLinks, provider, slaTarget, emergencyContact, alternativeService, updatedAt: now };
   } else {
-    all.unshift({ id:'SYSREG-'+Date.now(), category, systemId, displayName, ownerDept, type, location, criticality, tags, definition, biaLinks, createdAt:now, updatedAt:now });
+    all.unshift({ id:'SYSREG-'+Date.now(), category, systemId, displayName, ownerDept, type, location, criticality, tags, definition, biaLinks, provider, slaTarget, emergencyContact, alternativeService, createdAt:now, updatedAt:now });
   }
 
   saveAll(all);
@@ -662,6 +732,12 @@ function editItem(id){
   $('#f_criticality').value = item.criticality || 'Critical';
   $('#f_tags').value       = (item.tags||[]).join(', ');
   $('#f_definition').value  = item.definition || '';
+  if ($('#f_provider'))          $('#f_provider').value          = item.provider          || '';
+  if ($('#f_slaTarget'))         $('#f_slaTarget').value         = item.slaTarget         || '';
+  if ($('#f_emergencyContact'))  $('#f_emergencyContact').value  = item.emergencyContact  || '';
+  if ($('#f_alternativeService'))$('#f_alternativeService').value = item.alternativeService || '';
+  const extra = $('#serviceExtraFields');
+  if (extra) extra.classList.toggle('show', isServiceCat(item.category));
   setBIALinks(item.biaLinks || []);
   $('#btnSave').textContent = '✅ 수정 저장';
   const banner = $('#editBanner');
@@ -735,6 +811,8 @@ function renderTable(){
       <td>
         <div style="font-weight:500">${esc(x.displayName||'—')}</div>
         ${x.location ? `<div style="font-size:.7rem;color:var(--text-2);margin-top:2px">📍 ${esc(x.location)}</div>` : ''}
+        ${isServiceCat(x.category) && x.provider ? `<div style="font-size:.7rem;color:var(--text-2);margin-top:2px">🏢 ${esc(x.provider)}</div>` : ''}
+        ${isServiceCat(x.category) && x.slaTarget ? `<div style="font-size:.7rem;color:var(--text-2);margin-top:2px">📋 SLA: ${esc(x.slaTarget)}</div>` : ''}
       </td>
       <td>${esc(x.ownerDept||'—')}</td>
       <td>${critBadge(x.criticality)}</td>
@@ -863,6 +941,46 @@ function exportCSV(){
   });
 })();
 
+/* ─── Service Registry Migration ────────────────────────────── */
+(function migrateServiceRegistry() {
+  const SVC_KEY = 'bcmsServiceRegistry';
+  const raw = localStorage.getItem(SVC_KEY);
+  if (!raw) return;
+  try {
+    const svcData = JSON.parse(raw);
+    if (!Array.isArray(svcData) || !svcData.length) { localStorage.removeItem(SVC_KEY); return; }
+    const existing = loadAll();
+    const existingIds = new Set(existing.map(x => x.id || x.systemId).filter(Boolean));
+    const now = new Date().toISOString();
+    const newItems = svcData
+      .filter(s => s && !existingIds.has(s.id) && !existingIds.has(s.systemId))
+      .map(s => ({
+        id:                 s.id || ('SYSREG-MIGR-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
+        category:           normCat(s.category || s.serviceType || '외부 서비스'),
+        systemId:           s.systemId || s.serviceId || s.id || '',
+        displayName:        s.displayName || s.name || s.serviceName || '',
+        ownerDept:          s.ownerDept || s.department || s.dept || '',
+        type:               s.type || '',
+        location:           s.location || '',
+        criticality:        s.criticality || 'Medium',
+        tags:               Array.isArray(s.tags) ? s.tags : [],
+        definition:         s.definition || s.description || '',
+        biaLinks:           Array.isArray(s.biaLinks) ? s.biaLinks : [],
+        provider:           s.provider || s.providerName || s.vendor || '',
+        slaTarget:          s.slaTarget || s.sla || s.contractSla || '',
+        emergencyContact:   s.emergencyContact || s.contact || s.supportContact || '',
+        alternativeService: s.alternativeService || s.alternative || s.fallback || '',
+        createdAt: s.createdAt || now,
+        updatedAt: now,
+      }));
+    if (newItems.length) {
+      saveAll([...existing, ...newItems]);
+      toast(`🔄 서비스 레지스트리 ${newItems.length}개 항목 마이그레이션 완료`);
+    }
+    localStorage.removeItem(SVC_KEY);
+  } catch(e) { console.error('[BCMS] 서비스 레지스트리 마이그레이션 오류:', e); }
+})();
+
 /* ─── Init ───────────────────────────────────────────────────── */
 refreshOwnerDeptDropdown();
 renderAll();
@@ -879,6 +997,7 @@ window.exportJSON  = exportJSON;
 window.exportCSV   = exportCSV;
 window.updateBIACount    = updateBIACount;
 window.onOwnerDeptChange = onOwnerDeptChange;
+window.onCategoryChange  = onCategoryChange;
 
 })();
 </script>

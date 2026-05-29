@@ -290,6 +290,8 @@
         <div class="field">
           <label for="teamSelect">팀 선택 (편집기)</label>
           <select id="teamSelect"></select>
+          <input type="text" id="teamSelectDirect" placeholder="새 팀/부서명 입력"
+            style="display:none;margin-top:4px;width:100%;padding:7px 9px;border:0.5px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);font-size:13px;"/>
         </div>
         <div class="field">
           <label for="newFunctionName">핵심업무 직접 추가</label>
@@ -325,6 +327,8 @@
           <div class="formRow">
             <label for="newFnTeam">소속 부서/팀</label>
             <select id="newFnTeam"></select>
+            <input type="text" id="newFnTeamDirect" placeholder="부서/팀명 직접 입력"
+              style="display:none;margin-top:4px;width:100%;"/>
           </div>
           <div class="formRow">
             <label>업무 중요도</label>
@@ -878,19 +882,48 @@
     const toggleEntry     = document.getElementById('toggleEntry');
     const newFnTeam       = document.getElementById('newFnTeam');
 
+    /* ── Org chart dept helper ── */
+    const getOrgChartDepts = () => {
+      try {
+        const raw = localStorage.getItem('bcmsOrgChart');
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        const data = Array.isArray(arr) ? arr : [...(arr.nodes || []), ...(arr.edges || [])];
+        const seen = new Set();
+        return data
+          .filter(e => e.data && !e.data.source && e.data.label)
+          .map(e => e.data.label.split('\n')[0].trim())
+          .filter(d => { if (!d || seen.has(d)) return false; seen.add(d); return true; });
+      } catch { return []; }
+    };
+
     /* ── Populate selects ── */
     const renderTeamSelect = () => {
-      const teams = uniq(biaRows.map(r => r.team).filter(Boolean));
-      const prev  = teamSelect.value;
-      const opts  = teams.length
-        ? teams.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('')
-        : '<option value="">등록된 팀이 없습니다</option>';
+      // Primary: bcmsOrgChart depts; fallback: bcmsOrgRegistry teams
+      const orgDepts = getOrgChartDepts();
+      const orgTeams = orgDepts.length ? orgDepts : loadOrgTeams();
+      const existingTeams = biaRows.map(r => r.team).filter(Boolean);
+      const allTeams = uniq([...orgTeams, ...existingTeams]);
+
+      const prev = teamSelect.value;
+      const baseOpts = allTeams.length
+        ? allTeams.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('')
+        : '';
+      const opts = baseOpts + '<option value="__direct__">✏ 직접 입력</option>';
       teamSelect.innerHTML = opts;
       newFnTeam.innerHTML  = opts;
-      if (prev && teams.includes(prev)) teamSelect.value = prev;
+      if (prev && (allTeams.includes(prev) || prev === '__direct__')) teamSelect.value = prev;
       refreshCoreMap();
     };
     renderTeamSelect();
+
+    /* ── Get effective selected team (handles 직접 입력) ── */
+    const getSelectedTeam = () => {
+      if (teamSelect.value === '__direct__') {
+        return (document.getElementById('teamSelectDirect').value || '').trim();
+      }
+      return teamSelect.value;
+    };
 
     /* ── BIA ID generator ── */
     const genBiaId = (() => {
@@ -1061,8 +1094,9 @@
     document.getElementById('addEntryBtn').addEventListener('click', () => {
       const name = document.getElementById('newFnName').value.trim();
       if (!name) { alert('업무명칭을 입력하세요.'); return; }
-      const team = document.getElementById('newFnTeam').value;
-      if (!team) { alert('소속 부서/팀을 선택하세요.'); return; }
+      let team = document.getElementById('newFnTeam').value;
+      if (team === '__direct__') team = (document.getElementById('newFnTeamDirect').value || '').trim();
+      if (!team) { alert('소속 부서/팀을 선택하거나 직접 입력하세요.'); return; }
 
       const importance = document.querySelector('input[name="newImportance"]:checked')?.value || '일반';
       const financial   = Number(document.getElementById('slFinancial').value);
@@ -1441,7 +1475,7 @@
     };
 
     const renderTeamEditor = () => {
-      const team = teamSelect.value;
+      const team = getSelectedTeam();
       if (!team) {
         tableMount.innerHTML = '<div class="empty">팀을 선택하세요.</div>';
         renderSummary('', []);
@@ -1574,7 +1608,7 @@
 
     /* ── Team editor field update ── */
     const updateFnField = (idx, field, value) => {
-      const team = teamSelect.value;
+      const team = getSelectedTeam();
       const row  = ensureTeamRecord(team);
       const fn   = row.functions[idx];
       if (!fn) return;
@@ -1595,7 +1629,7 @@
       const res = e.target.getAttribute('data-resource');
       if (res) {
         const idx  = Number(e.target.getAttribute('data-idx'));
-        const team = teamSelect.value;
+        const team = getSelectedTeam();
         const row  = ensureTeamRecord(team);
         const fn   = row.functions[idx];
         if (!fn) return;
@@ -1633,7 +1667,7 @@
       }
       const guideIdx = e.target.getAttribute('data-guide-toggle');
       if (guideIdx != null) {
-        const team = teamSelect.value;
+        const team = getSelectedTeam();
         const row  = ensureTeamRecord(team);
         const fn   = row.functions[Number(guideIdx)];
         if (!fn) return;
@@ -1643,7 +1677,7 @@
       }
       const toggleIdx = e.target.getAttribute('data-toggle');
       if (toggleIdx != null) {
-        const team = teamSelect.value;
+        const team = getSelectedTeam();
         const row  = ensureTeamRecord(team);
         const fn   = row.functions[Number(toggleIdx)];
         if (!fn) return;
@@ -1653,7 +1687,7 @@
       }
       const del = e.target.getAttribute('data-delete');
       if (del != null) {
-        const team = teamSelect.value;
+        const team = getSelectedTeam();
         const row  = ensureTeamRecord(team);
         row.functions.splice(Number(del), 1);
         dirtyState = true;
@@ -1663,9 +1697,10 @@
 
     /* ── Add function (editor) ── */
     addFunctionBtn.addEventListener('click', () => {
-      const team = teamSelect.value;
+      const team = getSelectedTeam();
       const name = String(newFunctionName.value || '').trim();
-      if (!team || !name) return;
+      if (!team) { alert('팀/부서를 선택하거나 직접 입력하세요.'); return; }
+      if (!name) return;
       const row = ensureTeamRecord(team);
       if (row.functions.some(fn => fn.name === name)) { alert('이미 등록된 핵심업무입니다.'); return; }
       row.functions.push(normalizeFunction({ name }));
@@ -1704,7 +1739,7 @@
     });
 
     resetBtn.addEventListener('click', () => {
-      const team = teamSelect.value;
+      const team = getSelectedTeam();
       if (!team) return;
       const row = ensureTeamRecord(team);
       row.functions = (coreMap.get(team) || []).map(name => normalizeFunction({ name }));
@@ -1712,7 +1747,18 @@
       renderTeamEditor(); renderBiaList(); renderMetrics();
     });
 
-    teamSelect.addEventListener('change', () => { if (editorOpen) renderTeamEditor(); });
+    teamSelect.addEventListener('change', () => {
+      const directInput = document.getElementById('teamSelectDirect');
+      const isDirect = teamSelect.value === '__direct__';
+      if (directInput) { directInput.style.display = isDirect ? '' : 'none'; if (isDirect) directInput.focus(); }
+      if (!isDirect && editorOpen) renderTeamEditor();
+    });
+
+    newFnTeam.addEventListener('change', () => {
+      const directInput = document.getElementById('newFnTeamDirect');
+      const isDirect = newFnTeam.value === '__direct__';
+      if (directInput) { directInput.style.display = isDirect ? '' : 'none'; if (isDirect) { directInput.value = ''; directInput.focus(); } }
+    });
 
     /* ── Init ── */
     renderMetrics();
@@ -1737,7 +1783,7 @@
       const industry = localStorage.getItem('bcmsIndustry') || '일반';
       const allFns   = biaRows.flatMap(r => (r.functions || []).map(f => `${r.team}: ${f.name}`));
       const teams    = biaRows.map(r => r.team).filter(Boolean);
-      const curTeam  = teamSelect.value || teams[0] || '운영팀';
+      const curTeam  = getSelectedTeam() || teams[0] || '운영팀';
       AIHelper.open({
         title: '🤖 AI 핵심업무 목록 초안 제안 (BIA)',
         applyLabel: '✅ BIA에 추가하기',
