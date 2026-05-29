@@ -728,9 +728,12 @@ function renderTable() {
       <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[d.status] || d.status)}</span></td>
       <td style="color:var(--text-3);font-size:12px;">-</td>
       <td>${linkHtml}</td>
-      <td style="white-space:nowrap;">
-        <button class="btn btn-sm" onclick="editDoc('${esc(d.id)}')">수정</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteDoc('${esc(d.id)}')">삭제</button>
+      <td>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;">
+          <button class="btn btn-sm" onclick="editDoc('${esc(d.id)}')">수정</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteDoc('${esc(d.id)}')">삭제</button>
+          <button class="btn btn-sm" onclick="printManualDoc('${esc(d.id)}')">🖨️</button>
+        </div>
       </td>
     </tr>`;
   }).join('');
@@ -738,25 +741,69 @@ function renderTable() {
   // 포털 자동 항목 행
   const portalHtml = portalRows.map(p => {
     const statusCls = STATUS_BDG[p.status] || 'bdg-approved';
+    const meta   = readPortalMeta(p.key);
+    const m_v    = meta.version    ? esc(meta.version)    : '<span style="color:var(--text-3)">-</span>';
+    const m_rev  = meta.revDate    ? esc(meta.revDate)    : '<span style="color:var(--text-3)">-</span>';
+    const m_rvw  = meta.reviewDate ? esc(meta.reviewDate) : '<span style="color:var(--text-3)">-</span>';
+    const m_dept = meta.dept       ? esc(meta.dept)       : '<span style="color:var(--text-3)">-</span>';
     return `<tr style="background:rgba(22,163,74,.025);">
       <td style="color:var(--text-3);font-size:12px;">-</td>
       <td style="font-weight:600;">${esc(p.name)}</td>
       <td>${esc(TYPE_LBL[p.type] || p.type)}</td>
       <td>${esc(LEVEL_LBL[p.level] || p.level)}</td>
-      <td style="color:var(--text-3);">-</td>
-      <td style="color:var(--text-3);">-</td>
-      <td style="color:var(--text-3);">-</td>
-      <td style="color:var(--text-3);">-</td>
+      <td>${m_v}</td>
+      <td style="white-space:nowrap;">${m_rev}</td>
+      <td style="white-space:nowrap;">${m_rvw}</td>
+      <td>${m_dept}</td>
       <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[p.status] || p.status)}</span></td>
       <td><span class="bdg-portal">📋 포털 자동</span></td>
       <td><a href="${esc(p.link)}" style="color:var(--accent);font-size:12px;">열기 ↗</a></td>
-      <td style="white-space:nowrap;">
-        <a class="btn btn-sm" href="${esc(p.link)}" style="text-decoration:none;font-size:12px;">→ 바로가기</a>
+      <td>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;">
+          <a class="btn btn-sm" href="${esc(p.link)}" style="text-decoration:none;">→ 이동</a>
+          <button class="btn btn-sm" onclick="printPortalDoc('${p.link}')">🖨️</button>
+        </div>
       </td>
     </tr>`;
   }).join('');
 
   tbody.innerHTML = manualHtml + portalHtml;
+}
+
+/* ── Portal metadata reader ── */
+function readPortalMeta(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    const d = JSON.parse(raw);
+    if (key === 'bcmsPolicyData') {
+      return { version: d.version || '', revDate: d.policyDate || '', reviewDate: d.nextReview || '', dept: d.department || '' };
+    }
+    if (key === 'bcmsBCPDoc' || key === 'bcmsBCPMeta') {
+      const m = (typeof d === 'object' && !Array.isArray(d)) ? d : {};
+      return { version: m.version || '', revDate: m.date || m.revDate || '', reviewDate: m.nextReview || m.nextReviewDate || '', dept: m.dept || m.department || '' };
+    }
+    if (key === 'bcmsEOPDoc' || key === 'bcmsSOPData') {
+      const m = (typeof d === 'object' && !Array.isArray(d)) ? d : {};
+      return { version: m.version || '', revDate: m.date || m.revDate || '', reviewDate: m.nextReview || m.nextReviewDate || '', dept: m.dept || m.department || '' };
+    }
+    // Array-based records (BIA, Risk, Training, Audit): no document-level metadata
+    return {};
+  } catch { return {}; }
+}
+
+/* ── Print handlers ── */
+function printManualDoc(id) {
+  const doc = loadDocs().find(d => d.id === id);
+  if (!doc) return;
+  if (!doc.link) { toast('링크가 등록되지 않았습니다.'); return; }
+  window.open(doc.link, '_blank');
+}
+
+function printPortalDoc(link) {
+  const sep = link.includes('?') ? '&' : '?';
+  const win = window.open(link + sep + 'print=1', '_blank');
+  if (!win) toast('⚠️ 팝업 차단을 해제한 후 다시 시도하세요.');
 }
 
 /* ── Render: ISO checklist ── */
@@ -986,8 +1033,10 @@ document.querySelectorAll('.pyr-lv').forEach(el => {
 });
 
 /* ── Expose for inline onclick ── */
-window.editDoc   = editDoc;
-window.deleteDoc = deleteDoc;
+window.editDoc        = editDoc;
+window.deleteDoc      = deleteDoc;
+window.printManualDoc = printManualDoc;
+window.printPortalDoc = printPortalDoc;
 
 /* ── Render all ── */
 function renderAll() {

@@ -213,6 +213,18 @@
           <label>정책 번호</label>
           <input type="text" id="p_policyNo" placeholder="예: BCMS-POL-001"/>
         </div>
+        <div class="formRow">
+          <label>담당부서</label>
+          <select id="p_dept_sel" onchange="onPolicyDeptChange()" style="width:100%">
+            <option value="">-- 부서 선택 --</option>
+            <option value="__direct__">✏ 직접 입력</option>
+          </select>
+          <span id="p_dept_guide" style="display:none;font-size:10px;color:#ea580c;margin-top:3px;display:none;">
+            📋 조직도에서 먼저 부서를 추가하세요
+          </span>
+          <input type="text" id="p_dept_direct" placeholder="부서명 직접 입력"
+            style="display:none;margin-top:4px;width:100%;"/>
+        </div>
         <div class="formRow full">
           <label>회사 로고 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--text-3)">(선택)</span></label>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -637,7 +649,54 @@ document.querySelectorAll('.tabBtn').forEach(btn => {
 ══════════════════════════════════════════ */
 const POLICY_KEY = 'bcmsPolicyData';
 
+/* ── 담당부서 드롭다운 (조직도 연동) ── */
+function getPolicyOrgChartDepts() {
+  try {
+    const raw = localStorage.getItem('bcmsOrgChart');
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    const data = Array.isArray(arr) ? arr : [...(arr.nodes || []), ...(arr.edges || [])];
+    const seen = new Set();
+    return data
+      .filter(e => e.data && !e.data.source && e.data.label)
+      .map(e => e.data.label.split('\n')[0].trim())
+      .filter(d => { if (!d || seen.has(d)) return false; seen.add(d); return true; });
+  } catch { return []; }
+}
+
+function refreshPolicyDeptDropdown() {
+  const sel   = $('p_dept_sel');
+  if (!sel) return;
+  const prev  = sel.value;
+  const depts = getPolicyOrgChartDepts();
+  sel.innerHTML = '<option value="">-- 부서 선택 --</option>' +
+    depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('') +
+    '<option value="__direct__">✏ 직접 입력</option>';
+  const guide = $('p_dept_guide');
+  if (guide) guide.style.display = depts.length ? 'none' : 'inline';
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+}
+
+function onPolicyDeptChange() {
+  const val   = $('p_dept_sel').value;
+  const input = $('p_dept_direct');
+  input.style.display = val === '__direct__' ? '' : 'none';
+  if (val === '__direct__') input.focus();
+}
+
+function getPolicyDeptValue() {
+  const sel = $('p_dept_sel');
+  if (!sel) return '';
+  if (sel.value === '__direct__') return ($('p_dept_direct').value || '').trim();
+  return sel.value;
+}
+
+window.addEventListener('storage', e => {
+  if (e.key === 'bcmsOrgChart') refreshPolicyDeptDropdown();
+});
+
 function loadPolicy() {
+  refreshPolicyDeptDropdown();
   const d = loadJ(POLICY_KEY, {});
   $('p_company').value     = d.companyName   || '';
   $('p_version').value     = d.version       || '';
@@ -650,6 +709,21 @@ function loadPolicy() {
   $('p_authorTitle').value = d.authorTitle  || '';
   $('p_signerName').value  = d.signerName   || '';
   $('p_signerTitle').value = d.signerTitle  || '';
+
+  // 담당부서 복원
+  const dept    = d.department || '';
+  const deptSel = $('p_dept_sel');
+  if (dept && deptSel) {
+    const hasOpt = [...deptSel.options].some(o => o.value === dept && o.value !== '__direct__' && o.value !== '');
+    if (hasOpt) {
+      deptSel.value = dept;
+      $('p_dept_direct').style.display = 'none';
+    } else if (dept) {
+      deptSel.value = '__direct__';
+      $('p_dept_direct').value = dept;
+      $('p_dept_direct').style.display = '';
+    }
+  }
 
   // 로고 복원
   const _logo = localStorage.getItem('bcmsPolicyLogo') || '';
@@ -675,6 +749,7 @@ $('btnPolicySave').addEventListener('click', () => {
     revisionDate: $('p_revisionDate').value,
     nextReview:   $('p_nextReview').value,
     policyNo:     $('p_policyNo').value.trim(),
+    department:   getPolicyDeptValue(),
     body:         $('p_body').value,
     authorName:   $('p_authorName').value.trim(),
     authorTitle:  $('p_authorTitle').value.trim(),
@@ -1215,6 +1290,11 @@ loadPolicy();
 loadScope();
 renderObjTable();
 renderStkTable();
+
+// ?print=1 → 공식 문서 자동 출력 (docs.html 출력 버튼에서 호출)
+if (new URLSearchParams(window.location.search).get('print') === '1') {
+  setTimeout(() => { const btn = $('btnPrintDoc'); if (btn) btn.click(); }, 500);
+}
 </script>
 </body>
 </html>
