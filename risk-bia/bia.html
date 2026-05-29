@@ -253,6 +253,83 @@
     .scoreItem .n { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
     .scoreItem ul { margin: 0; padding-left: 14px; color: var(--text-2); font-size: 10px; line-height: 1.4; }
 
+    /* ── BIA Guide Banner ── */
+    .biaGuide { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:18px; }
+    .biaGuideHead {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 18px; cursor:pointer; user-select:none;
+      border-bottom:0.5px solid var(--border); transition:background .12s;
+    }
+    .biaGuideHead:hover { background:var(--surface-hover); }
+    .biaGuideTitle { font-size:13px; font-weight:700; color:var(--text); }
+    .biaGuideToggle { font-size:11.5px; color:var(--text-2); font-weight:600; }
+    .biaGuideBody { padding:16px 20px; }
+    .biaGuideBody.collapsed { display:none; }
+    .biaSteps { display:flex; flex-direction:column; gap:8px; }
+    .biaStep {
+      display:flex; align-items:flex-start; gap:12px;
+      padding:10px 14px; background:var(--bg);
+      border:0.5px solid var(--border); border-radius:var(--r-sm);
+    }
+    .biaStepNum {
+      flex-shrink:0; font-size:10px; font-weight:800; color:var(--accent);
+      background:var(--accent-subtle); border:0.5px solid var(--accent-border);
+      border-radius:5px; padding:2px 7px; margin-top:1px; white-space:nowrap;
+    }
+    .biaStepTitle { font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:3px; }
+    .biaStepDesc { font-size:11.5px; color:var(--text-2); line-height:1.65; }
+    .biaGuideFooter {
+      margin-top:12px; padding:9px 14px;
+      background:rgba(245,158,11,.06); border:0.5px solid rgba(245,158,11,.25);
+      border-radius:var(--r-sm); font-size:12px; color:#b45309; line-height:1.5;
+    }
+
+    /* ── Score guide button & modal ── */
+    .scoreGuideBtn {
+      width:19px; height:19px; border-radius:50%; border:0.5px solid var(--border-strong);
+      background:var(--surface); color:var(--text-2); font-size:11px; font-weight:800;
+      cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+      flex-shrink:0; margin-left:5px; transition:all .12s; vertical-align:middle; padding:0;
+    }
+    .scoreGuideBtn:hover { background:var(--accent); color:#fff; border-color:transparent; }
+
+    .impactModalBackdrop {
+      display:none; position:fixed; inset:0; z-index:9990;
+      background:rgba(0,0,0,.5); backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+      align-items:center; justify-content:center; padding:20px; box-sizing:border-box;
+    }
+    .impactModalBackdrop.show { display:flex; }
+    .impactModal {
+      background:var(--surface); border-radius:14px;
+      box-shadow:0 24px 64px rgba(0,0,0,.2);
+      width:100%; max-width:560px; max-height:80vh;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    .impactModalHead {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 20px; border-bottom:0.5px solid var(--border); flex-shrink:0;
+    }
+    .impactModalTitle { font-size:14px; font-weight:700; color:var(--text); }
+    .impactModalClose {
+      width:28px; height:28px; border-radius:50%; border:0.5px solid var(--border-strong);
+      background:var(--surface); color:var(--text-2); cursor:pointer; font-size:16px;
+      display:flex; align-items:center; justify-content:center; transition:all .12s;
+    }
+    .impactModalClose:hover { background:var(--surface-hover); color:var(--text); }
+    .impactModalBody { padding:16px 20px; overflow-y:auto; }
+    .impactTable { width:100%; border-collapse:collapse; font-size:12.5px; }
+    .impactTable th {
+      padding:8px 10px; text-align:left; font-size:11px; font-weight:700;
+      color:var(--text-2); border-bottom:1px solid var(--border); background:var(--bg);
+    }
+    .impactTable td { padding:9px 10px; border-bottom:0.5px solid var(--border); vertical-align:top; line-height:1.55; color:var(--text); }
+    .impactTable tr:last-child td { border-bottom:none; }
+    .impactTable .row-low  td { background:rgba(22,163,74,.06); }
+    .impactTable .row-mid  td { background:rgba(245,158,11,.07); }
+    .impactTable .row-high td { background:rgba(239,68,68,.07); }
+    .impactTable .score-cell { font-weight:800; font-family:"SF Mono","Consolas",monospace; white-space:nowrap; }
+
     @media (max-width: 960px) {
       .entryPanel { grid-template-columns: 1fr; }
       .entryCard.full { grid-column: 1; }
@@ -275,6 +352,63 @@
         <h1>BIA (업무영향분석)</h1>
         <p>ISO 22301 기준으로 핵심업무별 중단 영향, 복구 목표(MTPD·RTO·RPO·MBCO), 소요자원을 체계적으로 분석합니다.</p>
       </section>
+
+      <!-- BIA 작성 가이드 배너 -->
+      <div class="biaGuide" id="biaGuide">
+        <div class="biaGuideHead" id="biaGuideHead">
+          <span class="biaGuideTitle">📋 BIA 작성 순서 및 방법</span>
+          <span class="biaGuideToggle" id="biaGuideToggle">▲ 접기</span>
+        </div>
+        <div class="biaGuideBody" id="biaGuideBody">
+          <div class="biaSteps">
+            <div class="biaStep">
+              <span class="biaStepNum">STEP 1</span>
+              <div class="biaStepContent">
+                <div class="biaStepTitle">핵심업무 식별</div>
+                <div class="biaStepDesc">우리 조직에서 중단 시 가장 큰 피해를 주는 업무를 나열합니다.<br>예: 주문 처리, 고객 응대, 결제 시스템 운영, 인허가 업무 등</div>
+              </div>
+            </div>
+            <div class="biaStep">
+              <span class="biaStepNum">STEP 2</span>
+              <div class="biaStepContent">
+                <div class="biaStepTitle">소속 부서/팀 지정</div>
+                <div class="biaStepDesc">해당 업무를 담당하는 부서나 팀을 지정합니다.</div>
+              </div>
+            </div>
+            <div class="biaStep">
+              <span class="biaStepNum">STEP 3</span>
+              <div class="biaStepContent">
+                <div class="biaStepTitle">업무 중요도 선택</div>
+                <div class="biaStepDesc">· <b>핵심</b>: 즉시 복구 필요, 중단 시 조직 존립에 영향<br>· <b>중요</b>: 단기 내 복구 필요, 주요 서비스에 영향<br>· <b>일반</b>: 지연 허용 가능, 대체 수단 존재</div>
+              </div>
+            </div>
+            <div class="biaStep">
+              <span class="biaStepNum">STEP 4</span>
+              <div class="biaStepContent">
+                <div class="biaStepTitle">중단 영향 분석 (재무/운영/평판)</div>
+                <div class="biaStepDesc">각 영향 항목을 1~5점으로 평가합니다. 슬라이더 옆 <b>?</b> 버튼을 클릭하면 점수 기준표를 확인할 수 있습니다.</div>
+              </div>
+            </div>
+            <div class="biaStep">
+              <span class="biaStepNum">STEP 5</span>
+              <div class="biaStepContent">
+                <div class="biaStepTitle">복구 목표 설정 (MTPD → RTO → RPO)</div>
+                <div class="biaStepDesc">· <b>MTPD</b>: 업무 중단을 버틸 수 있는 최대 시간 (가장 먼저 설정)<br>· <b>RTO</b>: MTPD 이내에 복구를 완료해야 하는 목표 시간<br>· <b>RPO</b>: 데이터를 어느 시점까지 복구할 것인지 기준 시점</div>
+              </div>
+            </div>
+            <div class="biaStep">
+              <span class="biaStepNum">STEP 6</span>
+              <div class="biaStepContent">
+                <div class="biaStepTitle">MBCO 설정</div>
+                <div class="biaStepDesc">중단 상황에서도 유지해야 할 최소 운영 수준(%)을 설정합니다.</div>
+              </div>
+            </div>
+          </div>
+          <div class="biaGuideFooter">
+            💡 처음이라면 주요 업무 3~5개부터 시작하세요. 완벽하지 않아도 됩니다.
+          </div>
+        </div>
+      </div>
 
       <!-- 지표 -->
       <div class="metricsStrip">
@@ -357,17 +491,26 @@
         <div class="entryCard">
           <h3>② 중단 영향 분석</h3>
           <div class="sliderRow">
-            <div class="sliderLabel"><span>재무적 영향</span><span class="sliderValue" id="slFinancialVal">1</span></div>
+            <div class="sliderLabel">
+              <span style="display:flex;align-items:center;gap:0;">재무적 영향<button class="scoreGuideBtn" onclick="openImpactGuide('financial')" title="점수 기준 보기" type="button">?</button></span>
+              <span class="sliderValue" id="slFinancialVal">1</span>
+            </div>
             <input type="range" id="slFinancial" min="1" max="5" step="1" value="1"/>
             <div class="sliderTicks"><span>1 미미</span><span>2</span><span>3 보통</span><span>4</span><span>5 심각</span></div>
           </div>
           <div class="sliderRow">
-            <div class="sliderLabel"><span>운영적 영향</span><span class="sliderValue" id="slOperationalVal">1</span></div>
+            <div class="sliderLabel">
+              <span style="display:flex;align-items:center;gap:0;">운영적 영향<button class="scoreGuideBtn" onclick="openImpactGuide('operational')" title="점수 기준 보기" type="button">?</button></span>
+              <span class="sliderValue" id="slOperationalVal">1</span>
+            </div>
             <input type="range" id="slOperational" min="1" max="5" step="1" value="1"/>
             <div class="sliderTicks"><span>1 미미</span><span>2</span><span>3 보통</span><span>4</span><span>5 심각</span></div>
           </div>
           <div class="sliderRow">
-            <div class="sliderLabel"><span>평판/법규적 영향</span><span class="sliderValue" id="slReputationVal">1</span></div>
+            <div class="sliderLabel">
+              <span style="display:flex;align-items:center;gap:0;">평판/법규적 영향<button class="scoreGuideBtn" onclick="openImpactGuide('reputation')" title="점수 기준 보기" type="button">?</button></span>
+              <span class="sliderValue" id="slReputationVal">1</span>
+            </div>
             <input type="range" id="slReputation" min="1" max="5" step="1" value="1"/>
             <div class="sliderTicks"><span>1 미미</span><span>2</span><span>3 보통</span><span>4</span><span>5 심각</span></div>
           </div>
@@ -539,6 +682,17 @@
 
     </div>
   </main>
+
+  <!-- 영향도 점수 기준표 모달 -->
+  <div class="impactModalBackdrop" id="impactModalBackdrop" onclick="if(event.target===this)closeImpactGuide()">
+    <div class="impactModal" role="dialog" aria-modal="true">
+      <div class="impactModalHead">
+        <span class="impactModalTitle" id="impactModalTitle"></span>
+        <button class="impactModalClose" onclick="closeImpactGuide()" aria-label="닫기">✕</button>
+      </div>
+      <div class="impactModalBody" id="impactModalBody"></div>
+    </div>
+  </div>
 
   <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
@@ -1835,6 +1989,89 @@
         }
       });
     });
+
+    /* ── BIA Guide Banner ── */
+    (function() {
+      const GUIDE_STORE_KEY = 'biaGuideCollapsed';
+      const guideHead   = document.getElementById('biaGuideHead');
+      const guideBody   = document.getElementById('biaGuideBody');
+      const guideToggle = document.getElementById('biaGuideToggle');
+      if (!guideHead) return;
+
+      const isCollapsed = localStorage.getItem(GUIDE_STORE_KEY) === 'true';
+      if (isCollapsed) {
+        guideBody.classList.add('collapsed');
+        guideToggle.textContent = '▼ 펼치기';
+      }
+
+      guideHead.addEventListener('click', () => {
+        const nowCollapsed = guideBody.classList.toggle('collapsed');
+        guideToggle.textContent = nowCollapsed ? '▼ 펼치기' : '▲ 접기';
+        localStorage.setItem(GUIDE_STORE_KEY, nowCollapsed ? 'true' : 'false');
+      });
+    })();
+
+    /* ── Impact Score Guide Modal ── */
+    const IMPACT_GUIDE_DATA = {
+      financial: {
+        title: '재무적 영향 기준',
+        rows: [
+          { score:'1 (미미)', desc:'손실 100만원 미만 / 매출의 0.1% 미만 / 당일 복구 가능', cls:'row-low' },
+          { score:'2',        desc:'손실 100만~1,000만원 / 매출의 0.1~1% / 1~2일 내 복구', cls:'' },
+          { score:'3 (보통)', desc:'손실 1,000만~1억원 / 매출의 1~5% / 수일 소요', cls:'row-mid' },
+          { score:'4',        desc:'손실 1억~10억원 / 매출의 5~10% / 수주 소요', cls:'' },
+          { score:'5 (심각)', desc:'손실 10억원 이상 / 매출의 10% 초과 / 장기 복구 또는 불가', cls:'row-high' },
+        ]
+      },
+      operational: {
+        title: '운영적 영향 기준',
+        rows: [
+          { score:'1 (미미)', desc:'단순 불편, 대체 수단 즉시 가능, 업무 지연 1시간 미만', cls:'row-low' },
+          { score:'2',        desc:'일부 업무 지연, 대체 수단 있음, 1~4시간 영향', cls:'' },
+          { score:'3 (보통)', desc:'핵심 업무 일부 중단, 4~24시간 영향', cls:'row-mid' },
+          { score:'4',        desc:'핵심 업무 전면 중단, 1~3일 영향', cls:'' },
+          { score:'5 (심각)', desc:'서비스 완전 중단, 3일 이상, 복구 난이도 높음', cls:'row-high' },
+        ]
+      },
+      reputation: {
+        title: '평판/법규적 영향 기준',
+        rows: [
+          { score:'1 (미미)', desc:'내부 불만 수준, 외부 노출 없음', cls:'row-low' },
+          { score:'2',        desc:'일부 고객 불만, 소규모 민원 발생', cls:'' },
+          { score:'3 (보통)', desc:'언론 보도 가능성, 규제기관 주의 조치', cls:'row-mid' },
+          { score:'4',        desc:'언론 보도, 규제기관 조사, 계약 해지 위험', cls:'' },
+          { score:'5 (심각)', desc:'대규모 언론 보도, 법적 제재, 인증 취소 위험', cls:'row-high' },
+        ]
+      }
+    };
+
+    function openImpactGuide(type) {
+      const data = IMPACT_GUIDE_DATA[type];
+      if (!data) return;
+      document.getElementById('impactModalTitle').textContent = data.title;
+      document.getElementById('impactModalBody').innerHTML =
+        `<table class="impactTable">
+          <thead><tr><th style="width:100px">점수</th><th>기준</th></tr></thead>
+          <tbody>${data.rows.map(r =>
+            `<tr class="${r.cls}">
+              <td class="score-cell">${escHtml(r.score)}</td>
+              <td>${escHtml(r.desc)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+      document.getElementById('impactModalBackdrop').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeImpactGuide() {
+      document.getElementById('impactModalBackdrop').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImpactGuide(); });
+
+    window.openImpactGuide  = openImpactGuide;
+    window.closeImpactGuide = closeImpactGuide;
 
   })();
   </script>
