@@ -782,11 +782,11 @@
     const themeToggle = document.getElementById('themeToggle');
     const savedTheme = localStorage.getItem('bcmsTheme') || 'light';
     root.setAttribute('data-theme', savedTheme);
-    themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-    themeToggle.addEventListener('click', () => {
+    if (themeToggle) themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    themeToggle?.addEventListener('click', () => {
       const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', next);
-      themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+      if (themeToggle) themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
       localStorage.setItem('bcmsTheme', next);
     });
 
@@ -1126,6 +1126,13 @@
       } catch { return []; }
     };
 
+    /* ── BIA Editor Section state (반드시 renderTeamSelect 호출 전에 초기화) ── */
+    let biaEditorFilter = '전체';
+    let biaEditorMode   = null; // 'edit' | 'add' | null
+    let biaEditorTeam   = null;
+    let biaEditorFnIdx  = null;
+    let biaEditorSectionOpen = true;
+
     /* ── Populate selects ── */
     const renderTeamSelect = () => {
       // Primary: bcmsOrgChart depts; fallback: bcmsOrgRegistry teams
@@ -1134,26 +1141,19 @@
       const existingTeams = biaRows.map(r => r.team).filter(Boolean);
       const allTeams = uniq([...orgTeams, ...existingTeams]);
 
-      const prev = teamSelect.value;
+      const prev = teamSelect?.value || '';
       const baseOpts = allTeams.length
         ? allTeams.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('')
         : '';
       const opts = baseOpts + '<option value="__direct__">✏ 직접 입력</option>';
-      teamSelect.innerHTML = opts;
-      newFnTeam.innerHTML  = opts;
-      if (prev && (allTeams.includes(prev) || prev === '__direct__')) teamSelect.value = prev;
+      if (teamSelect) teamSelect.innerHTML = opts;
+      if (newFnTeam) newFnTeam.innerHTML  = opts;
+      if (prev && teamSelect && (allTeams.includes(prev) || prev === '__direct__')) teamSelect.value = prev;
       refreshCoreMap();
       // 팀 필터 칩도 갱신
       renderBiaEditorFilter();
     };
     renderTeamSelect();
-
-    /* ── BIA Editor Section ── */
-    let biaEditorFilter = '전체';
-    let biaEditorMode   = null; // 'edit' | 'add' | null
-    let biaEditorTeam   = null;
-    let biaEditorFnIdx  = null;
-    let biaEditorSectionOpen = true;
 
     function renderBiaEditorFilter() {
       const chips = document.getElementById('teamFilterChips');
@@ -1297,7 +1297,8 @@
 
     function closeBiaEdit() {
       biaEditorMode = null; biaEditorTeam = null; biaEditorFnIdx = null;
-      document.getElementById('biaEditorFormWrap').style.display = 'none';
+      const _fw = document.getElementById('biaEditorFormWrap');
+      if (_fw) _fw.style.display = 'none';
       renderBiaEditorTable();
     }
 
@@ -1319,7 +1320,7 @@
       let seq = 1 + biaRows.reduce((acc, r) => acc + (r.functions || []).length, 0);
       return () => `BIA-${new Date().getFullYear()}-${String(seq++).padStart(3,'0')}`;
     })();
-    document.getElementById('newBiaId').textContent = genBiaId();
+    { const _el = document.getElementById('newBiaId'); if (_el) _el.textContent = genBiaId(); }
 
     /* ── Entry panel toggle ── */
     toggleEntry?.addEventListener('click', () => {
@@ -1364,26 +1365,26 @@
 
     /* ── Impact score update ── */
     const updateImpactScore = () => {
-      const f = Number(document.getElementById('slFinancial').value);
-      const o = Number(document.getElementById('slOperational').value);
-      const r = Number(document.getElementById('slReputation').value);
-      document.getElementById('slFinancialVal').textContent   = f;
-      document.getElementById('slOperationalVal').textContent  = o;
-      document.getElementById('slReputationVal').textContent   = r;
+      const f = Number(document.getElementById('slFinancial')?.value || 1);
+      const o = Number(document.getElementById('slOperational')?.value || 1);
+      const r = Number(document.getElementById('slReputation')?.value || 1);
+      const fv = document.getElementById('slFinancialVal');   if (fv) fv.textContent = f;
+      const ov = document.getElementById('slOperationalVal'); if (ov) ov.textContent = o;
+      const rv = document.getElementById('slReputationVal');  if (rv) rv.textContent = r;
       const overall = clamp(Math.round((f + o + r) / 3), 1, 5);
-      document.getElementById('overallImpactNum').textContent  = overall;
+      const on = document.getElementById('overallImpactNum'); if (on) on.textContent = overall;
       const band = scoreBand(overall);
       const badge = document.getElementById('overallImpactBadge');
-      badge.textContent = band.text;
-      badge.className   = `scoreBadge ${band.cls}`;
+      if (badge) { badge.textContent = band.text; badge.className = `scoreBadge ${band.cls}`; }
     };
-    document.getElementById('slFinancial').addEventListener('input', updateImpactScore);
-    document.getElementById('slOperational').addEventListener('input', updateImpactScore);
-    document.getElementById('slReputation').addEventListener('input', updateImpactScore);
+    document.getElementById('slFinancial')?.addEventListener('input', updateImpactScore);
+    document.getElementById('slOperational')?.addEventListener('input', updateImpactScore);
+    document.getElementById('slReputation')?.addEventListener('input', updateImpactScore);
 
     /* ── MBCO update ── */
-    document.getElementById('newMbco').addEventListener('input', e => {
-      document.getElementById('mbcoVal').textContent = `${e.target.value}%`;
+    document.getElementById('newMbco')?.addEventListener('input', e => {
+      const v = document.getElementById('mbcoVal');
+      if (v) v.textContent = `${e.target.value}%`;
     });
 
     /* ── RTO vs MTPD warning ── */
@@ -1562,9 +1563,9 @@
     };
 
     const raMount = document.getElementById('resourceAnalysisMount');
-    raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
+    if (raMount) raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
 
-    raMount.addEventListener('change', e => {
+    raMount?.addEventListener('change', e => {
       if (!e.target.matches('[data-resource]')) return;
       const r = e.target.getAttribute('data-resource');
       const itemId = 'res_' + r.replace(/[·\/\s·]/g, '_');
@@ -1572,7 +1573,7 @@
       updateAutoRisks();
     });
 
-    raMount.addEventListener('click', e => {
+    raMount?.addEventListener('click', e => {
       // Sub-section toggle
       const toggleHead = e.target.closest('[data-toggle-body]');
       if (toggleHead && !e.target.matches('input[data-resource],input[type=checkbox]')) {
@@ -1635,7 +1636,7 @@
     };
 
     /* ── Clear form ── */
-    document.getElementById('clearEntryBtn').addEventListener('click', () => {
+    document.getElementById('clearEntryBtn')?.addEventListener('click', () => {
       document.getElementById('newBiaId').textContent = genBiaId();
       document.getElementById('newFnName').value  = '';
       document.getElementById('newFnDesc').value  = '';
@@ -1653,7 +1654,7 @@
     });
 
     /* ── Add BIA entry ── */
-    document.getElementById('addEntryBtn').addEventListener('click', () => {
+    document.getElementById('addEntryBtn')?.addEventListener('click', () => {
       const name = document.getElementById('newFnName').value.trim();
       if (!name) { alert('업무명칭을 입력하세요.'); return; }
       let team = document.getElementById('newFnTeam').value;
@@ -1838,7 +1839,7 @@
         </table>`;
     };
 
-    biaListMount.addEventListener('click', e => {
+    biaListMount?.addEventListener('click', e => {
       /* ── MBCO cell click (toggle editor) ── */
       const mbcoCellEl = e.target.closest('.mbco-cell');
       if (mbcoCellEl) {
@@ -1960,7 +1961,7 @@
     });
 
     /* ── MBCO slider live update ── */
-    biaListMount.addEventListener('input', e => {
+    biaListMount?.addEventListener('input', e => {
       if (!e.target.hasAttribute('data-mbco-slider')) return;
       const val  = Number(e.target.value);
       const disp = biaListMount.querySelector('[data-mbco-disp]');
@@ -2021,8 +2022,8 @@
       document.getElementById('tabPaneResources').classList.toggle('hidden', toList);
       if (!toList) renderResourceSummary();
     };
-    document.getElementById('tabBtnBiaList').addEventListener('click', () => switchTab('biaList'));
-    document.getElementById('tabBtnResources').addEventListener('click', () => switchTab('resources'));
+    document.getElementById('tabBtnBiaList')?.addEventListener('click', () => switchTab('biaList'));
+    document.getElementById('tabBtnResources')?.addEventListener('click', () => switchTab('resources'));
 
     /* ── Team editor score guide ── */
     const scoreGuideTemplate = () => `
@@ -2195,7 +2196,7 @@
     };
 
     /* ── Team editor events ── */
-    tableMount.addEventListener('change', e => {
+    tableMount?.addEventListener('change', e => {
       const tr    = e.target.closest('tr[data-idx]');
       const field = e.target.getAttribute('data-field');
       if (tr && field) { updateFnField(Number(tr.dataset.idx), field, e.target.value); renderTeamEditor(); return; }
@@ -2213,7 +2214,7 @@
       }
     });
 
-    tableMount.addEventListener('input', e => {
+    tableMount?.addEventListener('input', e => {
       const field = e.target.getAttribute('data-field');
       if (field !== 'rtoValue' && field !== 'rtoReason') return;
       const tr  = e.target.closest('tr[data-idx]');
@@ -2222,7 +2223,7 @@
       updateFnField(idx, field, e.target.value);
     });
 
-    tableMount.addEventListener('click', e => {
+    tableMount?.addEventListener('click', e => {
       const timeKey = e.target.getAttribute('data-time-impact-btn');
       if (timeKey) {
         const idx   = Number(e.target.getAttribute('data-idx'));
@@ -2269,7 +2270,7 @@
     });
 
     /* ── Add function (editor) ── */
-    addFunctionBtn.addEventListener('click', () => {
+    addFunctionBtn?.addEventListener('click', () => {
       const team = getSelectedTeam();
       const name = String(newFunctionName.value || '').trim();
       if (!team) { alert('팀/부서를 선택하거나 직접 입력하세요.'); return; }
@@ -2283,7 +2284,7 @@
     });
 
     /* ── Save / Reset ── */
-    saveBtn.addEventListener('click', () => {
+    saveBtn?.addEventListener('click', () => {
       biaRows = biaRows.map(row => ({
         team: row.team,
         functions: (row.functions || []).map(fn => {
@@ -2311,7 +2312,7 @@
       renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect();
     });
 
-    resetBtn.addEventListener('click', () => {
+    resetBtn?.addEventListener('click', () => {
       const team = getSelectedTeam();
       if (!team) return;
       const row = ensureTeamRecord(team);
@@ -2369,6 +2370,7 @@
 
     // "+ 핵심업무 추가" 버튼
     document.getElementById('addBiaBtn')?.addEventListener('click', () => {
+      try {
       // 1. 기존에 열려 있던 편집 폼 먼저 닫기
       closeBiaEdit();
 
@@ -2435,8 +2437,14 @@
       // 7. 폼으로 스크롤
       setTimeout(() => {
         const fw = document.getElementById('biaEditorFormWrap');
-        if (fw) fw.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 50);
+        if (fw) fw.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+      } catch(e) {
+        // 오류가 발생해도 폼은 반드시 표시
+        const fw = document.getElementById('biaEditorFormWrap');
+        if (fw) fw.style.display = 'block';
+        console.error('[addBiaBtn] 폼 열기 오류:', e);
+      }
     });
 
     // 저장 버튼 (BIA Editor)
@@ -2537,14 +2545,14 @@
     // 취소 버튼
     document.getElementById('biaEditorCancelBtn')?.addEventListener('click', closeBiaEdit);
 
-    teamSelect.addEventListener('change', () => {
+    teamSelect?.addEventListener('change', () => {
       const directInput = document.getElementById('teamSelectDirect');
       const isDirect = teamSelect.value === '__direct__';
       if (directInput) { directInput.style.display = isDirect ? '' : 'none'; if (isDirect) directInput.focus(); }
       if (!isDirect && editorOpen) renderTeamEditor();
     });
 
-    newFnTeam.addEventListener('change', () => {
+    newFnTeam?.addEventListener('change', () => {
       const directInput = document.getElementById('newFnTeamDirect');
       const isDirect = newFnTeam.value === '__direct__';
       if (directInput) { directInput.style.display = isDirect ? '' : 'none'; if (isDirect) { directInput.value = ''; directInput.focus(); } }
@@ -2570,7 +2578,7 @@
     if (normalizedChanged) saveBiaData(biaRows);
 
     /* ── AI 도우미 ── */
-    document.getElementById('aiHelpBtn').addEventListener('click', () => {
+    document.getElementById('aiHelpBtn')?.addEventListener('click', () => {
       const industry = localStorage.getItem('bcmsIndustry') || '일반';
       const allFns   = biaRows.flatMap(r => (r.functions || []).map(f => `${r.team}: ${f.name}`));
       const teams    = biaRows.map(r => r.team).filter(Boolean);
