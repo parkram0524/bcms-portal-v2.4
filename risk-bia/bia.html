@@ -1241,6 +1241,21 @@
         const cb = raMount.querySelector(`[data-resource="${r}"]`);
         if (cb) { cb.checked = true; document.getElementById('res_' + r.replace(/[·\/\s·]/g, '_'))?.classList.add('enabled'); }
       });
+      // 저장값 복원 시 스마트 셀렉트에서 값을 찾지 못하면 직접입력 모드로 전환
+      const restoreResField = (row, key, val) => {
+        if (val === undefined || val === null || val === '') return;
+        const el = row.querySelector(`[data-field="${key}"]`);
+        if (!el) return;
+        el.value = String(val);
+        // 스마트 셀렉트에서 값이 옵션에 없으면 직접입력 모드로 전환
+        if (el.tagName === 'SELECT' && el.value !== String(val) &&
+            (el.hasAttribute('data-person-sel') || el.hasAttribute('data-sys-sel') || el.hasAttribute('data-supplier-sel'))) {
+          el.value = '__direct__';
+          const di = el.parentNode?.querySelector('[data-person-direct],[data-sys-direct],[data-supplier-direct]');
+          if (di) { di.style.display = ''; di.value = String(val); }
+        }
+      };
+
       if (fn.resourceDetails) {
         Object.entries(fn.resourceDetails).forEach(([res, detail]) => {
           if (!detail.mainRows?.length) return;
@@ -1251,7 +1266,7 @@
             detail.mainRows.forEach((rowData, i) => {
               const row = cMain.querySelectorAll('.resDetailRow')[i];
               if (!row) return;
-              Object.entries(rowData).forEach(([key, val]) => { const el = row.querySelector(`[data-field="${key}"]`); if (el) el.value = val; });
+              Object.entries(rowData).forEach(([key, val]) => restoreResField(row, key, val));
             });
           }
           if (detail.altRows?.length) {
@@ -1262,7 +1277,7 @@
               detail.altRows.forEach((rowData, i) => {
                 const row = cAlt.querySelectorAll('.resDetailRow')[i];
                 if (!row) return;
-                Object.entries(rowData).forEach(([key, val]) => { const el = row.querySelector(`[data-field="${key}"]`); if (el) el.value = val; });
+                Object.entries(rowData).forEach(([key, val]) => restoreResField(row, key, val));
               });
             }
           }
@@ -1413,15 +1428,18 @@
     ];
     const getSystemList = () => { try { const a = JSON.parse(localStorage.getItem('bcms_system_registry_v1')||'[]'); return Array.isArray(a)?a.map(x=>x.displayName||x.systemId).filter(Boolean):[]; } catch{return[];} };
     const getDocumentList = () => { try { const a = JSON.parse(localStorage.getItem('bcmsDocuments')||'[]'); return Array.isArray(a)?a.map(x=>x.name).filter(Boolean):[]; } catch{return[];} };
+    const getPersonList = () => { try { const a = JSON.parse(localStorage.getItem('bcmsOrgRegistry')||'[]'); return Array.isArray(a)?a.filter(p=>p.name):[];} catch{return[];} };
+    const getFullSystemList = () => { try { const a = JSON.parse(localStorage.getItem('bcms_system_registry_v1')||'[]'); return Array.isArray(a)?a.filter(s=>s.displayName||s.systemId):[]; } catch{return[];} };
+    const SUPPLIER_CATS = ['외부 서비스', '클라우드 서비스', '아웃소싱 서비스'];
 
     const RES_CONFIG = {
       '인원':{ defaultBcp:'자원지원반',
         topFields:[{key:'headcount',label:'필요 인원 수',type:'number',placeholder:'예: 3',unit:'명'}],
         mainTitle:'주요 담당자', mainAddLabel:'+ 담당자 추가',
-        mainFields:[{key:'name',placeholder:'이름',type:'text'},{key:'dept',placeholder:'소속 부서',type:'orgSelect'},{key:'contact',placeholder:'연락처',type:'text'}],
+        mainFields:[{key:'name',placeholder:'이름',type:'personSelect'},{key:'dept',placeholder:'소속 부서',type:'orgSelect'},{key:'contact',placeholder:'연락처',type:'text'}],
         altTitle:'대체 인원', altAddLabel:'+ 대체 인원 추가',
         altTopFields:[{key:'altHeadcount',label:'대체 인원 수',type:'number',placeholder:'예: 2',unit:'명'}],
-        altFields:[{key:'name',placeholder:'이름',type:'text'},{key:'dept',placeholder:'소속 부서',type:'orgSelect'},{key:'contact',placeholder:'연락처',type:'text'},{key:'condition',placeholder:'대체 가능 조건',type:'text'}]
+        altFields:[{key:'name',placeholder:'이름',type:'personSelect'},{key:'dept',placeholder:'소속 부서',type:'orgSelect'},{key:'contact',placeholder:'연락처',type:'text'},{key:'condition',placeholder:'대체 가능 조건',type:'text'}]
       },
       '시설·작업장':{ defaultBcp:'업무환경반', topFields:[], altTopFields:[],
         mainTitle:'주요 시설', mainAddLabel:'+ 시설 추가',
@@ -1431,9 +1449,9 @@
       },
       '기술·IT':{ defaultBcp:'IT복구반', topFields:[], altTopFields:[],
         mainTitle:'주요 시스템', mainAddLabel:'+ 시스템 추가',
-        mainFields:[{key:'system',placeholder:'시스템명',type:'sysSelect'},{key:'owner',placeholder:'담당자',type:'text'},{key:'contact',placeholder:'연락처',type:'text'}],
+        mainFields:[{key:'system',placeholder:'시스템명',type:'richSysSelect'},{key:'owner',placeholder:'담당자/관리부서',type:'text'},{key:'contact',placeholder:'연락처',type:'text'}],
         altTitle:'대체 수단', altAddLabel:'+ 대체 수단 추가',
-        altFields:[{key:'name',placeholder:'대체 시스템/방법',type:'text'},{key:'time',placeholder:'전환 소요 시간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+        altFields:[{key:'name',placeholder:'대체 시스템/방법',type:'richSysSelect'},{key:'time',placeholder:'전환 소요 시간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
       },
       '정보·문서':{ defaultBcp:'업무재개반', topFields:[], altTopFields:[],
         mainTitle:'주요 문서', mainAddLabel:'+ 문서 추가',
@@ -1443,9 +1461,9 @@
       },
       '공급망·외주':{ defaultBcp:'자원지원반', topFields:[], altTopFields:[],
         mainTitle:'주요 공급업체', mainAddLabel:'+ 업체 추가',
-        mainFields:[{key:'name',placeholder:'업체명',type:'text'},{key:'service',placeholder:'제공 서비스',type:'text'},{key:'owner',placeholder:'담당자명',type:'text'},{key:'contact',placeholder:'연락처',type:'text'}],
+        mainFields:[{key:'name',placeholder:'업체명',type:'supplierSelect'},{key:'service',placeholder:'제공 서비스',type:'text'},{key:'owner',placeholder:'담당자명',type:'text'},{key:'contact',placeholder:'연락처',type:'text'}],
         altTitle:'대체 공급업체', altAddLabel:'+ 대체 업체 추가',
-        altFields:[{key:'name',placeholder:'대체 업체명',type:'text'},{key:'time',placeholder:'전환 소요 기간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+        altFields:[{key:'name',placeholder:'대체 업체명',type:'supplierSelect'},{key:'time',placeholder:'전환 소요 기간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
       },
       '유틸리티':{ defaultBcp:'업무환경반', topFields:[], altTopFields:[],
         mainTitle:'주요 유틸리티', mainAddLabel:'+ 추가',
@@ -1468,6 +1486,50 @@
     };
 
     const buildResFieldHtml = (field) => {
+      // ── 인원 드롭다운 (bcmsOrgRegistry 연동) ──
+      if (field.type === 'personSelect') {
+        const persons = getPersonList();
+        const opts = persons.map(p => {
+          const parts = [p.position, p.dept].filter(Boolean).join(' / ');
+          const label = p.name + (parts ? ` (${parts})` : '');
+          return `<option value="${escHtml(p.name)}" data-dept="${escHtml(p.dept||'')}" data-contact="${escHtml(p.mobile||p.email||'')}">${escHtml(label)}</option>`;
+        }).join('');
+        return `<div class="res-sel-wrap" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">` +
+          `<select class="resRowInp" data-field="${escHtml(field.key)}" data-person-sel style="width:100%">` +
+          `<option value="">담당자 선택${persons.length?'':' (등록 없음)'}</option>${opts}` +
+          `<option value="__direct__">✏ 직접 입력</option></select>` +
+          `<input type="text" class="resRowInp" data-person-direct placeholder="${escHtml(field.placeholder)}" style="display:none;width:100%;"/>` +
+          `</div>`;
+      }
+      // ── 시스템·IT 드롭다운 (bcms_system_registry_v1 연동) ──
+      if (field.type === 'richSysSelect') {
+        const systems = getFullSystemList();
+        const opts = systems.map(s => {
+          const label = `[${s.category||'기타'}] ${s.displayName||s.systemId}${s.criticality?' ('+s.criticality+')':''}`;
+          return `<option value="${escHtml(s.displayName||s.systemId)}" data-owner="${escHtml(s.ownerDept||'')}" data-contact="${escHtml(s.emergencyContact||'')}">${escHtml(label)}</option>`;
+        }).join('');
+        return `<div class="res-sel-wrap" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">` +
+          `<select class="resRowInp" data-field="${escHtml(field.key)}" data-sys-sel style="width:100%">` +
+          `<option value="">시스템 선택${systems.length?'':' (등록 없음)'}</option>${opts}` +
+          `<option value="__direct__">✏ 직접 입력</option></select>` +
+          `<input type="text" class="resRowInp" data-sys-direct placeholder="${escHtml(field.placeholder)}" style="display:none;width:100%;"/>` +
+          `</div>`;
+      }
+      // ── 공급업체 드롭다운 (외부 서비스·클라우드·아웃소싱 카테고리) ──
+      if (field.type === 'supplierSelect') {
+        const suppliers = getFullSystemList().filter(s => SUPPLIER_CATS.includes(s.category));
+        const opts = suppliers.map(s => {
+          const name = s.provider || s.displayName || s.systemId;
+          const label = `${name}${s.category?' ('+s.category+')':''}`;
+          return `<option value="${escHtml(name)}" data-service="${escHtml(s.displayName||'')}" data-contact="${escHtml(s.emergencyContact||'')}">${escHtml(label)}</option>`;
+        }).join('');
+        return `<div class="res-sel-wrap" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">` +
+          `<select class="resRowInp" data-field="${escHtml(field.key)}" data-supplier-sel style="width:100%">` +
+          `<option value="">업체 선택${suppliers.length?'':' (등록 없음)'}</option>${opts}` +
+          `<option value="__direct__">✏ 직접 입력</option></select>` +
+          `<input type="text" class="resRowInp" data-supplier-direct placeholder="${escHtml(field.placeholder)}" style="display:none;width:100%;"/>` +
+          `</div>`;
+      }
       if (field.type === 'orgSelect') {
         const depts = getOrgChartDepts();
         const opts = depts.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
@@ -1557,11 +1619,19 @@
     };
 
     const getResRows = (res, section) => {
-      const container = raMount.querySelector(`.resDetailRows[data-res="${res}"][data-section="${section}"]`);
+      const container = raMount?.querySelector(`.resDetailRows[data-res="${res}"][data-section="${section}"]`);
       if (!container) return [];
       return [...container.querySelectorAll('.resDetailRow')].map(row => {
         const obj = {};
-        row.querySelectorAll('[data-field]').forEach(el => { obj[el.dataset.field] = el.value.trim(); });
+        row.querySelectorAll('[data-field]').forEach(el => {
+          let val = el.value.trim();
+          // personSelect / richSysSelect / supplierSelect 직접 입력 모드 처리
+          if (val === '__direct__') {
+            const di = el.parentNode?.querySelector('[data-person-direct],[data-sys-direct],[data-supplier-direct]');
+            if (di) val = di.value.trim();
+          }
+          obj[el.dataset.field] = val;
+        });
         return obj;
       }).filter(obj => Object.values(obj).some(v => v));
     };
@@ -1570,11 +1640,77 @@
     if (raMount) raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
 
     raMount?.addEventListener('change', e => {
-      if (!e.target.matches('[data-resource]')) return;
-      const r = e.target.getAttribute('data-resource');
-      const itemId = 'res_' + r.replace(/[·\/\s·]/g, '_');
-      document.getElementById(itemId)?.classList.toggle('enabled', e.target.checked);
-      updateAutoRisks();
+      // ── 체크박스 토글 ──
+      if (e.target.matches('[data-resource]')) {
+        const r = e.target.getAttribute('data-resource');
+        const itemId = 'res_' + r.replace(/[·\/\s·]/g, '_');
+        document.getElementById(itemId)?.classList.toggle('enabled', e.target.checked);
+        updateAutoRisks();
+        return;
+      }
+
+      // ── 인원 드롭다운 자동 입력 ──
+      if (e.target.hasAttribute('data-person-sel')) {
+        const row = e.target.closest('.resDetailRow');
+        if (!row) return;
+        const wrap = e.target.parentNode;
+        const di = wrap?.querySelector('[data-person-direct]');
+        if (e.target.value === '__direct__') {
+          if (di) { di.style.display = ''; di.value = ''; di.focus(); }
+        } else {
+          if (di) di.style.display = 'none';
+          const opt = e.target.selectedOptions[0];
+          const dept = opt?.dataset.dept || '';
+          const contact = opt?.dataset.contact || '';
+          const deptEl = row.querySelector('[data-field="dept"]');
+          const contactEl = row.querySelector('[data-field="contact"]');
+          if (deptEl && dept) deptEl.value = dept;
+          if (contactEl && contact) contactEl.value = contact;
+        }
+        return;
+      }
+
+      // ── 시스템·IT 드롭다운 자동 입력 ──
+      if (e.target.hasAttribute('data-sys-sel')) {
+        const row = e.target.closest('.resDetailRow');
+        if (!row) return;
+        const wrap = e.target.parentNode;
+        const di = wrap?.querySelector('[data-sys-direct]');
+        if (e.target.value === '__direct__') {
+          if (di) { di.style.display = ''; di.value = ''; di.focus(); }
+        } else {
+          if (di) di.style.display = 'none';
+          const opt = e.target.selectedOptions[0];
+          const owner = opt?.dataset.owner || '';
+          const contact = opt?.dataset.contact || '';
+          const ownerEl = row.querySelector('[data-field="owner"]');
+          const contactEl = row.querySelector('[data-field="contact"]');
+          if (ownerEl && owner) ownerEl.value = owner;
+          if (contactEl && contact) contactEl.value = contact;
+        }
+        return;
+      }
+
+      // ── 공급업체 드롭다운 자동 입력 ──
+      if (e.target.hasAttribute('data-supplier-sel')) {
+        const row = e.target.closest('.resDetailRow');
+        if (!row) return;
+        const wrap = e.target.parentNode;
+        const di = wrap?.querySelector('[data-supplier-direct]');
+        if (e.target.value === '__direct__') {
+          if (di) { di.style.display = ''; di.value = ''; di.focus(); }
+        } else {
+          if (di) di.style.display = 'none';
+          const opt = e.target.selectedOptions[0];
+          const service = opt?.dataset.service || '';
+          const contact = opt?.dataset.contact || '';
+          const serviceEl = row.querySelector('[data-field="service"]');
+          const contactEl = row.querySelector('[data-field="contact"]');
+          if (serviceEl && service) serviceEl.value = service;
+          if (contactEl && contact) contactEl.value = contact;
+        }
+        return;
+      }
     });
 
     raMount?.addEventListener('click', e => {
