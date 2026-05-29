@@ -263,7 +263,15 @@ tr:hover td{background:var(--surface-hover)}
           </div>
           <div class="field-group">
             <label class="field-label">소속 부서 <span>*</span></label>
-            <input class="field-input" id="f_dept" placeholder="예: 재난안전(BCM)팀"/>
+            <select class="field-select" id="f_dept" onchange="onDeptSelChange()">
+              <option value="">-- 부서 선택 --</option>
+              <option value="__direct__">✏ 직접 입력</option>
+            </select>
+            <p id="f_dept_guide" style="display:none;font-size:.75rem;color:#ea580c;margin:.25rem 0 0">
+              📋 조직도에서 먼저 부서를 추가하세요
+            </p>
+            <input class="field-input" id="f_dept_direct" placeholder="부서명 직접 입력"
+              style="display:none;margin-top:.375rem" oninput="syncDeptDirect()"/>
           </div>
         </div>
 
@@ -383,6 +391,7 @@ tr:hover td{background:var(--surface-hover)}
 
 const KEY     = 'bcmsOrgRegistry';
 const BIA_KEY = 'bcmsBIAData';
+const ORG_KEY = 'bcmsOrgChart';
 
 let editingId = null;
 
@@ -433,6 +442,56 @@ function loadAll() {
   return Array.isArray(a) ? a : [];
 }
 function saveAll(a) { localStorage.setItem(KEY, JSON.stringify(a)); }
+
+/* ── Org chart dept dropdown ── */
+function getOrgChartDepts() {
+  try {
+    const raw = safeParse(localStorage.getItem(ORG_KEY), null);
+    if (!raw) return [];
+    const arr = Array.isArray(raw) ? raw : [...(raw.nodes || []), ...(raw.edges || [])];
+    const seen = new Set();
+    return arr
+      .filter(e => e.data && !e.data.source && e.data.label)
+      .map(e => e.data.label.split('\n')[0].trim())
+      .filter(d => { if (!d || seen.has(d)) return false; seen.add(d); return true; });
+  } catch { return []; }
+}
+
+function refreshDeptDropdown() {
+  const sel = $('#f_dept');
+  const prevVal = sel.value;
+  const depts = getOrgChartDepts();
+  sel.innerHTML = '<option value="">-- 부서 선택 --</option>' +
+    depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('') +
+    '<option value="__direct__">✏ 직접 입력</option>';
+  const guide = $('#f_dept_guide');
+  if (guide) guide.style.display = depts.length ? 'none' : 'block';
+  // Restore previous selection if it still exists in dropdown
+  if (prevVal && [...sel.options].some(o => o.value === prevVal)) {
+    sel.value = prevVal;
+  }
+}
+
+function onDeptSelChange() {
+  const val = $('#f_dept').value;
+  const directInput = $('#f_dept_direct');
+  if (val === '__direct__') {
+    directInput.style.display = 'block';
+    directInput.focus();
+  } else {
+    directInput.style.display = 'none';
+  }
+}
+
+function syncDeptDirect() { /* value read via getDeptValue at save time */ }
+
+function getDeptValue() {
+  const sel = $('#f_dept');
+  if (sel.value === '__direct__') {
+    return ($('#f_dept_direct').value || '').trim();
+  }
+  return sel.value;
+}
 
 /* ── Roles grid (form) ── */
 function buildRolesGrid() {
@@ -489,11 +548,13 @@ $('#formPanelHd').addEventListener('click', toggleForm);
 /* ── Reset / Cancel ── */
 function resetForm() {
   editingId = null;
-  $('#f_name').value     = '';
-  $('#f_position').value = '';
-  $('#f_dept').value     = '';
-  $('#f_email').value    = '';
-  $('#f_mobile').value   = '';
+  $('#f_name').value        = '';
+  $('#f_position').value    = '';
+  $('#f_dept').value        = '';
+  $('#f_dept_direct').value = '';
+  $('#f_dept_direct').style.display = 'none';
+  $('#f_email').value  = '';
+  $('#f_mobile').value = '';
   setRoles([]);
   refreshAltSelect();
   $('#f_altId').value = '';
@@ -506,7 +567,7 @@ function cancelEdit() { resetForm(); toast('수정 취소'); }
 function saveItem() {
   const name     = ($('#f_name').value     || '').trim();
   const position = ($('#f_position').value || '').trim();
-  const dept     = ($('#f_dept').value     || '').trim();
+  const dept     = getDeptValue();
   const email    = ($('#f_email').value    || '').trim();
   const mobile   = ($('#f_mobile').value   || '').trim();
   const roles    = getRoles();
@@ -546,7 +607,22 @@ function editItem(id) {
   editingId = id;
   $('#f_name').value     = item.name      || '';
   $('#f_position').value = item.position  || '';
-  $('#f_dept').value     = item.dept      || '';
+  // Set dept: try dropdown first, fall back to direct input
+  const deptSel = $('#f_dept');
+  const deptVal = item.dept || '';
+  const hasOpt  = [...deptSel.options].some(o => o.value === deptVal && o.value !== '__direct__' && o.value !== '');
+  if (hasOpt) {
+    deptSel.value = deptVal;
+    $('#f_dept_direct').style.display = 'none';
+  } else if (deptVal) {
+    deptSel.value = '__direct__';
+    $('#f_dept_direct').value = deptVal;
+    $('#f_dept_direct').style.display = 'block';
+  } else {
+    deptSel.value = '';
+    $('#f_dept_direct').value = '';
+    $('#f_dept_direct').style.display = 'none';
+  }
   $('#f_email').value    = item.email     || '';
   $('#f_mobile').value   = item.mobile    || '';
   setRoles(item.roles || []);
@@ -781,15 +857,24 @@ $('#q').addEventListener('input', () => {
 })();
 
 /* ── Expose globals ── */
-window.saveItem   = saveItem;
-window.editItem   = editItem;
-window.deleteItem = deleteItem;
-window.resetForm  = resetForm;
-window.cancelEdit = cancelEdit;
+window.saveItem       = saveItem;
+window.editItem       = editItem;
+window.deleteItem     = deleteItem;
+window.resetForm      = resetForm;
+window.cancelEdit     = cancelEdit;
+window.onDeptSelChange = onDeptSelChange;
+window.syncDeptDirect = syncDeptDirect;
+window.renderDeptTable = renderDeptTable;
 
 /* ── Init ── */
 buildRolesGrid();
+refreshDeptDropdown();
 renderAll();
+
+/* ── Listen for org chart changes from other tabs ── */
+window.addEventListener('storage', e => {
+  if (e.key === ORG_KEY) refreshDeptDropdown();
+});
 })();
 </script>
 </body>

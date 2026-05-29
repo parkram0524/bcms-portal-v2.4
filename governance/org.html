@@ -109,6 +109,42 @@
   .pTxt { resize: vertical; min-height: 70px; line-height: 1.5; }
   .pContactRow { display: none; }
   body.isEditMode .pContactRow { display: flex; }
+
+  /* ── Members section ── */
+  .pMemberCard {
+    padding: 8px 10px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--bg);
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .pMemberName { font-weight: 600; color: var(--text); }
+  .pMemberPos  { color: var(--text-2); font-size: 11px; font-weight: 400; }
+  .pMemberRoles { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+  .pMemberMobile { font-size: 11px; color: var(--text-2); margin-top: 4px; }
+  .pRoleBadge {
+    display: inline-block; padding: 1px 6px; border-radius: 99px;
+    font-size: 10px; font-weight: 600; white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .prb-chief { background:#fef2f2; color:#dc2626; border-color:#fecaca; }
+  .prb-mgr   { background:#fff7ed; color:#ea580c; border-color:#fed7aa; }
+  .prb-bia   { background:#dbeafe; color:#1d4ed8; border-color:#bfdbfe; }
+  .prb-risk  { background:#ede9fe; color:#6d28d9; border-color:#ddd6fe; }
+  .prb-bcp   { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; }
+  .prb-drill { background:#e0f2fe; color:#0369a1; border-color:#bae6fd; }
+  .prb-audit { background:#f3f4f6; color:#6b7280; border-color:#d1d5db; }
+  .prb-dept  { background:#f9fafb; color:#374151; border-color:#e5e7eb; }
+  [data-theme="dark"] .prb-chief { background:#450a0a; color:#f87171; border-color:#7f1d1d; }
+  [data-theme="dark"] .prb-mgr   { background:#431407; color:#fb923c; border-color:#9a3412; }
+  [data-theme="dark"] .prb-bia   { background:#1e3a5f; color:#93c5fd; border-color:#1e40af; }
+  [data-theme="dark"] .prb-risk  { background:#2e1065; color:#c4b5fd; border-color:#4c1d95; }
+  [data-theme="dark"] .prb-bcp   { background:#052e16; color:#86efac; border-color:#14532d; }
+  [data-theme="dark"] .prb-drill { background:#082f49; color:#7dd3fc; border-color:#075985; }
+  [data-theme="dark"] .prb-audit { background:#1f2937; color:#9ca3af; border-color:#374151; }
+  [data-theme="dark"] .prb-dept  { background:#111827; color:#d1d5db; border-color:#374151; }
   /* ── 비상대응 모드 전용 담당부서 필드 ── */
   .pDeptField { display: none; }
   body.isEmergencyMode .pDeptField { display: flex; }
@@ -189,12 +225,8 @@
         <button class="pClose" onclick="ORG.closePanel()">×</button>
       </div>
       <div class="pField">
-        <label class="pLbl">이름</label>
-        <input class="pInp" id="pName" type="text" placeholder="노드 이름"/>
-      </div>
-      <div class="pField">
         <label class="pLbl">부서명</label>
-        <input class="pInp" id="pSub" type="text" placeholder="부서명 (선택)"/>
+        <input class="pInp" id="pSub" type="text" placeholder="부서명"/>
       </div>
       <div class="pField">
         <label class="pLbl">글자 크기</label>
@@ -228,6 +260,10 @@
         <button class="pBtn primary" onclick="ORG.savePanel()">적용</button>
         <button class="pBtn danger"  onclick="ORG.deletePanelNode()">삭제</button>
       </div>
+      <div class="pField" id="pMembersSection" style="border-top:0.5px solid var(--border);padding-top:11px;margin-top:0">
+        <label class="pLbl">소속 인원</label>
+        <div id="pMembersList" style="margin-top:6px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -255,6 +291,7 @@ window.ORG = (() => {
   const KEY_ORG = 'bcmsOrgChart';
   const KEY_EOP = 'bcmsEOPOrg';
   const KEY_IND = 'bcmsIndustry';
+  const KEY_REG = 'bcmsOrgRegistry';
 
   const COLORS = [
     {bg:'#0f172a',fg:'#fff'},{bg:'#1e40af',fg:'#fff'},{bg:'#2563eb',fg:'#fff'},
@@ -655,7 +692,7 @@ window.ORG = (() => {
   function finishLabelEdit() {
     if (!lblNode) return;
     const v = lblEd.value.trim();
-    if (v) { lblNode.data('label', v); if (panelNode && panelNode.id() === lblNode.id()) document.getElementById('pName').value = v; }
+    if (v) { lblNode.data('label', v); if (panelNode && panelNode.id() === lblNode.id()) document.getElementById('pSub').value = v; }
     lblEd.classList.remove('show'); lblNode = null;
   }
   lblEd.addEventListener('blur', finishLabelEdit);
@@ -751,9 +788,7 @@ window.ORG = (() => {
   function openPanel(node) {
     panelNode = node;
     const label = node.data('label') || '';
-    const parts = label.split('\n');
-    document.getElementById('pName').value = parts[0] || '';
-    document.getElementById('pSub').value  = node.data('sub') || parts.slice(1).join('\n') || '';
+    document.getElementById('pSub').value = label;
     const fs = node.style('font-size') || '13px';
     const fsSel = document.getElementById('pFontSize');
     fsSel.value = ['10px','12px','13px','14px','16px'].includes(fs) ? fs : '13px';
@@ -767,36 +802,31 @@ window.ORG = (() => {
       sel.innerHTML = '<option value="">-- 미지정 --</option>' +
         depts.map(d => `<option value="${d}"${d === current ? ' selected' : ''}>${d}</option>`).join('');
     }
+    renderPanelMembers(label);
     document.getElementById('panel').classList.add('open');
   }
   function savePanel() {
     if (!panelNode) return;
-    const name = document.getElementById('pName').value.trim();
     const sub  = document.getElementById('pSub').value.trim();
     const fs   = document.getElementById('pFontSize').value;
     const bannerColor = document.getElementById('pBannerColor').value;
     const w = Math.min(300, Math.max(80, parseInt(document.getElementById('pNodeW').value) || 140));
     const h = Math.min(150, Math.max(40, parseInt(document.getElementById('pNodeH').value) || 70));
-    const newLabel = name + (sub ? '\n' + sub : '');
-    if (newLabel) panelNode.data('label', newLabel);
-    // Persist style values in node data so cy.json() serialises them
+    if (sub) panelNode.data('label', sub);
     panelNode.data('sub', sub);
     panelNode.data('bannerColor', bannerColor);
     panelNode.data('fontSize', fs);
     panelNode.data('nodeW', w);
     panelNode.data('nodeH', h);
-    // Apply inline style immediately for live feedback
     applyNodeStyle(panelNode);
-    // Emergency mode: apply dept mapping as node subtitle
     if (mode === 'emergency') {
       const dept = document.getElementById('pDeptMapping').value;
       panelNode.data('assignedDept', dept);
       if (dept) {
-        panelNode.data('label', name + '\n' + dept);
+        panelNode.data('label', sub + '\n' + dept);
         panelNode.data('sub', dept);
       }
     }
-    // Auto-save to localStorage
     const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
     saveJ(key, cy.json().elements);
     toast('적용되었습니다 ✓');
@@ -810,6 +840,45 @@ window.ORG = (() => {
   function closePanel() {
     document.getElementById('panel').classList.remove('open');
     panelNode = null;
+  }
+
+  /* ── Panel members (Task 4) ───────────────────────────────────── */
+  const PANEL_ROLE_CLS = {
+    'BCMS 총괄책임자': 'prb-chief',
+    'BCMS 관리자':    'prb-mgr',
+    'BIA 담당자':     'prb-bia',
+    '리스크 담당자':  'prb-risk',
+    'BCP 담당자':     'prb-bcp',
+    '훈련 담당자':    'prb-drill',
+    '내부심사원':     'prb-audit',
+    '부서 담당자':    'prb-dept',
+  };
+
+  function renderPanelMembers(nodeLabel) {
+    const list = document.getElementById('pMembersList');
+    try {
+      const raw = localStorage.getItem(KEY_REG);
+      const persons = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(persons)) { list.innerHTML = ''; return; }
+      const deptName = (nodeLabel || '').split('\n')[0].trim();
+      const members = persons.filter(p => (p.dept || '').trim() === deptName);
+      if (!members.length) {
+        list.innerHTML = '<div style="font-size:12px;color:var(--text-2);padding:4px 0">등록된 인원이 없습니다</div>';
+        return;
+      }
+      list.innerHTML = members.map(p => {
+        const rolesHtml = (p.roles || []).map(r =>
+          `<span class="pRoleBadge ${PANEL_ROLE_CLS[r] || 'prb-dept'}">${r}</span>`
+        ).join('');
+        return `<div class="pMemberCard">
+          <div class="pMemberName">${p.name || ''}${p.position ? `<span class="pMemberPos"> · ${p.position}</span>` : ''}</div>
+          ${rolesHtml ? `<div class="pMemberRoles">${rolesHtml}</div>` : ''}
+          ${p.mobile ? `<div class="pMemberMobile">📱 ${p.mobile}</div>` : ''}
+        </div>`;
+      }).join('');
+    } catch {
+      list.innerHTML = '';
+    }
   }
 
   /* ── Color swatches ───────────────────────────────────────────── */

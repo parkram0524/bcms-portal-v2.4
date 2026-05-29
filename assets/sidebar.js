@@ -104,8 +104,8 @@
       <a href="${H("/governance/index.html")}" class="sidebar-section-title">🧭 1. Governance (거버넌스)</a>
       <div class="sub-menu">
         <a href="${H("/governance/policy.html")}">정책/목표/범위</a>
-        <a href="${H("/governance/org-registry.html")}">조직 관리</a>
         <a href="${H("/governance/org.html")}">조직도 (평상시/비상대응)</a>
+        <a href="${H("/governance/org-registry.html")}">조직 관리</a>
         <a href="${H("/governance/docs.html")}">문서체계</a>
         <a href="${H("/governance/requirements.html")}">법규·요구사항</a>
         <a href="${H("/governance/bcms-map.html")}">BCMS 체계 맵</a>
