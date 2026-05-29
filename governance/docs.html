@@ -105,6 +105,22 @@
   .bdg-warn     { color: #b45309; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4);  }
   .bdg-overdue  { color: #991b1b; background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.4);   }
 
+  /* ── Type row backgrounds (applied inline on <tr>) ── */
+
+  /* ── Type badges ── */
+  .bdg-type-policy    { color:#0070f3; background:rgba(0,112,243,.1);   border-color:rgba(0,112,243,.3); }
+  .bdg-type-procedure { color:#16a34a; background:rgba(34,197,94,.1);   border-color:rgba(34,197,94,.3); }
+  .bdg-type-guideline { color:#7c3aed; background:rgba(139,92,246,.1);  border-color:rgba(139,92,246,.3); }
+  .bdg-type-plan      { color:#0369a1; background:rgba(14,165,233,.1);  border-color:rgba(14,165,233,.3); }
+  .bdg-type-form      { color:#b45309; background:rgba(245,158,11,.1);  border-color:rgba(245,158,11,.3); }
+  .bdg-type-record    { color:#475569; background:rgba(100,116,139,.1); border-color:rgba(100,116,139,.3); }
+  [data-theme="dark"] .bdg-type-policy    { color:#60a5fa; background:rgba(37,99,235,.2);   border-color:rgba(37,99,235,.4); }
+  [data-theme="dark"] .bdg-type-procedure { color:#4ade80; background:rgba(22,163,74,.2);   border-color:rgba(22,163,74,.4); }
+  [data-theme="dark"] .bdg-type-guideline { color:#c4b5fd; background:rgba(124,58,237,.2);  border-color:rgba(124,58,237,.4); }
+  [data-theme="dark"] .bdg-type-plan      { color:#7dd3fc; background:rgba(14,165,233,.2);  border-color:rgba(14,165,233,.4); }
+  [data-theme="dark"] .bdg-type-form      { color:#fcd34d; background:rgba(217,119,6,.2);   border-color:rgba(217,119,6,.4); }
+  [data-theme="dark"] .bdg-type-record    { color:#94a3b8; background:rgba(100,116,139,.2); border-color:rgba(100,116,139,.4); }
+
   /* ── ISO checklist tab ── */
   .gauge-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
   .gauge-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
@@ -369,7 +385,6 @@
       <table>
         <thead>
           <tr>
-            <th>문서 ID</th>
             <th>문서명</th>
             <th>유형</th>
             <th>레벨</th>
@@ -463,6 +478,18 @@ const ALL_CLAUSES = ['4.3','5.2','6.2','7.2','8.2','8.3','8.4','8.5','9.1','9.2'
 const TYPE_LBL   = { policy:'정책서', procedure:'절차서', guideline:'지침서', form:'양식', record:'기록', plan:'계획서' };
 const STATUS_LBL = { draft:'초안', review:'검토중', approved:'승인', obsolete:'폐기', active:'운영중' };
 const LEVEL_LBL  = { '1':'Level 1', '2':'Level 2', '3':'Level 3', '4':'Level 4', '5':'Level 5' };
+
+const TYPE_ORDER   = { policy:0, procedure:1, guideline:2, plan:3, form:4, record:5 };
+const TYPE_ICON    = { policy:'📋', procedure:'📝', guideline:'📖', plan:'📊', form:'📄', record:'🗂️' };
+const TYPE_BG      = {
+  policy:'rgba(0,112,243,.06)', procedure:'rgba(34,197,94,.06)',
+  guideline:'rgba(139,92,246,.06)', plan:'rgba(14,165,233,.06)',
+  form:'rgba(245,158,11,.06)', record:'rgba(100,116,139,.06)',
+};
+const TYPE_BDG_CLS = {
+  policy:'bdg-type-policy', procedure:'bdg-type-procedure', guideline:'bdg-type-guideline',
+  plan:'bdg-type-plan', form:'bdg-type-form', record:'bdg-type-record',
+};
 const PYR_LBL    = { '1':'정책서 (Level 1)', '2':'절차서 (Level 2)', '3':'지침서 (Level 3)', '4':'양식 (Level 4)', '5':'증적 (Level 5)' };
 
 /* ── Storage ── */
@@ -688,16 +715,14 @@ function renderTable() {
   refreshDeptFilter(docs);
   const { type, level, status, dept, q } = getFilters();
 
-  // 직접 등록 문서 필터
   const manualRows = docs.filter(d =>
     (!type   || d.type === type) &&
     (!level  || d.level === level) &&
     (!status || d.status === status) &&
     (!dept   || d.dept === dept) &&
-    (!q      || d.name.toLowerCase().includes(q) || (d.id||'').toLowerCase().includes(q))
+    (!q      || d.name.toLowerCase().includes(q))
   );
 
-  // 포털 자동 항목 필터 (dept 필터 적용 시 제외 — 포털 항목은 부서 없음)
   const portalRows = dept ? [] : getPortalTableDocs().filter(p =>
     (!type   || p.type === type) &&
     (!level  || p.level === level) &&
@@ -707,67 +732,79 @@ function renderTable() {
 
   const tbody = document.getElementById('docTbody');
   if (!manualRows.length && !portalRows.length) {
-    tbody.innerHTML = '<tr><td colspan="12" class="empty-row">등록된 문서가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-row">등록된 문서가 없습니다.</td></tr>';
     return;
   }
 
-  // 직접 등록 문서 행
-  const manualHtml = manualRows.map(d => {
-    const statusCls = STATUS_BDG[d.status] || 'bdg-draft';
-    const linkHtml  = d.link ? `<a href="${esc(d.link)}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;">열기 ↗</a>` : '-';
-    const reviewBdg = reviewStatus(d.reviewDate);
-    return `<tr>
-      <td style="font-size:12px;font-weight:700;color:var(--text-2);">${esc(d.id)}</td>
-      <td style="font-weight:600;">${esc(d.name)}</td>
-      <td>${esc(TYPE_LBL[d.type] || d.type)}</td>
-      <td>${esc(LEVEL_LBL[d.level] || d.level)}</td>
-      <td>${esc(d.version || '-')}</td>
-      <td style="white-space:nowrap;">${esc(d.revDate || '-')}</td>
-      <td style="white-space:nowrap;">${esc(d.reviewDate || '-')} ${reviewBdg}</td>
-      <td>${esc(d.dept || '-')}</td>
-      <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[d.status] || d.status)}</span></td>
-      <td style="color:var(--text-3);font-size:12px;">-</td>
-      <td>${linkHtml}</td>
-      <td>
-        <div style="display:flex;flex-wrap:wrap;gap:3px;">
-          <button class="btn btn-sm" onclick="editDoc('${esc(d.id)}')">수정</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteDoc('${esc(d.id)}')">삭제</button>
-          <button class="btn btn-sm" onclick="printManualDoc('${esc(d.id)}')">🖨️</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+  // 직접 등록 + 포털 자동 통합 후 유형 순서 → 이름 가나다 정렬
+  const combined = [
+    ...manualRows.map(d => ({ _portal: false, type: d.type, name: d.name, _d: d })),
+    ...portalRows.map(p => ({ _portal: true,  type: p.type, name: p.name, _d: p })),
+  ];
+  combined.sort((a, b) => {
+    const oa = TYPE_ORDER[a.type] ?? 6;
+    const ob = TYPE_ORDER[b.type] ?? 6;
+    if (oa !== ob) return oa - ob;
+    return (a.name || '').localeCompare(b.name || '', 'ko');
+  });
 
-  // 포털 자동 항목 행
-  const portalHtml = portalRows.map(p => {
-    const statusCls = STATUS_BDG[p.status] || 'bdg-approved';
-    const meta   = readPortalMeta(p.key);
-    const m_v    = meta.version    ? esc(meta.version)    : '<span style="color:var(--text-3)">-</span>';
-    const m_rev  = meta.revDate    ? esc(meta.revDate)    : '<span style="color:var(--text-3)">-</span>';
-    const m_rvw  = meta.reviewDate ? esc(meta.reviewDate) : '<span style="color:var(--text-3)">-</span>';
-    const m_dept = meta.dept       ? esc(meta.dept)       : '<span style="color:var(--text-3)">-</span>';
-    return `<tr style="background:rgba(22,163,74,.025);">
-      <td style="color:var(--text-3);font-size:12px;">-</td>
-      <td style="font-weight:600;">${esc(p.name)}</td>
-      <td>${esc(TYPE_LBL[p.type] || p.type)}</td>
-      <td>${esc(LEVEL_LBL[p.level] || p.level)}</td>
-      <td>${m_v}</td>
-      <td style="white-space:nowrap;">${m_rev}</td>
-      <td style="white-space:nowrap;">${m_rvw}</td>
-      <td>${m_dept}</td>
-      <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[p.status] || p.status)}</span></td>
-      <td><span class="bdg-portal">📋 포털 자동</span></td>
-      <td><a href="${esc(p.link)}" style="color:var(--accent);font-size:12px;">열기 ↗</a></td>
-      <td>
-        <div style="display:flex;flex-wrap:wrap;gap:3px;">
-          <a class="btn btn-sm" href="${esc(p.link)}" style="text-decoration:none;">→ 이동</a>
-          <button class="btn btn-sm" onclick="printPortalDoc('${p.link}')">🖨️</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+  tbody.innerHTML = combined.map(({ _portal, _d }) => {
+    const bg      = TYPE_BG[_d.type] || '';
+    const icon    = TYPE_ICON[_d.type] || '📄';
+    const typeBdg = `<span class="bdg ${TYPE_BDG_CLS[_d.type] || ''}">${esc(TYPE_LBL[_d.type] || _d.type)}</span>`;
 
-  tbody.innerHTML = manualHtml + portalHtml;
+    if (!_portal) {
+      const d = _d;
+      const statusCls = STATUS_BDG[d.status] || 'bdg-draft';
+      const linkHtml  = d.link ? `<a href="${esc(d.link)}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;">열기 ↗</a>` : '-';
+      const reviewBdg = reviewStatus(d.reviewDate);
+      return `<tr style="background:${bg}">
+        <td style="font-weight:600;"><span style="margin-right:5px;">${icon}</span>${esc(d.name)}</td>
+        <td>${typeBdg}</td>
+        <td>${esc(LEVEL_LBL[d.level] || d.level)}</td>
+        <td>${esc(d.version || '-')}</td>
+        <td style="white-space:nowrap;">${esc(d.revDate || '-')}</td>
+        <td style="white-space:nowrap;">${esc(d.reviewDate || '-')} ${reviewBdg}</td>
+        <td>${esc(d.dept || '-')}</td>
+        <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[d.status] || d.status)}</span></td>
+        <td style="color:var(--text-3);font-size:12px;">-</td>
+        <td>${linkHtml}</td>
+        <td>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;">
+            <button class="btn btn-sm" onclick="editDoc('${esc(d.id)}')">수정</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteDoc('${esc(d.id)}')">삭제</button>
+            <button class="btn btn-sm" onclick="printManualDoc('${esc(d.id)}')">🖨️</button>
+          </div>
+        </td>
+      </tr>`;
+    } else {
+      const p = _d;
+      const statusCls = STATUS_BDG[p.status] || 'bdg-approved';
+      const meta   = readPortalMeta(p.key);
+      const m_v    = meta.version    ? esc(meta.version)    : '<span style="color:var(--text-3)">-</span>';
+      const m_rev  = meta.revDate    ? esc(meta.revDate)    : '<span style="color:var(--text-3)">-</span>';
+      const m_rvw  = meta.reviewDate ? esc(meta.reviewDate) : '<span style="color:var(--text-3)">-</span>';
+      const m_dept = meta.dept       ? esc(meta.dept)       : '<span style="color:var(--text-3)">-</span>';
+      return `<tr style="background:${bg}">
+        <td style="font-weight:600;"><span style="margin-right:5px;">${icon}</span>${esc(p.name)}</td>
+        <td>${typeBdg}</td>
+        <td>${esc(LEVEL_LBL[p.level] || p.level)}</td>
+        <td>${m_v}</td>
+        <td style="white-space:nowrap;">${m_rev}</td>
+        <td style="white-space:nowrap;">${m_rvw}</td>
+        <td>${m_dept}</td>
+        <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[p.status] || p.status)}</span></td>
+        <td><span class="bdg-portal">📋 포털 자동</span></td>
+        <td><a href="${esc(p.link)}" style="color:var(--accent);font-size:12px;">열기 ↗</a></td>
+        <td>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;">
+            <a class="btn btn-sm" href="${esc(p.link)}" style="text-decoration:none;">→ 이동</a>
+            <button class="btn btn-sm" onclick="printPortalDoc('${p.link}')">🖨️</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+  }).join('');
 }
 
 /* ── Portal metadata reader ── */
