@@ -101,6 +101,7 @@
   .bdg-review   { color: #d97706; background: rgba(217,119,6,.1);   border-color: rgba(217,119,6,.3);   }
   .bdg-approved { color: #16a34a; background: rgba(22,163,74,.1);   border-color: rgba(22,163,74,.3);   }
   .bdg-obsolete { color: #dc2626; background: rgba(220,38,38,.1);   border-color: rgba(220,38,38,.3);   }
+  .bdg-active   { color: #2563eb; background: rgba(37,99,235,.1);   border-color: rgba(37,99,235,.3);   }
   .bdg-warn     { color: #b45309; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4);  }
   .bdg-overdue  { color: #991b1b; background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.4);   }
 
@@ -356,6 +357,7 @@
         <option value="draft">초안</option>
         <option value="review">검토중</option>
         <option value="approved">승인</option>
+        <option value="active">운영중</option>
         <option value="obsolete">폐기</option>
       </select>
       <select class="f-sel-sm" id="fltDept"><option value="">부서 전체</option></select>
@@ -376,8 +378,9 @@
             <th>검토 예정일</th>
             <th>담당부서</th>
             <th>상태</th>
+            <th style="width:80px;">출처</th>
             <th>링크</th>
-            <th style="width:100px;">관리</th>
+            <th style="width:110px;">관리</th>
           </tr>
         </thead>
         <tbody id="docTbody"></tbody>
@@ -458,7 +461,7 @@ const ISO_REQ = [
 const ALL_CLAUSES = ['4.3','5.2','6.2','7.2','8.2','8.3','8.4','8.5','9.1','9.2','9.3','10.1'];
 
 const TYPE_LBL   = { policy:'정책서', procedure:'절차서', guideline:'지침서', form:'양식', record:'기록', plan:'계획서' };
-const STATUS_LBL = { draft:'초안', review:'검토중', approved:'승인', obsolete:'폐기' };
+const STATUS_LBL = { draft:'초안', review:'검토중', approved:'승인', obsolete:'폐기', active:'운영중' };
 const LEVEL_LBL  = { '1':'Level 1', '2':'Level 2', '3':'Level 3', '4':'Level 4', '5':'Level 5' };
 const PYR_LBL    = { '1':'정책서 (Level 1)', '2':'절차서 (Level 2)', '3':'지침서 (Level 3)', '4':'양식 (Level 4)', '5':'증적 (Level 5)' };
 
@@ -646,7 +649,7 @@ function getFilters() {
 
 /* ── Render: KPI ── */
 function renderKpi(docs) {
-  document.getElementById('kTotal').textContent = docs.length + getPortalDocs().length;
+  document.getElementById('kTotal').textContent = docs.length + getPortalTableDocs().length;
 
   // ISO rate (포털 데이터·문서 패키지·수동 체크 통합)
   document.getElementById('kIso').textContent = calcIsoStats().pct + '%';
@@ -678,12 +681,15 @@ function refreshDeptFilter(docs) {
 }
 
 /* ── Render: Table ── */
+const STATUS_BDG = { draft:'bdg-draft', review:'bdg-review', approved:'bdg-approved', obsolete:'bdg-obsolete', active:'bdg-active' };
+
 function renderTable() {
   const docs = loadDocs();
   refreshDeptFilter(docs);
   const { type, level, status, dept, q } = getFilters();
 
-  const rows = docs.filter(d =>
+  // 직접 등록 문서 필터
+  const manualRows = docs.filter(d =>
     (!type   || d.type === type) &&
     (!level  || d.level === level) &&
     (!status || d.status === status) &&
@@ -691,14 +697,23 @@ function renderTable() {
     (!q      || d.name.toLowerCase().includes(q) || (d.id||'').toLowerCase().includes(q))
   );
 
+  // 포털 자동 항목 필터 (dept 필터 적용 시 제외 — 포털 항목은 부서 없음)
+  const portalRows = dept ? [] : getPortalTableDocs().filter(p =>
+    (!type   || p.type === type) &&
+    (!level  || p.level === level) &&
+    (!status || p.status === status) &&
+    (!q      || p.name.toLowerCase().includes(q))
+  );
+
   const tbody = document.getElementById('docTbody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="11" class="empty-row">등록된 문서가 없습니다.</td></tr>';
+  if (!manualRows.length && !portalRows.length) {
+    tbody.innerHTML = '<tr><td colspan="12" class="empty-row">등록된 문서가 없습니다.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = rows.map(d => {
-    const statusCls = { draft:'bdg-draft', review:'bdg-review', approved:'bdg-approved', obsolete:'bdg-obsolete' }[d.status] || 'bdg-draft';
+  // 직접 등록 문서 행
+  const manualHtml = manualRows.map(d => {
+    const statusCls = STATUS_BDG[d.status] || 'bdg-draft';
     const linkHtml  = d.link ? `<a href="${esc(d.link)}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;">열기 ↗</a>` : '-';
     const reviewBdg = reviewStatus(d.reviewDate);
     return `<tr>
@@ -711,6 +726,7 @@ function renderTable() {
       <td style="white-space:nowrap;">${esc(d.reviewDate || '-')} ${reviewBdg}</td>
       <td>${esc(d.dept || '-')}</td>
       <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[d.status] || d.status)}</span></td>
+      <td style="color:var(--text-3);font-size:12px;">-</td>
       <td>${linkHtml}</td>
       <td style="white-space:nowrap;">
         <button class="btn btn-sm" onclick="editDoc('${esc(d.id)}')">수정</button>
@@ -718,6 +734,29 @@ function renderTable() {
       </td>
     </tr>`;
   }).join('');
+
+  // 포털 자동 항목 행
+  const portalHtml = portalRows.map(p => {
+    const statusCls = STATUS_BDG[p.status] || 'bdg-approved';
+    return `<tr style="background:rgba(22,163,74,.025);">
+      <td style="color:var(--text-3);font-size:12px;">-</td>
+      <td style="font-weight:600;">${esc(p.name)}</td>
+      <td>${esc(TYPE_LBL[p.type] || p.type)}</td>
+      <td>${esc(LEVEL_LBL[p.level] || p.level)}</td>
+      <td style="color:var(--text-3);">-</td>
+      <td style="color:var(--text-3);">-</td>
+      <td style="color:var(--text-3);">-</td>
+      <td style="color:var(--text-3);">-</td>
+      <td><span class="bdg ${statusCls}">${esc(STATUS_LBL[p.status] || p.status)}</span></td>
+      <td><span class="bdg-portal">📋 포털 자동</span></td>
+      <td><a href="${esc(p.link)}" style="color:var(--accent);font-size:12px;">열기 ↗</a></td>
+      <td style="white-space:nowrap;">
+        <a class="btn btn-sm" href="${esc(p.link)}" style="text-decoration:none;font-size:12px;">→ 바로가기</a>
+      </td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML = manualHtml + portalHtml;
 }
 
 /* ── Render: ISO checklist ── */
@@ -852,6 +891,38 @@ const PORTAL_DOC_MAP = [
 
 function getPortalDocs() {
   return PORTAL_DOC_MAP.filter(entry => {
+    try {
+      const raw = localStorage.getItem(entry.key);
+      if (!raw) return false;
+      return entry.check(JSON.parse(raw));
+    } catch { return false; }
+  });
+}
+
+/* ── 포털 자동 항목 → 문서 목록 테이블 매핑 ── */
+const PORTAL_TABLE_MAP = [
+  { key:'bcmsPolicyData',   name:'BCMS 업무연속성 방침서',       type:'policy',    level:'1', status:'approved', link:'policy.html',
+    check: d => !!String(d && (d.policyText || d.body) || '').trim() },
+  { key:'bcmsObjectives',   name:'업무연속성 목표 및 KPI',        type:'record',    level:'1', status:'active',   link:'policy.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key:'bcmsBIAData',      name:'업무영향분석(BIA) 결과',        type:'record',    level:'5', status:'approved', link:'../risk-bia/bia.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key:'bcmsRiskList',     name:'리스크 평가 결과',              type:'record',    level:'5', status:'approved', link:'../risk-bia/risk.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key:'bcmsBCPDoc',       name:'업무연속성계획(BCP) 절차서',    type:'procedure', level:'2', status:'approved', link:'../strategy-plans/bcp.html',
+    check: d => !!d && typeof d === 'object' },
+  { key:'bcmsEOPDoc',       name:'비상운영절차(EOP)',              type:'procedure', level:'2', status:'approved', link:'../library/eop.html',
+    check: d => !!d && typeof d === 'object' },
+  { key:'bcmsSOPData',      name:'표준운영절차(SOP)',              type:'procedure', level:'2', status:'approved', link:'../library/sop.html',
+    check: d => !!d },
+  { key:'bcmsTrainingData', name:'훈련 결과 기록',                type:'record',    level:'5', status:'active',   link:'../training/index.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+  { key:'bcmsAuditData',    name:'내부심사 보고서',               type:'record',    level:'5', status:'approved', link:'../audit/index.html',
+    check: d => Array.isArray(d) && d.length > 0 },
+];
+
+function getPortalTableDocs() {
+  return PORTAL_TABLE_MAP.filter(entry => {
     try {
       const raw = localStorage.getItem(entry.key);
       if (!raw) return false;
