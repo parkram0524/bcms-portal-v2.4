@@ -112,18 +112,38 @@
     .recRow { display: grid; grid-template-columns: 1fr 78px; gap: 6px; }
     .fieldHint { font-size: 10px; color: var(--text-3); margin-top: 4px; line-height: 1.4; }
 
-    /* ── Resource analysis ── */
-    .resourceAnalysisGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .resItem { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r-sm); padding: 10px; display: flex; flex-direction: column; gap: 6px; transition: all .12s; }
-    .resItem.enabled { background: var(--accent-subtle); border-color: var(--accent-border); }
-    .resToggleLabel { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-2); user-select: none; }
-    .resToggleLabel input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; }
-    .rIcon { font-size: 15px; }
-    .resFields { display: none; flex-direction: column; gap: 5px; }
-    .resItem.enabled .resFields { display: flex; }
-    .resFields input { width: 100%; font-size: 11px; color: var(--text); }
-    .resFields input::placeholder { color: #aaa; }
-    .resFieldLabel { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+    /* ── Resource analysis (enhanced) ── */
+    .resourceAnalysisGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .resItem { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--r-sm); overflow:hidden; transition:border-color .12s; }
+    .resItem.enabled { border-color:var(--accent-border); }
+    .resToggleLabel { display:flex; align-items:center; gap:8px; padding:10px 12px; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text-2); user-select:none; background:var(--surface); transition:background .1s; }
+    .resToggleLabel:hover { background:var(--surface-hover); }
+    .resItem.enabled .resToggleLabel { color:var(--accent); background:var(--accent-subtle); }
+    .resToggleLabel input[type="checkbox"] { accent-color:var(--accent); width:15px; height:15px; flex-shrink:0; cursor:pointer; }
+    .rIcon { font-size:17px; }
+    .resFields { display:none; padding:10px 12px; }
+    .resItem.enabled .resFields { display:block; }
+    .resFieldLabel { font-size:10.5px; font-weight:700; color:var(--text-2); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+    .resSubSection { border:0.5px solid var(--border); border-radius:6px; overflow:hidden; margin-top:8px; }
+    .resSubHead { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; cursor:pointer; user-select:none; font-size:11.5px; font-weight:700; color:var(--text-2); background:var(--bg); transition:background .1s; }
+    .resSubHead:hover { background:var(--surface-hover); }
+    .resSubTitle { flex:1; }
+    .resSubChevron { font-size:10px; color:var(--text-3); transition:transform .15s; display:inline-block; }
+    .resSubChevron.collapsed { transform:rotate(-90deg); }
+    .resSubBody { padding:8px 10px; background:var(--surface); }
+    .resDetailRow { display:flex; gap:4px; align-items:center; margin-bottom:5px; }
+    .resDetailRow:last-child { margin-bottom:0; }
+    .resRowInp { flex:1; min-width:0; padding:5px 7px; font-size:12px; border:0.5px solid var(--border-strong); border-radius:5px; background:var(--surface); color:var(--text); font-family:inherit; outline:none; }
+    .resRowInp:focus { border-color:var(--accent); }
+    .resRowDel { width:22px; height:22px; flex-shrink:0; border:0.5px solid rgba(239,68,68,.3); border-radius:4px; background:rgba(239,68,68,.05); color:#dc2626; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; transition:background .1s; padding:0; line-height:1; }
+    .resRowDel:hover { background:rgba(239,68,68,.15); }
+    .resAddRowBtn { margin-top:7px; font-size:11.5px; font-weight:600; color:var(--accent); cursor:pointer; padding:4px 0; background:none; border:none; display:flex; align-items:center; gap:3px; font-family:inherit; }
+    .resAddRowBtn:hover { opacity:.7; }
+    .resBcpSection { margin-top:8px; padding:8px 10px; background:rgba(0,112,243,.04); border:0.5px solid rgba(0,112,243,.15); border-radius:6px; }
+    .resExtraField { display:flex; align-items:center; gap:8px; margin-top:8px; padding:6px 0; border-top:0.5px solid var(--border); flex-wrap:wrap; }
+    .resExtraLabel { font-size:11px; font-weight:600; color:var(--text-2); white-space:nowrap; }
+    .resInp { padding:5px 7px; font-size:12px; border:0.5px solid var(--border-strong); border-radius:5px; background:var(--surface); color:var(--text); font-family:inherit; outline:none; }
+    .resInp:focus { border-color:var(--accent); }
 
     /* ── Related risks ── */
     .relatedRisksList { display: flex; flex-direction: column; gap: 5px; max-height: 160px; overflow-y: auto; margin-top: 6px; }
@@ -335,7 +355,7 @@
       .entryCard.full { grid-column: 1; }
       .metricsStrip { grid-template-columns: repeat(3, 1fr); }
       .controlRow { grid-template-columns: 1fr; }
-      .resourceAnalysisGrid { grid-template-columns: repeat(2, 1fr); }
+      .resourceAnalysisGrid { grid-template-columns:1fr; }
       .resourceSummaryGrid { grid-template-columns: repeat(2, 1fr); }
       .detailGrid { grid-template-columns: 1fr; }
       .timeGrid { grid-template-columns: repeat(2, 1fr); }
@@ -1167,29 +1187,167 @@
       document.getElementById(id)?.addEventListener('input',  checkRtoMtpdWarn);
     });
 
-    /* ── Resource analysis cards ── */
-    const raMount = document.getElementById('resourceAnalysisMount');
-    raMount.innerHTML = RESOURCE_OPTIONS.map(r => {
-      const safeId = 'res_' + r.replace(/[·\/\s·]/g, '_');
-      return `
-        <div class="resItem" id="${safeId}">
-          <label class="resToggleLabel">
-            <input type="checkbox" data-resource="${r}"/>
-            <span class="rIcon">${RESOURCE_ICONS[r] || ''}</span>
-            <span>${r}</span>
-          </label>
-          <div class="resFields">
-            <div>
-              <div class="resFieldLabel">필요 수량/내용</div>
-              <input type="text" placeholder="예: 5명, 서버실 접근" data-res-desc="${r}"/>
+    /* ── Resource analysis cards (enhanced) ── */
+    const BCP_TEAMS_OPTIONS = [
+      '업무연속성대응본부(BCP대응본부)','업무환경반','IT복구반','업무재개반','자원지원반','대내외소통반'
+    ];
+    const getSystemList = () => { try { const a = JSON.parse(localStorage.getItem('bcms_system_registry_v1')||'[]'); return Array.isArray(a)?a.map(x=>x.displayName||x.systemId).filter(Boolean):[]; } catch{return[];} };
+    const getDocumentList = () => { try { const a = JSON.parse(localStorage.getItem('bcmsDocuments')||'[]'); return Array.isArray(a)?a.map(x=>x.name).filter(Boolean):[]; } catch{return[];} };
+
+    const RES_CONFIG = {
+      '인원':{ defaultBcp:'자원지원반',
+        topFields:[{key:'headcount',label:'필요 인원 수',type:'number',placeholder:'예: 3',unit:'명'}],
+        mainTitle:'주요 담당자', mainAddLabel:'+ 담당자 추가',
+        mainFields:[{key:'name',placeholder:'이름',type:'text'},{key:'dept',placeholder:'소속 부서',type:'orgSelect'},{key:'contact',placeholder:'연락처',type:'text'}],
+        altTitle:'대체 인원', altAddLabel:'+ 대체 인원 추가',
+        altTopFields:[{key:'altHeadcount',label:'대체 인원 수',type:'number',placeholder:'예: 2',unit:'명'}],
+        altFields:[{key:'name',placeholder:'이름',type:'text'},{key:'dept',placeholder:'소속 부서',type:'orgSelect'},{key:'contact',placeholder:'연락처',type:'text'},{key:'condition',placeholder:'대체 가능 조건',type:'text'}]
+      },
+      '시설·작업장':{ defaultBcp:'업무환경반', topFields:[], altTopFields:[],
+        mainTitle:'주요 시설', mainAddLabel:'+ 시설 추가',
+        mainFields:[{key:'name',placeholder:'시설명',type:'text'},{key:'location',placeholder:'위치',type:'text'},{key:'capacity',placeholder:'수용 인원',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}],
+        altTitle:'대체 시설', altAddLabel:'+ 대체 시설 추가',
+        altFields:[{key:'name',placeholder:'대체 시설명',type:'text'},{key:'location',placeholder:'위치',type:'text'},{key:'time',placeholder:'가동 소요 시간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+      },
+      '기술·IT':{ defaultBcp:'IT복구반', topFields:[], altTopFields:[],
+        mainTitle:'주요 시스템', mainAddLabel:'+ 시스템 추가',
+        mainFields:[{key:'system',placeholder:'시스템명',type:'sysSelect'},{key:'owner',placeholder:'담당자',type:'text'},{key:'contact',placeholder:'연락처',type:'text'}],
+        altTitle:'대체 수단', altAddLabel:'+ 대체 수단 추가',
+        altFields:[{key:'name',placeholder:'대체 시스템/방법',type:'text'},{key:'time',placeholder:'전환 소요 시간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+      },
+      '정보·문서':{ defaultBcp:'업무재개반', topFields:[], altTopFields:[],
+        mainTitle:'주요 문서', mainAddLabel:'+ 문서 추가',
+        mainFields:[{key:'doc',placeholder:'문서명',type:'docSelect'},{key:'location',placeholder:'보관 위치',type:'text'},{key:'owner',placeholder:'담당자',type:'text'}],
+        altTitle:'대체 수단', altAddLabel:'+ 대체 수단 추가',
+        altFields:[{key:'method',placeholder:'대체 접근 방법',type:'text'},{key:'backup',placeholder:'백업 위치',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+      },
+      '공급망·외주':{ defaultBcp:'자원지원반', topFields:[], altTopFields:[],
+        mainTitle:'주요 공급업체', mainAddLabel:'+ 업체 추가',
+        mainFields:[{key:'name',placeholder:'업체명',type:'text'},{key:'service',placeholder:'제공 서비스',type:'text'},{key:'owner',placeholder:'담당자명',type:'text'},{key:'contact',placeholder:'연락처',type:'text'}],
+        altTitle:'대체 공급업체', altAddLabel:'+ 대체 업체 추가',
+        altFields:[{key:'name',placeholder:'대체 업체명',type:'text'},{key:'time',placeholder:'전환 소요 기간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+      },
+      '유틸리티':{ defaultBcp:'업무환경반', topFields:[], altTopFields:[],
+        mainTitle:'주요 유틸리티', mainAddLabel:'+ 추가',
+        mainFields:[{key:'type',placeholder:'종류',type:'utilSelect'},{key:'vendor',placeholder:'공급업체',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}],
+        altTitle:'대체 수단', altAddLabel:'+ 대체 수단 추가',
+        altFields:[{key:'method',placeholder:'대체 수단(발전기/UPS 등)',type:'text'},{key:'time',placeholder:'가동 소요 시간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+      },
+      '설비·장비':{ defaultBcp:'자원지원반', topFields:[], altTopFields:[],
+        mainTitle:'주요 설비', mainAddLabel:'+ 설비 추가',
+        mainFields:[{key:'name',placeholder:'설비명',type:'text'},{key:'location',placeholder:'위치',type:'text'},{key:'owner',placeholder:'담당자',type:'text'},{key:'contact',placeholder:'연락처',type:'text'}],
+        altTitle:'대체 수단', altAddLabel:'+ 대체 수단 추가',
+        altFields:[{key:'name',placeholder:'대체 설비/방법',type:'text'},{key:'time',placeholder:'조달 소요 기간',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+      },
+      '자금':{ defaultBcp:'자원지원반', topFields:[], altTopFields:[],
+        mainTitle:'필요 자금 항목', mainAddLabel:'+ 항목 추가',
+        mainFields:[{key:'name',placeholder:'항목명',type:'text'},{key:'amount',placeholder:'예상 금액',type:'text'},{key:'method',placeholder:'조달 방법',type:'text'},{key:'owner',placeholder:'담당자',type:'text'}],
+        altTitle:'대체 조달', altAddLabel:'+ 대체 조달 추가',
+        altFields:[{key:'method',placeholder:'대체 조달 방법',type:'text'},{key:'limit',placeholder:'한도',type:'text'},{key:'contact',placeholder:'담당자 연락처',type:'text'}]
+      }
+    };
+
+    const buildResFieldHtml = (field) => {
+      if (field.type === 'orgSelect') {
+        const depts = getOrgChartDepts();
+        const opts = depts.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+        return `<select class="resRowInp" data-field="${field.key}"><option value="">${depts.length?'부서 선택':'부서 없음'}</option>${opts}<option value="__direct__">✏ 직접 입력</option></select>`;
+      }
+      if (field.type === 'sysSelect') {
+        const sys = getSystemList();
+        const opts = sys.map(s=>`<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+        return `<select class="resRowInp" data-field="${field.key}"><option value="">시스템 선택</option>${opts}<option value="__direct__">✏ 직접 입력</option></select>`;
+      }
+      if (field.type === 'docSelect') {
+        const docs = getDocumentList();
+        const opts = docs.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+        return `<select class="resRowInp" data-field="${field.key}"><option value="">문서 선택</option>${opts}<option value="__direct__">✏ 직접 입력</option></select>`;
+      }
+      if (field.type === 'utilSelect') {
+        return `<select class="resRowInp" data-field="${field.key}"><option value="">종류 선택</option><option>전력</option><option>수도</option><option>통신</option><option>가스</option><option>냉방·냉각</option></select>`;
+      }
+      if (field.type === 'number') {
+        return `<input type="number" class="resRowInp" placeholder="${escHtml(field.placeholder)}" data-field="${field.key}" min="0"/>`;
+      }
+      return `<input type="text" class="resRowInp" placeholder="${escHtml(field.placeholder)}" data-field="${field.key}"/>`;
+    };
+
+    const buildResRowHtml = (res, section) => {
+      const cfg = RES_CONFIG[res];
+      const fields = section === 'main' ? cfg.mainFields : cfg.altFields;
+      return `<div class="resDetailRow" data-res="${escHtml(res)}" data-section="${section}">${
+        fields.map(f => buildResFieldHtml(f)).join('')
+      }<button class="resRowDel" type="button" title="행 삭제">✕</button></div>`;
+    };
+
+    const buildResCardHtml = (res) => {
+      const cfg = RES_CONFIG[res];
+      if (!cfg) return '';
+      const safeId = 'res_' + res.replace(/[·\/\s·]/g, '_');
+      const icon = RESOURCE_ICONS[res] || '';
+      const bcpOpts = BCP_TEAMS_OPTIONS.map(t =>
+        `<option${t === cfg.defaultBcp ? ' selected' : ''}>${escHtml(t)}</option>`
+      ).join('') + '<option value="__direct__">✏ 직접 입력</option>';
+
+      const renderTopFields = (fields) => (fields||[]).map(f =>
+        `<div class="resExtraField"><label class="resExtraLabel">${escHtml(f.label)}</label>
+         <input type="${f.type}" class="resInp" placeholder="${escHtml(f.placeholder)}"
+           data-res-extra="${escHtml(res)}" data-key="${f.key}" min="0" style="width:70px;"/>
+         ${f.unit?`<span style="font-size:12px;color:var(--text-2);">${f.unit}</span>`:''}</div>`
+      ).join('');
+
+      return `<div class="resItem" id="${safeId}">
+        <label class="resToggleLabel">
+          <input type="checkbox" data-resource="${escHtml(res)}"/>
+          <span class="rIcon">${icon}</span>
+          <span>${escHtml(res)}</span>
+        </label>
+        <div class="resFields">
+          ${renderTopFields(cfg.topFields)}
+          <div class="resSubSection">
+            <div class="resSubHead" data-toggle-body="${safeId}_main">
+              <span class="resSubTitle">${escHtml(cfg.mainTitle)}</span>
+              <span class="resSubChevron">▼</span>
             </div>
-            <div>
-              <div class="resFieldLabel">대체수단</div>
-              <input type="text" placeholder="예: 원격 접속, 외부 용역" data-res-alt="${r}"/>
+            <div class="resSubBody" id="${safeId}_main">
+              <div class="resDetailRows" data-res="${escHtml(res)}" data-section="main">${buildResRowHtml(res,'main')}</div>
+              <button class="resAddRowBtn" type="button" data-res="${escHtml(res)}" data-section="main">${escHtml(cfg.mainAddLabel)}</button>
             </div>
           </div>
-        </div>`;
-    }).join('');
+          ${renderTopFields(cfg.altTopFields)}
+          <div class="resSubSection">
+            <div class="resSubHead" data-toggle-body="${safeId}_alt">
+              <span class="resSubTitle">${escHtml(cfg.altTitle)}</span>
+              <span class="resSubChevron">▼</span>
+            </div>
+            <div class="resSubBody" id="${safeId}_alt">
+              <div class="resDetailRows" data-res="${escHtml(res)}" data-section="alt">${buildResRowHtml(res,'alt')}</div>
+              <button class="resAddRowBtn" type="button" data-res="${escHtml(res)}" data-section="alt">${escHtml(cfg.altAddLabel)}</button>
+            </div>
+          </div>
+          <div class="resBcpSection">
+            <div class="resFieldLabel">🔗 BCP 대응본부 담당반</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;">
+              <select class="resInp" data-res-bcp-team="${escHtml(res)}" style="flex:1;min-width:160px;">${bcpOpts}</select>
+              <input type="text" class="resInp" data-res-bcp-contact="${escHtml(res)}" placeholder="담당반 연락처" style="flex:1;min-width:100px;"/>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    };
+
+    const getResRows = (res, section) => {
+      const container = raMount.querySelector(`.resDetailRows[data-res="${res}"][data-section="${section}"]`);
+      if (!container) return [];
+      return [...container.querySelectorAll('.resDetailRow')].map(row => {
+        const obj = {};
+        row.querySelectorAll('[data-field]').forEach(el => { obj[el.dataset.field] = el.value.trim(); });
+        return obj;
+      }).filter(obj => Object.values(obj).some(v => v));
+    };
+
+    const raMount = document.getElementById('resourceAnalysisMount');
+    raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
 
     raMount.addEventListener('change', e => {
       if (!e.target.matches('[data-resource]')) return;
@@ -1197,6 +1355,45 @@
       const itemId = 'res_' + r.replace(/[·\/\s·]/g, '_');
       document.getElementById(itemId)?.classList.toggle('enabled', e.target.checked);
       updateAutoRisks();
+    });
+
+    raMount.addEventListener('click', e => {
+      // Sub-section toggle
+      const toggleHead = e.target.closest('[data-toggle-body]');
+      if (toggleHead && !e.target.matches('input[data-resource],input[type=checkbox]')) {
+        e.stopPropagation();
+        const bodyId = toggleHead.dataset.toggleBody;
+        const body = document.getElementById(bodyId);
+        const chev = toggleHead.querySelector('.resSubChevron');
+        if (body) {
+          const isHidden = body.style.display === 'none';
+          body.style.display = isHidden ? '' : 'none';
+          if (chev) chev.classList.toggle('collapsed', !isHidden);
+        }
+        return;
+      }
+      // Add row
+      const addBtn = e.target.closest('.resAddRowBtn');
+      if (addBtn) {
+        const res = addBtn.dataset.res;
+        const section = addBtn.dataset.section;
+        const container = raMount.querySelector(`.resDetailRows[data-res="${res}"][data-section="${section}"]`);
+        if (container) container.insertAdjacentHTML('beforeend', buildResRowHtml(res, section));
+        return;
+      }
+      // Delete row
+      const delBtn = e.target.closest('.resRowDel');
+      if (delBtn) {
+        const row = delBtn.closest('.resDetailRow');
+        const container = row?.parentElement;
+        if (!row) return;
+        if (container && container.querySelectorAll('.resDetailRow').length > 1) {
+          row.remove();
+        } else {
+          row.querySelectorAll('input').forEach(el => { el.value = ''; });
+          row.querySelectorAll('select').forEach(el => { el.selectedIndex = 0; });
+        }
+      }
     });
 
     /* ── Auto risks ── */
@@ -1234,12 +1431,8 @@
       document.getElementById('newMbco').value = 50;
       document.getElementById('mbcoVal').textContent = '50%';
       document.getElementById('rtoMtpdWarn').style.display = 'none';
-      raMount.querySelectorAll('[data-resource]').forEach(cb => {
-        cb.checked = false;
-        const itemId = 'res_' + cb.getAttribute('data-resource').replace(/[·\/\s·]/g, '_');
-        document.getElementById(itemId)?.classList.remove('enabled');
-      });
-      raMount.querySelectorAll('[data-res-desc],[data-res-alt]').forEach(inp => { inp.value = ''; });
+      // Rebuild resource cards to initial state (simplest reset approach)
+      raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
       document.getElementById('newRelatedManual').value = '';
       document.getElementById('autoRisksList').innerHTML = '<div class="relatedRiskEmpty">④에서 소요자원을 선택하면 관련 리스크가 표시됩니다.</div>';
     });
@@ -1275,10 +1468,20 @@
         const cb = raMount.querySelector(`[data-resource="${r}"]`);
         if (cb && cb.checked) {
           selectedResources.push(r);
+          const mainRows = getResRows(r, 'main');
+          const altRows  = getResRows(r, 'alt');
+          const extraFields = {};
+          raMount.querySelectorAll(`[data-res-extra="${r}"]`).forEach(el => {
+            if (el.dataset.key) extraFields[el.dataset.key] = el.value.trim();
+          });
           resourceDetails[r] = {
             required: true,
-            description: raMount.querySelector(`[data-res-desc="${r}"]`)?.value.trim() || '',
-            alternative: raMount.querySelector(`[data-res-alt="${r}"]`)?.value.trim()  || ''
+            description: mainRows.map(row => Object.values(row).filter(Boolean).join(' ')).join('; '),
+            alternative: altRows.map(row => Object.values(row).filter(Boolean).join(' ')).join('; '),
+            mainRows, altRows,
+            bcpTeam:    raMount.querySelector(`[data-res-bcp-team="${r}"]`)?.value || '',
+            bcpContact: raMount.querySelector(`[data-res-bcp-contact="${r}"]`)?.value || '',
+            extraFields,
           };
         }
       });
