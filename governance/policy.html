@@ -145,7 +145,9 @@
   /* ── 이해관계자 목록 테이블 정렬 ── */
   #tab-stakeholders table th,
   #tab-stakeholders table td { text-align: center; }
+  #tab-stakeholders table th:nth-child(1),
   #tab-stakeholders table td:nth-child(1),
+  #tab-stakeholders table th:nth-child(4),
   #tab-stakeholders table td:nth-child(4) { text-align: left; }
 
   @media (max-width: 900px) {
@@ -358,7 +360,12 @@
         </div>
         <div class="formRow">
           <label>담당 부서</label>
-          <input type="text" id="obj_dept" placeholder="예: BCMS PMO"/>
+          <select id="obj_dept_sel" onchange="onObjDeptChange()" style="width:100%">
+            <option value="">-- 부서 선택 --</option>
+            <option value="__direct__">✏ 직접 입력</option>
+          </select>
+          <input type="text" id="obj_dept" placeholder="예: BCMS PMO"
+            style="display:none;margin-top:4px;width:100%;"/>
         </div>
         <div class="formRow half">
           <label>목표 내용</label>
@@ -530,7 +537,7 @@
         </div>
         <div class="formRow">
           <label>유형</label>
-          <select id="stk_category">
+          <select id="stk_category" onchange="onStkCategoryChange()">
             <option value="">선택</option>
             <option>경영진</option>
             <option>임직원</option>
@@ -539,7 +546,10 @@
             <option>규제기관</option>
             <option>주주/투자자</option>
             <option>지역사회</option>
+            <option value="__direct__">✏ 직접 입력</option>
           </select>
+          <input type="text" id="stk_category_direct" placeholder="유형 직접 입력"
+            style="display:none;margin-top:4px;width:100%;"/>
         </div>
         <div class="formRow half">
           <label>주요 관심사항 / 요구사항</label>
@@ -551,7 +561,12 @@
         </div>
         <div class="formRow">
           <label>담당자</label>
-          <input type="text" id="stk_manager" placeholder="예: 홍길동 팀장"/>
+          <select id="stk_manager_sel" onchange="onStkManagerChange()" style="width:100%">
+            <option value="">-- 선택 --</option>
+            <option value="__direct__">✏ 직접 입력</option>
+          </select>
+          <input type="text" id="stk_manager" placeholder="예: 홍길동 팀장"
+            style="display:none;margin-top:4px;width:100%;"/>
         </div>
       </div>
 
@@ -692,7 +707,11 @@ function getPolicyDeptValue() {
 }
 
 window.addEventListener('storage', e => {
-  if (e.key === 'bcmsOrgChart') refreshPolicyDeptDropdown();
+  if (e.key === 'bcmsOrgChart') {
+    refreshPolicyDeptDropdown();
+    refreshObjDeptDropdown();
+    refreshStkManagerDropdown();
+  }
 });
 
 function loadPolicy() {
@@ -1019,6 +1038,40 @@ document.querySelectorAll('.checkItem').forEach(item => {
 ══════════════════════════════════════════ */
 const OBJ_KEY = 'bcmsObjectives';
 
+/* ── 담당 부서 드롭다운 ── */
+function refreshObjDeptDropdown() {
+  const depts = getPolicyOrgChartDepts();
+  const sel   = $('obj_dept_sel');
+  const input = $('obj_dept');
+  if (!depts.length) {
+    sel.style.display   = 'none';
+    input.style.display = '';
+    return;
+  }
+  sel.style.display = '';
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">-- 부서 선택 --</option>' +
+    depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('') +
+    '<option value="__direct__">✏ 직접 입력</option>';
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+  const isDirect = sel.value === '__direct__';
+  input.style.display = isDirect ? '' : 'none';
+}
+
+function onObjDeptChange() {
+  const isDirect = $('obj_dept_sel').value === '__direct__';
+  const input    = $('obj_dept');
+  input.style.display = isDirect ? '' : 'none';
+  if (isDirect) { input.value = ''; input.focus(); }
+}
+
+function getObjDeptValue() {
+  const sel = $('obj_dept_sel');
+  if (!sel || sel.style.display === 'none') return ($('obj_dept').value || '').trim();
+  if (sel.value === '__direct__') return ($('obj_dept').value || '').trim();
+  return sel.value;
+}
+
 function genObjId() {
   const yr = thisYear();
   const list = loadJ(OBJ_KEY, []);
@@ -1123,7 +1176,7 @@ $('btnObjSave').addEventListener('click', () => {
     targetValue: $('obj_targetValue').value,
     unit:        $('obj_unit').value,
     deadline:    $('obj_deadline').value,
-    department:  $('obj_dept').value.trim(),
+    department:  getObjDeptValue(),
     createdAt:   new Date().toISOString(),
   });
   saveJ(OBJ_KEY, list);
@@ -1133,9 +1186,14 @@ $('btnObjSave').addEventListener('click', () => {
 });
 
 function resetObjForm() {
-  ['obj_id','obj_content','obj_metric','obj_targetValue','obj_deadline','obj_dept'].forEach(id => $( id ).value = '');
+  ['obj_id','obj_content','obj_metric','obj_targetValue','obj_deadline'].forEach(id => $(id).value = '');
+  $('obj_dept').value = '';
   $('obj_category').value = '';
   $('obj_unit').value = '%';
+  refreshObjDeptDropdown();
+  const sel = $('obj_dept_sel');
+  if (sel && sel.style.display !== 'none') sel.value = '';
+  $('obj_dept').style.display = sel && sel.style.display !== 'none' ? 'none' : '';
 }
 
 $('btnObjReset').addEventListener('click', resetObjForm);
@@ -1216,6 +1274,54 @@ $('btnScopeClear').addEventListener('click', () => {
 ══════════════════════════════════════════ */
 const STK_KEY = 'bcmsStakeholders';
 
+/* ── 담당자 드롭다운 ── */
+function refreshStkManagerDropdown() {
+  const depts = getPolicyOrgChartDepts();
+  const sel   = $('stk_manager_sel');
+  const input = $('stk_manager');
+  if (!depts.length) {
+    sel.style.display   = 'none';
+    input.style.display = '';
+    return;
+  }
+  sel.style.display = '';
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">-- 선택 --</option>' +
+    depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('') +
+    '<option value="__direct__">✏ 직접 입력</option>';
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+  const isDirect = sel.value === '__direct__';
+  input.style.display = isDirect ? '' : 'none';
+}
+
+function onStkManagerChange() {
+  const isDirect = $('stk_manager_sel').value === '__direct__';
+  const input    = $('stk_manager');
+  input.style.display = isDirect ? '' : 'none';
+  if (isDirect) { input.value = ''; input.focus(); }
+}
+
+function getStkManagerValue() {
+  const sel = $('stk_manager_sel');
+  if (!sel || sel.style.display === 'none') return ($('stk_manager').value || '').trim();
+  if (sel.value === '__direct__') return ($('stk_manager').value || '').trim();
+  return sel.value;
+}
+
+/* ── 유형 직접 입력 ── */
+function onStkCategoryChange() {
+  const isDirect = $('stk_category').value === '__direct__';
+  const input    = $('stk_category_direct');
+  input.style.display = isDirect ? '' : 'none';
+  if (isDirect) { input.value = ''; input.focus(); }
+}
+
+function getStkCategoryValue() {
+  const sel = $('stk_category');
+  if (sel.value === '__direct__') return ($('stk_category_direct').value || '').trim();
+  return sel.value;
+}
+
 function renderStkTable() {
   const list = loadJ(STK_KEY, []);
   const body = $('stkBody');
@@ -1262,10 +1368,10 @@ $('btnStkSave').addEventListener('click', () => {
     id:            `STK-${String(list.length + 1).padStart(3, '0')}`,
     name,
     type,
-    category:      $('stk_category').value,
+    category:      getStkCategoryValue(),
     requirements:  $('stk_requirements').value.trim(),
     communication: $('stk_communication').value.trim(),
-    manager:       $('stk_manager').value.trim(),
+    manager:       getStkManagerValue(),
     createdAt:     new Date().toISOString(),
   });
   saveJ(STK_KEY, list);
@@ -1275,9 +1381,16 @@ $('btnStkSave').addEventListener('click', () => {
 });
 
 function resetStkForm() {
-  ['stk_name','stk_requirements','stk_communication','stk_manager'].forEach(id => $(id).value = '');
+  ['stk_name','stk_requirements','stk_communication'].forEach(id => $(id).value = '');
+  $('stk_manager').value = '';
   $('stk_type').value = '';
   $('stk_category').value = '';
+  $('stk_category_direct').value = '';
+  $('stk_category_direct').style.display = 'none';
+  refreshStkManagerDropdown();
+  const sel = $('stk_manager_sel');
+  if (sel && sel.style.display !== 'none') sel.value = '';
+  $('stk_manager').style.display = sel && sel.style.display !== 'none' ? 'none' : '';
 }
 
 $('btnStkReset').addEventListener('click', resetStkForm);
@@ -1288,6 +1401,8 @@ $('btnStkReset').addEventListener('click', resetStkForm);
 ────────────────────────────────────────── */
 loadPolicy();
 loadScope();
+refreshObjDeptDropdown();
+refreshStkManagerDropdown();
 renderObjTable();
 renderStkTable();
 
