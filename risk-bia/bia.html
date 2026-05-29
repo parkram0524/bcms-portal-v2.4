@@ -1286,9 +1286,13 @@
       if (titleEl) titleEl.textContent = isNew ? '➕ 핵심업무 추가' : `✏ ${fn.name} 편집`;
       const delBtn = document.getElementById('biaEditorDeleteBtn');
       if (delBtn) delBtn.style.display = isNew ? 'none' : '';
-      document.getElementById('biaEditorFormWrap').style.display = '';
+      const formWrapEl = document.getElementById('biaEditorFormWrap');
+      if (formWrapEl) formWrapEl.style.display = 'block';
       renderBiaEditorTable();
-      setTimeout(() => document.getElementById('biaEditorFormWrap').scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+      setTimeout(() => {
+        const fw = document.getElementById('biaEditorFormWrap');
+        if (fw) fw.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      }, 50);
     }
 
     function closeBiaEdit() {
@@ -2365,32 +2369,74 @@
 
     // "+ 핵심업무 추가" 버튼
     document.getElementById('addBiaBtn')?.addEventListener('click', () => {
-      // 빈 폼 준비
-      document.getElementById('newBiaId').textContent = genBiaId();
-      document.getElementById('newFnName').value  = '';
-      document.getElementById('newFnDesc').value  = '';
-      document.querySelector('input[name="newImportance"][value="중요"]').checked = true;
-      ['slFinancial','slOperational','slReputation'].forEach(id => { document.getElementById(id).value = 1; });
+      // 1. 기존에 열려 있던 편집 폼 먼저 닫기
+      closeBiaEdit();
+
+      // 2. 섹션이 접혀 있으면 펼치기
+      const bodyWrap = document.getElementById('biaEditorBodyWrap');
+      if (bodyWrap && bodyWrap.style.display === 'none') {
+        biaEditorSectionOpen = true;
+        bodyWrap.style.display = '';
+        const toggleBtn = document.getElementById('biaEditorToggle');
+        if (toggleBtn) toggleBtn.textContent = '▲ 접기';
+      }
+
+      // 3. 빈 폼으로 초기화
+      const biaIdEl = document.getElementById('newBiaId');
+      if (biaIdEl) biaIdEl.textContent = genBiaId();
+      const fnNameEl = document.getElementById('newFnName');
+      if (fnNameEl) fnNameEl.value = '';
+      const fnDescEl = document.getElementById('newFnDesc');
+      if (fnDescEl) fnDescEl.value = '';
+      const impEl = document.querySelector('input[name="newImportance"][value="중요"]');
+      if (impEl) impEl.checked = true;
+      ['slFinancial','slOperational','slReputation'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 1;
+      });
       updateImpactScore();
-      ['newMtpdVal','newRtoVal','newRpoVal'].forEach(id => { document.getElementById(id).value = ''; });
-      document.getElementById('newMbco').value = 50;
-      document.getElementById('mbcoVal').textContent = '50%';
-      raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
-      document.getElementById('newRelatedManual').value = '';
-      document.getElementById('autoRisksList').innerHTML = '<div class="relatedRiskEmpty">④에서 소요자원을 선택하면 관련 리스크가 표시됩니다.</div>';
-      // 팀이 선택되어 있으면 기본 팀 설정
+      ['newMtpdVal','newRtoVal','newRpoVal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const mbcoEl = document.getElementById('newMbco');
+      if (mbcoEl) mbcoEl.value = 50;
+      const mbcoValEl = document.getElementById('mbcoVal');
+      if (mbcoValEl) mbcoValEl.textContent = '50%';
+      const rtoWarnEl = document.getElementById('rtoMtpdWarn');
+      if (rtoWarnEl) rtoWarnEl.style.display = 'none';
+      if (raMount) raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
+      const relManEl = document.getElementById('newRelatedManual');
+      if (relManEl) relManEl.value = '';
+      const autoRisksEl = document.getElementById('autoRisksList');
+      if (autoRisksEl) autoRisksEl.innerHTML = '<div class="relatedRiskEmpty">④에서 소요자원을 선택하면 관련 리스크가 표시됩니다.</div>';
+
+      // 4. 팀 필터가 걸려 있으면 기본 팀 설정
       if (biaEditorFilter !== '전체') {
         const teamSelEl = document.getElementById('newFnTeam');
-        if (teamSelEl && [...teamSelEl.options].some(o => o.value === biaEditorFilter)) teamSelEl.value = biaEditorFilter;
+        if (teamSelEl && [...teamSelEl.options].some(o => o.value === biaEditorFilter))
+          teamSelEl.value = biaEditorFilter;
       }
+
+      // 5. 모드 설정
       biaEditorMode = 'add'; biaEditorTeam = null; biaEditorFnIdx = null;
+
       const titleEl = document.getElementById('biaEditorFormTitle');
       if (titleEl) titleEl.textContent = '➕ 핵심업무 추가';
       const delBtn = document.getElementById('biaEditorDeleteBtn');
       if (delBtn) delBtn.style.display = 'none';
-      document.getElementById('biaEditorFormWrap').style.display = '';
+
+      // 6. 폼을 명시적으로 block 표시 (display:'' 방식은 초기 인라인 스타일 제거 시 불안정)
+      const formWrap = document.getElementById('biaEditorFormWrap');
+      if (formWrap) formWrap.style.display = 'block';
+
       renderBiaEditorTable();
-      setTimeout(() => document.getElementById('biaEditorFormWrap').scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+
+      // 7. 폼으로 스크롤
+      setTimeout(() => {
+        const fw = document.getElementById('biaEditorFormWrap');
+        if (fw) fw.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
     });
 
     // 저장 버튼 (BIA Editor)
