@@ -107,20 +107,20 @@
 /* ── Table ── */
 .table-wrap{overflow-x:auto;padding:.25rem 0}
 table{width:100%;border-collapse:collapse;font-size:.8125rem;table-layout:fixed}
-th{padding:.625rem 1rem;text-align:left;font-size:.75rem;font-weight:600;
+th{padding:.625rem 1rem;text-align:center;font-size:.75rem;font-weight:600;
   color:var(--text-2);border-bottom:1px solid var(--border);white-space:nowrap;
   background:var(--bg)}
 td{padding:.625rem 1rem;border-bottom:1px solid var(--border);vertical-align:middle;
-  color:var(--text);line-height:1.45}
+  color:var(--text);line-height:1.45;text-align:center}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--surface-hover)}
-th:nth-child(1),td:nth-child(1){width:14%}  /* 카테고리 */
-th:nth-child(2),td:nth-child(2){width:14%}  /* 시스템ID */
-th:nth-child(3),td:nth-child(3){width:22%}  /* 표시명 */
-th:nth-child(4),td:nth-child(4){width:12%}  /* 소유부서 */
-th:nth-child(5),td:nth-child(5){width:10%}  /* 중요도 */
-th:nth-child(6),td:nth-child(6){width:9%;text-align:center} /* BIA연계 */
-th:nth-child(7),td:nth-child(7){width:19%;text-align:right} /* 액션 */
+th:nth-child(1),td:nth-child(1){width:14%}
+th:nth-child(2),td:nth-child(2){width:14%}
+th:nth-child(3),td:nth-child(3){width:22%;text-align:left}  /* 표시명 - left */
+th:nth-child(4),td:nth-child(4){width:12%}
+th:nth-child(5),td:nth-child(5){width:10%}
+th:nth-child(6),td:nth-child(6){width:9%;text-align:center}
+th:nth-child(7),td:nth-child(7){width:19%;text-align:center}
 td:nth-child(2){font-family:monospace;font-size:.8rem}
 .empty-row td{text-align:center;color:var(--text-2);padding:2rem 1rem;font-size:.875rem}
 
@@ -164,7 +164,7 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
 [data-theme=dark] .bia-link-badge.has{background:#1e3a5f;color:#93c5fd}
 
 /* Row actions */
-.row-actions{display:flex;gap:.375rem;justify-content:flex-end;flex-wrap:wrap}
+.row-actions{display:flex;gap:.375rem;justify-content:center;flex-wrap:wrap}
 
 /* ── Bottom Export Bar ── */
 .export-bar{display:flex;justify-content:space-between;align-items:center;
@@ -261,8 +261,13 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
           <input class="field-input" id="f_displayName" placeholder="예: UPS 시스템 A"/>
         </div>
         <div class="field-group">
-          <label class="field-label">소유 부서</label>
-          <input class="field-input" id="f_ownerDept" placeholder="예: 시설팀 / IT팀"/>
+          <label class="field-label">관리 부서</label>
+          <select class="field-select" id="f_ownerDept_sel" onchange="onOwnerDeptChange()">
+            <option value="">-- 부서 선택 --</option>
+            <option value="__direct__">✏ 직접 입력</option>
+          </select>
+          <input class="field-input" id="f_ownerDept" placeholder="예: 시설팀 / IT팀"
+            style="display:none;margin-top:4px;"/>
         </div>
       </div>
 
@@ -362,7 +367,7 @@ td:nth-child(2){font-family:monospace;font-size:.8rem}
             <th>카테고리</th>
             <th>시스템 ID</th>
             <th>표시명</th>
-            <th>소유 부서</th>
+            <th>관리 부서</th>
             <th>중요도</th>
             <th style="text-align:center">BIA 연계</th>
             <th style="text-align:right">액션</th>
@@ -424,6 +429,55 @@ function loadAll(){
   return Array.isArray(arr) ? arr : [];
 }
 function saveAll(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+
+/* ─── Org chart dept dropdown ───────────────────────────────── */
+function getOrgChartDepts() {
+  try {
+    const raw = localStorage.getItem('bcmsOrgChart');
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    const data = Array.isArray(arr) ? arr : [...(arr.nodes || []), ...(arr.edges || [])];
+    const seen = new Set();
+    return data
+      .filter(e => e.data && !e.data.source && e.data.label)
+      .map(e => e.data.label.split('\n')[0].trim())
+      .filter(d => { if (!d || seen.has(d)) return false; seen.add(d); return true; });
+  } catch { return []; }
+}
+
+function refreshOwnerDeptDropdown() {
+  const sel   = $('#f_ownerDept_sel');
+  const input = $('#f_ownerDept');
+  if (!sel || !input) return;
+  const depts = getOrgChartDepts();
+  if (!depts.length) {
+    sel.style.display   = 'none';
+    input.style.display = '';
+    return;
+  }
+  sel.style.display = '';
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">-- 부서 선택 --</option>' +
+    depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('') +
+    '<option value="__direct__">✏ 직접 입력</option>';
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+  input.style.display = sel.value === '__direct__' ? '' : 'none';
+}
+
+function onOwnerDeptChange() {
+  const isDirect = $('#f_ownerDept_sel').value === '__direct__';
+  $('#f_ownerDept').style.display = isDirect ? '' : 'none';
+  if (isDirect) { $('#f_ownerDept').value = ''; $('#f_ownerDept').focus(); }
+}
+
+function getOwnerDeptValue() {
+  const sel = $('#f_ownerDept_sel');
+  if (!sel || sel.style.display === 'none') return ($('#f_ownerDept').value || '').trim();
+  if (sel.value === '__direct__') return ($('#f_ownerDept').value || '').trim();
+  return sel.value;
+}
+
+window.addEventListener('storage', e => { if (e.key === 'bcmsOrgChart') refreshOwnerDeptDropdown(); });
 
 /* ─── Category helpers ───────────────────────────────────────── */
 const CAT_MAP = {
@@ -531,6 +585,10 @@ function resetForm(){
   $('#f_displayName').value = '';
   $('#f_ownerDept').value  = '';
   $('#f_type').value       = '';
+  refreshOwnerDeptDropdown();
+  const odSel = $('#f_ownerDept_sel');
+  if (odSel && odSel.style.display !== 'none') odSel.value = '';
+  if ($('#f_ownerDept') && odSel && odSel.style.display !== 'none') $('#f_ownerDept').style.display = 'none';
   $('#f_location').value   = '';
   $('#f_criticality').value = 'Critical';
   $('#f_tags').value       = '';
@@ -547,7 +605,7 @@ function saveItem(){
   const category    = normCat($('#f_category').value);
   const systemId    = ($('#f_systemId').value   || '').trim();
   const displayName = ($('#f_displayName').value || '').trim();
-  const ownerDept   = ($('#f_ownerDept').value  || '').trim();
+  const ownerDept   = getOwnerDeptValue();
   const type        = ($('#f_type').value        || '').trim();
   const location    = ($('#f_location').value    || '').trim();
   const criticality = $('#f_criticality').value;
@@ -591,7 +649,14 @@ function editItem(id){
   $('#f_category').value   = normCat(item.category);
   $('#f_systemId').value   = item.systemId   || '';
   $('#f_displayName').value = item.displayName || '';
-  $('#f_ownerDept').value  = item.ownerDept  || '';
+  const odVal = item.ownerDept || '';
+  const odSel = $('#f_ownerDept_sel');
+  if (odSel && odSel.style.display !== 'none') {
+    const hasOpt = [...odSel.options].some(o => o.value === odVal && o.value !== '__direct__' && o.value !== '');
+    if (hasOpt) { odSel.value = odVal; $('#f_ownerDept').style.display = 'none'; }
+    else if (odVal) { odSel.value = '__direct__'; $('#f_ownerDept').value = odVal; $('#f_ownerDept').style.display = ''; }
+    else { odSel.value = ''; $('#f_ownerDept').style.display = 'none'; }
+  } else { $('#f_ownerDept').value = odVal; }
   $('#f_type').value       = item.type       || '';
   $('#f_location').value   = item.location   || '';
   $('#f_criticality').value = item.criticality || 'Critical';
@@ -769,7 +834,7 @@ function exportCSV(){
   if (!all.length){ toast('내보낼 데이터가 없습니다.'); return; }
 
   const cols = ['systemId','displayName','category','ownerDept','type','location','criticality','tags','biaLinks','definition','createdAt','updatedAt'];
-  const hdrs = ['시스템ID','표시명','카테고리','소유부서','유형','위치','중요도','태그','BIA연계','용어정의','등록일','수정일'];
+  const hdrs = ['시스템ID','표시명','카테고리','관리부서','유형','위치','중요도','태그','BIA연계','용어정의','등록일','수정일'];
 
   const csvQ = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
   const rows = [hdrs, ...all.map(x => cols.map(c => {
@@ -799,6 +864,7 @@ function exportCSV(){
 })();
 
 /* ─── Init ───────────────────────────────────────────────────── */
+refreshOwnerDeptDropdown();
 renderAll();
 
 // Expose globals for inline handlers
@@ -811,7 +877,8 @@ window.resetAll    = resetAll;
 window.seedDemo    = seedDemo;
 window.exportJSON  = exportJSON;
 window.exportCSV   = exportCSV;
-window.updateBIACount = updateBIACount;
+window.updateBIACount    = updateBIACount;
+window.onOwnerDeptChange = onOwnerDeptChange;
 
 })();
 </script>

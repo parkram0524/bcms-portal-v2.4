@@ -158,6 +158,40 @@
   .dra-status-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .dra-link-wrap  { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 
+  /* ── Dept multi-select dropdown ── */
+  .dept-sel-wrap { position: relative; }
+  .dept-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 5px; min-height: 2px; }
+  .dept-tag {
+    display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
+    background: var(--accent-subtle); color: var(--accent);
+    border: 1px solid var(--accent-border); border-radius: 99px;
+    font-size: 11.5px; font-weight: 600;
+  }
+  .dept-tag-rm { cursor: pointer; font-size: 14px; line-height: 1; opacity: .7; margin-left: 2px; }
+  .dept-tag-rm:hover { opacity: 1; }
+  .dept-trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; font-size: 13px;
+    border: 1px solid var(--border-strong); border-radius: 8px;
+    background: var(--surface); color: var(--text);
+    cursor: pointer; user-select: none;
+  }
+  .dept-trigger:hover, .dept-trigger.open { border-color: var(--accent); }
+  .dept-dd {
+    display: none; position: absolute; z-index: 200; left: 0; right: 0; top: calc(100% + 4px);
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 8px; box-shadow: var(--shadow); max-height: 180px; overflow-y: auto;
+  }
+  .dept-dd.show { display: block; }
+  .dept-opt {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    font-size: 13px; cursor: pointer; transition: background .1s;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .dept-opt:last-child { border-bottom: none; }
+  .dept-opt:hover { background: var(--surface-hover); }
+  .dept-opt input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+
   /* ── Toast ── */
   .toast {
     position: fixed; bottom: 28px; left: 50%;
@@ -255,7 +289,16 @@
         </div>
         <div class="ff">
           <label class="fl">준수 의무 부서</label>
-          <input class="fi" id="fDept" type="text" placeholder="예: IT본부, 경영지원"/>
+          <div class="dept-sel-wrap" id="deptSelWrap">
+            <div class="dept-tags" id="deptTags"></div>
+            <div class="dept-trigger" id="deptTrigger">
+              <span id="deptTriggerText" style="color:var(--text-2)">부서 선택...</span>
+              <span style="font-size:11px;color:var(--text-2)">▼</span>
+            </div>
+            <div class="dept-dd" id="deptDd"></div>
+            <input class="fi" id="deptDirectInput" placeholder="부서명 직접 입력"
+              style="display:none;margin-top:6px;"/>
+          </div>
         </div>
         <div class="ff">
           <label class="fl">점검 주기</label>
@@ -546,6 +589,158 @@ function genId(reqs) {
   return `${prefix}${String(nums.length ? Math.max(...nums) + 1 : 1).padStart(3,'0')}`;
 }
 
+/* ── Dept helpers ── */
+function deptToArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  return [val];
+}
+
+function getOrgChartDepts() {
+  try {
+    const raw = localStorage.getItem('bcmsOrgChart');
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    const data = Array.isArray(arr) ? arr : [...(arr.nodes || []), ...(arr.edges || [])];
+    const seen = new Set();
+    return data
+      .filter(e => e.data && !e.data.source && e.data.label)
+      .map(e => e.data.label.split('\n')[0].trim())
+      .filter(d => { if (!d || seen.has(d)) return false; seen.add(d); return true; });
+  } catch { return []; }
+}
+
+let selectedDepts = [];
+
+function buildDeptDropdown() {
+  const depts = getOrgChartDepts();
+  const dd = document.getElementById('deptDd');
+  if (!dd) return;
+  const opts = [
+    { val: '__all__', lbl: '전체 부서' },
+    ...depts.map(d => ({ val: d, lbl: d })),
+    { val: '__direct__', lbl: '✏ 직접 입력' },
+  ];
+  dd.innerHTML = opts.map(o =>
+    `<div class="dept-opt" data-val="${esc(o.val)}">
+      <input type="checkbox" onclick="event.stopPropagation()"/>
+      ${esc(o.lbl)}
+    </div>`
+  ).join('');
+  dd.querySelectorAll('.dept-opt').forEach(opt => {
+    opt.addEventListener('click', () => toggleDept(opt.dataset.val));
+    opt.querySelector('input').addEventListener('change', e => {
+      e.stopPropagation();
+      toggleDept(opt.dataset.val);
+    });
+  });
+  syncDeptUI();
+}
+
+function toggleDept(val) {
+  if (val === '__all__') {
+    selectedDepts = selectedDepts.includes('전체 부서') ? [] : ['전체 부서'];
+  } else if (val === '__direct__') {
+    if (selectedDepts.includes('__direct__')) {
+      selectedDepts = selectedDepts.filter(d => d !== '__direct__');
+    } else {
+      selectedDepts = selectedDepts.filter(d => d !== '전체 부서');
+      selectedDepts.push('__direct__');
+    }
+  } else {
+    selectedDepts = selectedDepts.filter(d => d !== '전체 부서');
+    const idx = selectedDepts.indexOf(val);
+    if (idx >= 0) selectedDepts.splice(idx, 1);
+    else selectedDepts.push(val);
+  }
+  syncDeptUI();
+}
+
+function syncDeptUI() {
+  document.querySelectorAll('#deptDd .dept-opt').forEach(opt => {
+    const val = opt.dataset.val;
+    const chk = opt.querySelector('input[type=checkbox]');
+    if (!chk) return;
+    if (val === '__all__')    chk.checked = selectedDepts.includes('전체 부서');
+    else if (val === '__direct__') chk.checked = selectedDepts.includes('__direct__');
+    else chk.checked = selectedDepts.includes(val) && !selectedDepts.includes('전체 부서');
+  });
+  const display = getDeptDisplay();
+  const tagsEl = document.getElementById('deptTags');
+  if (tagsEl) {
+    tagsEl.innerHTML = display.map(d =>
+      `<span class="dept-tag">${esc(d)}<span class="dept-tag-rm" onclick="removeDept('${esc(d)}')">×</span></span>`
+    ).join('');
+  }
+  const trigText = document.getElementById('deptTriggerText');
+  if (trigText) {
+    const n = display.length;
+    trigText.textContent = n === 0 ? '부서 선택...' : `${n}개 선택됨`;
+    trigText.style.color = n === 0 ? 'var(--text-2)' : 'var(--text)';
+  }
+  const directInput = document.getElementById('deptDirectInput');
+  if (directInput) directInput.style.display = selectedDepts.includes('__direct__') ? '' : 'none';
+}
+
+function getDeptDisplay() {
+  if (selectedDepts.includes('전체 부서')) return ['전체 부서'];
+  return selectedDepts.filter(d => d !== '__direct__');
+}
+
+function getDeptValue() {
+  const display = getDeptDisplay();
+  if (selectedDepts.includes('__direct__')) {
+    const raw = (document.getElementById('deptDirectInput').value || '').trim();
+    raw.split(',').map(x => x.trim()).filter(Boolean).forEach(x => { if (!display.includes(x)) display.push(x); });
+  }
+  return display;
+}
+
+function setDeptValue(val) {
+  const arr = deptToArray(val);
+  const knownSet = new Set(['전체 부서', ...getOrgChartDepts()]);
+  selectedDepts = [];
+  const directVals = [];
+  arr.forEach(d => {
+    if (knownSet.has(d)) selectedDepts.push(d);
+    else directVals.push(d);
+  });
+  if (directVals.length) {
+    selectedDepts.push('__direct__');
+    document.getElementById('deptDirectInput').value = directVals.join(', ');
+  } else {
+    document.getElementById('deptDirectInput').value = '';
+  }
+  buildDeptDropdown();
+  syncDeptUI();
+}
+
+function removeDept(val) {
+  if (val === '전체 부서') selectedDepts = [];
+  else selectedDepts = selectedDepts.filter(d => d !== val);
+  syncDeptUI();
+}
+
+// Trigger open/close
+document.getElementById('deptTrigger').addEventListener('click', () => {
+  const dd = document.getElementById('deptDd');
+  const tr = document.getElementById('deptTrigger');
+  const open = dd.classList.toggle('show');
+  tr.classList.toggle('open', open);
+});
+
+// Close on outside click
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('deptSelWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('deptDd').classList.remove('show');
+    document.getElementById('deptTrigger').classList.remove('open');
+  }
+});
+
+// Refresh when org chart changes (other tab)
+window.addEventListener('storage', e => { if (e.key === 'bcmsOrgChart') buildDeptDropdown(); });
+
 /* ── Build module checkboxes ── */
 (function() {
   document.getElementById('moduleCbs').innerHTML = MODULES.map(m =>
@@ -585,7 +780,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
   const data = {
     name, cat: document.getElementById('fCat').value,
     clause: document.getElementById('fClause').value.trim(),
-    dept: document.getElementById('fDept').value.trim(),
+    dept: getDeptValue(),
     cycle: document.getElementById('fCycle').value,
     nextCheck: document.getElementById('fNextCheck').value,
     status: document.getElementById('fStatus').value,
@@ -611,7 +806,10 @@ function resetForm() {
   editingId = null;
   document.getElementById('editBadge').style.display = 'none';
   document.getElementById('btnSave').textContent = '저장';
-  ['fId','fName','fClause','fDept','fNextCheck','fMethod'].forEach(id => document.getElementById(id).value = '');
+  ['fId','fName','fClause','fNextCheck','fMethod'].forEach(id => document.getElementById(id).value = '');
+  selectedDepts = [];
+  document.getElementById('deptDirectInput').value = '';
+  buildDeptDropdown();
   document.getElementById('fCat').value    = 'law';
   document.getElementById('fCycle').value  = 'annual';
   document.getElementById('fStatus').value = 'ok';
@@ -631,7 +829,7 @@ function editReq(id) {
   document.getElementById('fName').value      = req.name;
   document.getElementById('fCat').value       = req.cat;
   document.getElementById('fClause').value    = req.clause    || '';
-  document.getElementById('fDept').value      = req.dept      || '';
+  setDeptValue(req.dept || '');
   document.getElementById('fCycle').value     = req.cycle     || 'annual';
   document.getElementById('fNextCheck').value = req.nextCheck || '';
   document.getElementById('fStatus').value    = req.status;
@@ -692,7 +890,9 @@ function renderKpi(reqs) {
 
 /* ── Render dept filter ── */
 function refreshDeptFilter(reqs) {
-  const depts = [...new Set(reqs.map(r => r.dept).filter(Boolean))].sort();
+  const deptSet = new Set();
+  reqs.forEach(r => deptToArray(r.dept).forEach(d => d && deptSet.add(d)));
+  const depts = [...deptSet].sort();
   const sel = document.getElementById('fltDept');
   const cur = sel.value;
   sel.innerHTML = '<option value="">부서 전체</option>' +
@@ -711,7 +911,7 @@ function renderTable() {
   const rows = reqs.filter(r =>
     (!cat    || r.cat === cat) &&
     (!status || r.status === status) &&
-    (!dept   || r.dept === dept) &&
+    (!dept   || deptToArray(r.dept).includes(dept)) &&
     (!q      || r.name.toLowerCase().includes(q) || (r.id||'').toLowerCase().includes(q))
   );
 
@@ -726,7 +926,7 @@ function renderTable() {
     <td style="font-size:11.5px;font-weight:700;color:var(--text-2);">${esc(r.id)}</td>
     <td style="font-weight:600;max-width:280px;">${esc(r.name)}</td>
     <td>${esc(CAT_LBL[r.cat] || r.cat)}</td>
-    <td>${esc(r.dept || '-')}</td>
+    <td>${esc(deptToArray(r.dept).join(', ') || '-')}</td>
     <td>${esc(CYCLE_LBL[r.cycle] || r.cycle)}</td>
     <td style="white-space:nowrap;">${esc(r.nextCheck || '-')}${reviewBadge(r.nextCheck)}</td>
     <td><span class="bdg ${statusCls[r.status] || 'bdg-na'}">${esc(STATUS_LBL[r.status] || r.status)}</span></td>
@@ -837,6 +1037,7 @@ function renderAll() {
   renderTable();
 }
 
+buildDeptDropdown();
 renderAll();
 </script>
 
