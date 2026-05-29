@@ -1132,6 +1132,7 @@
     let biaEditorTeam   = null;
     let biaEditorFnIdx  = null;
     let biaEditorSectionOpen = true;
+    let biaListEditKey  = null; // BIA 목록에서 현재 편집 중인 항목 키 (team::fnIdx)
 
     /* ── Populate selects ── */
     const renderTeamSelect = () => {
@@ -1297,9 +1298,12 @@
 
     function closeBiaEdit() {
       biaEditorMode = null; biaEditorTeam = null; biaEditorFnIdx = null;
+      const hadListEdit = biaListEditKey !== null;
+      biaListEditKey = null;
       const _fw = document.getElementById('biaEditorFormWrap');
       if (_fw) _fw.style.display = 'none';
       renderBiaEditorTable();
+      if (hadListEdit) renderBiaList(); // "편집 중" 하이라이트 해제
     }
 
     function renderBiaEditor() {
@@ -1775,11 +1779,12 @@
               const mbcoRecord = mbcoData[fn.biaId || fn.id] || {};
               const savedReason = mbcoRecord.mbcoReason || '';
               const sliderInit  = mbcoNum ?? 50;
+              const isListEditing = biaListEditKey === mbcoKey;
 
               const mainRow = `
-                <tr>
+                <tr${isListEditing ? ' style="background:var(--accent-subtle);"' : ''}>
                   <td style="font-family:monospace;font-size:10px">${escHtml(fn.biaId || fn.id || '-')}</td>
-                  <td class="td-left">${escHtml(fn.name)}</td>
+                  <td class="td-left">${escHtml(fn.name)}${isListEditing ? ' <span style="font-size:10px;font-weight:700;color:var(--accent);vertical-align:middle;">✏ 편집 중</span>' : ''}</td>
                   <td>${escHtml(fn._team)}</td>
                   <td><span class="badge ${impCls}">${escHtml(fn.importance || '일반')}</span></td>
                   <td>${escHtml(fn.mtpd || '-')}</td>
@@ -1792,8 +1797,10 @@
                       : `<span class="badge mbco-unset">미설정 ⚠</span>`}
                   </td>
                   <td>
-                    <button class="btn" style="font-size:10px;padding:3px 7px;margin-right:3px" type="button"
-                      data-edit-bia="${escHtml(fn._team)}::${fn._fnIdx}">수정</button>
+                    ${isListEditing
+                      ? `<span class="btn" style="font-size:10px;padding:3px 7px;margin-right:3px;background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border);cursor:default;">✏ 편집 중</span>`
+                      : `<button class="btn" style="font-size:10px;padding:3px 7px;margin-right:3px" type="button"
+                          data-edit-bia="${escHtml(fn._team)}::${fn._fnIdx}">수정</button>`}
                     <button class="btn" style="font-size:10px;padding:3px 7px" type="button"
                       data-delete-bia="${escHtml(fn._team)}::${fn._fnIdx}">삭제</button>
                   </td>
@@ -1888,6 +1895,8 @@
         if (teamRow) {
           teamRow.functions.splice(Number(idxStr), 1);
           mbcoEditOpen = null;
+          // 삭제된 항목이 편집 중이었으면 폼도 닫기
+          if (biaListEditKey === deleteKey) closeBiaEdit();
           saveBiaData(biaRows);
           renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect();
         }
@@ -1896,67 +1905,16 @@
 
       if (editKey) {
         mbcoEditOpen = null;
-        const [team, idxStr] = editKey.split('::');
-        const teamRow = biaRows.find(r => r.team === team);
-        if (!teamRow) return;
-        const fn = teamRow.functions[Number(idxStr)];
-        if (!fn) return;
-
-        // Pre-fill form
-        document.getElementById('newBiaId').textContent = fn.biaId || fn.id || genBiaId();
-        document.getElementById('newFnName').value      = fn.name;
-        document.getElementById('newFnTeam').value      = team;
-        document.getElementById('newFnDesc').value      = fn.description || '';
-        const impInput = document.querySelector(`input[name="newImportance"][value="${fn.importance}"]`);
-        if (impInput) impInput.checked = true;
-
-        document.getElementById('slFinancial').value   = fn.financialImpact   || fn.overallImpact;
-        document.getElementById('slOperational').value = fn.operationalImpact  || fn.overallImpact;
-        document.getElementById('slReputation').value  = fn.reputationalImpact || fn.overallImpact;
-        updateImpactScore();
-
-        if (fn.mtpdMinutes) {
-          if (fn.mtpdMinutes % 1440 === 0) {
-            document.getElementById('newMtpdVal').value  = fn.mtpdMinutes / 1440;
-            document.getElementById('newMtpdUnit').value = '일';
-          } else {
-            document.getElementById('newMtpdVal').value  = fn.mtpdMinutes / 60;
-            document.getElementById('newMtpdUnit').value = '시간';
-          }
-        }
-        document.getElementById('newRtoVal').value  = fn.rtoValue || '';
-        document.getElementById('newRtoUnit').value = fn.rtoUnit  || '분';
-        document.getElementById('newRpoVal').value  = fn.rpoValue || '';
-        document.getElementById('newRpoUnit').value = fn.rpoUnit  || '분';
-        const mbcoVal = fn.mbco != null ? fn.mbco : 50;
-        document.getElementById('newMbco').value = mbcoVal;
-        document.getElementById('mbcoVal').textContent = `${mbcoVal}%`;
-
-        RESOURCE_OPTIONS.forEach(r => {
-          const cb = raMount.querySelector(`[data-resource="${r}"]`);
-          if (!cb) return;
-          const enabled = fn.requiredResources.includes(r);
-          cb.checked = enabled;
-          document.getElementById('res_' + r.replace(/[·\/\s·]/g, '_'))?.classList.toggle('enabled', enabled);
-          if (fn.resourceDetails && fn.resourceDetails[r]) {
-            const desc = raMount.querySelector(`[data-res-desc="${r}"]`);
-            const alt  = raMount.querySelector(`[data-res-alt="${r}"]`);
-            if (desc) desc.value = fn.resourceDetails[r].description || '';
-            if (alt)  alt.value  = fn.resourceDetails[r].alternative || '';
-          }
-        });
-        updateAutoRisks();
-
-        teamRow.functions.splice(Number(idxStr), 1);
-        saveBiaData(biaRows);
-        renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect();
-
-        if (!panelOpen) {
-          panelOpen = true;
-          entryPanel.classList.remove('collapsed');
-          toggleEntry.textContent = '▴ 접기';
-        }
-        entryPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // openBiaEdit 으로 BIA 상세편집 섹션 폼에 데이터 로드
+        openBiaEdit(editKey, false);
+        // BIA 목록에서 해당 행 "편집 중" 표시
+        biaListEditKey = editKey;
+        renderBiaList();
+        // BIA 상세편집 섹션 상단으로 스크롤
+        setTimeout(() => {
+          const sec = document.getElementById('biaEditorSection');
+          if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
       }
     });
 
