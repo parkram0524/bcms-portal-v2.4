@@ -273,6 +273,28 @@
     .scoreItem .n { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
     .scoreItem ul { margin: 0; padding-left: 14px; color: var(--text-2); font-size: 10px; line-height: 1.4; }
 
+    /* ── BIA Editor Section ── */
+    .biaEditorSection { margin-top:18px; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--r); overflow:hidden; }
+    .biaEditorSection .sectionHeader { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:0.5px solid var(--border); gap:12px; }
+    .biaEditorSection .sectionHeader h2 { font-size:13px; font-weight:600; color:var(--text); margin:0; }
+    .teamFilterBar { display:flex; flex-wrap:wrap; gap:5px; padding:10px 16px; border-bottom:0.5px solid var(--border); align-items:center; }
+    .teamChip { padding:4px 12px; border-radius:999px; border:0.5px solid var(--border-strong); background:var(--surface); color:var(--text-2); font-size:12px; font-weight:600; cursor:pointer; transition:all .12s; white-space:nowrap; }
+    .teamChip:hover { background:var(--surface-hover); color:var(--text); }
+    .teamChip.active { background:var(--accent); color:#fff; border-color:transparent; }
+    #biaEditorTableWrap { overflow-x:auto; }
+    #biaEditorTableWrap table { width:100%; border-collapse:collapse; table-layout:fixed; min-width:640px; }
+    #biaEditorTableWrap th { padding:8px 10px; text-align:center; font-size:11px; font-weight:700; color:var(--text-2); background:var(--bg); border-bottom:1px solid var(--border); white-space:nowrap; }
+    #biaEditorTableWrap th:first-child { text-align:left; }
+    #biaEditorTableWrap td { padding:10px; font-size:13px; border-bottom:0.5px solid var(--border); vertical-align:middle; color:var(--text); text-align:center; }
+    #biaEditorTableWrap td:first-child { text-align:left; font-weight:600; }
+    #biaEditorTableWrap tr:last-child td { border-bottom:none; }
+    .biaEditorRow { cursor:pointer; transition:background .1s; }
+    .biaEditorRow:hover td { background:var(--surface-hover); }
+    .biaEditorRow.editing td { background:var(--accent-subtle) !important; }
+    .biaEditorFormHead { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:var(--surface); border-bottom:0.5px solid var(--border); flex-wrap:wrap; gap:8px; }
+    .biaEditorFormTitle { font-size:13.5px; font-weight:700; color:var(--text); }
+    .biaEditorAddBar { padding:10px 16px; border-top:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+
     /* ── BIA Guide Banner ── */
     .biaGuide { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:18px; }
     .biaGuideHead {
@@ -439,33 +461,61 @@
         <div class="metric"><div class="k">연결 리스크 수</div><div class="v" id="mRiskCount">0</div></div>
       </div>
 
-      <!-- 팀 선택 / 업무 추가 (편집기용) -->
-      <div class="controlRow">
-        <div class="field">
-          <label for="teamSelect">팀 선택 (편집기)</label>
-          <select id="teamSelect"></select>
-          <input type="text" id="teamSelectDirect" placeholder="새 팀/부서명 입력"
-            style="display:none;margin-top:4px;width:100%;padding:7px 9px;border:0.5px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);font-size:13px;"/>
-        </div>
-        <div class="field">
-          <label for="newFunctionName">핵심업무 직접 추가</label>
-          <input id="newFunctionName" type="text" placeholder="예: 전력 장애 원인 분석"/>
-        </div>
-        <div class="field" style="display:flex;align-items:flex-end;">
-          <button id="addFunctionBtn" class="btn" type="button" style="white-space:nowrap">업무 추가</button>
-        </div>
+      <!-- 숨김 호환 요소 (JS 참조용, 화면 표시 없음) -->
+      <div style="display:none;position:absolute;left:-9999px;" aria-hidden="true">
+        <select id="teamSelect"></select>
+        <input id="teamSelectDirect" type="text"/>
+        <input id="newFunctionName" type="text"/>
+        <button id="addFunctionBtn" type="button"></button>
+        <button id="toggleEntry" type="button"></button>
+        <div id="biaEntryHeader"></div>
       </div>
 
-      <!-- BIA 등록 폼 (5섹션) -->
-      <div class="collapseCard">
-        <div class="collapseHead" id="biaEntryHeader">
-          <span class="collapseTitle">BIA 등록</span>
+      <!-- BIA 상세편집 섹션 (NEW) -->
+      <div class="biaEditorSection" id="biaEditorSection">
+        <div class="sectionHeader" id="biaEditorHeader">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <h2>BIA 상세편집</h2>
+            <span id="biaEditorCount" style="font-size:12px;color:var(--text-2);"></span>
+          </div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn primary" id="aiHelpBtn" type="button" style="display:flex;align-items:center;gap:5px;">🤖 AI 도움받기</button>
-            <button class="btn primary" id="toggleEntry" type="button">▾ 펼치기</button>
+            <button class="btn primary" id="aiHelpBtn" type="button" style="font-size:12px;padding:5px 11px;">🤖 AI 도움받기</button>
+            <button class="btn primary" type="button" id="biaEditorToggle">▲ 접기</button>
           </div>
         </div>
-        <div class="entryPanel collapsed" id="entryPanel">
+        <div id="biaEditorBodyWrap">
+          <!-- 팀 필터 -->
+          <div class="teamFilterBar">
+            <span style="font-size:11.5px;font-weight:600;color:var(--text-2);margin-right:4px;">팀 필터</span>
+            <div id="teamFilterChips" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+          </div>
+          <!-- 업무 목록 테이블 -->
+          <div id="biaEditorTableWrap">
+            <table>
+              <colgroup>
+                <col style="width:26%"/><col style="width:13%"/><col style="width:9%"/>
+                <col style="width:9%"/><col style="width:9%"/><col style="width:9%"/>
+                <col style="width:9%"/><col style="width:16%"/>
+              </colgroup>
+              <thead><tr>
+                <th>업무명</th><th>팀/부서</th><th>중요도</th>
+                <th>MTPD</th><th>RTO</th><th>종합영향도</th><th>MBCO</th><th style="text-align:right">관리</th>
+              </tr></thead>
+              <tbody id="biaEditorTbody"></tbody>
+            </table>
+          </div>
+          <!-- 인라인 편집 폼 -->
+          <div id="biaEditorFormWrap" style="display:none;border-top:2px solid var(--accent);">
+            <div class="biaEditorFormHead">
+              <span class="biaEditorFormTitle" id="biaEditorFormTitle">✏ BIA 편집</span>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                <button class="btn" type="button" id="biaEditorCancelBtn">취소</button>
+                <button class="btn" type="button" id="biaEditorDeleteBtn" style="color:#dc2626;border-color:rgba(220,38,38,.3);">삭제</button>
+                <button class="btn primary" type="button" id="biaEditorSaveBtn">💾 저장</button>
+              </div>
+            </div>
+            <!-- entryPanel 폼 전체 (여기에 내용 포함) -->
+            <div class="entryPanel" id="entryPanel" style="display:grid !important;">
 
         <!-- ① 기본 정보 -->
         <div class="entryCard">
@@ -653,8 +703,15 @@
           </div>
         </div>
 
-        </div><!-- /entryPanel -->
-      </div><!-- /collapseCard (BIA 등록) -->
+            </div><!-- /entryPanel -->
+          </div><!-- /biaEditorFormWrap -->
+          <!-- 추가 버튼 바 -->
+          <div class="biaEditorAddBar">
+            <span style="font-size:12px;color:var(--text-2);">행을 클릭하면 상세편집 폼이 펼쳐집니다.</span>
+            <button class="btn primary" type="button" id="addBiaBtn">+ 핵심업무 추가</button>
+          </div>
+        </div><!-- /biaEditorBodyWrap -->
+      </div><!-- /biaEditorSection -->
 
       <!-- 탭 내비게이션 -->
       <div class="tabNav" id="biaTabNav">
@@ -679,23 +736,21 @@
         <div id="resourceSummaryMount"></div>
       </div>
 
-      <!-- 팀별 BIA 상세 편집 (접힘) -->
-      <div class="teamEditorSection">
-        <div class="sectionHeader" id="teamEditorHeader">
-          <h2>팀별 BIA 상세 편집 <span style="font-weight:400;color:var(--text-2);font-size:12px;margin-left:6px">· 시간경과 영향평가</span></h2>
-          <button class="btn primary" type="button" id="teamEditorToggle">▾ 펼치기</button>
-        </div>
-        <div class="teamEditorBody collapsed" id="teamEditorBody">
+      <!-- 숨김 호환 요소 (teamEditor JS 참조용) -->
+      <div style="display:none;position:absolute;left:-9999px;" aria-hidden="true">
+        <div id="teamEditorHeader"></div>
+        <button id="teamEditorToggle" type="button"></button>
+        <div id="teamEditorBody" class="teamEditorBody collapsed">
           <div class="summaryStrip">
-            <div class="sumStat"><div class="k">선택 팀</div><div class="v" id="teamMetric" style="font-size:15px;margin-top:8px">-</div></div>
-            <div class="sumStat"><div class="k">핵심업무 수</div><div class="v" id="countMetric">0</div></div>
-            <div class="sumStat"><div class="k">중요업무 수</div><div class="v" id="importantMetric">0</div></div>
-            <div class="sumStat"><div class="k">최단 MTPD/RTO</div><div class="v" id="timeMetric" style="font-size:14px;margin-top:10px">-</div></div>
+            <div class="sumStat"><div class="v" id="teamMetric"></div></div>
+            <div class="sumStat"><div class="v" id="countMetric"></div></div>
+            <div class="sumStat"><div class="v" id="importantMetric"></div></div>
+            <div class="sumStat"><div class="v" id="timeMetric"></div></div>
           </div>
           <div id="tableMount" class="tableWrap"></div>
           <div class="actions">
-            <button id="resetBtn" class="btn" type="button">선택 팀 초기화</button>
-            <button id="saveBtn" class="btn primary" type="button">저장</button>
+            <button id="resetBtn" class="btn" type="button"></button>
+            <button id="saveBtn" class="btn primary" type="button"></button>
           </div>
         </div>
       </div>
@@ -1088,8 +1143,164 @@
       newFnTeam.innerHTML  = opts;
       if (prev && (allTeams.includes(prev) || prev === '__direct__')) teamSelect.value = prev;
       refreshCoreMap();
+      // 팀 필터 칩도 갱신
+      renderBiaEditorFilter();
     };
     renderTeamSelect();
+
+    /* ── BIA Editor Section ── */
+    let biaEditorFilter = '전체';
+    let biaEditorMode   = null; // 'edit' | 'add' | null
+    let biaEditorTeam   = null;
+    let biaEditorFnIdx  = null;
+    let biaEditorSectionOpen = true;
+
+    function renderBiaEditorFilter() {
+      const chips = document.getElementById('teamFilterChips');
+      if (!chips) return;
+      const teams = uniq(biaRows.map(r => r.team).filter(Boolean));
+      chips.innerHTML = ['전체', ...teams].map(t =>
+        `<button class="teamChip${t === biaEditorFilter ? ' active' : ''}" type="button" data-team="${escHtml(t)}">${escHtml(t)}</button>`
+      ).join('');
+    }
+
+    function renderBiaEditorTable() {
+      const tbody = document.getElementById('biaEditorTbody');
+      if (!tbody) return;
+      const allFns = biaRows.flatMap(row =>
+        (row.functions || []).map((fn, fnIdx) => ({ ...fn, _team: row.team, _fnIdx: fnIdx }))
+      ).filter(fn => biaEditorFilter === '전체' || fn._team === biaEditorFilter);
+      const cnt = document.getElementById('biaEditorCount');
+      if (cnt) cnt.textContent = `총 ${allFns.length}개 업무`;
+      if (!allFns.length) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-3);">
+          등록된 BIA가 없습니다. 아래 <b>+ 핵심업무 추가</b>를 클릭하세요.</td></tr>`;
+        return;
+      }
+      const mbcoData = loadMbcoData();
+      tbody.innerHTML = allFns.map(fn => {
+        const key = `${fn._team}::${fn._fnIdx}`;
+        const band = scoreBand(fn.overallImpact);
+        const impCls = fn.importance === '핵심' ? 'core' : fn.importance === '중요' ? 'important' : 'general';
+        const mbcoNum = fn.mbco != null ? Number(fn.mbco) : null;
+        const mbcoStr = mbcoNum !== null ? `${mbcoNum}%` : '-';
+        const isEditing = biaEditorMode === 'edit' && biaEditorTeam === fn._team && biaEditorFnIdx === fn._fnIdx;
+        return `<tr class="biaEditorRow${isEditing ? ' editing' : ''}" data-edit-key="${escHtml(key)}">
+          <td>${escHtml(fn.name)}</td>
+          <td>${escHtml(fn._team)}</td>
+          <td><span class="badge ${impCls}">${escHtml(fn.importance || '일반')}</span></td>
+          <td>${escHtml(fn.mtpd || '-')}</td>
+          <td>${escHtml(fn.rto || '-')}</td>
+          <td><span class="badge ${band.cls}">${fn.overallImpact}</span></td>
+          <td>${escHtml(mbcoStr)}</td>
+          <td style="text-align:right;">
+            <button class="btn" style="font-size:11px;padding:3px 9px;" type="button"
+              data-bia-edit="${escHtml(key)}">✏ 편집</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function populateBiaForm(fn, teamName) {
+      document.getElementById('newFnName').value  = fn.name || '';
+      document.getElementById('newFnDesc').value  = fn.description || '';
+      // 팀 선택
+      const teamSelEl = document.getElementById('newFnTeam');
+      if (teamSelEl) {
+        const hasTm = [...teamSelEl.options].some(o => o.value === teamName);
+        if (hasTm) { teamSelEl.value = teamName; document.getElementById('newFnTeamDirect').style.display = 'none'; }
+        else { teamSelEl.value = '__direct__'; const di = document.getElementById('newFnTeamDirect'); if (di) { di.value = teamName; di.style.display = ''; } }
+      }
+      // 중요도
+      const impEl = document.querySelector(`input[name="newImportance"][value="${fn.importance || '일반'}"]`);
+      if (impEl) impEl.checked = true;
+      // 슬라이더
+      document.getElementById('slFinancial').value  = fn.financialImpact  || fn.overallImpact || 1;
+      document.getElementById('slOperational').value= fn.operationalImpact|| fn.overallImpact || 1;
+      document.getElementById('slReputation').value = fn.reputationalImpact|| fn.overallImpact || 1;
+      updateImpactScore();
+      // MTPD
+      const mtpdM = fn.mtpdMinutes;
+      if (mtpdM) {
+        if (mtpdM % 1440 === 0) { document.getElementById('newMtpdVal').value = mtpdM/1440; document.getElementById('newMtpdUnit').value = '일'; }
+        else { document.getElementById('newMtpdVal').value = mtpdM/60; document.getElementById('newMtpdUnit').value = '시간'; }
+      } else { document.getElementById('newMtpdVal').value = ''; }
+      // RTO
+      document.getElementById('newRtoVal').value  = fn.rtoValue !== undefined ? fn.rtoValue : '';
+      document.getElementById('newRtoUnit').value = fn.rtoUnit || '분';
+      // RPO
+      document.getElementById('newRpoVal').value  = fn.rpoValue || '';
+      document.getElementById('newRpoUnit').value = fn.rpoUnit || '분';
+      // MBCO
+      const mbcoEl = document.getElementById('newMbco');
+      if (mbcoEl) { mbcoEl.value = fn.mbco ?? 50; document.getElementById('mbcoVal').textContent = `${mbcoEl.value}%`; }
+      // 소요자원 재빌드
+      raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
+      if (fn.requiredResources) fn.requiredResources.forEach(r => {
+        const cb = raMount.querySelector(`[data-resource="${r}"]`);
+        if (cb) { cb.checked = true; document.getElementById('res_' + r.replace(/[·\/\s·]/g, '_'))?.classList.add('enabled'); }
+      });
+      if (fn.resourceDetails) {
+        Object.entries(fn.resourceDetails).forEach(([res, detail]) => {
+          if (!detail.mainRows?.length) return;
+          const cMain = raMount.querySelector(`.resDetailRows[data-res="${res}"][data-section="main"]`);
+          if (cMain) {
+            cMain.innerHTML = '';
+            detail.mainRows.forEach(() => cMain.insertAdjacentHTML('beforeend', buildResRowHtml(res, 'main')));
+            detail.mainRows.forEach((rowData, i) => {
+              const row = cMain.querySelectorAll('.resDetailRow')[i];
+              if (!row) return;
+              Object.entries(rowData).forEach(([key, val]) => { const el = row.querySelector(`[data-field="${key}"]`); if (el) el.value = val; });
+            });
+          }
+          if (detail.altRows?.length) {
+            const cAlt = raMount.querySelector(`.resDetailRows[data-res="${res}"][data-section="alt"]`);
+            if (cAlt) {
+              cAlt.innerHTML = '';
+              detail.altRows.forEach(() => cAlt.insertAdjacentHTML('beforeend', buildResRowHtml(res, 'alt')));
+              detail.altRows.forEach((rowData, i) => {
+                const row = cAlt.querySelectorAll('.resDetailRow')[i];
+                if (!row) return;
+                Object.entries(rowData).forEach(([key, val]) => { const el = row.querySelector(`[data-field="${key}"]`); if (el) el.value = val; });
+              });
+            }
+          }
+          if (detail.bcpTeam) { const el = raMount.querySelector(`[data-res-bcp-team="${res}"]`); if (el) el.value = detail.bcpTeam; }
+          if (detail.bcpContact) { const el = raMount.querySelector(`[data-res-bcp-contact="${res}"]`); if (el) el.value = detail.bcpContact; }
+        });
+      }
+      updateAutoRisks();
+    }
+
+    function openBiaEdit(key, isNew) {
+      const [team, fnIdxStr] = key.split('::');
+      const fnIdx = Number(fnIdxStr);
+      const teamRow = biaRows.find(r => r.team === team);
+      const fn = teamRow?.functions[fnIdx];
+      if (!fn && !isNew) return;
+      biaEditorMode  = isNew ? 'add' : 'edit';
+      biaEditorTeam  = team;
+      biaEditorFnIdx = fnIdx;
+      if (!isNew) populateBiaForm(fn, team);
+      const titleEl = document.getElementById('biaEditorFormTitle');
+      if (titleEl) titleEl.textContent = isNew ? '➕ 핵심업무 추가' : `✏ ${fn.name} 편집`;
+      const delBtn = document.getElementById('biaEditorDeleteBtn');
+      if (delBtn) delBtn.style.display = isNew ? 'none' : '';
+      document.getElementById('biaEditorFormWrap').style.display = '';
+      renderBiaEditorTable();
+      setTimeout(() => document.getElementById('biaEditorFormWrap').scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+    }
+
+    function closeBiaEdit() {
+      biaEditorMode = null; biaEditorTeam = null; biaEditorFnIdx = null;
+      document.getElementById('biaEditorFormWrap').style.display = 'none';
+      renderBiaEditorTable();
+    }
+
+    function renderBiaEditor() {
+      renderBiaEditorFilter();
+      renderBiaEditorTable();
+    }
 
     /* ── Get effective selected team (handles 직접 입력) ── */
     const getSelectedTeam = () => {
@@ -1107,27 +1318,27 @@
     document.getElementById('newBiaId').textContent = genBiaId();
 
     /* ── Entry panel toggle ── */
-    toggleEntry.addEventListener('click', () => {
+    toggleEntry?.addEventListener('click', () => {
       panelOpen = !panelOpen;
-      entryPanel.classList.toggle('collapsed', !panelOpen);
-      toggleEntry.textContent = panelOpen ? '▴ 접기' : '▾ 펼치기';
+      entryPanel?.classList.toggle('collapsed', !panelOpen);
+      if (toggleEntry) toggleEntry.textContent = panelOpen ? '▴ 접기' : '▾ 펼치기';
     });
-    document.getElementById('biaEntryHeader').addEventListener('click', e => {
-      if (!e.target.closest('button')) toggleEntry.click();
+    document.getElementById('biaEntryHeader')?.addEventListener('click', e => {
+      if (!e.target.closest('button')) toggleEntry?.click();
     });
 
     /* ── Team editor toggle ── */
     const teamEditorBody   = document.getElementById('teamEditorBody');
     const teamEditorToggle = document.getElementById('teamEditorToggle');
     let editorOpen = false;
-    teamEditorToggle.addEventListener('click', () => {
+    teamEditorToggle?.addEventListener('click', () => {
       editorOpen = !editorOpen;
-      teamEditorBody.classList.toggle('collapsed', !editorOpen);
-      teamEditorToggle.textContent = editorOpen ? '▴ 접기' : '▾ 펼치기';
+      teamEditorBody?.classList.toggle('collapsed', !editorOpen);
+      if (teamEditorToggle) teamEditorToggle.textContent = editorOpen ? '▴ 접기' : '▾ 펼치기';
       if (editorOpen) renderTeamEditor();
     });
-    document.getElementById('teamEditorHeader').addEventListener('click', e => {
-      if (!e.target.closest('button')) teamEditorToggle.click();
+    document.getElementById('teamEditorHeader')?.addEventListener('click', e => {
+      if (!e.target.closest('button')) teamEditorToggle?.click();
     });
 
     /* ── Demo banner ── */
@@ -1513,6 +1724,7 @@
       renderResourceSummary();
       renderMetrics();
       renderTeamSelect();
+      renderBiaEditor();
       switchTab('biaList');
       document.getElementById('clearEntryBtn').click();
       showToast('✅ BIA 등록 완료! BIA 목록의 <b>MBCO 컬럼</b>을 클릭하여 최소운영수준을 설정하세요.');
@@ -2104,6 +2316,181 @@
       renderTeamEditor(); renderBiaList(); renderMetrics();
     });
 
+    /* ── BIA Editor event handlers ── */
+    // 섹션 접기/펼치기
+    document.getElementById('biaEditorToggle')?.addEventListener('click', () => {
+      const body = document.getElementById('biaEditorBodyWrap');
+      const btn  = document.getElementById('biaEditorToggle');
+      if (!body) return;
+      biaEditorSectionOpen = !biaEditorSectionOpen;
+      body.style.display = biaEditorSectionOpen ? '' : 'none';
+      if (btn) btn.textContent = biaEditorSectionOpen ? '▲ 접기' : '▼ 펼치기';
+    });
+    document.getElementById('biaEditorHeader')?.addEventListener('click', e => {
+      if (!e.target.closest('button')) document.getElementById('biaEditorToggle')?.click();
+    });
+
+    // 팀 필터 칩 클릭
+    document.getElementById('teamFilterChips')?.addEventListener('click', e => {
+      const chip = e.target.closest('.teamChip');
+      if (!chip) return;
+      biaEditorFilter = chip.dataset.team || '전체';
+      closeBiaEdit();
+      renderBiaEditorFilter();
+      renderBiaEditorTable();
+    });
+
+    // 테이블 행 클릭 → 편집 폼 열기
+    document.getElementById('biaEditorTbody')?.addEventListener('click', e => {
+      const editBtn = e.target.closest('[data-bia-edit]');
+      if (editBtn) {
+        const key = editBtn.dataset.biaEdit;
+        if (biaEditorMode === 'edit' && `${biaEditorTeam}::${biaEditorFnIdx}` === key) {
+          closeBiaEdit();
+        } else {
+          openBiaEdit(key, false);
+        }
+        return;
+      }
+      const row = e.target.closest('.biaEditorRow');
+      if (row && row.dataset.editKey) {
+        const key = row.dataset.editKey;
+        if (biaEditorMode === 'edit' && `${biaEditorTeam}::${biaEditorFnIdx}` === key) {
+          closeBiaEdit();
+        } else {
+          openBiaEdit(key, false);
+        }
+      }
+    });
+
+    // "+ 핵심업무 추가" 버튼
+    document.getElementById('addBiaBtn')?.addEventListener('click', () => {
+      // 빈 폼 준비
+      document.getElementById('newBiaId').textContent = genBiaId();
+      document.getElementById('newFnName').value  = '';
+      document.getElementById('newFnDesc').value  = '';
+      document.querySelector('input[name="newImportance"][value="중요"]').checked = true;
+      ['slFinancial','slOperational','slReputation'].forEach(id => { document.getElementById(id).value = 1; });
+      updateImpactScore();
+      ['newMtpdVal','newRtoVal','newRpoVal'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('newMbco').value = 50;
+      document.getElementById('mbcoVal').textContent = '50%';
+      raMount.innerHTML = RESOURCE_OPTIONS.map(r => buildResCardHtml(r)).join('');
+      document.getElementById('newRelatedManual').value = '';
+      document.getElementById('autoRisksList').innerHTML = '<div class="relatedRiskEmpty">④에서 소요자원을 선택하면 관련 리스크가 표시됩니다.</div>';
+      // 팀이 선택되어 있으면 기본 팀 설정
+      if (biaEditorFilter !== '전체') {
+        const teamSelEl = document.getElementById('newFnTeam');
+        if (teamSelEl && [...teamSelEl.options].some(o => o.value === biaEditorFilter)) teamSelEl.value = biaEditorFilter;
+      }
+      biaEditorMode = 'add'; biaEditorTeam = null; biaEditorFnIdx = null;
+      const titleEl = document.getElementById('biaEditorFormTitle');
+      if (titleEl) titleEl.textContent = '➕ 핵심업무 추가';
+      const delBtn = document.getElementById('biaEditorDeleteBtn');
+      if (delBtn) delBtn.style.display = 'none';
+      document.getElementById('biaEditorFormWrap').style.display = '';
+      renderBiaEditorTable();
+      setTimeout(() => document.getElementById('biaEditorFormWrap').scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+    });
+
+    // 저장 버튼 (BIA Editor)
+    document.getElementById('biaEditorSaveBtn')?.addEventListener('click', () => {
+      const name = document.getElementById('newFnName').value.trim();
+      if (!name) { alert('업무명칭을 입력하세요.'); return; }
+      let team = document.getElementById('newFnTeam').value;
+      if (team === '__direct__') team = (document.getElementById('newFnTeamDirect').value || '').trim();
+      if (!team) { alert('소속 부서/팀을 선택하거나 직접 입력하세요.'); return; }
+
+      const importance   = document.querySelector('input[name="newImportance"]:checked')?.value || '일반';
+      const financial    = Number(document.getElementById('slFinancial').value);
+      const operational  = Number(document.getElementById('slOperational').value);
+      const reputation   = Number(document.getElementById('slReputation').value);
+      const overallImpact= clamp(Math.round((financial + operational + reputation) / 3), 1, 5);
+      const mtpdV = Number(document.getElementById('newMtpdVal').value) || null;
+      const mtpdU = document.getElementById('newMtpdUnit').value;
+      const rtoV  = document.getElementById('newRtoVal').value;
+      const rtoU  = document.getElementById('newRtoUnit').value;
+      const rpoV  = document.getElementById('newRpoVal').value;
+      const rpoU  = document.getElementById('newRpoUnit').value;
+      const mbco  = Number(document.getElementById('newMbco').value);
+      const biaId = document.getElementById('newBiaId').textContent;
+      const mtpdMinutes = mtpdV ? (mtpdU === '일' ? mtpdV * 1440 : mtpdV * 60) : null;
+
+      const selectedResources = []; const resourceDetails = {};
+      RESOURCE_OPTIONS.forEach(r => {
+        const cb = raMount.querySelector(`[data-resource="${r}"]`);
+        if (cb && cb.checked) {
+          selectedResources.push(r);
+          const mainRows = getResRows(r, 'main'); const altRows = getResRows(r, 'alt');
+          const extraFields = {};
+          raMount.querySelectorAll(`[data-res-extra="${r}"]`).forEach(el => { if (el.dataset.key) extraFields[el.dataset.key] = el.value.trim(); });
+          resourceDetails[r] = {
+            required:true,
+            description: mainRows.map(row => Object.values(row).filter(Boolean).join(' ')).join('; '),
+            alternative: altRows.map(row => Object.values(row).filter(Boolean).join(' ')).join('; '),
+            mainRows, altRows,
+            bcpTeam:    raMount.querySelector(`[data-res-bcp-team="${r}"]`)?.value || '',
+            bcpContact: raMount.querySelector(`[data-res-bcp-contact="${r}"]`)?.value || '',
+            extraFields,
+          };
+        }
+      });
+      const relatedRisks = [...document.querySelectorAll('.relatedRiskCheck:checked')].map(cb => cb.getAttribute('data-risk-id'));
+      const newFnData = normalizeFunction({
+        biaId, name, importance, overallImpact, timeImpact: makeDefaultTimeImpact(overallImpact),
+        rtoValue: rtoV === '' ? '' : Number(rtoV), rtoUnit: rtoU,
+        requiredResources: selectedResources,
+        description: document.getElementById('newFnDesc').value.trim(),
+        financialImpact: financial, operationalImpact: operational, reputationalImpact: reputation,
+        rpoValue: rpoV === '' ? '' : Number(rpoV), rpoUnit: rpoU, mbco, resourceDetails, relatedRisks
+      });
+      if (mtpdMinutes !== null) { newFnData.mtpdMinutes = mtpdMinutes; newFnData.mtpd = toDurationText(mtpdMinutes); }
+
+      if (biaEditorMode === 'edit' && biaEditorTeam !== null && biaEditorFnIdx !== null) {
+        // 기존 항목 수정
+        const oldTeamRow = biaRows.find(r => r.team === biaEditorTeam);
+        if (oldTeamRow && oldTeamRow.functions[biaEditorFnIdx]) {
+          const oldFn = oldTeamRow.functions[biaEditorFnIdx];
+          newFnData.id = oldFn.id; newFnData.biaId = oldFn.biaId;
+          if (team !== biaEditorTeam) {
+            oldTeamRow.functions.splice(biaEditorFnIdx, 1);
+            let newTeamRow = biaRows.find(r => r.team === team);
+            if (!newTeamRow) { newTeamRow = { team, functions: [] }; biaRows.push(newTeamRow); }
+            newTeamRow.functions.push(newFnData);
+          } else {
+            oldTeamRow.functions[biaEditorFnIdx] = newFnData;
+          }
+        }
+        showToast('✅ BIA 수정 완료!');
+      } else {
+        // 신규 추가
+        let teamRow2 = biaRows.find(r => r.team === team);
+        if (!teamRow2) { teamRow2 = { team, functions: [] }; biaRows.push(teamRow2); }
+        teamRow2.functions.push(newFnData);
+        showToast('✅ BIA 등록 완료! MBCO 컬럼을 클릭하여 최소운영수준을 설정하세요.');
+      }
+
+      saveBiaData(biaRows);
+      closeBiaEdit();
+      renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect(); renderBiaEditor();
+    });
+
+    // 삭제 버튼
+    document.getElementById('biaEditorDeleteBtn')?.addEventListener('click', () => {
+      if (!confirm('이 BIA 항목을 삭제하시겠습니까?')) return;
+      const teamRow = biaRows.find(r => r.team === biaEditorTeam);
+      if (teamRow && biaEditorFnIdx !== null) {
+        teamRow.functions.splice(biaEditorFnIdx, 1);
+        saveBiaData(biaRows);
+        showToast('🗑 삭제되었습니다.');
+      }
+      closeBiaEdit();
+      renderBiaList(); renderResourceSummary(); renderMetrics(); renderTeamSelect(); renderBiaEditor();
+    });
+
+    // 취소 버튼
+    document.getElementById('biaEditorCancelBtn')?.addEventListener('click', closeBiaEdit);
+
     teamSelect.addEventListener('change', () => {
       const directInput = document.getElementById('teamSelectDirect');
       const isDirect = teamSelect.value === '__direct__';
@@ -2118,6 +2505,7 @@
     });
 
     /* ── Init ── */
+    renderBiaEditor();
     renderMetrics();
     renderBiaList();
     renderResourceSummary();
