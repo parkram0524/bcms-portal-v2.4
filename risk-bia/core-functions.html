@@ -206,38 +206,88 @@
 
     let editingTeam = '';
 
+    /* ── 분 → 표시용 텍스트 변환 ── */
+    const minsToText = m => {
+      if (m == null || !Number.isFinite(Number(m))) return '-';
+      const n = Number(m);
+      if (n >= 1440 && n % 1440 === 0) return `${n / 1440}일`;
+      if (n >= 60   && n % 60   === 0) return `${n / 60}시간`;
+      return `${n}분`;
+    };
+
+    /* ── flat 형식 판별 ──
+       DataStore.writeBiaRecords() 저장 시: [{id, teamName, functionName, ...}] (flat)
+       기존 저장 시: [{team, functions:[...]}] (team-grouped)
+    ── */
+    const isFlatFormat = raw =>
+      Array.isArray(raw) && raw.length > 0 &&
+      !Array.isArray(raw[0]?.functions) &&
+      (raw[0]?.functionName != null || raw[0]?.teamName != null);
+
+    /* flat 레코드 1개 → fnRow 객체 */
+    const flatRecordToFnRow = record => {
+      const name = normStr(record.functionName || record.name || '');
+      if (!name) return null;
+      const rtoDisplay = (() => {
+        if (record.rtoValue != null && record.rtoValue !== '' && record.rtoValue !== null)
+          return `${record.rtoValue}${record.rtoUnit || '분'}`;
+        return '-';
+      })();
+      return {
+        id:         normStr(record.id || record.biaId || ''),
+        name,
+        importance: normStr(record.importance || '') || '일반',
+        mtpd:       record.mtpdMinutes != null ? minsToText(record.mtpdMinutes) : '-',
+        rto:        rtoDisplay,
+        coreFinal:  normStr(record.grade || '') !== '일반',
+      };
+    };
+
     /* ──────────────────────────────────────────────
        bcmsBIAData 읽기
-       구조: [{team, functions:[{name, importance, mtpd, rto, coreFinal, id, ...}]}]
-       문자열 배열 형태도 허용
+       두 가지 저장 형식 모두 지원:
+         flat: [{id, teamName, functionName, overallImpact, rtoValue, rtoUnit, ...}]
+         grouped: [{team, functions:[{name, importance, ...}]}]
     ─────────────────────────────────────────────── */
     const readBIARows = () => {
       const raw = safeParse(localStorage.getItem(BIA_KEY), []);
-      if (!Array.isArray(raw)) return [];
+      if (!Array.isArray(raw) || !raw.length) return [];
 
+      /* flat canonical 형식 (DataStore 저장) */
+      if (isFlatFormat(raw)) {
+        const teamMap = new Map();
+        for (const record of raw) {
+          const team = normStr(record.teamName || record.team || '');
+          if (!team) continue;
+          const fn = flatRecordToFnRow(record);
+          if (!fn) continue;
+          if (!teamMap.has(team)) teamMap.set(team, []);
+          teamMap.get(team).push(fn);
+        }
+        return [...teamMap.entries()]
+          .map(([team, functions]) => ({ team, functions }))
+          .filter(row => row.functions.length);
+      }
+
+      /* 기존 team-grouped 형식 */
       return raw.map(row => {
         if (!row || typeof row !== 'object') return null;
-
         const team = normStr(row.team || row.teamName || '');
         if (!team) return null;
 
         const fns = (row.functions || []).map(f => {
           if (!f) return null;
-          /* 문자열인 경우 */
           if (typeof f === 'string') {
             const name = normStr(f);
             return name ? { id: '', name, importance: '일반', mtpd: '-', rto: '-', coreFinal: false } : null;
           }
-          /* 객체인 경우 — 여러 필드명 허용 */
           const name = normStr(f.name || f.functionName || f.coreFunction || f.title || '');
           if (!name) return null;
-
           const rtoDisplay = (() => {
             if (normStr(f.rto) && normStr(f.rto) !== '-') return normStr(f.rto);
             if (f.rtoValue != null && f.rtoValue !== '') return `${f.rtoValue}${f.rtoUnit || ''}`;
             return '-';
           })();
-
           return {
             id:         normStr(f.id || f.biaId || ''),
             name,
@@ -308,10 +358,36 @@
       const rows = safeParse(localStorage.getItem(BIA_KEY), []);
       if (!Array.isArray(rows)) return;
 
-      const idx = rows.findIndex(r => normStr(r.team || r.teamName) === originalTeam);
+      if (isFlatFormat(rows)) {
+        /* flat 형식: 팀별 레코드 단위로 처리 */
+        const teamRecs  = rows.filter(r => normStr(r.teamName || r.team) === originalTeam);
+        const otherRecs = rows.filter(r => normStr(r.teamName || r.team) !== originalTeam);
+
+        const existingByName = new Map();
+        teamRecs.forEach(r => {
+          const name = normStr(r.functionName || r.name || '');
+          if (name) existingByName.set(name, r);
+        });
+
+        const newRecs = newFnNames.map(name => {
+          const existing = existingByName.get(name);
+          if (existing) return { ...existing, teamName: newTeam };
+          return {
+            id: `BIA-${Date.now()}-${Math.random().toString(36).slice(2,5)}`,
+            teamName: newTeam, functionName: name,
+            importance: '일반', overallImpact: 3, requiredResources: [],
+          };
+        });
+
+        try { localStorage.setItem(BIA_KEY, JSON.stringify([...otherRecs, ...newRecs])); } catch {}
+        syncCoreFromBIA();
+        return;
+      }
+
+      /* 기존 team-grouped 형식 */
+      const idx    = rows.findIndex(r => normStr(r.team || r.teamName) === originalTeam);
       const oldFns = idx >= 0 ? (rows[idx].functions || []) : [];
 
-      /* 기존 rich 객체 보존 */
       const oldFnMap = new Map();
       oldFns.forEach(f => {
         const name = typeof f === 'string'
@@ -338,7 +414,9 @@
       const rows = safeParse(localStorage.getItem(BIA_KEY), []);
       try {
         localStorage.setItem(BIA_KEY, JSON.stringify(
-          Array.isArray(rows) ? rows.filter(r => normStr(r.team || r.teamName) !== team) : []
+          Array.isArray(rows)
+            ? rows.filter(r => normStr(r.teamName || r.team) !== team)
+            : []
         ));
       } catch {}
       syncCoreFromBIA();
