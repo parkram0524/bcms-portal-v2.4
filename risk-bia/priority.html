@@ -364,7 +364,38 @@
   ];
 
   /* ── Data sources ── */
-  const loadBIA       = () => loadJSON('bcmsBIAData', []);
+  const loadBIA = () => {
+    const raw = loadJSON('bcmsBIAData', []);
+    if (!Array.isArray(raw) || !raw.length) return [];
+
+    const first = raw[0];
+    // Flat canonical format (saved by DataStore.writeBiaRecords):
+    // each item has { teamName, functionName, ... } instead of { team, functions:[] }
+    if (first && !Array.isArray(first.functions) && (first.functionName != null || first.teamName != null)) {
+      const teamMap = new Map();
+      for (const record of raw) {
+        const team   = String(record.teamName || record.team || '').trim();
+        const fnName = String(record.functionName || record.name || '').trim();
+        if (!team || !fnName) continue;
+        if (!teamMap.has(team)) teamMap.set(team, []);
+        teamMap.get(team).push({
+          name:              fnName,
+          importance:        record.importance || '일반',
+          overallImpact:     record.overallImpact || record.impact || 3,
+          impact:            record.overallImpact || record.impact || 3,
+          rtoValue:          record.rtoValue,
+          rtoUnit:           record.rtoUnit || '분',
+          requiredResources: Array.isArray(record.requiredResources) ? record.requiredResources : [],
+          biaId:             record.id || record.biaId,
+          id:                record.id || record.biaId,
+        });
+      }
+      return [...teamMap.entries()].map(([team, functions]) => ({ team, functions }));
+    }
+    // Old team-grouped format: [{ team, functions:[] }]
+    return raw;
+  };
+
   const loadRisks     = () => loadJSON('bcmsRiskList', []);
   const loadConfirmed = () => loadJSON('bcmsPriorityConfirmed', {});
   const saveConfirmed = obj => saveJSON('bcmsPriorityConfirmed', obj);
