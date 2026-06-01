@@ -15,9 +15,11 @@
 .tab-btn{padding:.5rem 1.125rem;border:none;background:none;cursor:pointer;
   font-size:.9375rem;font-weight:500;color:var(--text-2);
   border-bottom:2.5px solid transparent;margin-bottom:-2px;
-  border-radius:var(--r-sm) var(--r-sm) 0 0;transition:color .15s,border-color .15s}
+  border-radius:var(--r-sm) var(--r-sm) 0 0;transition:color .15s,border-color .15s,background .15s,box-shadow .15s}
 .tab-btn:hover{color:var(--accent)}
-.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn.active{color:var(--accent);font-weight:700;background:var(--surface);
+  border-bottom-color:var(--surface);
+  box-shadow:inset 0 3px 0 var(--accent)}
 .tab-pane{display:none}.tab-pane.active{display:block}
 
 /* ── Summary Gauge Row ── */
