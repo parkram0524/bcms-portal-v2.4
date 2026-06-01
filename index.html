@@ -306,6 +306,10 @@
   /* ── Derived counts ── */
   const biaFunctions = () => {
     const bia = getBIA();
+    if (!Array.isArray(bia) || bia.length === 0) return [];
+    // flat 배열: 첫 항목에 functions 키가 없으면 flat 구조로 판단
+    if (bia[0].functions === undefined) return bia;
+    // 팀별 묶음 구조: { team, functions: [...] }
     return bia.flatMap(t => Array.isArray(t.functions) ? t.functions : []);
   };
   const coreFunctions = () => {
