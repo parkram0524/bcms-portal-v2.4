@@ -51,6 +51,19 @@
   .cBtn.locked   { background: #7c3aed; color: #fff; border-color: transparent; }
   .cBtn.warn     { background: #d97706; color: #fff; border-color: transparent; }
 
+  /* ── Info banner ── */
+  .infoBanner {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px;
+    background: #eff6ff; border-bottom: 0.5px solid #bfdbfe;
+    font-size: 12.5px; color: #1d4ed8; flex-shrink: 0;
+    line-height: 1.5;
+  }
+  [data-theme="dark"] .infoBanner {
+    background: #1e3a5f; border-bottom-color: #1e40af; color: #93c5fd;
+  }
+  .infoBanner svg { flex-shrink: 0; }
+
   /* ── Canvas ── */
   .canvasWrap { flex: 1; min-height: 0; position: relative; overflow: hidden; }
   #cy { width: 100%; height: 100%; }
@@ -209,6 +222,14 @@
       <button class="cBtn warn"    id="btnReset"    onclick="ORG.resetToSample()">초기화</button>
       <button class="cBtn"         id="btnLock"     onclick="ORG.toggleLock()">편집 잠금</button>
     </div>
+  </div>
+
+  <!-- Info banner -->
+  <div class="infoBanner">
+    <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+    </svg>
+    조직도를 수정한 후 반드시 우측 상단의 <strong style="margin:0 3px">[저장]</strong> 버튼을 눌러야 조직 관리, BIA, 정책 등 다른 페이지의 부서 목록에 반영됩니다.
   </div>
 
   <!-- Canvas -->
@@ -1022,7 +1043,7 @@ window.ORG = (() => {
     const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
     saveJ(key, cy.json().elements);
     console.log('저장완료', localStorage.getItem(key)?.length);
-    toast('저장되었습니다 ✓');
+    toast('저장 완료! 부서 목록이 다른 페이지에 반영되었습니다.');
   }
 
   function loadMode() {
