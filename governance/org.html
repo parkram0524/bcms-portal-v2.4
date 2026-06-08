@@ -823,7 +823,7 @@ window.ORG = (() => {
       sel.innerHTML = '<option value="">-- 미지정 --</option>' +
         depts.map(d => `<option value="${d}"${d === current ? ' selected' : ''}>${d}</option>`).join('');
     }
-    renderPanelMembers(label);
+    renderPanelMembers(node);
     document.getElementById('panel').classList.add('open');
   }
   function savePanel() {
@@ -863,7 +863,7 @@ window.ORG = (() => {
     panelNode = null;
   }
 
-  /* ── Panel members (Task 4) ───────────────────────────────────── */
+  /* ── Panel members ────────────────────────────────────────────── */
   const PANEL_ROLE_CLS = {
     'BCMS 총괄책임자': 'prb-chief',
     'BCMS 관리자':    'prb-mgr',
@@ -875,28 +875,74 @@ window.ORG = (() => {
     '부서 담당자':    'prb-dept',
   };
 
-  function renderPanelMembers(nodeLabel) {
+  // 해당 노드 + 하위 모든 자식 노드의 dept 레이블을 트리 순서로 반환 (순환 방지 포함)
+  function getDescendantDepts(node) {
+    const result = [];
+    const seen = new Set();
+    const collect = (n) => {
+      const lbl = (n.data('label') || '').split('\n')[0].trim();
+      if (lbl && !seen.has(lbl)) { seen.add(lbl); result.push(lbl); }
+      n.outgoers('node').forEach(child => collect(child));
+    };
+    collect(node);
+    return result;
+  }
+
+  function renderMemberCardHtml(p) {
+    const rolesHtml = (p.roles || []).map(r =>
+      `<span class="pRoleBadge ${PANEL_ROLE_CLS[r] || 'prb-dept'}">${r}</span>`
+    ).join('');
+    return `<div class="pMemberCard">
+      <div class="pMemberName">${p.name || ''}${p.position ? `<span class="pMemberPos"> · ${p.position}</span>` : ''}</div>
+      ${rolesHtml ? `<div class="pMemberRoles">${rolesHtml}</div>` : ''}
+      ${p.mobile ? `<div class="pMemberMobile">📱 ${p.mobile}</div>` : ''}
+    </div>`;
+  }
+
+  function renderPanelMembers(node) {
     const list = document.getElementById('pMembersList');
     try {
       const raw = localStorage.getItem(KEY_REG);
       const persons = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(persons)) { list.innerHTML = ''; return; }
-      const deptName = (nodeLabel || '').split('\n')[0].trim();
-      const members = persons.filter(p => (p.dept || '').trim() === deptName);
+
+      const deptLabels  = getDescendantDepts(node);
+      const deptSet     = new Set(deptLabels);
+      const nodeLabel   = (node.data('label') || '').split('\n')[0].trim();
+      const hasChildren = deptLabels.length > 1;
+
+      const members = persons.filter(p => deptSet.has((p.dept || '').trim()));
+
       if (!members.length) {
         list.innerHTML = '<div style="font-size:12px;color:var(--text-2);padding:4px 0">등록된 인원이 없습니다</div>';
         return;
       }
-      list.innerHTML = members.map(p => {
-        const rolesHtml = (p.roles || []).map(r =>
-          `<span class="pRoleBadge ${PANEL_ROLE_CLS[r] || 'prb-dept'}">${r}</span>`
-        ).join('');
-        return `<div class="pMemberCard">
-          <div class="pMemberName">${p.name || ''}${p.position ? `<span class="pMemberPos"> · ${p.position}</span>` : ''}</div>
-          ${rolesHtml ? `<div class="pMemberRoles">${rolesHtml}</div>` : ''}
-          ${p.mobile ? `<div class="pMemberMobile">📱 ${p.mobile}</div>` : ''}
-        </div>`;
-      }).join('');
+
+      let html = '';
+
+      if (hasChildren) {
+        // 상위 노드: 전체 카운트 헤더 표시
+        html += `<div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px">(${nodeLabel} 전체 ${members.length}명)</div>`;
+
+        // 부서별 그룹핑 (트리 순서 유지)
+        const byDept = {};
+        members.forEach(p => {
+          const d = (p.dept || '').trim();
+          if (!byDept[d]) byDept[d] = [];
+          byDept[d].push(p);
+        });
+        deptLabels.forEach((dept, i) => {
+          if (!byDept[dept] || !byDept[dept].length) return;
+          html += `<div style="font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:.04em;
+            padding:4px 0 3px;${i > 0 ? 'border-top:0.5px solid var(--border);margin-top:4px;' : ''}"
+          >${dept} · ${byDept[dept].length}명</div>`;
+          html += byDept[dept].map(p => renderMemberCardHtml(p)).join('');
+        });
+      } else {
+        html += members.map(p => renderMemberCardHtml(p)).join('');
+      }
+
+      list.innerHTML = html;
     } catch {
       list.innerHTML = '';
     }
