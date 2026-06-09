@@ -44,6 +44,9 @@
       background: var(--surface); color: var(--text-2); white-space: nowrap;
     }
     .headerChip.industry { border-color: var(--accent-border); background: var(--accent-subtle); color: var(--accent); }
+    .headerChip.goalIso  { background:rgba(0,112,243,.08);  color:#0070f3; border-color:rgba(0,112,243,.3);  text-decoration:none; }
+    .headerChip.goalDrrb { background:rgba(34,197,94,.08);  color:#16a34a; border-color:rgba(34,197,94,.3);  text-decoration:none; }
+    .headerChip.goalIso:hover, .headerChip.goalDrrb:hover { filter:brightness(.92); }
     .certBadge { font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 999px; border: 0.5px solid; white-space: nowrap; }
     .certBadge.early  { background: rgba(156,163,175,.08); color:#6b7280; border-color:rgba(156,163,175,.3); }
     .certBadge.prep   { background: rgba(245,158,11,.08);  color:#b45309; border-color:rgba(245,158,11,.3); }
@@ -194,6 +197,7 @@
         </div>
         <div class="dashHeaderRight">
           <span class="headerChip industry" id="industryChip">업종 로딩중</span>
+          <span id="goalChips" style="display:contents"></span>
           <span class="headerChip" id="dateChip">날짜</span>
           <span class="certBadge early" id="certBadge">인증준비 초기</span>
         </div>
@@ -415,6 +419,17 @@
 
     document.getElementById('industryChip').textContent = industry ? `🏭 ${industry}` : '업종 미설정';
     document.getElementById('dateChip').textContent = dateStr;
+
+    const goal = localStorage.getItem('bcmsGoal') || '';
+    const goalChips = document.getElementById('goalChips');
+    if (goalChips) {
+      const badges = [];
+      if (goal === 'iso22301' || goal === 'both')
+        badges.push(`<a href="admin/index.html" class="headerChip goalIso" title="인증 목표 변경">🏅 ISO 22301</a>`);
+      if (goal === 'drrb' || goal === 'both')
+        badges.push(`<a href="admin/index.html" class="headerChip goalDrrb" title="인증 목표 변경">🏆 재해경감우수기업</a>`);
+      goalChips.innerHTML = badges.join('');
+    }
 
     const subtitleEl = document.getElementById('dashSubtitle');
     if (subtitleEl) {
