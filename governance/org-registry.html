@@ -329,6 +329,7 @@ tr:hover td{background:var(--surface-hover)}
             <option value="내부심사원">내부심사원</option>
             <option value="부서 담당자">부서 담당자</option>
           </select>
+          <button class="btn" onclick="resetExamplePersons()" title="예시 데이터만 삭제">예시 초기화</button>
         </div>
       </div>
       <div class="person-grid" id="personGrid">
@@ -417,6 +418,19 @@ const ROLE_CLS = {
   '부서 담당자':    'role-dept',
 };
 
+const SAMPLE_PERSONS = [
+  { id:'EX-001', name:'홍길동', position:'팀장',  dept:'기획팀',
+    roles:['BCMS 총괄책임자'], email:'hong@example.go.kr', mobile:'010-1234-0001', altId:'EX-002', isExample:true },
+  { id:'EX-002', name:'김영희', position:'책임',  dept:'IT본부',
+    roles:['BCMS 관리자','BIA 담당자'], email:'kim@example.go.kr', mobile:'010-1234-0002', altId:'', isExample:true },
+  { id:'EX-003', name:'이철수', position:'주임',  dept:'정보보호팀',
+    roles:['리스크 담당자','BCP 담당자'], email:'lee@example.go.kr', mobile:'010-1234-0003', altId:'EX-001', isExample:true },
+  { id:'EX-004', name:'박지수', position:'담당',  dept:'행정팀',
+    roles:['훈련 담당자','내부심사원'], email:'park@example.go.kr', mobile:'010-1234-0004', altId:'', isExample:true },
+  { id:'EX-005', name:'최민서', position:'담당',  dept:'민원팀',
+    roles:['부서 담당자'], email:'choi@example.go.kr', mobile:'010-1234-0005', altId:'', isExample:true },
+];
+
 /* ── Utils ── */
 function $(s)  { return document.querySelector(s); }
 function $$(s) { return document.querySelectorAll(s); }
@@ -442,6 +456,23 @@ function loadAll() {
   return Array.isArray(a) ? a : [];
 }
 function saveAll(a) { localStorage.setItem(KEY, JSON.stringify(a)); }
+
+function loadSamplePersons() {
+  if (localStorage.getItem(KEY + '_init')) return;
+  if (loadAll().length > 0) { localStorage.setItem(KEY + '_init', '1'); return; }
+  const now = new Date().toISOString();
+  saveAll(SAMPLE_PERSONS.map(p => ({ ...p, createdAt: now, updatedAt: now })));
+  localStorage.setItem(KEY + '_init', '1');
+}
+
+function resetExamplePersons() {
+  if (!confirm('예시 데이터만 삭제하시겠습니까?\n직접 입력한 데이터는 유지됩니다.')) return;
+  const filtered = loadAll().filter(p => !p.isExample);
+  saveAll(filtered);
+  if (editingId && !filtered.some(p => p.id === editingId)) resetForm();
+  toast('예시 데이터가 삭제되었습니다. 직접 입력한 데이터는 유지됩니다.');
+  renderAll();
+}
 
 /* ── Org chart dept dropdown ── */
 function getOrgChartDepts() {
@@ -857,18 +888,20 @@ $('#q').addEventListener('input', () => {
 })();
 
 /* ── Expose globals ── */
-window.saveItem       = saveItem;
-window.editItem       = editItem;
-window.deleteItem     = deleteItem;
-window.resetForm      = resetForm;
-window.cancelEdit     = cancelEdit;
-window.onDeptSelChange = onDeptSelChange;
-window.syncDeptDirect = syncDeptDirect;
-window.renderDeptTable = renderDeptTable;
+window.saveItem            = saveItem;
+window.editItem            = editItem;
+window.deleteItem          = deleteItem;
+window.resetForm           = resetForm;
+window.cancelEdit          = cancelEdit;
+window.onDeptSelChange     = onDeptSelChange;
+window.syncDeptDirect      = syncDeptDirect;
+window.renderDeptTable     = renderDeptTable;
+window.resetExamplePersons = resetExamplePersons;
 
 /* ── Init ── */
 buildRolesGrid();
 refreshDeptDropdown();
+loadSamplePersons();
 renderAll();
 
 /* ── Listen for org chart changes from other tabs ── */

@@ -373,19 +373,19 @@ window.ORG = (() => {
     if (!s) {
       // Default: hardcoded 공공기관 sample with exact IDs
       return [
-        { data: { id:'ceo',  label:'(공공기관명)\n기관장',  type:'ceo'      } },
-        { data: { id:'div1', label:'기획조정실',            type:'division' } },
-        { data: { id:'div2', label:'행정지원본부',          type:'division' } },
-        { data: { id:'div3', label:'IT본부',                type:'division' } },
-        { data: { id:'div4', label:'민원서비스본부',        type:'division' } },
-        { data: { id:'t1',   label:'기획팀',                type:'team'     } },
-        { data: { id:'t2',   label:'예산팀',                type:'team'     } },
-        { data: { id:'t3',   label:'행정팀',                type:'team'     } },
-        { data: { id:'t4',   label:'인사팀',                type:'team'     } },
-        { data: { id:'t5',   label:'정보화팀',              type:'team'     } },
-        { data: { id:'t6',   label:'정보보호팀',            type:'team'     } },
-        { data: { id:'t7',   label:'민원팀',                type:'team'     } },
-        { data: { id:'t8',   label:'대민서비스팀',          type:'team'     } },
+        { data: { id:'ceo',  label:'(공공기관명)\n기관장',  type:'ceo',      isExample:true } },
+        { data: { id:'div1', label:'기획조정실',            type:'division', isExample:true } },
+        { data: { id:'div2', label:'행정지원본부',          type:'division', isExample:true } },
+        { data: { id:'div3', label:'IT본부',                type:'division', isExample:true } },
+        { data: { id:'div4', label:'민원서비스본부',        type:'division', isExample:true } },
+        { data: { id:'t1',   label:'기획팀',                type:'team',     isExample:true } },
+        { data: { id:'t2',   label:'예산팀',                type:'team',     isExample:true } },
+        { data: { id:'t3',   label:'행정팀',                type:'team',     isExample:true } },
+        { data: { id:'t4',   label:'인사팀',                type:'team',     isExample:true } },
+        { data: { id:'t5',   label:'정보화팀',              type:'team',     isExample:true } },
+        { data: { id:'t6',   label:'정보보호팀',            type:'team',     isExample:true } },
+        { data: { id:'t7',   label:'민원팀',                type:'team',     isExample:true } },
+        { data: { id:'t8',   label:'대민서비스팀',          type:'team',     isExample:true } },
         { data: { id:'e-ceo-div1', source:'ceo',  target:'div1' } },
         { data: { id:'e-ceo-div2', source:'ceo',  target:'div2' } },
         { data: { id:'e-ceo-div3', source:'ceo',  target:'div3' } },
@@ -401,14 +401,14 @@ window.ORG = (() => {
       ];
     }
     const els = [];
-    els.push({ data: { id:'ceo', label:`${s.company}\n${s.root}`, type:'ceo' } });
+    els.push({ data: { id:'ceo', label:`${s.company}\n${s.root}`, type:'ceo', isExample:true } });
     s.divs.forEach((d, di) => {
       const did = `d${di}`;
-      els.push({ data: { id:did, label:d.n, type:'division' } });
+      els.push({ data: { id:did, label:d.n, type:'division', isExample:true } });
       els.push({ data: { id:`e-c-${did}`, source:'ceo', target:did } });
       d.t.forEach((t, ti) => {
         const tid = `t${di}-${ti}`;
-        els.push({ data: { id:tid, label:t, type:'team' } });
+        els.push({ data: { id:tid, label:t, type:'team', isExample:true } });
         els.push({ data: { id:`e-${did}-${tid}`, source:did, target:tid } });
       });
     });
@@ -419,25 +419,25 @@ window.ORG = (() => {
     // Preset positions: explicit coordinates so nodes don't collapse into a line
     return [
       // ── Root ──
-      { data: { id:'eop-root', label:'재난대책본부\n(본부장/CEO)', type:'eop-root' },
+      { data: { id:'eop-root', label:'재난대책본부\n(본부장/CEO)', type:'eop-root', isExample:true },
         position: { x:400, y:100 } },
 
       // ── Stage-1: 재난대책본부 산하 4개 반 ──
-      { data: { id:'s1u0', label:'재난상황반', type:'eop-unit' }, position: { x:100, y:280 } },
-      { data: { id:'s1u1', label:'초동대응반', type:'eop-unit' }, position: { x:280, y:280 } },
-      { data: { id:'s1u2', label:'복구지원반', type:'eop-unit' }, position: { x:460, y:280 } },
-      { data: { id:'s1u3', label:'대외협력반', type:'eop-unit' }, position: { x:640, y:280 } },
+      { data: { id:'s1u0', label:'재난상황반', type:'eop-unit', isExample:true }, position: { x:100, y:280 } },
+      { data: { id:'s1u1', label:'초동대응반', type:'eop-unit', isExample:true }, position: { x:280, y:280 } },
+      { data: { id:'s1u2', label:'복구지원반', type:'eop-unit', isExample:true }, position: { x:460, y:280 } },
+      { data: { id:'s1u3', label:'대외협력반', type:'eop-unit', isExample:true }, position: { x:640, y:280 } },
 
       // ── BCP root (조건부 가동) ──
-      { data: { id:'bcp-root', label:'업무연속성대응본부\n(BCP대응본부)', type:'eop-stage' },
+      { data: { id:'bcp-root', label:'업무연속성대응본부\n(BCP대응본부)', type:'eop-stage', isExample:true },
         position: { x:900, y:280 } },
 
       // ── Stage-2: BCP 대응본부 산하 5개 반 ──
-      { data: { id:'s2u0', label:'업무환경반',   type:'eop-unit' }, position: { x:680,  y:460 } },
-      { data: { id:'s2u1', label:'IT복구반',     type:'eop-unit' }, position: { x:820,  y:460 } },
-      { data: { id:'s2u2', label:'업무재개반',   type:'eop-unit' }, position: { x:960,  y:460 } },
-      { data: { id:'s2u3', label:'자원지원반',   type:'eop-unit' }, position: { x:1100, y:460 } },
-      { data: { id:'s2u4', label:'대내외소통반', type:'eop-unit' }, position: { x:1240, y:460 } },
+      { data: { id:'s2u0', label:'업무환경반',   type:'eop-unit', isExample:true }, position: { x:680,  y:460 } },
+      { data: { id:'s2u1', label:'IT복구반',     type:'eop-unit', isExample:true }, position: { x:820,  y:460 } },
+      { data: { id:'s2u2', label:'업무재개반',   type:'eop-unit', isExample:true }, position: { x:960,  y:460 } },
+      { data: { id:'s2u3', label:'자원지원반',   type:'eop-unit', isExample:true }, position: { x:1100, y:460 } },
+      { data: { id:'s2u4', label:'대내외소통반', type:'eop-unit', isExample:true }, position: { x:1240, y:460 } },
 
       // ── Edges ──
       { data: { id:'es1-s1u0', source:'eop-root', target:'s1u0' } },
@@ -1098,10 +1098,8 @@ window.ORG = (() => {
       // (leftover from an earlier broken session) is treated as empty.
       const raw = loadJ(KEY_ORG, null);
       let els = null;
-      if (raw) {
-        const arr = Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])];
-        const nodeCount = arr.filter(e => e.data && !e.data.source).length;
-        if (nodeCount >= 2) els = arr;
+      if (raw !== null) {
+        els = Array.isArray(raw) ? raw : [...(raw.nodes||[]), ...(raw.edges||[])];
       }
       if (!els) {
         const ind = (localStorage.getItem(KEY_IND)||'').trim();
@@ -1122,12 +1120,21 @@ window.ORG = (() => {
   }
 
   function resetToSample() {
-    if (!confirm('샘플 데이터로 초기화하시겠습니까? 현재 레이아웃이 삭제됩니다.')) return;
+    if (!confirm('예시 데이터만 삭제하시겠습니까?\n직접 입력한 데이터는 유지됩니다.')) return;
+
+    const exampleNodes = cy.nodes().filter(n => n.data('isExample') === true);
+    cy.remove(exampleNodes); // connected edges are auto-removed by cytoscape
+
     const key = mode === 'normal' ? KEY_ORG : KEY_EOP;
-    localStorage.removeItem(key);
-    loadMode();
+    saveJ(key, cy.json().elements);
+
+    try {
+      const reg = loadJ(KEY_REG, []);
+      if (Array.isArray(reg)) saveJ(KEY_REG, reg.filter(p => !p.isExample));
+    } catch {}
+
     closePanel();
-    toast('초기화되었습니다');
+    toast('예시 데이터가 삭제되었습니다. 직접 입력한 데이터는 유지됩니다.');
   }
 
   /* ── Dark mode sync ───────────────────────────────────────────── */
