@@ -864,7 +864,10 @@
     </div>
     <div class="recFld full" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
       <a class="btn" href="../audit/capa.html" target="_blank" style="font-size:12px" title="CAPA 페이지로 이동하여 개선조치를 등록하세요">→ CAPA 연계</a>
-      <button class="btn primary" type="button" data-rec-save="${esc(t.id)}">저장</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" type="button" data-rec-print="${esc(t.id)}" style="font-size:12px">보고서 출력</button>
+        <button class="btn primary" type="button" data-rec-save="${esc(t.id)}">저장</button>
+      </div>
     </div>
   </div>
 </div>`;
@@ -1656,6 +1659,10 @@
       saveBtn.textContent = '저장됨';
       setTimeout(() => { saveBtn.textContent = '저장'; }, 900);
     }
+    const printBtn = e.target.closest('[data-rec-print]');
+    if (printBtn) {
+      printTrainingReport(printBtn.getAttribute('data-rec-print'));
+    }
   });
 
   const saveRecord = (id, card) => {
@@ -1683,6 +1690,121 @@
     btn.textContent = '저장됨';
     setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
   });
+
+  /* ─── Per-item training result report (window.open) ─── */
+  const printTrainingReport = (id) => {
+    loadTrainings();
+    const t = trainings.find(x => x.id === id);
+    if (!t) { alert('훈련 데이터를 찾을 수 없습니다.'); return; }
+
+    const meta = loadJSON('bcmsReportMeta', {});
+    const companyName = meta.companyName || meta.company || localStorage.getItem('bcmsCompany') || '(회사명 미등록)';
+    const depts = Array.isArray(t.departments) ? t.departments.join(', ') : (t.departments || '-');
+    const achColor = t.achievement === '달성' ? '#16a34a' : t.achievement === '미달성' ? '#dc2626' : '#b45309';
+    const stColor  = t.status === '완료' ? '#16a34a' : t.status === '진행중' ? '#0070f3' : '#6b7280';
+    const td = 'border:1px solid #bfdbfe;padding:8px 12px;font-size:12px;vertical-align:top';
+    const th = td + ';background:#eff6ff;font-weight:700;color:#1e3a8a;width:140px;white-space:nowrap';
+    const thC = td + ';background:#eff6ff;font-weight:700;color:#1e3a8a;text-align:center';
+
+    const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>훈련 결과 보고서 — ${esc(t.name || id)}</title>
+<style>
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#111;margin:0;padding:0}
+.page{max-width:900px;margin:0 auto;padding:40px 30px}
+table{width:100%;border-collapse:collapse;margin-bottom:24px}
+h2{font-size:15px;font-weight:700;color:#1e3a8a;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid #e5e7eb}
+.stamp{display:inline-block;border:2px solid;border-radius:4px;padding:2px 10px;font-weight:700;font-size:13px}
+.no-print{text-align:center;margin-bottom:24px}
+.no-print button{padding:10px 28px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:inherit}
+.footer{font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:12px;margin-top:24px;text-align:right}
+@media print{.no-print{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:20px 15px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="no-print"><button onclick="window.print()">인쇄하기</button></div>
+
+  <div style="border-bottom:2px solid #1e40af;padding-bottom:16px;margin-bottom:28px">
+    <div style="font-size:11px;color:#6b7280;font-weight:600;letter-spacing:.05em;margin-bottom:6px">ISO 22301 훈련 결과 기록서</div>
+    <h1 style="font-size:22px;font-weight:800;color:#1e3a8a;margin:0 0 14px">${esc(t.name || '(제목없음)')}</h1>
+    <table style="border:none;border-collapse:collapse;width:auto;margin:0">
+      <tr><td style="border:none;padding:2px 24px 2px 0;font-size:11px;color:#6b7280;font-weight:600">회사명</td><td style="border:none;padding:2px 0;font-size:13px;font-weight:700">${esc(companyName)}</td></tr>
+      <tr><td style="border:none;padding:2px 24px 2px 0;font-size:11px;color:#6b7280;font-weight:600">문서번호</td><td style="border:none;padding:2px 0;font-size:13px">TRN-${esc(id)}</td></tr>
+      <tr><td style="border:none;padding:2px 24px 2px 0;font-size:11px;color:#6b7280;font-weight:600">작성일</td><td style="border:none;padding:2px 0;font-size:13px">${esc(today())}</td></tr>
+    </table>
+  </div>
+
+  <h2>1. 훈련 개요</h2>
+  <table>
+    <tr><th style="${th}">훈련명</th><td style="${td}">${esc(t.name || '-')}</td><th style="${th}">훈련 유형</th><td style="${td}">${esc(t.type || '-')}</td></tr>
+    <tr><th style="${th}">계획 일시</th><td style="${td}">${esc(t.planDate || '-')}</td><th style="${th}">실제 훈련일</th><td style="${td}">${esc(t.actualDate || '-')}</td></tr>
+    <tr><th style="${th}">참가 부서</th><td style="${td}">${esc(depts)}</td><th style="${th}">참가 인원</th><td style="${td}">${t.participants ? esc(String(t.participants)) + '명' : '-'}</td></tr>
+    <tr><th style="${th}">훈련 시나리오</th><td style="${td}" colspan="3">${esc(t.scenario || '-')}</td></tr>
+    <tr><th style="${th}">훈련 목표</th><td style="${td}" colspan="3">${esc(t.objective || '-')}</td></tr>
+    <tr><th style="${th}">합격 기준</th><td style="${td}" colspan="3">${esc(t.criteria || '-')}</td></tr>
+  </table>
+
+  <h2>2. 훈련 결과</h2>
+  <table>
+    <tr>
+      <th style="${th}">훈련 상태</th>
+      <td style="${td}"><span class="stamp" style="border-color:${stColor};color:${stColor}">${esc(t.status || '-')}</span></td>
+      <th style="${th}">목표 달성 여부</th>
+      <td style="${td}"><span class="stamp" style="border-color:${achColor};color:${achColor}">${esc(t.achievement || '미평가')}</span></td>
+    </tr>
+    <tr><th style="${th}">훈련 결과 요약</th><td style="${td};white-space:pre-wrap" colspan="3">${esc(t.resultSummary || '(미입력)')}</td></tr>
+  </table>
+
+  <h2>3. 문제점 및 개선사항</h2>
+  <table>
+    <tr><th style="${th}">발견된 문제점</th><td style="${td};white-space:pre-wrap">${esc(t.issues || '(없음)')}</td></tr>
+    <tr><th style="${th}">개선 필요 사항</th><td style="${td};white-space:pre-wrap">${esc(t.improvements || '(없음)')}</td></tr>
+  </table>
+
+  <h2>4. CAPA 연계</h2>
+  <table>
+    <tr>
+      <th style="${th}">CAPA 등록 필요</th>
+      <td style="${td}">${(t.issues || t.improvements) ? '<span style="font-weight:700;color:#0070f3">● 개선사항 있음 — CAPA 페이지에서 등록하세요</span>' : '<span style="color:#6b7280">해당없음</span>'}</td>
+    </tr>
+    <tr>
+      <th style="${th}">관련 훈련 참조</th>
+      <td style="${td}">${esc(t.name || '-')} (문서번호: TRN-${esc(id)})</td>
+    </tr>
+  </table>
+
+  <h2>5. 서명란</h2>
+  <table>
+    <thead><tr>
+      <th style="${th}">구분</th>
+      <th style="${thC}">작성자</th>
+      <th style="${thC}">검토자</th>
+      <th style="${thC}">승인자</th>
+    </tr></thead>
+    <tbody>
+      <tr><th style="${th}">소속/직위</th><td style="${td};height:32px">&nbsp;</td><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td></tr>
+      <tr><th style="${th}">성명</th><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td></tr>
+      <tr><th style="${th}">서명/날인</th><td style="${td};height:52px">&nbsp;</td><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td></tr>
+    </tbody>
+  </table>
+  <table style="margin:0">
+    <tr><th style="${th}">작성일</th><td style="${td}">${esc(today())}</td></tr>
+  </table>
+
+  <p class="footer">본 보고서는 BCMS Portal에서 자동 생성되었습니다. (ISO 22301 훈련 결과 기록 양식) | TRN-${esc(id)} | ${esc(today())}</p>
+</div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank', 'width=960,height=800,scrollbars=yes,resizable=yes');
+    if (!w) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.'); return; }
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => w.print(), 600);
+  };
 
   /* ─── Print report ─── */
   const printReport = () => {
