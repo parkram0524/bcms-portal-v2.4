@@ -383,8 +383,38 @@ function normalizeBIA(raw) {
 /* ─── Data sources ──────────────────────────────────────────── */
 function calcBIA()      { return statusRate(normalizeBIA(loadJ('bcmsBIAData', null))); }
 function calcRisk()     { return statusRate(toArr(loadJ('bcmsRiskAssessment', null) || loadJ('bcmsRiskList', null))); }
-function calcBCP()      { return statusRate(toArr(loadJ('bcmsBCPStrategy', null))); }
-function calcTraining() { return statusRate(toArr(loadJ('bcmsTrainingData', null))); }
+function calcBCP() {
+  /* bcmsBCP: [{team, strategies:[{strategyText, status, ...}]}] */
+  const raw = loadJ('bcmsBCP', null);
+  if (raw) {
+    const teamArr = toArr(raw);
+    const strats = teamArr.flatMap(row =>
+      Array.isArray(row.strategies) ? row.strategies
+        : (row.strategyText !== undefined ? [row] : [])
+    );
+    if (strats.length) {
+      const written = strats.filter(s =>
+        (s.strategyText || s.strategy || '').trim().length > 0
+      ).length;
+      return clamp(Math.round((written / strats.length) * 100));
+    }
+  }
+  /* fallback: bcmsBCPStrategy */
+  return statusRate(toArr(loadJ('bcmsBCPStrategy', null)));
+}
+
+function calcTraining() {
+  const arr = toArr(loadJ('bcmsTrainingData', null));
+  if (!arr.length) return null;
+  const done = arr.filter(item => {
+    const st = (item.status || item.state || '').toLowerCase();
+    if (DONE.some(v => st.includes(v))) return true;
+    if (item.completed === true) return true;
+    if (item.result === '합격' || item.result === '통과' || item.result === 'pass') return true;
+    return false;
+  }).length;
+  return clamp(Math.round((done / arr.length) * 100));
+}
 
 function calcGapAll() {
   const arr = toArr(loadJ('bcmsGapAnalysis', null));
