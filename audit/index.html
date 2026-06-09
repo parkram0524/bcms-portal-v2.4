@@ -1444,6 +1444,22 @@
     document.getElementById(btn).addEventListener('click', () => switchTab(btn, pane));
   });
 
+  /* ─── bcmsGoal 기반 탭·메트릭 필터 ─── */
+  const applyGoalFilter = () => {
+    const goal = localStorage.getItem('bcmsGoal') || 'both';
+    if (goal === 'iso22301') {
+      document.getElementById('tabDisaster').style.display = 'none';
+      document.getElementById('paneDisaster').classList.add('hidden');
+      document.getElementById('mDisaster').closest('.metric').style.display = 'none';
+    } else if (goal === 'drrb') {
+      document.getElementById('tabGap').style.display = 'none';
+      document.getElementById('paneGap').classList.add('hidden');
+      document.getElementById('mIso').closest('.metric').style.display = 'none';
+      switchTab('tabDisaster', 'paneDisaster');
+    }
+  };
+  applyGoalFilter();
+
   /* ─── Demo seed ─── */
   if (window.BCMSDemoSeed) {
     window.BCMSDemoSeed.ensureDemoIfEmpty();

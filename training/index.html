@@ -1362,6 +1362,7 @@
     const yearData = trainings.filter(t => (t.planDate || '').startsWith(yr));
     const doneData = yearData.filter(t => t.status === '완료');
     const capaData = loadJSON('bcmsCapaData', []);
+    const goal     = localStorage.getItem('bcmsGoal') || 'both';
 
     /* ── helpers ── */
     const hasBcpTrain   = doneData.some(t => ['탁상 훈련 (Tabletop Exercise)','기능 훈련 (Functional Exercise)','전체 훈련 (Full-scale Exercise)'].includes(t.type));
@@ -1490,36 +1491,40 @@
     const gaugeColor  = (pct) => pct >= 80 ? 'var(--accent)' : pct >= 50 ? '#f59e0b' : '#ef4444';
 
     mount.innerHTML = `
+      ${goal !== 'drrb' ? `
       <div class="complianceSection">
         <div class="complianceSectionHeader">
           <span>📋</span> ISO 22301 요구사항 (${yr}년 기준)
         </div>
         ${renderItems(isoItems)}
-      </div>
+      </div>` : ''}
 
+      ${goal !== 'iso22301' ? `
       <div class="complianceSection">
         <div class="complianceSectionHeader">
           <span>🏆</span> 재해경감우수기업 평가항목
         </div>
         ${renderItems(disasterItems)}
-      </div>
+      </div>` : ''}
 
       <div class="gaugeSection">
         <h3>충족률 현황</h3>
+        ${goal !== 'drrb' ? `
         <div class="gaugeRow">
           <span class="gaugeLabel">ISO 22301 충족률 (${isoOk}/${isoTotal})</span>
           <div class="gaugeTrack">
             <div class="gaugeFill" style="width:${isoPct}%;background:${gaugeColor(isoPct)}"></div>
           </div>
           <span class="gaugePct">${isoPct}%</span>
-        </div>
+        </div>` : ''}
+        ${goal !== 'iso22301' ? `
         <div class="gaugeRow">
           <span class="gaugeLabel">재해경감우수기업 충족률 (${disasterOk}/${disasterTotal})</span>
           <div class="gaugeTrack">
             <div class="gaugeFill" style="width:${disasterPct}%;background:${gaugeColor(disasterPct)}"></div>
           </div>
           <span class="gaugePct">${disasterPct}%</span>
-        </div>
+        </div>` : ''}
       </div>`;
 
     /* nav click on compliance items */
