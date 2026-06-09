@@ -555,6 +555,7 @@
   <script src="../assets/ai-helper.js"></script>
   <script src="../assets/sidebar.js"></script>
   <script src="../assets/demo-seed.js"></script>
+  <script src="../assets/print-utils.js"></script>
   <script>
   'use strict';
 
@@ -1855,61 +1856,31 @@
 <head>
 <meta charset="utf-8">
 <title>훈련 결과 보고서 — ${h(t.name || id)}</title>
+${getPrintStyles()}
 <style>
   @page { size: A4 portrait; margin: 18mm 16mm; }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Nanum Gothic", sans-serif;
-    font-size: 10pt; color: #111; background: #fff;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  }
-  .doc-outer {
-    border: 1.5px solid #444; padding: 11mm 13mm 7mm;
-    min-height: calc(297mm - 36mm); position: relative;
-    display: flex; flex-direction: column;
-  }
-  .doc-logo { position: absolute; top: 5mm; right: 7mm; text-align: right; line-height: 1; }
-  .doc-logo-text { font-size: 7.5pt; color: #bbb; letter-spacing: .12em; font-weight: 700; text-transform: uppercase; }
-  .doc-title {
-    text-align: center; font-size: 15.5pt; font-weight: 900;
-    letter-spacing: -.02em; padding-bottom: 5mm;
-    border-bottom: 2px solid #222; margin-bottom: 5.5mm;
-  }
-  .doc-subtitle { font-size: 9pt; font-weight: 400; color: #666; display: block; margin-top: 3px; letter-spacing: 0; }
-  .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 6mm; font-size: 9pt; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #111; background: #fff; }
+  .doc-outer { border: 1.5px solid #444; padding: 11mm 13mm 7mm; min-height: calc(297mm - 36mm); position: relative; display: flex; flex-direction: column; }
+  .meta-table { margin-bottom: 6mm; font-size: 9pt; }
   .meta-table th, .meta-table td { border: 0.5px solid #999; padding: 4px 9px; vertical-align: middle; }
-  .meta-table th { background: #f2f2f2; font-weight: 700; color: #333; width: 22%; white-space: nowrap; }
+  .meta-table th { background: #f2f2f2; color: #333; width: 22%; white-space: nowrap; }
   .body-section { margin-bottom: 5mm; }
-  .body-label {
-    font-size: 7.5pt; font-weight: 700; color: #555; letter-spacing: .06em;
-    text-transform: uppercase; margin-bottom: 3mm; padding-bottom: 2mm;
-    border-bottom: 0.5px solid #ddd;
-  }
+  .body-label { font-size: 7.5pt; font-weight: 700; color: #555; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 0.5px solid #ddd; }
   .body-text { font-size: 9.5pt; line-height: 1.8; white-space: pre-wrap; word-break: keep-all; min-height: 12mm; }
-  .sign-section {
-    display: flex; gap: 7mm; margin-top: auto;
-    padding-top: 5mm; border-top: 0.75px solid #bbb;
-  }
-  .sign-box { flex: 1; border: 0.75px solid #aaa; padding: 5mm 6mm; }
+  .sign-section { display: flex; gap: 7mm; margin-top: auto; padding-top: 5mm; border-top: 0.75px solid #bbb; }
+  .sign-box { flex: 1; border: 0.75px solid #aaa; padding: 5mm 6mm; text-align: left; }
   .sign-box-label { font-size: 7.5pt; font-weight: 700; color: #777; letter-spacing: .04em; margin-bottom: 2.5mm; }
   .sign-box-name { font-size: 10pt; font-weight: 700; margin-bottom: 1mm; min-height: 13pt; }
   .sign-box-date { font-size: 8.5pt; color: #666; margin-bottom: 6mm; }
   .sign-line { border-bottom: 0.75px solid #aaa; }
-  .doc-footer {
-    display: flex; justify-content: space-between; font-size: 7.5pt; color: #999;
-    margin-top: 4mm; padding-top: 2mm; border-top: 0.5px solid #ddd;
-  }
+  .doc-footer { display: flex; justify-content: space-between; font-size: 7.5pt; color: #999; margin-top: 4mm; padding-top: 2mm; border-top: 0.5px solid #ddd; }
   @media print { body { background: #fff !important; } }
-</style>
-</head>
+<\/style>
+<\/head>
 <body>
 <div class="doc-outer">
-  <div class="doc-logo"><span class="doc-logo-text">${h(companyName)}</span></div>
-
-  <div class="doc-title">
-    훈련 결과 보고서
-    <span class="doc-subtitle">ISO 22301:2019 § 8.5 훈련 및 연습</span>
-  </div>
+  ${getPrintHeader('훈련 결과 보고서')}
 
   <table class="meta-table">
     <tr>

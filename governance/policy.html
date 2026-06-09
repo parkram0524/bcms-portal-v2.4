@@ -609,6 +609,7 @@
 <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
 
 <script src="../assets/sidebar.js"></script>
+<script src="../assets/print-utils.js"></script>
 <script>
 'use strict';
 
@@ -826,140 +827,41 @@ $('btnPrintDoc').addEventListener('click', () => {
     authorTitle:  $('p_authorTitle').value.trim() || '',
     signerName:   $('p_signerName').value.trim()  || '',
     signerTitle:  $('p_signerTitle').value.trim() || '',
-    logoData:     localStorage.getItem('bcmsPolicyLogo') || '',
   };
 
   const h = s => String(s).replace(/[&<>"']/g,
     m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-
-  // 로고: 이미지 or 회사명 텍스트 fallback
-  const logoHtml = d.logoData
-    ? `<img src="${d.logoData}" alt="로고" style="max-height:40px;max-width:150px;object-fit:contain;"/>`
-    : `<span class="doc-logo-text">${h(d.companyName)}</span>`;
 
   const html = `<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <title>${h(d.companyName)} BCMS 운영 방침<\/title>
+${getPrintStyles()}
 <style>
   @page { size: A4 portrait; margin: 18mm 16mm; }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Nanum Gothic", sans-serif;
-    font-size: 10pt;
-    color: #111;
-    background: #fff;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .doc-outer {
-    border: 1.5px solid #444;
-    padding: 11mm 13mm 7mm;
-    min-height: calc(297mm - 36mm);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-  }
-  .doc-logo {
-    position: absolute;
-    top: 5mm;
-    right: 7mm;
-    text-align: right;
-    line-height: 1;
-  }
-  .doc-logo-text {
-    font-size: 7.5pt;
-    color: #ccc;
-    letter-spacing: .12em;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-  .doc-title {
-    text-align: center;
-    font-size: 15.5pt;
-    font-weight: 900;
-    letter-spacing: -.02em;
-    padding-bottom: 5mm;
-    border-bottom: 2px solid #222;
-    margin-bottom: 5.5mm;
-  }
-  .meta-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 6.5mm;
-    font-size: 9pt;
-  }
-  .meta-table th, .meta-table td {
-    border: 0.5px solid #999;
-    padding: 4px 9px;
-    vertical-align: middle;
-  }
-  .meta-table th {
-    background: #f2f2f2;
-    font-weight: 700;
-    color: #333;
-    width: 22%;
-    white-space: nowrap;
-  }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #111; background: #fff; }
+  .doc-outer { border: 1.5px solid #444; padding: 11mm 13mm 7mm; min-height: calc(297mm - 36mm); position: relative; display: flex; flex-direction: column; }
+  .meta-table { margin-bottom: 6.5mm; font-size: 9pt; }
+  .meta-table th, .meta-table td { border: 0.5px solid #999; padding: 4px 9px; vertical-align: middle; }
+  .meta-table th { background: #f2f2f2; color: #333; width: 22%; white-space: nowrap; }
   .body-section { flex: 1; margin-bottom: 8mm; }
-  .body-label {
-    font-size: 7.5pt;
-    font-weight: 700;
-    color: #555;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    margin-bottom: 3mm;
-    padding-bottom: 2mm;
-    border-bottom: 0.5px solid #ddd;
-  }
-  .body-text {
-    font-size: 10pt;
-    line-height: 1.9;
-    white-space: pre-wrap;
-    word-break: keep-all;
-  }
-  .sign-section {
-    display: flex;
-    gap: 7mm;
-    margin-top: auto;
-    padding-top: 5mm;
-    border-top: 0.75px solid #bbb;
-  }
-  .sign-box {
-    flex: 1;
-    border: 0.75px solid #aaa;
-    padding: 5mm 6mm;
-  }
-  .sign-box-label {
-    font-size: 7.5pt;
-    font-weight: 700;
-    color: #777;
-    letter-spacing: .04em;
-    margin-bottom: 2.5mm;
-  }
+  .body-label { font-size: 7.5pt; font-weight: 700; color: #555; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 0.5px solid #ddd; }
+  .body-text { font-size: 10pt; line-height: 1.9; white-space: pre-wrap; word-break: keep-all; }
+  .sign-section { display: flex; gap: 7mm; margin-top: auto; padding-top: 5mm; border-top: 0.75px solid #bbb; }
+  .sign-box { flex: 1; border: 0.75px solid #aaa; padding: 5mm 6mm; text-align: left; }
+  .sign-box-label { font-size: 7.5pt; font-weight: 700; color: #777; letter-spacing: .04em; margin-bottom: 2.5mm; }
   .sign-box-name { font-size: 11pt; font-weight: 700; margin-bottom: 1mm; min-height: 14pt; }
   .sign-box-role { font-size: 9pt; color: #555; margin-bottom: 7mm; min-height: 11pt; }
   .sign-line { border-bottom: 0.75px solid #aaa; }
-  .doc-footer {
-    display: flex;
-    justify-content: space-between;
-    font-size: 7.5pt;
-    color: #999;
-    margin-top: 4mm;
-    padding-top: 2mm;
-    border-top: 0.5px solid #ddd;
-  }
-  @media print {
-    body { background: #fff !important; }
-  }
+  .doc-footer { display: flex; justify-content: space-between; font-size: 7.5pt; color: #999; margin-top: 4mm; padding-top: 2mm; border-top: 0.5px solid #ddd; }
+  @media print { body { background: #fff !important; } }
 <\/style>
 <\/head>
 <body>
 <div class="doc-outer">
-  <div class="doc-logo">${logoHtml}</div>
-
-  <div class="doc-title">업무연속성관리체계(BCMS) 운영 방침</div>
+  ${getPrintHeader('업무연속성관리체계(BCMS) 운영 방침')}
 
   <table class="meta-table">
     <tr>
