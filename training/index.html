@@ -77,16 +77,39 @@
       border-radius: var(--r-sm); padding: 7px 11px;
     }
 
-    .deptGrid { display: flex; gap: 6px; flex-wrap: wrap; }
-    .deptChk { position: relative; }
-    .deptChk input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
-    .deptChkLabel {
-      display: inline-flex; align-items: center; padding: 4px 10px;
-      border: 0.5px solid var(--border-strong); border-radius: 5px;
-      font-size: 12px; font-weight: 600; color: var(--text-2);
-      cursor: pointer; background: var(--surface); transition: all .12s;
+    /* ── 부서 멀티 드롭다운 ── */
+    .dept-sel-wrap { position: relative; }
+    .dept-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 5px; min-height: 2px; }
+    .dept-tag {
+      display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
+      background: var(--accent-subtle); color: var(--accent);
+      border: 1px solid var(--accent-border); border-radius: 99px;
+      font-size: 11.5px; font-weight: 600;
     }
-    .deptChk input:checked + .deptChkLabel { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
+    .dept-tag-rm { cursor: pointer; font-size: 14px; line-height: 1; opacity: .7; margin-left: 2px; }
+    .dept-tag-rm:hover { opacity: 1; }
+    .dept-trigger {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 8px 10px; font-size: 13px;
+      border: 1px solid var(--border-strong); border-radius: 8px;
+      background: var(--surface); color: var(--text);
+      cursor: pointer; user-select: none;
+    }
+    .dept-trigger:hover, .dept-trigger.open { border-color: var(--accent); }
+    .dept-dd {
+      display: none; position: absolute; z-index: 200; left: 0; right: 0; top: calc(100% + 4px);
+      background: var(--surface); border: 1px solid var(--border-strong);
+      border-radius: 8px; box-shadow: var(--shadow); max-height: 180px; overflow-y: auto;
+    }
+    .dept-dd.show { display: block; }
+    .dept-opt {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      font-size: 13px; cursor: pointer; transition: background .1s;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .dept-opt:last-child { border-bottom: none; }
+    .dept-opt:hover { background: var(--surface-hover); }
+    .dept-opt input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
 
     .formActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 0.5px solid var(--border); }
 
@@ -380,8 +403,14 @@
 
             <div class="formRow full">
               <label>대상 부서/팀 <span style="font-weight:400;text-transform:none;letter-spacing:0">(다중선택)</span></label>
-              <div class="deptGrid" id="deptGrid">
-                <span style="font-size:12px;color:var(--text-3)">BIA 데이터 로딩 중...</span>
+              <div class="dept-sel-wrap" id="trainDeptSelWrap">
+                <div class="dept-tags" id="trainDeptTags"></div>
+                <div class="dept-trigger" id="trainDeptTrigger">
+                  <span id="trainDeptTriggerText" style="color:var(--text-2)">부서 선택...</span>
+                  <span style="font-size:10px;color:var(--text-3)">▾</span>
+                </div>
+                <div class="dept-dd" id="trainDeptDd"></div>
+                <input type="text" id="trainDeptDirectInput" placeholder="직접 입력 (쉼표 구분)" style="display:none;margin-top:6px;width:100%">
               </div>
             </div>
 
@@ -690,30 +719,141 @@
     sel.innerHTML = html;
   };
 
-  /* ─── Load BIA teams for dept checkboxes ─── */
-  const loadDeptOptions = () => {
-    const biaRows = loadJSON('bcmsBIAData', []);
-    const teams = [...new Set(biaRows.map(r => String(r.team || '').trim()).filter(Boolean))].sort();
-    const grid = document.getElementById('deptGrid');
-    if (!teams.length) {
-      grid.innerHTML = `<input type="text" id="deptFreeText" placeholder="부서명 입력 (쉼표 구분)" style="min-width:280px">`;
-      return;
-    }
-    grid.innerHTML = teams.map(t =>
-      `<label class="deptChk">
-        <input type="checkbox" class="deptCheck" value="${esc(t)}">
-        <span class="deptChkLabel">${esc(t)}</span>
-      </label>`
-    ).join('');
+  /* ─── 부서 멀티 드롭다운 (bcmsOrgChart 연동) ─── */
+  const getOrgChartDepts = () => {
+    try {
+      const raw = localStorage.getItem('bcmsOrgChart');
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      const data = Array.isArray(arr) ? arr : [...(arr.nodes || []), ...(arr.edges || [])];
+      const seen = new Set();
+      return data
+        .filter(e => e.data && !e.data.source && e.data.label)
+        .map(e => e.data.label.split('\n')[0].trim())
+        .filter(d => { if (!d || seen.has(d)) return false; seen.add(d); return true; });
+    } catch { return []; }
   };
 
-  const getSelectedDepts = () => {
-    const checks = document.querySelectorAll('.deptCheck:checked');
-    if (checks.length) return [...checks].map(c => c.value);
-    const ft = document.getElementById('deptFreeText');
-    if (ft) return ft.value.split(',').map(s => s.trim()).filter(Boolean);
-    return [];
+  let selectedTrainDepts = [];
+
+  const buildTrainDeptDropdown = () => {
+    const depts = getOrgChartDepts();
+    const dd = document.getElementById('trainDeptDd');
+    if (!dd) return;
+    const opts = depts.length
+      ? [{ val: '__all__', lbl: '전체 부서' }, ...depts.map(d => ({ val: d, lbl: d })), { val: '__direct__', lbl: '✏ 직접 입력' }]
+      : [{ val: '__direct__', lbl: '✏ 직접 입력' }];
+    dd.innerHTML = opts.map(o =>
+      `<div class="dept-opt" data-val="${esc(o.val)}">
+        <input type="checkbox" onclick="event.stopPropagation()"/>
+        ${esc(o.lbl)}
+      </div>`
+    ).join('');
+    dd.querySelectorAll('.dept-opt').forEach(opt => {
+      opt.addEventListener('click', () => toggleTrainDept(opt.dataset.val));
+      opt.querySelector('input').addEventListener('change', e => { e.stopPropagation(); toggleTrainDept(opt.dataset.val); });
+    });
+    syncTrainDeptUI();
   };
+
+  const toggleTrainDept = (val) => {
+    if (val === '__all__') {
+      selectedTrainDepts = selectedTrainDepts.includes('전체 부서') ? [] : ['전체 부서'];
+    } else if (val === '__direct__') {
+      if (selectedTrainDepts.includes('__direct__')) selectedTrainDepts = selectedTrainDepts.filter(d => d !== '__direct__');
+      else { selectedTrainDepts = selectedTrainDepts.filter(d => d !== '전체 부서'); selectedTrainDepts.push('__direct__'); }
+    } else {
+      selectedTrainDepts = selectedTrainDepts.filter(d => d !== '전체 부서');
+      const idx = selectedTrainDepts.indexOf(val);
+      if (idx >= 0) selectedTrainDepts.splice(idx, 1); else selectedTrainDepts.push(val);
+    }
+    syncTrainDeptUI();
+  };
+
+  const syncTrainDeptUI = () => {
+    document.querySelectorAll('#trainDeptDd .dept-opt').forEach(opt => {
+      const chk = opt.querySelector('input[type=checkbox]');
+      if (!chk) return;
+      const v = opt.dataset.val;
+      if (v === '__all__')     chk.checked = selectedTrainDepts.includes('전체 부서');
+      else if (v === '__direct__') chk.checked = selectedTrainDepts.includes('__direct__');
+      else chk.checked = selectedTrainDepts.includes(v) && !selectedTrainDepts.includes('전체 부서');
+    });
+    const display = getTrainDeptDisplay();
+    const tagsEl  = document.getElementById('trainDeptTags');
+    if (tagsEl) {
+      tagsEl.innerHTML = display.map(d =>
+        `<span class="dept-tag">${esc(d)}<span class="dept-tag-rm" data-remove="${esc(d)}">×</span></span>`
+      ).join('');
+      tagsEl.querySelectorAll('.dept-tag-rm').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); removeTrainDept(btn.dataset.remove); });
+      });
+    }
+    const trigText = document.getElementById('trainDeptTriggerText');
+    if (trigText) {
+      const n = display.length;
+      trigText.textContent = n === 0 ? '부서 선택...' : `${n}개 선택됨`;
+      trigText.style.color = n === 0 ? 'var(--text-2)' : 'var(--text)';
+    }
+    const directInput = document.getElementById('trainDeptDirectInput');
+    if (directInput) directInput.style.display = selectedTrainDepts.includes('__direct__') ? '' : 'none';
+  };
+
+  const getTrainDeptDisplay = () =>
+    selectedTrainDepts.includes('전체 부서') ? ['전체 부서'] : selectedTrainDepts.filter(d => d !== '__direct__');
+
+  const getSelectedDepts = () => {
+    const display = getTrainDeptDisplay();
+    if (selectedTrainDepts.includes('__direct__')) {
+      const raw = (document.getElementById('trainDeptDirectInput')?.value || '').trim();
+      raw.split(',').map(x => x.trim()).filter(Boolean).forEach(x => { if (!display.includes(x)) display.push(x); });
+    }
+    return display;
+  };
+
+  const setTrainDeptValue = (val) => {
+    const arr = Array.isArray(val) ? val
+      : typeof val === 'string' ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const knownSet = new Set(['전체 부서', ...getOrgChartDepts()]);
+    selectedTrainDepts = [];
+    const directVals = [];
+    arr.forEach(d => { if (knownSet.has(d)) selectedTrainDepts.push(d); else directVals.push(d); });
+    if (directVals.length) {
+      selectedTrainDepts.push('__direct__');
+      const di = document.getElementById('trainDeptDirectInput');
+      if (di) di.value = directVals.join(', ');
+    } else {
+      const di = document.getElementById('trainDeptDirectInput');
+      if (di) di.value = '';
+    }
+    buildTrainDeptDropdown();
+  };
+
+  const removeTrainDept = (val) => {
+    if (val === '전체 부서') selectedTrainDepts = [];
+    else selectedTrainDepts = selectedTrainDepts.filter(d => d !== val);
+    syncTrainDeptUI();
+  };
+
+  /* 드롭다운 토글 */
+  document.getElementById('trainDeptTrigger').addEventListener('click', () => {
+    const dd = document.getElementById('trainDeptDd');
+    const tr = document.getElementById('trainDeptTrigger');
+    const open = dd.classList.toggle('show');
+    tr.classList.toggle('open', open);
+  });
+
+  /* 외부 클릭 시 닫기 */
+  document.addEventListener('click', e => {
+    const wrap = document.getElementById('trainDeptSelWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('trainDeptDd').classList.remove('show');
+      document.getElementById('trainDeptTrigger').classList.remove('open');
+    }
+  });
+
+  /* 조직도 변경 시 목록 갱신 */
+  window.addEventListener('storage', e => { if (e.key === 'bcmsOrgChart') buildTrainDeptDropdown(); });
 
   /* ─── Year filter ─── */
   const populateYearFilter = () => {
@@ -1581,9 +1721,8 @@
     document.getElementById('fPlanDate').value = today();
     document.getElementById('fObjective').value = '';
     document.getElementById('fCriteria').value = '';
-    document.querySelectorAll('.deptCheck').forEach(c => { c.checked = false; });
-    const ft = document.getElementById('deptFreeText');
-    if (ft) ft.value = '';
+    selectedTrainDepts = [];
+    syncTrainDeptUI();
     loadScenarioOptions();
     document.getElementById('newTrnId').textContent = genId();
     syncTrainHeader();
@@ -1966,7 +2105,7 @@
   }
 
   /* ─── Init ─── */
-  loadDeptOptions();
+  buildTrainDeptDropdown();
   renderAll();
 
   /* ─── AI 도우미 ─── */
