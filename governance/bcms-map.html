@@ -320,13 +320,20 @@ function statusRate(arr) {
 
 function gapRate(items) {
   if (!items.length) return null;
-  let score = 0;
+  let total = 0, score = 0;
   items.forEach(x => {
     const st = x.status || x.state || '';
-    if (st === '이행'   || st === 'compliant') score += 1;
-    else if (st === '부분이행' || st === 'partial')  score += 0.5;
+    /* '해당없음'(N/A) 항목은 분모에서 제외 */
+    if (st === '해당없음' || st === 'N/A' || st === 'na' || st === 'n/a') return;
+    total++;
+    if (st === '완료'     || st === '이행'      || st === 'compliant' ||
+        st === 'done'     || st === 'completed'  || st === 'closed')    score += 1;
+    else if (st === '진행중'   || st === '부분이행' || st === 'partial' ||
+             st === 'in_progress' || st === '일부')                     score += 0.5;
+    /* '미착수', '미이행', 기타 → 0 */
   });
-  return clamp((score / items.length) * 100);
+  if (!total) return null;
+  return clamp(Math.round((score / total) * 100));
 }
 
 function avg(...vals) {
@@ -424,12 +431,17 @@ function calcGapAll() {
 function calcCAPA() {
   const arr = toArr(loadJ('bcmsCapaItems', null));
   if (!arr.length) return null;
-  let done = 0;
+  let total = 0, done = 0;
   arr.forEach(x => {
     const st = (x.status || x.state || '').toLowerCase();
-    if (DONE.some(v => st.includes(v))) done++;
+    /* '해당없음'(N/A) 제외 */
+    if (st === '해당없음' || st === 'n/a' || st === 'na') return;
+    total++;
+    if (st === '완료' || st === 'done' || st === 'completed' ||
+        st === 'closed' || st === '이행' || st === '승인') done++;
   });
-  return clamp((done / arr.length) * 100);
+  if (!total) return null;
+  return clamp(Math.round((done / total) * 100));
 }
 
 /* ─── PDCA phase definitions ────────────────────────────────── */
