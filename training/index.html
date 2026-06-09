@@ -801,6 +801,7 @@
               ${STATUS_OPTIONS.map(s => `<option value="${esc(s)}"${t.status === s ? ' selected' : ''}>${esc(s)}</option>`).join('')}
             </select>
             <button class="btn" type="button" data-del="${esc(t.id)}" style="padding:3px 8px;font-size:11px;color:#dc2626;border-color:rgba(239,68,68,.25)">삭제</button>
+            <button class="btn" type="button" data-print="${esc(t.id)}" style="padding:3px 8px;font-size:11px" title="보고서 출력">🖨️</button>
           </div>
         </td>
       </tr>`;
@@ -1631,14 +1632,17 @@
   });
 
   document.getElementById('planTableBody').addEventListener('click', e => {
-    const btn = e.target.closest('[data-del]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-del');
-    if (!confirm(`훈련 "${id}"를 삭제할까요?`)) return;
-    loadTrainings();
-    trainings = trainings.filter(x => x.id !== id);
-    saveTrainings();
-    renderAll();
+    const delBtn = e.target.closest('[data-del]');
+    if (delBtn) {
+      const id = delBtn.getAttribute('data-del');
+      if (!confirm(`훈련 "${id}"를 삭제할까요?`)) return;
+      loadTrainings();
+      trainings = trainings.filter(x => x.id !== id);
+      saveTrainings();
+      renderAll();
+    }
+    const printBtn = e.target.closest('[data-print]');
+    if (printBtn) printTrainingReport(printBtn.getAttribute('data-print'));
   });
 
   /* ─── Filters ─── */
@@ -1696,119 +1700,168 @@
     setTimeout(() => { btn.textContent = '전체 저장'; }, 900);
   });
 
-  /* ─── Per-item training result report (window.open) ─── */
+  /* ─── Per-item training result report (window.open / policy.html 방식) ─── */
   const printTrainingReport = (id) => {
     loadTrainings();
     const t = trainings.find(x => x.id === id);
     if (!t) { alert('훈련 데이터를 찾을 수 없습니다.'); return; }
 
-    const meta = loadJSON('bcmsReportMeta', {});
-    const companyName = meta.companyName || meta.company || localStorage.getItem('bcmsCompany') || '(회사명 미등록)';
-    const depts = Array.isArray(t.departments) ? t.departments.join(', ') : (t.departments || '-');
-    const achColor = t.achievement === '달성' ? '#16a34a' : t.achievement === '미달성' ? '#dc2626' : '#b45309';
-    const stColor  = t.status === '완료' ? '#16a34a' : t.status === '진행중' ? '#0070f3' : '#6b7280';
-    const td = 'border:1px solid #bfdbfe;padding:8px 12px;font-size:12px;vertical-align:top';
-    const th = td + ';background:#eff6ff;font-weight:700;color:#1e3a8a;width:140px;white-space:nowrap';
-    const thC = td + ';background:#eff6ff;font-weight:700;color:#1e3a8a;text-align:center';
+    /* 회사명: profile → bcmsCompany → reportMeta 순으로 탐색 */
+    let companyName = '';
+    try { const p = JSON.parse(localStorage.getItem('bcms_user_profile') || 'null'); if (p?.company_name) companyName = p.company_name; } catch {}
+    if (!companyName) companyName = localStorage.getItem('bcmsCompany') || localStorage.getItem('bcmsCompanyName') || '';
+    if (!companyName) { const m = loadJSON('bcmsReportMeta', {}); companyName = m.companyName || m.company || ''; }
+    if (!companyName) companyName = '(회사명 미등록)';
+
+    const h = s => String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+    const depts = Array.isArray(t.departments) ? t.departments.join(', ') : (t.departments || '');
+    const achMap = { '달성': '합격', '부분달성': '조건부합격', '미달성': '불합격' };
+    const achResult = achMap[t.achievement] || t.achievement || '미평가';
+    const achColor = t.achievement === '달성' ? '#166534' : t.achievement === '미달성' ? '#991b1b' : '#92400e';
+    const capaNote = (t.issues || t.improvements)
+      ? '● CAPA 등록 필요 (개선사항 있음)'
+      : '해당없음';
+    const capaColor = (t.issues || t.improvements) ? '#92400e' : '#6b7280';
+
+    const bodySection = (label, content) =>
+      `<div class="body-section">
+        <div class="body-label">${h(label)}</div>
+        <div class="body-text">${h(content || '(미입력)')}</div>
+      </div>`;
 
     const html = `<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>훈련 결과 보고서 — ${esc(t.name || id)}</title>
+<meta charset="utf-8">
+<title>훈련 결과 보고서 — ${h(t.name || id)}</title>
 <style>
-body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#111;margin:0;padding:0}
-.page{max-width:900px;margin:0 auto;padding:40px 30px}
-table{width:100%;border-collapse:collapse;margin-bottom:24px}
-h2{font-size:15px;font-weight:700;color:#1e3a8a;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid #e5e7eb}
-.stamp{display:inline-block;border:2px solid;border-radius:4px;padding:2px 10px;font-weight:700;font-size:13px}
-.no-print{text-align:center;margin-bottom:24px}
-.no-print button{padding:10px 28px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:inherit}
-.footer{font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:12px;margin-top:24px;text-align:right}
-@media print{.no-print{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:20px 15px}}
+  @page { size: A4 portrait; margin: 18mm 16mm; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Nanum Gothic", sans-serif;
+    font-size: 10pt; color: #111; background: #fff;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .doc-outer {
+    border: 1.5px solid #444; padding: 11mm 13mm 7mm;
+    min-height: calc(297mm - 36mm); position: relative;
+    display: flex; flex-direction: column;
+  }
+  .doc-logo { position: absolute; top: 5mm; right: 7mm; text-align: right; line-height: 1; }
+  .doc-logo-text { font-size: 7.5pt; color: #bbb; letter-spacing: .12em; font-weight: 700; text-transform: uppercase; }
+  .doc-title {
+    text-align: center; font-size: 15.5pt; font-weight: 900;
+    letter-spacing: -.02em; padding-bottom: 5mm;
+    border-bottom: 2px solid #222; margin-bottom: 5.5mm;
+  }
+  .doc-subtitle { font-size: 9pt; font-weight: 400; color: #666; display: block; margin-top: 3px; letter-spacing: 0; }
+  .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 6mm; font-size: 9pt; }
+  .meta-table th, .meta-table td { border: 0.5px solid #999; padding: 4px 9px; vertical-align: middle; }
+  .meta-table th { background: #f2f2f2; font-weight: 700; color: #333; width: 22%; white-space: nowrap; }
+  .body-section { margin-bottom: 5mm; }
+  .body-label {
+    font-size: 7.5pt; font-weight: 700; color: #555; letter-spacing: .06em;
+    text-transform: uppercase; margin-bottom: 3mm; padding-bottom: 2mm;
+    border-bottom: 0.5px solid #ddd;
+  }
+  .body-text { font-size: 9.5pt; line-height: 1.8; white-space: pre-wrap; word-break: keep-all; min-height: 12mm; }
+  .sign-section {
+    display: flex; gap: 7mm; margin-top: auto;
+    padding-top: 5mm; border-top: 0.75px solid #bbb;
+  }
+  .sign-box { flex: 1; border: 0.75px solid #aaa; padding: 5mm 6mm; }
+  .sign-box-label { font-size: 7.5pt; font-weight: 700; color: #777; letter-spacing: .04em; margin-bottom: 2.5mm; }
+  .sign-box-name { font-size: 10pt; font-weight: 700; margin-bottom: 1mm; min-height: 13pt; }
+  .sign-box-date { font-size: 8.5pt; color: #666; margin-bottom: 6mm; }
+  .sign-line { border-bottom: 0.75px solid #aaa; }
+  .doc-footer {
+    display: flex; justify-content: space-between; font-size: 7.5pt; color: #999;
+    margin-top: 4mm; padding-top: 2mm; border-top: 0.5px solid #ddd;
+  }
+  @media print { body { background: #fff !important; } }
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="no-print"><button onclick="window.print()">인쇄하기</button></div>
+<div class="doc-outer">
+  <div class="doc-logo"><span class="doc-logo-text">${h(companyName)}</span></div>
 
-  <div style="border-bottom:2px solid #1e40af;padding-bottom:16px;margin-bottom:28px">
-    <div style="font-size:11px;color:#6b7280;font-weight:600;letter-spacing:.05em;margin-bottom:6px">ISO 22301 훈련 결과 기록서</div>
-    <h1 style="font-size:22px;font-weight:800;color:#1e3a8a;margin:0 0 14px">${esc(t.name || '(제목없음)')}</h1>
-    <table style="border:none;border-collapse:collapse;width:auto;margin:0">
-      <tr><td style="border:none;padding:2px 24px 2px 0;font-size:11px;color:#6b7280;font-weight:600">회사명</td><td style="border:none;padding:2px 0;font-size:13px;font-weight:700">${esc(companyName)}</td></tr>
-      <tr><td style="border:none;padding:2px 24px 2px 0;font-size:11px;color:#6b7280;font-weight:600">문서번호</td><td style="border:none;padding:2px 0;font-size:13px">TRN-${esc(id)}</td></tr>
-      <tr><td style="border:none;padding:2px 24px 2px 0;font-size:11px;color:#6b7280;font-weight:600">작성일</td><td style="border:none;padding:2px 0;font-size:13px">${esc(today())}</td></tr>
-    </table>
+  <div class="doc-title">
+    훈련 결과 보고서
+    <span class="doc-subtitle">ISO 22301:2019 § 8.5 훈련 및 연습</span>
   </div>
 
-  <h2>1. 훈련 개요</h2>
-  <table>
-    <tr><th style="${th}">훈련명</th><td style="${td}">${esc(t.name || '-')}</td><th style="${th}">훈련 유형</th><td style="${td}">${esc(t.type || '-')}</td></tr>
-    <tr><th style="${th}">계획 일시</th><td style="${td}">${esc(t.planDate || '-')}</td><th style="${th}">실제 훈련일</th><td style="${td}">${esc(t.actualDate || '-')}</td></tr>
-    <tr><th style="${th}">참가 부서</th><td style="${td}">${esc(depts)}</td><th style="${th}">참가 인원</th><td style="${td}">${t.participants ? esc(String(t.participants)) + '명' : '-'}</td></tr>
-    <tr><th style="${th}">훈련 시나리오</th><td style="${td}" colspan="3">${esc(t.scenario || '-')}</td></tr>
-    <tr><th style="${th}">훈련 목표</th><td style="${td}" colspan="3">${esc(t.objective || '-')}</td></tr>
-    <tr><th style="${th}">합격 기준</th><td style="${td}" colspan="3">${esc(t.criteria || '-')}</td></tr>
-  </table>
-
-  <h2>2. 훈련 결과</h2>
-  <table>
+  <table class="meta-table">
     <tr>
-      <th style="${th}">훈련 상태</th>
-      <td style="${td}"><span class="stamp" style="border-color:${stColor};color:${stColor}">${esc(t.status || '-')}</span></td>
-      <th style="${th}">목표 달성 여부</th>
-      <td style="${td}"><span class="stamp" style="border-color:${achColor};color:${achColor}">${esc(t.achievement || '미평가')}</span></td>
-    </tr>
-    <tr><th style="${th}">훈련 결과 요약</th><td style="${td};white-space:pre-wrap" colspan="3">${esc(t.resultSummary || '(미입력)')}</td></tr>
-  </table>
-
-  <h2>3. 문제점 및 개선사항</h2>
-  <table>
-    <tr><th style="${th}">발견된 문제점</th><td style="${td};white-space:pre-wrap">${esc(t.issues || '(없음)')}</td></tr>
-    <tr><th style="${th}">개선 필요 사항</th><td style="${td};white-space:pre-wrap">${esc(t.improvements || '(없음)')}</td></tr>
-  </table>
-
-  <h2>4. CAPA 연계</h2>
-  <table>
-    <tr>
-      <th style="${th}">CAPA 등록 필요</th>
-      <td style="${td}">${(t.issues || t.improvements) ? '<span style="font-weight:700;color:#0070f3">● 개선사항 있음 — CAPA 페이지에서 등록하세요</span>' : '<span style="color:#6b7280">해당없음</span>'}</td>
+      <th>훈련명</th><td colspan="3" style="font-weight:600">${h(t.name || '-')}</td>
     </tr>
     <tr>
-      <th style="${th}">관련 훈련 참조</th>
-      <td style="${td}">${esc(t.name || '-')} (문서번호: TRN-${esc(id)})</td>
+      <th>훈련 유형</th><td>${h(t.type || '-')}</td>
+      <th>훈련 일시</th><td>${h(t.actualDate || t.planDate || '-')}</td>
+    </tr>
+    <tr>
+      <th>훈련 장소</th><td>${h(t.location || '(미등록)')}</td>
+      <th>참가 인원</th><td>${t.participants ? h(String(t.participants)) + '명' : '-'}</td>
+    </tr>
+    <tr>
+      <th>참가 부서</th><td colspan="3">${h(depts || '-')}</td>
+    </tr>
+    <tr>
+      <th>훈련 목적</th><td colspan="3">${h(t.objective || '-')}</td>
+    </tr>
+    <tr>
+      <th>합격 기준</th><td colspan="3">${h(t.criteria || '-')}</td>
+    </tr>
+    <tr>
+      <th>훈련 결과</th>
+      <td colspan="3" style="font-weight:700;color:${achColor}">${h(achResult)}</td>
+    </tr>
+    <tr>
+      <th>CAPA 연계</th>
+      <td colspan="3" style="font-weight:${(t.issues||t.improvements)?'700':'400'};color:${capaColor}">${h(capaNote)}</td>
     </tr>
   </table>
 
-  <h2>5. 서명란</h2>
-  <table>
-    <thead><tr>
-      <th style="${th}">구분</th>
-      <th style="${thC}">작성자</th>
-      <th style="${thC}">검토자</th>
-      <th style="${thC}">승인자</th>
-    </tr></thead>
-    <tbody>
-      <tr><th style="${th}">소속/직위</th><td style="${td};height:32px">&nbsp;</td><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td></tr>
-      <tr><th style="${th}">성명</th><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td></tr>
-      <tr><th style="${th}">서명/날인</th><td style="${td};height:52px">&nbsp;</td><td style="${td}">&nbsp;</td><td style="${td}">&nbsp;</td></tr>
-    </tbody>
-  </table>
-  <table style="margin:0">
-    <tr><th style="${th}">작성일</th><td style="${td}">${esc(today())}</td></tr>
-  </table>
+  ${bodySection('훈련 시나리오 요약', t.scenario)}
+  ${bodySection('훈련 결과 요약', t.resultSummary)}
+  ${bodySection('주요 발견사항 및 문제점', t.issues)}
+  ${bodySection('개선 권고사항', t.improvements)}
 
-  <p class="footer">본 보고서는 BCMS Portal에서 자동 생성되었습니다. (ISO 22301 훈련 결과 기록 양식) | TRN-${esc(id)} | ${esc(today())}</p>
+  <div class="sign-section">
+    <div class="sign-box">
+      <div class="sign-box-label">작성자</div>
+      <div class="sign-box-name">&nbsp;</div>
+      <div class="sign-box-date">작성일: ${h(today())}</div>
+      <div class="sign-line"></div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-box-label">검토자</div>
+      <div class="sign-box-name">&nbsp;</div>
+      <div class="sign-box-date">&nbsp;</div>
+      <div class="sign-line"></div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-box-label">승인자</div>
+      <div class="sign-box-name">&nbsp;</div>
+      <div class="sign-box-date">&nbsp;</div>
+      <div class="sign-line"></div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>${h(companyName)}</span>
+    <span>TRN-${h(id)}</span>
+    <span>본 보고서는 ISO 22301:2019 조항 8.5 훈련 및 연습 요구사항에 따라 작성되었습니다.</span>
+  </div>
 </div>
+<script>window.onload = function(){ window.print(); };<\/script>
 </body>
 </html>`;
 
-    const w = window.open('', '_blank', 'width=960,height=800,scrollbars=yes,resizable=yes');
-    if (!w) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.'); return; }
-    w.document.write(html);
-    w.document.close();
-    setTimeout(() => w.print(), 600);
+    const win = window.open('', '_blank');
+    if (!win) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.'); return; }
+    win.document.write(html);
+    win.document.close();
   };
 
   /* ─── Print report ─── */
