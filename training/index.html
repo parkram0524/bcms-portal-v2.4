@@ -78,7 +78,7 @@
     }
 
     /* ── 부서 멀티 드롭다운 ── */
-    .dept-sel-wrap { position: relative; }
+    .dept-sel-wrap { position: relative; z-index: 10; }
     .dept-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 5px; min-height: 2px; }
     .dept-tag {
       display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
@@ -97,13 +97,13 @@
     }
     .dept-trigger:hover, .dept-trigger.open { border-color: var(--accent); }
     .dept-dd {
-      display: none; position: absolute; z-index: 200; left: 0; right: 0; top: calc(100% + 4px);
+      display: none; position: absolute; z-index: 300; left: 0; right: 0; top: calc(100% + 4px);
       background: var(--surface); border: 1px solid var(--border-strong);
-      border-radius: 8px; box-shadow: var(--shadow); max-height: 180px; overflow-y: auto;
+      border-radius: 8px; box-shadow: var(--shadow); max-height: 200px; overflow-y: auto;
     }
     .dept-dd.show { display: block; }
     .dept-opt {
-      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      display: flex; align-items: center; gap: 8px; padding: 7px 12px;
       font-size: 13px; cursor: pointer; transition: background .1s;
       border-bottom: 0.5px solid var(--border);
     }
