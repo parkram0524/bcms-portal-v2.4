@@ -176,8 +176,48 @@
         banner.innerHTML = `<b>Incident ${esc(focus.incidentId || '-')}에서 추천된 실행계획</b><div class="muted" style="margin-top:6px;">영향 서비스: ${esc(focus.serviceName || '-')}</div>`;
       };
 
+      /* mtpdMinutes(숫자) → 표시 텍스트 */
+      const minsToText = (m) => {
+        if (m == null || !Number.isFinite(Number(m))) return '-';
+        const n = Number(m);
+        if (n >= 1440 && n % 1440 === 0) return `${n / 1440}일`;
+        if (n >= 60   && n % 60   === 0) return `${n / 60}시간`;
+        return `${n}분`;
+      };
+
       function normalizeBiaRows(raw) {
         const rows = Array.isArray(raw) ? raw : (raw && raw.team ? [raw] : []);
+        if (!rows.length) return [];
+
+        const first = rows[0];
+        /* flat 포맷: [{teamName, functionName, ...}] */
+        if (first && !Array.isArray(first.functions) &&
+            (first.functionName != null || first.teamName != null)) {
+          const teamMap = new Map();
+          for (const r of rows) {
+            const team  = String(r.teamName || r.team || '').trim();
+            const fnName = String(r.functionName || r.name || '').trim();
+            if (!team || !fnName) continue;
+            if (!teamMap.has(team)) teamMap.set(team, []);
+            const rto = (r.rtoValue != null && r.rtoValue !== '')
+              ? `${r.rtoValue}${r.rtoUnit || '분'}`
+              : normalizeText(r.rto, '-');
+            teamMap.get(team).push({
+              function:   fnName,
+              importance: normalizeText(r.importance, '일반'),
+              grade:      normalizeText(r.grade, '일반'),
+              mtpd:       r.mtpdMinutes != null ? minsToText(Number(r.mtpdMinutes)) : normalizeText(r.mtpd, '-'),
+              rto,
+              impact:     toNum(r.overallImpact || r.impact) ?? 3,
+              coreFinal:  !!(r.coreFinal || (r.grade && r.grade !== '일반'))
+            });
+          }
+          return [...teamMap.entries()]
+            .map(([team, functions]) => ({ team, functions }))
+            .filter((row) => row.functions.length);
+        }
+
+        /* 기존 team-grouped 포맷: [{team, functions:[...]}] */
         return rows
           .map((row) => ({
             team: String(row.team || '').trim(),
@@ -188,13 +228,13 @@
             team: row.team,
             functions: row.functions
               .map((fn) => ({
-                function: normalizeText(fn.name || fn.function || fn.process || fn.work, ''),
+                function:   normalizeText(fn.name || fn.function || fn.process || fn.work, ''),
                 importance: normalizeText(fn.importance, '일반'),
-                grade: normalizeText(fn.grade, '일반'),
-                mtpd: normalizeText(fn.mtpd, '-'),
-                rto: normalizeText(fn.rto || `${fn.rtoValue ?? ''}${fn.rtoUnit ?? ''}`.trim(), '-'),
-                impact: toNum(fn.impact || fn.overallImpact) ?? 3,
-                coreFinal: !!fn.coreFinal
+                grade:      normalizeText(fn.grade, '일반'),
+                mtpd:       normalizeText(fn.mtpd, '-'),
+                rto:        normalizeText(fn.rto || `${fn.rtoValue ?? ''}${fn.rtoUnit ?? ''}`.trim(), '-'),
+                impact:     toNum(fn.impact || fn.overallImpact) ?? 3,
+                coreFinal:  !!fn.coreFinal
               }))
               .filter((fn) => fn.function)
           }));
@@ -210,13 +250,15 @@
           for (const item of raw) {
             const riskName = normalizeText(item.riskName || item.risk || item.name, '');
             if (!riskName) continue;
-            const team = normalizeText(item.riskType, '기타');
+            // teamName/functionName 있으면 BIA 연결 가능, 없으면 riskType 폴백
+            const team   = normalizeText(item.teamName || item.team || item.riskType, '기타');
+            const fnName = normalizeText(item.functionName || item.coreFunction || item.function, '');
             const impact = toNum(item.impact) ?? 3;
             const likelihood = toNum(item.likelihood) ?? 1;
             const riskScore = toNum(item.riskScore) ?? (impact * likelihood);
-            const critical = item.critical === undefined ? (riskScore >= 13) : !!item.critical;
+            const critical = item.critical !== undefined ? !!item.critical : (riskScore >= 13);
             if (!teamMap.has(team)) teamMap.set(team, []);
-            teamMap.get(team).push({ function: riskName, risk: riskName, riskScore, critical });
+            teamMap.get(team).push({ function: fnName || riskName, risk: riskName, riskScore, critical });
           }
           return [...teamMap.entries()].map(([team, risks]) => ({ team, risks }));
         }
@@ -407,24 +449,44 @@
       }
 
       function renderKpi() {
-        const all = state.rows.filter((r) => r.critical || r.riskScore >= 13);
-        const written = all.filter((r) => (r.strategyText || '').trim().length > 0).length;
+        /* ── 중점관리 리스크 수: bcmsRiskList에서 직접 카운트 ── */
+        const riskList = get(KEY_RISK, []);
+        const criticalCount = riskList.filter((r) => {
+          if (r.critical !== undefined) return !!r.critical;
+          const score = toNum(r.riskScore) ?? ((toNum(r.impact) ?? 3) * (toNum(r.likelihood) ?? 1));
+          return score >= 13;
+        }).length;
 
-        // Count confirmed from state.rows (bcmsBCP key)
-        const finalFromBCP = all.filter((r) => r.status === '확정').length;
-        // Count confirmed from bcmsBCPStrategy (strategy-plans/index.html saves here)
-        const stratData = (() => {
-          try { return JSON.parse(localStorage.getItem('bcmsBCPStrategy') || '[]'); } catch { return []; }
-        })();
+        /* ── BCP 전략 목록: bcmsBCP 키에서 모든 전략 아이템 수집 ── */
+        const bcpRaw = get(KEY_BCP, []);
+        const allStrategies = Array.isArray(bcpRaw)
+          ? bcpRaw.flatMap((row) =>
+              Array.isArray(row.strategies) ? row.strategies
+                : (row.function || row.risk ? [row] : [])
+            )
+          : [];
+
+        const writtenCount = allStrategies.filter(
+          (s) => (s.strategyText || s.strategy || '').trim().length > 0
+        ).length;
+
+        const finalFromBCP = allStrategies.filter(
+          (s) => s.status === '확정' || s.status === 'confirmed'
+        ).length;
+
+        /* bcmsBCPStrategy 폴백 (strategy-plans/index.html 저장 키) */
+        const stratData = get('bcmsBCPStrategy', []);
         const finalFromStrategy = Array.isArray(stratData)
           ? stratData.filter((s) => !!s.completed || s.status === 'confirmed' || s.status === '확정').length
           : 0;
+
         const finalCount = Math.max(finalFromBCP, finalFromStrategy);
 
-        const pending = Math.max(all.length - written, 0);
+        /* 미작성: 중점관리 리스크 수 - 전략 작성 수 */
+        const pending = Math.max(criticalCount - writtenCount, 0);
 
-        $('kCritical').textContent = String(all.length);
-        $('kWritten').textContent = String(written);
+        $('kCritical').textContent = String(criticalCount);
+        $('kWritten').textContent = String(writtenCount);
         $('kFinal').textContent = String(finalCount);
         $('kPending').textContent = String(pending);
       }
