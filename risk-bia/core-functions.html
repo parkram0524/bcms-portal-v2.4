@@ -215,91 +215,60 @@
       return `${n}분`;
     };
 
-    /* ── flat 형식 판별 ──
-       DataStore.writeBiaRecords() 저장 시: [{id, teamName, functionName, ...}] (flat)
-       기존 저장 시: [{team, functions:[...]}] (team-grouped)
-    ── */
+    /* ── normalizeBIA: 어떤 형식이든 flat 함수 배열로 반환 ── */
+    const normalizeBIA = raw => {
+      if (!Array.isArray(raw) || !raw.length) return [];
+      if (Array.isArray(raw[0].functions)) {
+        // 팀별 묶음: [{team, functions:[...]}]
+        return raw.flatMap(t =>
+          (t.functions || []).map(fn => {
+            if (!fn) return null;
+            if (typeof fn === 'string') return { name: fn, _team: t.team || t.teamName || '' };
+            return { ...fn, _team: t.team || t.teamName || '' };
+          }).filter(Boolean)
+        );
+      }
+      // flat: [{functionName, teamName, ...}]
+      return raw.map(r => ({
+        ...r,
+        name:  r.name  || r.functionName || '',
+        _team: r._team || r.teamName     || r.team || '',
+      }));
+    };
+
+    /* ── flat 형식 판별 (updateBIARow/deleteBIARow 쓰기 작업에서만 사용) ── */
     const isFlatFormat = raw =>
       Array.isArray(raw) && raw.length > 0 &&
       !Array.isArray(raw[0]?.functions) &&
       (raw[0]?.functionName != null || raw[0]?.teamName != null);
 
-    /* flat 레코드 1개 → fnRow 객체 */
-    const flatRecordToFnRow = record => {
-      const name = normStr(record.functionName || record.name || '');
-      if (!name) return null;
-      const rtoDisplay = (() => {
-        if (record.rtoValue != null && record.rtoValue !== '' && record.rtoValue !== null)
-          return `${record.rtoValue}${record.rtoUnit || '분'}`;
-        return '-';
-      })();
-      return {
-        id:         normStr(record.id || record.biaId || ''),
-        name,
-        importance: normStr(record.importance || '') || '일반',
-        mtpd:       record.mtpdMinutes != null ? minsToText(record.mtpdMinutes) : '-',
-        rto:        rtoDisplay,
-        coreFinal:  normStr(record.grade || '') !== '일반',
-      };
-    };
-
-    /* ──────────────────────────────────────────────
-       bcmsBIAData 읽기
-       두 가지 저장 형식 모두 지원:
-         flat: [{id, teamName, functionName, overallImpact, rtoValue, rtoUnit, ...}]
-         grouped: [{team, functions:[{name, importance, ...}]}]
-    ─────────────────────────────────────────────── */
+    /* ── bcmsBIAData 읽기 → 표시용 team-grouped 배열로 변환 ── */
     const readBIARows = () => {
       const raw = safeParse(localStorage.getItem(BIA_KEY), []);
-      if (!Array.isArray(raw) || !raw.length) return [];
-
-      /* flat canonical 형식 (DataStore 저장) */
-      if (isFlatFormat(raw)) {
-        const teamMap = new Map();
-        for (const record of raw) {
-          const team = normStr(record.teamName || record.team || '');
-          if (!team) continue;
-          const fn = flatRecordToFnRow(record);
-          if (!fn) continue;
-          if (!teamMap.has(team)) teamMap.set(team, []);
-          teamMap.get(team).push(fn);
-        }
-        return [...teamMap.entries()]
-          .map(([team, functions]) => ({ team, functions }))
-          .filter(row => row.functions.length);
+      const flat = normalizeBIA(raw);
+      const teamMap = new Map();
+      for (const r of flat) {
+        const team = normStr(r._team || '');
+        const name = normStr(r.name || r.functionName || r.coreFunction || r.title || '');
+        if (!team || !name) continue;
+        if (!teamMap.has(team)) teamMap.set(team, []);
+        const rtoDisplay = (() => {
+          if (normStr(r.rto) && normStr(r.rto) !== '-') return normStr(r.rto);
+          if (r.rtoValue != null && r.rtoValue !== '') return `${r.rtoValue}${r.rtoUnit || '분'}`;
+          return '-';
+        })();
+        teamMap.get(team).push({
+          id:         normStr(r.id || r.biaId || ''),
+          name,
+          importance: normStr(r.importance || r.grade || '') || '일반',
+          mtpd:       r.mtpdMinutes != null ? minsToText(Number(r.mtpdMinutes)) : (normStr(r.mtpd || '') || '-'),
+          rto:        rtoDisplay,
+          coreFinal:  !!r.coreFinal,
+        });
       }
-
-      /* 기존 team-grouped 형식 */
-      return raw.map(row => {
-        if (!row || typeof row !== 'object') return null;
-        const team = normStr(row.team || row.teamName || '');
-        if (!team) return null;
-
-        const fns = (row.functions || []).map(f => {
-          if (!f) return null;
-          if (typeof f === 'string') {
-            const name = normStr(f);
-            return name ? { id: '', name, importance: '일반', mtpd: '-', rto: '-', coreFinal: false } : null;
-          }
-          const name = normStr(f.name || f.functionName || f.coreFunction || f.title || '');
-          if (!name) return null;
-          const rtoDisplay = (() => {
-            if (normStr(f.rto) && normStr(f.rto) !== '-') return normStr(f.rto);
-            if (f.rtoValue != null && f.rtoValue !== '') return `${f.rtoValue}${f.rtoUnit || ''}`;
-            return '-';
-          })();
-          return {
-            id:         normStr(f.id || f.biaId || ''),
-            name,
-            importance: normStr(f.importance || f.grade || '') || '일반',
-            mtpd:       normStr(f.mtpd || '') || '-',
-            rto:        rtoDisplay,
-            coreFinal:  !!f.coreFinal,
-          };
-        }).filter(Boolean);
-
-        return fns.length ? { team, functions: fns } : null;
-      }).filter(Boolean);
+      return [...teamMap.entries()]
+        .map(([team, functions]) => ({ team, functions }))
+        .filter(row => row.functions.length);
     };
 
     /* bcmsCoreFunctions 동기화 (이름 배열만 저장) */

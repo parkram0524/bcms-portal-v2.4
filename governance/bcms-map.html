@@ -365,8 +365,23 @@ function setGauge(circleId, pctId, v, color) {
 
 function nowStr() { return new Date().toLocaleString('ko-KR', { hour12: false }); }
 
+/* ─── normalizeBIA: 어떤 형식이든 flat 함수 배열로 반환 ─── */
+function normalizeBIA(raw) {
+  if (!Array.isArray(raw) || !raw.length) return [];
+  if (Array.isArray(raw[0].functions)) {
+    return raw.flatMap(t =>
+      (t.functions || []).map(fn => ({ ...fn, _team: t.team || t.teamName || '' }))
+    );
+  }
+  return raw.map(r => ({
+    ...r,
+    name:  r.name  || r.functionName || '',
+    _team: r._team || r.teamName     || r.team || '',
+  }));
+}
+
 /* ─── Data sources ──────────────────────────────────────────── */
-function calcBIA()      { return statusRate(toArr(loadJ('bcmsBIAData', null))); }
+function calcBIA()      { return statusRate(normalizeBIA(loadJ('bcmsBIAData', null))); }
 function calcRisk()     { return statusRate(toArr(loadJ('bcmsRiskAssessment', null) || loadJ('bcmsRiskList', null))); }
 function calcBCP()      { return statusRate(toArr(loadJ('bcmsBCPStrategy', null))); }
 function calcTraining() { return statusRate(toArr(loadJ('bcmsTrainingData', null))); }

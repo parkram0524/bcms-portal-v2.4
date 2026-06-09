@@ -304,15 +304,25 @@
   const getDR        = () => loadJ('bcmsDisasterReduction', {});
   const getAudits    = () => loadJ('bcmsAuditData', []);
 
-  /* ── Derived counts ── */
-  const biaFunctions = () => {
-    const bia = getBIA();
-    if (!Array.isArray(bia) || bia.length === 0) return [];
-    // flat 배열: 첫 항목에 functions 키가 없으면 flat 구조로 판단
-    if (bia[0].functions === undefined) return bia;
-    // 팀별 묶음 구조: { team, functions: [...] }
-    return bia.flatMap(t => Array.isArray(t.functions) ? t.functions : []);
+  /* ── normalizeBIA: 어떤 형식이든 flat 함수 배열로 반환 ── */
+  const normalizeBIA = raw => {
+    if (!Array.isArray(raw) || !raw.length) return [];
+    if (Array.isArray(raw[0].functions)) {
+      // 팀별 묶음: [{ team, functions: [...] }]
+      return raw.flatMap(t =>
+        (t.functions || []).map(fn => ({ ...fn, _team: t.team || t.teamName || '' }))
+      );
+    }
+    // flat: [{ functionName, teamName, ... }]
+    return raw.map(r => ({
+      ...r,
+      name:  r.name  || r.functionName || '',
+      _team: r._team || r.teamName     || r.team || '',
+    }));
   };
+
+  /* ── Derived counts ── */
+  const biaFunctions = () => normalizeBIA(getBIA());
   const coreFunctions = () => {
     const core = getCore();
     return core.flatMap(t => Array.isArray(t.functions) ? t.functions : []);
@@ -713,9 +723,7 @@
     const biaData = getBIA();
     const mbcoStore = getMBCOStore();
 
-    const allFns = biaData.flatMap(row =>
-      (row.functions || []).map(fn => ({ ...fn, _team: row.team || row.teamName || '' }))
-    ).filter(fn => fn.name);
+    const allFns = normalizeBIA(biaData).filter(fn => fn.name);
 
     if (!allFns.length) {
       section.innerHTML = `<div class="panelCard" style="margin-bottom:20px"><div class="empty">BIA 데이터가 없습니다. <a href="risk-bia/bia.html" style="color:var(--accent)">BIA 등록 →</a></div></div>`;

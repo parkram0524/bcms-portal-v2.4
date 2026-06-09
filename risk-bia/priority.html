@@ -363,37 +363,19 @@
     { key: '자금',        icon: '💰' },
   ];
 
-  /* ── Data sources ── */
-  const loadBIA = () => {
-    const raw = loadJSON('bcmsBIAData', []);
+  /* ── normalizeBIA: 어떤 형식이든 flat 함수 배열로 반환 ── */
+  const normalizeBIA = raw => {
     if (!Array.isArray(raw) || !raw.length) return [];
-
-    const first = raw[0];
-    // Flat canonical format (saved by DataStore.writeBiaRecords):
-    // each item has { teamName, functionName, ... } instead of { team, functions:[] }
-    if (first && !Array.isArray(first.functions) && (first.functionName != null || first.teamName != null)) {
-      const teamMap = new Map();
-      for (const record of raw) {
-        const team   = String(record.teamName || record.team || '').trim();
-        const fnName = String(record.functionName || record.name || '').trim();
-        if (!team || !fnName) continue;
-        if (!teamMap.has(team)) teamMap.set(team, []);
-        teamMap.get(team).push({
-          name:              fnName,
-          importance:        record.importance || '일반',
-          overallImpact:     record.overallImpact || record.impact || 3,
-          impact:            record.overallImpact || record.impact || 3,
-          rtoValue:          record.rtoValue,
-          rtoUnit:           record.rtoUnit || '분',
-          requiredResources: Array.isArray(record.requiredResources) ? record.requiredResources : [],
-          biaId:             record.id || record.biaId,
-          id:                record.id || record.biaId,
-        });
-      }
-      return [...teamMap.entries()].map(([team, functions]) => ({ team, functions }));
+    if (Array.isArray(raw[0].functions)) {
+      return raw.flatMap(t =>
+        (t.functions || []).map(fn => ({ ...fn, _team: t.team || t.teamName || '' }))
+      );
     }
-    // Old team-grouped format: [{ team, functions:[] }]
-    return raw;
+    return raw.map(r => ({
+      ...r,
+      name:  r.name  || r.functionName || '',
+      _team: r._team || r.teamName     || r.team || '',
+    }));
   };
 
   const loadRisks     = () => loadJSON('bcmsRiskList', []);
@@ -413,42 +395,40 @@
     return map;
   };
 
-  /* ── Compute all priority items ── */
-  const computeItems = (biaRows, riskMap, confirmed) => {
+  /* ── Compute all priority items (flat 배열 기반) ── */
+  const computeItems = (flatFns, riskMap, confirmed) => {
     const items = [];
-    for (const block of biaRows) {
-      const team = String(block.team || '').trim();
-      for (const fn of (block.functions || [])) {
-        if (!fn.name) continue;
+    for (const fn of flatFns) {
+      const name = fn.name || '';
+      const team = fn._team || '';
+      if (!name) continue;
 
-        const overallImpact = clamp(Number(fn.overallImpact || fn.impact || 3), 1, 5);
+      const overallImpact = clamp(Number(fn.overallImpact || fn.impact || 3), 1, 5);
 
-        /* 최고위험도: max normalized risk score via shared required resources */
-        let maxRisk = 1;
-        for (const res of (fn.requiredResources || [])) {
-          if (riskMap.has(res)) maxRisk = Math.max(maxRisk, riskMap.get(res));
-        }
-
-        const rtomins  = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
-        const urgency  = rtoUrgency(rtomins);
-        const rawScore = (overallImpact * 0.4) + (maxRisk * 0.4) + (urgency * 0.2);
-        const score    = Math.round(rawScore * 10) / 10;
-        const grade    = getGrade(score);
-        const id       = String(fn.biaId || fn.id || `${team}__${fn.name}`);
-
-        items.push({
-          id, team, name: fn.name,
-          importance: fn.importance || '일반',
-          overallImpact,
-          maxRisk: Math.round(maxRisk * 10) / 10,
-          urgency,
-          rtoDisplay: rtoDisplayText(fn.rtoValue, fn.rtoUnit),
-          score, grade,
-          confirmed:         !!confirmed[id],
-          note:              confirmed[id + '_note'] || '',
-          requiredResources: fn.requiredResources || [],
-        });
+      let maxRisk = 1;
+      for (const res of (fn.requiredResources || [])) {
+        if (riskMap.has(res)) maxRisk = Math.max(maxRisk, riskMap.get(res));
       }
+
+      const rtomins  = rtoToMinutes(fn.rtoValue, fn.rtoUnit);
+      const urgency  = rtoUrgency(rtomins);
+      const rawScore = (overallImpact * 0.4) + (maxRisk * 0.4) + (urgency * 0.2);
+      const score    = Math.round(rawScore * 10) / 10;
+      const grade    = getGrade(score);
+      const id       = String(fn.biaId || fn.id || `${team}__${name}`);
+
+      items.push({
+        id, team, name,
+        importance: fn.importance || '일반',
+        overallImpact,
+        maxRisk: Math.round(maxRisk * 10) / 10,
+        urgency,
+        rtoDisplay: rtoDisplayText(fn.rtoValue, fn.rtoUnit),
+        score, grade,
+        confirmed:         !!confirmed[id],
+        note:              confirmed[id + '_note'] || '',
+        requiredResources: fn.requiredResources || [],
+      });
     }
     items.sort((a, b) => b.score - a.score);
     return items;
@@ -572,12 +552,12 @@
 
   /* ── Main render ── */
   const renderAll = () => {
-    const biaRows  = loadBIA();
-    const risks    = loadRisks();
-    CONFIRMED      = loadConfirmed();
+    const flatFns = normalizeBIA(loadJSON('bcmsBIAData', []));
+    const risks   = loadRisks();
+    CONFIRMED     = loadConfirmed();
 
-    const riskMap  = buildResourceRiskMap(risks);
-    ALL_ITEMS      = computeItems(biaRows, riskMap, CONFIRMED);
+    const riskMap = buildResourceRiskMap(risks);
+    ALL_ITEMS     = computeItems(flatFns, riskMap, CONFIRMED);
 
     renderMetrics(ALL_ITEMS);
     renderDeptOptions(ALL_ITEMS);
