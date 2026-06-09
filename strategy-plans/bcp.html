@@ -65,6 +65,41 @@
 
     .muted{ color:rgba(15,23,42,.62); }
     .empty{ text-align:center; color:rgba(15,23,42,.62); padding:26px 12px; }
+
+    /* ── Guide Box ── */
+    .guideBox{border:1px solid rgba(59,130,246,.25);border-radius:14px;background:rgba(239,246,255,.8);margin-bottom:14px;overflow:hidden;}
+    [data-theme=dark] .guideBox{background:rgba(30,58,138,.15);border-color:rgba(96,165,250,.2);}
+    .guideHd{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;cursor:pointer;user-select:none;gap:8px;}
+    .guideHdTitle{font-size:13.5px;font-weight:900;color:#1d4ed8;display:flex;align-items:center;gap:6px;}
+    [data-theme=dark] .guideHdTitle{color:#93c5fd;}
+    .guideHdHint{font-size:11.5px;font-weight:500;color:rgba(15,23,42,.4);margin-left:2px;}
+    .guideArrow{font-size:11px;color:rgba(15,23,42,.35);transition:transform .22s;}
+    .guideArrow.open{transform:rotate(180deg);}
+    .guideBody{padding:0 14px 14px;}
+    .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+    @media(max-width:1080px){.steps{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:640px){.steps{grid-template-columns:1fr;}}
+    .step{background:#fff;border:1px solid rgba(59,130,246,.14);border-radius:10px;padding:10px 12px;}
+    [data-theme=dark] .step{background:rgba(30,41,59,.6);border-color:rgba(96,165,250,.14);}
+    .stepNum{font-size:11px;font-weight:900;color:#3b82f6;letter-spacing:.03em;margin-bottom:3px;}
+    .stepTitle{font-size:12.5px;font-weight:800;color:#0f172a;margin-bottom:3px;}
+    [data-theme=dark] .stepTitle{color:#e2e8f0;}
+    .stepDesc{font-size:11.5px;color:rgba(15,23,42,.58);line-height:1.55;}
+    [data-theme=dark] .stepDesc{color:rgba(226,232,240,.48);}
+
+    /* ── Empty State ── */
+    .emptyState{text-align:center;padding:38px 20px;}
+    .emptyIcon{font-size:32px;margin-bottom:10px;}
+    .emptyTitle{font-size:14.5px;font-weight:800;color:#0f172a;margin-bottom:6px;}
+    [data-theme=dark] .emptyTitle{color:#e2e8f0;}
+    .emptyDesc{font-size:13px;color:rgba(15,23,42,.6);line-height:1.65;margin-bottom:14px;}
+    .emptyLinks{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+    .emptyLink{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:999px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.28);color:#1d4ed8;text-decoration:none;font-size:12.5px;font-weight:800;}
+    .emptyLink:hover{background:rgba(59,130,246,.18);}
+    [data-theme=dark] .emptyLink{color:#93c5fd;background:rgba(59,130,246,.14);border-color:rgba(96,165,250,.24);}
+
+    /* ── Strategy type select tooltip ── */
+    select[data-field="strategyType"]{min-width:90px;}
   </style>
 </head>
 <body>
@@ -85,6 +120,43 @@
         </div>
       </div>
       <div class="card" id="focusBanner" style="display:none; margin-bottom:12px;"></div>
+
+      <!-- 사용 가이드 박스 -->
+      <div class="guideBox" id="guideBox">
+        <div class="guideHd" id="guideToggle" role="button" tabindex="0" aria-expanded="true">
+          <span class="guideHdTitle">💡 BCP 전략 작성 가이드<span class="guideHdHint">— 클릭하여 접기/펼치기</span></span>
+          <span class="guideArrow open" id="guideArrow">▼</span>
+        </div>
+        <div class="guideBody" id="guideBody">
+          <div class="steps">
+            <div class="step">
+              <div class="stepNum">STEP 1</div>
+              <div class="stepTitle">BIA · 리스크 등록</div>
+              <div class="stepDesc">BIA 페이지에서 핵심업무를 등록하고, 리스크 평가에서 <b>중점관리 리스크</b>를 식별·등록합니다.</div>
+            </div>
+            <div class="step">
+              <div class="stepNum">STEP 2</div>
+              <div class="stepTitle">전략유형 선택</div>
+              <div class="stepDesc">각 리스크에 대해 <b>회피·감소·이전·수용</b> 중 적합한 대응 방향을 선택합니다. (ISO 31000 기반)</div>
+            </div>
+            <div class="step">
+              <div class="stepNum">STEP 3</div>
+              <div class="stepTitle">BCP 전략 입력</div>
+              <div class="stepDesc">연속성 전략과 복구 방안을 구체적으로 입력합니다. <b>AI 도움받기</b>로 초안을 생성할 수 있습니다.</div>
+            </div>
+            <div class="step">
+              <div class="stepNum">STEP 4</div>
+              <div class="stepTitle">자원 · 상태 확정</div>
+              <div class="stepDesc">전략 실행에 필요한 자원을 체크하고, 검토 완료 후 상태를 <b>확정</b>으로 변경합니다.</div>
+            </div>
+            <div class="step">
+              <div class="stepNum">STEP 5</div>
+              <div class="stepTitle">전체 저장</div>
+              <div class="stepDesc">상단 <b>전체 저장</b> 버튼으로 모든 변경사항을 저장합니다. 행별 저장 버튼도 사용 가능합니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="grid">
         <section class="card kpi"><p class="kTitle">중점관리 리스크 수</p><div class="kValue" id="kCritical">0</div></section>
@@ -146,7 +218,15 @@
       const KEY_RISK = 'bcmsRiskList';
       const KEY_BCP = 'bcmsBCP';
 
-      const STRATEGY_TYPES = ['예방/감축','대체 운영','대체 설비','수동 처리','우회 처리','외부 지원','자원 이중화','모니터링 강화'];
+      /* ISO 31000 기반 4대 리스크 대응 전략 */
+      const STRATEGY_TYPES = ['회피','감소','이전','수용','미정'];
+      const STRATEGY_TIPS = {
+        '회피': '위험 원인 자체를 제거하거나 해당 활동을 중단합니다 (Avoid)',
+        '감소': '예방·통제를 통해 발생 가능성 또는 영향도를 낮춥니다 (Reduce)',
+        '이전': '보험·외주 계약 등으로 위험 책임을 제3자에게 이전합니다 (Transfer)',
+        '수용': '비용 대비 효과 검토 후 위험을 감수하고 모니터링합니다 (Accept)',
+        '미정': '전략 미결정 또는 검토 중인 상태입니다',
+      };
       const RESOURCE_OPTIONS = ['인력','시스템','데이터','설비','유틸리티','협력업체','예비부품','작업공간'];
       const STATUS_OPTIONS = ['초안','검토중','확정'];
 
@@ -315,7 +395,7 @@
             rto: normalizeText(item.rto, '-'),
             impact: toNum(item.impact) ?? 3,
             coreFinal: !!item.coreFinal,
-            strategyType: STRATEGY_TYPES.includes(item.strategyType) ? item.strategyType : '',
+            strategyType: item.strategyType || '',
             strategyText: normalizeText(item.strategyText || item.strategy || item.recovery, ''),
             requiredResources: resources,
             status: STATUS_OPTIONS.includes(item.status) ? item.status : '초안'
@@ -364,7 +444,7 @@
               rto: normalizeText(b.rto ?? draft.rto, '-'),
               impact: toNum(b.impact ?? draft.impact) ?? 3,
               coreFinal: !!(b.coreFinal ?? draft.coreFinal),
-              strategyType: STRATEGY_TYPES.includes(draft.strategyType) ? draft.strategyType : '',
+              strategyType: draft.strategyType || '',
               strategyText: normalizeText(draft.strategyText, ''),
               requiredResources: Array.isArray(draft.requiredResources) ? draft.requiredResources : [],
               status: STATUS_OPTIONS.includes(draft.status) ? draft.status : '초안'
@@ -423,13 +503,14 @@
               <td class="riskCell">${esc(row.risk)}<div class="riskMeta">${riskBadge}</div></td>
               <td><b>${esc(row.riskScore)}</b></td>
               <td>
-                <select data-field="strategyType">
-                  <option value="">선택</option>
-                  ${STRATEGY_TYPES.map((x) => `<option value="${esc(x)}" ${row.strategyType === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+                <select data-field="strategyType" title="${esc(row.strategyType && STRATEGY_TIPS[row.strategyType] ? STRATEGY_TIPS[row.strategyType] : '전략유형을 선택하세요')}">
+                  <option value="">전략유형 선택</option>
+                  ${STRATEGY_TYPES.map((x) => `<option value="${esc(x)}" title="${esc(STRATEGY_TIPS[x] || '')}" ${row.strategyType === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+                  ${row.strategyType && !STRATEGY_TYPES.includes(row.strategyType) ? `<option value="${esc(row.strategyType)}" selected>${esc(row.strategyType)}</option>` : ''}
                 </select>
               </td>
               <td>
-                <textarea class="strategyText" data-field="strategyText" placeholder="해당 리스크를 경감하거나 업무를 지속하기 위한 전략을 입력하세요">${esc(row.strategyText)}</textarea>
+                <textarea class="strategyText" data-field="strategyText" placeholder="예) 핵심 인력 재배치, 백업 시스템 전환, 대체 거래처 확보 등">${esc(row.strategyText)}</textarea>
               </td>
               <td><div class="resourceBox">${resourceTags}</div></td>
               <td>
@@ -444,7 +525,37 @@
           `;
         }).join('');
 
-        $('rows').innerHTML = html || '<tr><td colspan="12" class="empty">표시할 리스크가 없습니다. Risk Assessment 데이터를 확인해 주세요.</td></tr>';
+        if (!html) {
+          const hasRiskData = get(KEY_RISK, []).length > 0;
+          const criticalOnly = $('criticalOnly').checked;
+          const criticalCount = state.rows.filter((r) => r.critical || r.riskScore >= 13).length;
+          let emptyContent;
+          if (!hasRiskData) {
+            emptyContent = `
+              <div class="emptyIcon">📊</div>
+              <div class="emptyTitle">BIA · 리스크 데이터가 없습니다</div>
+              <div class="emptyDesc">BIA와 리스크 평가를 먼저 완료하면<br>중점관리 리스크 기반 BCP 전략을 작성할 수 있습니다.</div>
+              <div class="emptyLinks">
+                <a class="emptyLink" href="../risk-bia/bia.html">📋 BIA 등록 →</a>
+                <a class="emptyLink" href="../risk-bia/risk.html">⚠️ 리스크 평가 →</a>
+              </div>`;
+          } else if (criticalOnly && criticalCount === 0) {
+            emptyContent = `
+              <div class="emptyIcon">⚠️</div>
+              <div class="emptyTitle">중점관리 리스크가 없습니다</div>
+              <div class="emptyDesc">리스크 점수 13점 이상 또는 중점관리로 지정된 리스크가 없습니다.<br>리스크 평가에서 중점관리 항목을 등록하거나, "중점관리만 보기"를 해제해 주세요.</div>
+              <div class="emptyLinks">
+                <a class="emptyLink" href="../risk-bia/risk.html">⚠️ 리스크 평가 →</a>
+              </div>`;
+          } else {
+            emptyContent = `
+              <div class="emptyIcon">🔍</div>
+              <div class="emptyTitle">필터 조건에 맞는 항목이 없습니다</div>
+              <div class="emptyDesc">팀 필터·상태 필터를 변경하거나 "중점관리만 보기"를 해제해 보세요.</div>`;
+          }
+          html = `<tr><td colspan="12"><div class="emptyState">${emptyContent}</div></td></tr>`;
+        }
+        $('rows').innerHTML = html;
         renderKpi();
       }
 
@@ -582,6 +693,29 @@
         $('saveAllBtn').textContent = '전체 저장됨';
         setTimeout(() => { $('saveAllBtn').textContent = '전체 저장'; }, 900);
       });
+
+      /* ── 가이드 박스 토글 ── */
+      (() => {
+        const toggle = $('guideToggle');
+        const body   = $('guideBody');
+        const arrow  = $('guideArrow');
+        const GUIDE_KEY = 'bcmsBcpGuideOpen';
+        const open = localStorage.getItem(GUIDE_KEY) !== 'false';
+        if (!open) {
+          body.style.display = 'none';
+          arrow.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+        const doToggle = () => {
+          const isOpen = body.style.display !== 'none';
+          body.style.display = isOpen ? 'none' : '';
+          arrow.classList.toggle('open', !isOpen);
+          toggle.setAttribute('aria-expanded', String(!isOpen));
+          localStorage.setItem(GUIDE_KEY, String(!isOpen));
+        };
+        toggle?.addEventListener('click', doToggle);
+        toggle?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doToggle(); } });
+      })();
 
       renderFocusBanner();
       buildMergedRows();
