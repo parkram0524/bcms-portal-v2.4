@@ -12,9 +12,11 @@ jobs:
       - name: Ping Supabase
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/")
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/bcms_users?select=count&limit=1")
           echo "Response status: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 400 ] || [ "$HTTP_STATUS" -eq 401 ]; then
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 406 ]; then
             echo "Supabase is alive (status: $HTTP_STATUS)"
           else
             echo "Supabase unreachable with status $HTTP_STATUS."
