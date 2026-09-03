@@ -1005,21 +1005,28 @@
     };
 
     const loadBiaData = () => {
+      const mbcoFallback = loadMbcoData();
+      const resolveMbco = (record, id) => {
+        if (record.mbco != null) return record.mbco;
+        const fb = mbcoFallback[id];
+        return fb?.mbco != null ? fb.mbco : null;
+      };
       if (window.DataStore && DataStore.readBiaRecords) {
         const byTeam = new Map();
         DataStore.readBiaRecords().forEach(record => {
           const team = String(record.teamName || record.team || '').trim();
           if (!team) return;
           if (!byTeam.has(team)) byTeam.set(team, []);
+          const rid = record.biaId || record.id;
           byTeam.get(team).push(normalizeFunction({
-            id: record.id, biaId: record.biaId || record.id, functionId: record.functionId,
+            id: record.id, biaId: rid, functionId: record.functionId,
             name: record.functionName || record.name,
             importance: record.importance, overallImpact: record.overallImpact,
             timeImpact: record.timeImpact, rtoValue: record.rtoValue, rtoUnit: record.rtoUnit,
             grade: record.grade, requiredResources: record.requiredResources,
             description: record.description, financialImpact: record.financialImpact,
             operationalImpact: record.operationalImpact, reputationalImpact: record.reputationalImpact,
-            rpoValue: record.rpoValue, rpoUnit: record.rpoUnit, mbco: record.mbco,
+            rpoValue: record.rpoValue, rpoUnit: record.rpoUnit, mbco: resolveMbco(record, rid),
             resourceDetails: record.resourceDetails, relatedRisks: record.relatedRisks
           }));
         });
@@ -1029,7 +1036,15 @@
       const rows = Array.isArray(raw) ? raw : (raw && (raw.team || raw.teamName) ? [raw] : []);
       return rows.map(row => ({
         team: String(row.team || row.teamName || '').trim(),
-        functions: (row.functions || []).map(normalizeFunction).filter(f => f.name)
+        functions: (row.functions || []).map(fn => {
+          const normalized = normalizeFunction(fn);
+          if (normalized.mbco == null) {
+            const id = normalized.biaId || normalized.id;
+            const fb = mbcoFallback[id];
+            if (fb?.mbco != null) normalized.mbco = fb.mbco;
+          }
+          return normalized;
+        }).filter(f => f.name)
       })).filter(row => row.team);
     };
 

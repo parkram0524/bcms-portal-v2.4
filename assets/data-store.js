@@ -236,6 +236,7 @@
       importance, overallImpact, timeImpact, mtpdMinutes,
       rtoValue: hasValue(rtoValueRaw) ? Number(rtoValueRaw) : null,
       rtoUnit, rtoMinutes,
+      mbco: src.mbco != null && src.mbco !== '' ? Number(src.mbco) : null,
       grade: asText(pickFirst(src, ['grade'], '일반')) || '일반',
       requiredResources: uniq(safeArray(src.requiredResources).map((x) => asText(x)).filter(Boolean)),
       sourceRefId: asText(pickFirst(src, ['sourceRefId'], '')),
